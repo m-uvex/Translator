@@ -1,0 +1,41 @@
+{
+ "name": "uebersetzer",
+ "version": "1.5.0",
+ "private": true,
+ "description": "Lokaler Übersetzer und Texteditor mit Ollama, NLLB-200 und Omnilingual MT",
+ "author": "Janek",
+ "main": "main.js",
+ "scripts": {
+  "start": "electron .",
+  "dist": "electron-builder --win nsis"
+ },
+ "dependencies": {
+  "electron": "^33.0.0",
+  "mammoth": "^1.13.0",
+  "pdf-parse": "^2.4.5",
+  "nspell": "^2.1.5",
+  "dictionary-de": "^3.0.0",
+  "dictionary-en": "^4.0.0",
+  "dictionary-nl": "^2.0.0"
+ },
+ "devDependencies": {
+  "electron-builder": "^25.0.0"
+ },
+ "build": {
+  "appId": "local.uebersetzer",
+  "productName": "Übersetzer",
+  "files": [
+   "*.js",
+   "*.html",
+   "*.css",
+   "build/icon.ico",
+   "node_modules/**"
+  ],
+  "nsis": {
+   "oneClick": true,
+   "perMachine": false,
+   "createDesktopShortcut": true,
+   "createStartMenuShortcut": true
+  }
+ }
+}

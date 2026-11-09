@@ -1,0 +1,6 @@
+torch
+transformers
+sentencepiece
+langcodes
+language-data
+huggingface_hub

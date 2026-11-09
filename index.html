@@ -1,0 +1,45 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Übersetzer</title>
+<meta name="color-scheme" content="light dark"><link rel="stylesheet" href="style.css"></head><body>
+<div class="app">
+  <nav class="rail">
+    <div class="rg"><button class="ib rb active" id="nvTr" data-i="languages" data-tt="navTr"></button><button class="ib rb" id="nvEd" data-i="doc" data-tt="navEd"></button></div>
+    <div class="rg"><button class="ib" id="openSettings" data-i="sliders" data-tt="settings"></button></div>
+  </nav>
+  <div id="vT" class="view">
+    <main>
+      <header>
+        <div class="langs"><button class="pill" id="srcBtn"></button><button class="ib" id="swap" data-i="swap" data-tt="swap"></button><button class="pill" id="tgtBtn"></button></div>
+        <div class="model"><button class="pill" id="modelBtn"></button><button class="ib" id="refresh" data-i="refresh" data-tt="reloadModels"></button></div>
+      </header>
+      <section class="panes">
+        <div class="card" id="drop">
+          <textarea id="input" data-ph="inputPh"></textarea>
+          <div id="thumbs"></div>
+          <footer><button class="ib" id="attach" data-i="clip" data-tt="attach"></button><input type="file" id="file" hidden multiple accept="image/*,.txt,.md,.csv,.srt,.json,.html,.pdf,.docx"><span class="muted" id="count"></span><span class="sp"></span><button class="primary" id="go" data-t="translate"></button></footer>
+        </div>
+        <div class="card"><div id="output" class="out"></div><footer><span class="muted" id="status"></span><span class="sp"></span><button class="ib" id="copy" data-i="copy" data-tt="copy"></button></footer></div>
+      </section>
+    </main>
+    <aside class="side">
+      <div id="llmOnly"><div id="styles"></div>
+        <details class="ctx"><summary data-t="context"></summary><textarea id="ctx" data-ph="ctxPh"></textarea></details>
+        <details class="ctx"><summary data-t="glossary"></summary><div id="glossList"></div><button class="ghost" id="glAdd" data-t="addEntry"></button></details>
+      </div>
+      <p id="nllbNote" class="muted hidden"></p>
+    </aside>
+  </div>
+  <div id="vE" class="view hidden">
+    <div class="tb" id="edTb"></div>
+    <div id="pageWrap"><div id="page" contenteditable="true" spellcheck="false"></div></div>
+    <div class="sbar" id="edBar"></div>
+    <div class="ctxbar hidden" id="ctxBar"></div>
+    <input type="file" id="edFile" hidden accept=".txt,.md,.html,.docx,.pdf">
+  </div>
+</div>
+<div id="pop" class="pop hidden"></div><div id="alt" class="pop alt hidden"></div><div id="cm" class="pop hidden"></div><div id="trPop" class="pop trpop hidden"></div>
+<dialog id="ask"><p id="askText"></p><input id="askIn" class="hidden"><div class="dh"><button class="ghost" id="askNo"></button><button class="primary" id="askYes"></button></div></dialog>
+<dialog id="styleDlg"></dialog>
+<dialog id="sumDlg"></dialog>
+<dialog id="settings"><div class="dh"><h2 data-t="settings"></h2><button class="ib" id="closeSet" data-i="x"></button></div><div id="setBody"></div>
+<div class="dh"><button class="ghost" id="resetAll" data-t="resetAll"></button></div></dialog>
+<script src="renderer.js"></script><script src="editor.js"></script></body></html>

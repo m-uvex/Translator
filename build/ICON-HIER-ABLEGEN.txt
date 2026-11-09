@@ -1,0 +1,1 @@
+Lege hier eine Datei namens icon.ico (mind. 256x256) ab, bevor du "npm run dist" ausfuehrst.
