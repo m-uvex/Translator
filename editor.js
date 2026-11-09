@@ -37,26 +37,26 @@ Object.assign(IC, {
 });
 const reicon = () => document.querySelectorAll('[data-i]').forEach(e => e.innerHTML = ic(e.dataset.i));
 
-const X = (k, de, en, nl) => { K[k] = [de, en]; NL[k] = nl; };
-X('navTr','Übersetzer','Translator','Vertaler'); X('navEd','Textbearbeitung','Text editor','Tekstbewerking');
-X('fNew','Neues Dokument','New document','Nieuw document'); X('fOpen','Öffnen','Open','Openen'); X('fSave','Speichern unter …','Save as …','Opslaan als …');
-X('undo','Rückgängig','Undo','Ongedaan maken'); X('redo','Wiederholen','Redo','Opnieuw');
-X('bold','Fett','Bold','Vet'); X('italic','Kursiv','Italic','Cursief'); X('underline','Unterstrichen','Underline','Onderstreept'); X('strike','Durchgestrichen','Strikethrough','Doorgehaald');
-X('hP','Absatz','Paragraph','Alinea'); X('h1','Überschrift 1','Heading 1','Kop 1'); X('h2','Überschrift 2','Heading 2','Kop 2'); X('h3','Überschrift 3','Heading 3','Kop 3');
-X('ul','Aufzählung','Bulleted list','Opsomming'); X('ol','Nummerierte Liste','Numbered list','Genummerde lijst'); X('quote','Zitat','Quote','Citaat');
-X('aL','Linksbündig','Align left','Links uitlijnen'); X('aC','Zentriert','Center','Centreren'); X('aR','Rechtsbündig','Align right','Rechts uitlijnen'); X('aJ','Blocksatz','Justify','Uitvullen');
-X('link','Link einfügen','Insert link','Link invoegen'); X('linkQ','Adresse des Links','Link address','Linkadres'); X('clear','Formatierung entfernen','Clear formatting','Opmaak wissen');
-X('font','Schriftart','Font','Lettertype'); X('size','Schriftgröße','Font size','Lettergrootte');
-X('shortenAll','Gesamten Text kürzen','Shorten entire text','Hele tekst inkorten'); X('lengthenAll','Gesamten Text verlängern','Lengthen entire text','Hele tekst verlengen'); X('summarizeAll','Gesamten Text zusammenfassen','Summarize entire text','Hele tekst samenvatten');
-X('shorten','Kürzen','Shorten','Inkorten'); X('lengthen','Verlängern','Lengthen','Verlengen'); X('summarize','Zusammenfassen','Summarize','Samenvatten'); X('proofread','Probelesen','Proofread','Nalezen');
-X('synonyms','Synonyme','Synonyms','Synoniemen'); X('styleB','Stil','Style','Stijl'); X('translateSel','Übersetzen','Translate','Vertalen');
-X('modelMenu','Modelle','Models','Modellen'); X('writeModel','Schreibmodell','Writing model','Schrijfmodel'); X('transModel','Übersetzungsmodell','Translation model','Vertaalmodel');
-X('dict','Wörterbuch','Dictionary','Woordenboek'); X('spellOn','Rechtschreibung prüfen','Check spelling','Spelling controleren');
-X('addDict','Zum Wörterbuch hinzufügen','Add to dictionary','Aan woordenboek toevoegen'); X('ignoreW','Ignorieren','Ignore','Negeren');
-X('commaMissing','Hier fehlt vermutlich ein Komma','A comma is probably missing here','Hier ontbreekt waarschijnlijk een komma'); X('insComma','Komma einfügen','Insert comma','Komma invoegen'); X('noSug','Keine Vorschläge','No suggestions','Geen suggesties');
-K.words = [n => `${n} Wörter`, n => `${n} words`]; NL.words = n => `${n} woorden`;
-X('noWrite','Kein Schreibmodell gefunden. Bitte ein Ollama-Modell installieren.','No writing model found. Please install an Ollama model.','Geen schrijfmodel gevonden. Installeer een Ollama-model.');
-K.prog = [(i, n) => `Absatz ${i}/${n} …`, (i, n) => `Paragraph ${i}/${n} …`]; NL.prog = (i, n) => `Alinea ${i}/${n} …`;
+const X = (k, de, en, nl, es, tr, ar) => { K[k] = [de, en]; NL[k] = nl; if (window.ES && es) ES[k] = es; if (window.TR && tr) TR[k] = tr; if (window.AR && ar) AR[k] = ar; };
+X('navTr','Übersetzer','Translator','Vertaler','Traductor','Çevirmen','المترجم'); X('navEd','Textbearbeitung','Text editor','Tekstbewerking','Editor de texto','Metin düzenleyici','محرر النصوص');
+X('fNew','Neues Dokument','New document','Nieuw document','Nuevo documento','Yeni belge','مستند جديد'); X('fOpen','Öffnen','Open','Openen','Abrir','Aç','فتح'); X('fSave','Speichern unter …','Save as …','Opslaan als …','Guardar como …','Farklı kaydet …','حفظ باسم …');
+X('undo','Rückgängig','Undo','Ongedaan maken','Deshacer','Geri al','تراجع'); X('redo','Wiederholen','Redo','Opnieuw','Rehacer','Yinele','إعادة');
+X('bold','Fett','Bold','Vet','Negrita','Kalın','عريض'); X('italic','Kursiv','Italic','Cursief','Cursiva','İtalik','مائل'); X('underline','Unterstrichen','Underline','Onderstreept','Subrayado','Altı çizili','تسطير'); X('strike','Durchgestrichen','Strikethrough','Doorgehaald','Tachado','Üstü çizili','يتوسطه خط');
+X('hP','Absatz','Paragraph','Alinea','Párrafo','Paragraf','فقرة'); X('h1','Überschrift 1','Heading 1','Kop 1','Título 1','Başlık 1','عنوان 1'); X('h2','Überschrift 2','Heading 2','Kop 2','Título 2','Başlık 2','عنوان 2'); X('h3','Überschrift 3','Heading 3','Kop 3','Título 3','Başlık 3','عنوان 3');
+X('ul','Aufzählung','Bulleted list','Opsomming','Lista con viñetas','Madde işaretli liste','قائمة نقطية'); X('ol','Nummerierte Liste','Numbered list','Genummerde lijst','Lista numerada','Numaralı liste','قائمة رقمية'); X('quote','Zitat','Quote','Citaat','Cita','Alıntı','اقتباس');
+X('aL','Linksbündig','Align left','Links uitlijnen','Alinear a la izquierda','Sola hizala','محاذاة لليسار'); X('aC','Zentriert','Center','Centreren','Centrar','Ortala','توسيط'); X('aR','Rechtsbündig','Align right','Rechts uitlijnen','Alinear a la derecha','Sağa hizala','محاذاة لليمين'); X('aJ','Blocksatz','Justify','Uitvullen','Justificar','İki yana yasla','ضبط');
+X('link','Link einfügen','Insert link','Link invoegen','Insertar enlace','Bağlantı ekle','إدراج رابط'); X('linkQ','Adresse des Links','Link address','Linkadres','Dirección del enlace','Bağlantı adresi','عنوان الرابط'); X('clear','Formatierung entfernen','Clear formatting','Opmaak wissen','Borrar formato','Biçimlendirmeyi temizle','مسح التنسيق');
+X('font','Schriftart','Font','Lettertype','Fuente','Yazı tipi','الخط'); X('size','Schriftgröße','Font size','Lettergrootte','Tamaño','Yazı boyutu','حجم الخط');
+X('shortenAll','Gesamten Text kürzen','Shorten entire text','Hele tekst inkorten','Acortar todo el texto','Tüm metni kısalt','تقصير النص بالكامل'); X('lengthenAll','Gesamten Text verlängern','Lengthen entire text','Hele tekst verlengen','Alargar todo el texto','Tüm metni uzat','إطالة النص بالكامل'); X('summarizeAll','Gesamten Text zusammenfassen','Summarize entire text','Hele tekst samenvatten','Resumir todo el texto','Tüm metni özetle','تلخيص النص بالكامل');
+X('shorten','Kürzen','Shorten','Inkorten','Acortar','Kısalt','تقصير'); X('lengthen','Verlängern','Lengthen','Verlengen','Alargar','Uzat','إطالة'); X('summarize','Zusammenfassen','Summarize','Samenvatten','Resumir','Özetle','تلخيص'); X('proofread','Probelesen','Proofread','Nalezen','Revisar','Düzelt','تدقيق');
+X('synonyms','Synonyme','Synonyms','Synoniemen','Sinónimos','Eş anlamlılar','مرادفات'); X('styleB','Stil','Style','Stijl','Estilo','Stil','الأسلوب'); X('translateSel','Übersetzen','Translate','Vertalen','Traducir','Çevir','ترجمة');
+X('modelMenu','Modelle','Models','Modellen','Modelos','Modeller','النماذج'); X('writeModel','Schreibmodell','Writing model','Schrijfmodel','Modelo de escritura','Yazma modeli','نموذج الكتابة'); X('transModel','Übersetzungsmodell','Translation model','Vertaalmodel','Modelo de traducción','Çeviri modeli','نموذج الترجمة');
+X('dict','Wörterbuch','Dictionary','Woordenboek','Diccionario','Sözlük','القاموس'); X('spellOn','Rechtschreibung prüfen','Check spelling','Spelling controleren','Revisar ortografía','Yazımı denetle','تدقيق إملائي');
+X('addDict','Zum Wörterbuch hinzufügen','Add to dictionary','Aan woordenboek toevoegen','Añadir al diccionario','Sözlüğe ekle','إضافة إلى القاموس'); X('ignoreW','Ignorieren','Ignore','Negeren','Ignorar','Yoksay','تجاهل');
+X('commaMissing','Hier fehlt vermutlich ein Komma','A comma is probably missing here','Hier ontbreekt waarschijnlijk een komma','Probablemente falta una coma','Muhtemelen virgül eksik','ربما تنقص فاصلة'); X('insComma','Komma einfügen','Insert comma','Komma invoegen','Insertar coma','Virgül ekle','إدراج فاصلة'); X('noSug','Keine Vorschläge','No suggestions','Geen suggesties','Sin sugerencias','Öneri yok','لا توجد اقتراحات');
+K.words = [n => `${n} Wörter`, n => `${n} words`]; NL.words = n => `${n} woorden`; if (window.ES) ES.words = n => `${n} palabras`; if (window.TR) TR.words = n => `${n} kelime`; if (window.AR) AR.words = n => `${n} كلمة`;
+X('noWrite','Kein Schreibmodell gefunden. Bitte ein Ollama-Modell installieren.','No writing model found. Please install an Ollama model.','Geen schrijfmodel gevonden. Installeer een Ollama-model.','No se encontró modelo de escritura. Instala un modelo Ollama.','Yazma modeli bulunamadı. Lütfen bir Ollama modeli yükleyin.','لم يتم العثور على نموذج كتابة. يرجى تثبيت نموذج Ollama.');
+K.prog = [(i, n) => `Absatz ${i}/${n} …`, (i, n) => `Paragraph ${i}/${n} …`]; NL.prog = (i, n) => `Alinea ${i}/${n} …`; if (window.ES) ES.prog = (i, n) => `Párrafo ${i}/${n} …`; if (window.TR) TR.prog = (i, n) => `Paragraf ${i}/${n} …`; if (window.AR) AR.prog = (i, n) => `فقرة ${i}/${n} …`;
 X('styleNew','Neuer Stil …','New style …','Nieuwe stijl …'); X('styleEdit','Stil bearbeiten','Edit style','Stijl bewerken'); X('styleName','Name des Stils','Style name','Naam van de stijl'); X('styleIcon','Symbol','Icon','Pictogram');
 X('styleInstr','Anweisung für die KI (einmalig)','Instruction for the AI (one-time)','Instructie voor de AI (eenmalig)');
 X('styleInstrPh','z. B. „Schreibe wie ein Pirat: bildhaft, mit Seemannsausdrücken.“','e.g. “Write like a pirate: vivid, with nautical expressions.”','bijv. “Schrijf als een piraat: beeldend, met zeemansuitdrukkingen.”');
@@ -65,15 +65,15 @@ X('styleDelete','Löschen','Delete','Verwijderen');
 X('styleConfDel', (n) => `Stil „${n}" löschen?`, (n) => `Delete style "${n}"?`, (n) => `Stijl "${n}" verwijderen?`);
 X('save','Speichern','Save','Opslaan'); X('del','Löschen','Delete','Verwijderen'); X('close','Schließen','Close','Sluiten'); X('yes','Ja','Yes','Ja');
 X('st_pro','Professionell','Professional','Professioneel'); X('st_casual','Locker','Casual','Los'); X('st_concise','Prägnant','Concise','Beknopt'); X('st_formal','Förmlich','Formal','Formeel'); X('st_creative','Kreativ','Creative','Creatief'); X('st_simple','Einfach','Simple','Eenvoudig');
-X('confNew','Aktuelles Dokument verwerfen und ein neues beginnen?','Discard the current document and start a new one?','Huidig document verwerpen en een nieuw beginnen?');
+X('confNew','Aktuelles Dokument verwerfen und ein neues beginnen?','Discard the current document and start a new one?','Huidig document verwerpen en een nieuw beginnen?','¿Descartar el documento actual y comenzar uno nuevo?','Mevcut belgeyi atıp yenisine başlansın mı?','هل تريد تجاهل المستند الحالي وبدء مستند جديد؟');
 X('sumTitle','Zusammenfassung','Summary','Samenvatting'); X('insTop','Am Anfang einfügen','Insert at top','Bovenaan invoegen'); X('replAll','Text ersetzen','Replace text','Tekst vervangen');
 X('lblWriter','Absender','Writer','Schrijver'); X('lblAddr','Adressat','Addressee','Geadresseerde'); X('lblForm','Ton','Tone','Toon');
 X('noChanges','Keine Änderungen gefunden','No changes found','Geen wijzigingen gevonden');
-X('proofTitle','Änderungen prüfen','Review changes','Wijzigingen controleren');
-X('accept','Übernehmen','Accept','Overnemen'); X('reject','Ablehnen','Reject','Afwijzen');
-X('acceptAll','Alle verbleibenden übernehmen','Accept all remaining','Alle resterende overnemen');
-X('rejectAll','Alle verbleibenden ablehnen','Reject all remaining','Alle resterende afwijzen');
-X('pagebreak','Seitenumbruch','Page break','Pagina-einde');
+X('proofTitle','Änderungen prüfen','Review changes','Wijzigingen controleren','Revisar cambios','Değişiklikleri incele','مراجعة التغييرات');
+X('accept','Übernehmen','Accept','Overnemen','Aceptar','Kabul et','قبول'); X('reject','Ablehnen','Reject','Afwijzen','Rechazar','Reddet','رفض');
+X('acceptAll','Alle verbleibenden übernehmen','Accept all remaining','Alle resterende overnemen','Aceptar todo lo restante','Kalanların tümünü kabul et','قبول جميع المتبقي');
+X('rejectAll','Alle verbleibenden ablehnen','Reject all remaining','Alle resterende afwijzen','Rechazar todo lo restante','Kalanların tümünü reddet','رفض جميع المتبقي');
+X('pagebreak','Seitenumbruch','Page break','Pagina-einde','Salto de página','Sayfa sonu','فاصل صفحة');
 
 S.ed = Object.assign({ src:'auto', tgt:'en', formal:'standard', wGender:'unknown', aGender:'unknown' }, S.ed || {});
 S.edStyles = S.edStyles || []; S.edWrite = S.edWrite || ''; S.edTrans = S.edTrans || ''; S.dictLang = S.dictLang || ''; if (S.edSpell === undefined) S.edSpell = true;
@@ -102,7 +102,8 @@ const PROOFREAD_SYS = 'You are a proofreader. You correct only spelling, grammar
 
 function langHint() {
   const c = (typeof dictCode === 'function') ? dictCode() : (S.dictLang || 'de');
-  return c === 'de' ? 'German' : c === 'nl' ? 'Dutch' : 'English';
+  const m = { de:'German', nl:'Dutch', es:'Spanish', tr:'Turkish', ar:'Arabic', en:'English' };
+  return m[c] || 'English';
 }
 function proofreadPrompt() {
   const L = langHint();
@@ -174,7 +175,12 @@ async function withBusy(fn) {
     cleanMarks();
     await fn();
   } catch (e) { edStatus(t('error', String(e.message).slice(0, 100))); }
-  finally { ED.busy = false; bar.classList.remove('working'); hideBar(); updWords(); }
+  finally {
+    cleanMarks();
+    unmarkProcessing(page);
+    page.querySelectorAll('.ai-processing').forEach(unmarkProcessing);
+    ED.busy = false; bar.classList.remove('working'); hideBar(); updWords();
+  }
 }
 const snapSel = () => { const r = ED.sel; if (!r || r.collapsed) return null; const tx = r.toString().trim(); return tx ? { range:r.cloneRange(), text:tx } : null; };
 const markProcessing = el => el && el.classList && el.classList.add('ai-processing');
@@ -367,45 +373,42 @@ const blocks = (root) => [...(root || page).querySelectorAll('p,li,blockquote,di
 const chunkText = (txt, n = 3500) => { const out = []; let cur = ''; for (const p of txt.split(/\n+/)) { if ((cur + p).length > n && cur) { out.push(cur); cur = ''; } cur += p + '\n'; } if (cur.trim()) out.push(cur); return out; };
 async function summarizeLong(txt) { const parts = chunkText(txt); if (parts.length < 2) return edRun(OPS.summarize, txt); const s = []; for (const p of parts) { if (ED.cancelled) return ''; s.push(await edRun(OPS.summarizeShort, p)); } return edRun(OPS.summarize, s.join('\n')); }
 async function allOp(kind) {
-  if (!page.textContent.trim()) return; closePops();
+  const wholeText = page.innerText.trim();
+  if (!wholeText) return;
+  closePops();
   const beforeHTML = page.innerHTML;
   await withBusy(async () => {
-    if (kind === 'summarize') {
-      const summary = await summarizeLong(page.innerText);
-      if (ED.cancelled) return;
-      showSummary(summary); return;
-    }
     if (kind === 'proofread') { return await proofreadDiff(null); }
 
-    // Verarbeitung in einem Offscreen-Clone, damit die echte Seite waehrend
-    // des LLM-Calls unveraendert bleibt (Undo bleibt sauber).
-    const work = document.createElement('div');
-    work.innerHTML = beforeHTML;
-    const wbl = blocks(work);
+    const blk = page.querySelectorAll('p, h1, h2, h3, blockquote, li');
+    if (blk.length) blk.forEach(markProcessing);
+    else markProcessing(page);
 
-    // Animation auf der echten Seite anzeigen
-    markProcessing(page);
     try {
-      if (!wbl.length) {
-        const whole = work.innerText.trim();
-        if (!whole) return;
-        edStatus(t('prog', 1, 1));
-        const result = await edRun(OPS[kind], whole);
-        if (ED.cancelled) return;
-        work.innerHTML = '<p>' + esc(result).replace(/\n+/g, '</p><p>') + '</p>';
+      let result = '';
+      if (kind === 'summarize') {
+        result = await summarizeLong(wholeText);
       } else {
-        for (let i = 0; i < wbl.length; i++) {
-          if (ED.cancelled) return;
-          edStatus(t('prog', i + 1, wbl.length));
-          const result = await edRun(OPS[kind], wbl[i].textContent.trim());
-          if (ED.cancelled) return;
-          wbl[i].textContent = result.replace(/\n+/g, ' ');
+        edStatus(t('prog', 1, 1));
+        const parts = chunkText(wholeText, 3500);
+        if (parts.length <= 1) {
+          result = await edRun(OPS[kind], wholeText);
+        } else {
+          const resParts = [];
+          for (let i = 0; i < parts.length; i++) {
+            if (ED.cancelled) return;
+            edStatus(t('prog', i + 1, parts.length));
+            resParts.push(await edRun(OPS[kind], parts[i]));
+          }
+          result = resParts.join('\n\n');
         }
       }
+      if (ED.cancelled || !result) return;
       edStatus('');
-      cleanMarks(work);
-      applyContent(work.innerHTML, beforeHTML);
+      cleanMarks(page);
+      applyContent(paragraphs(result), beforeHTML);
     } finally {
+      cleanMarks(page);
       unmarkProcessing(page);
     }
   });
@@ -503,7 +506,12 @@ function transPop(btn) {
     tp.innerHTML = `<div class="trrow"><button class="pill" id="tpSrc">${esc(langLabel(S.ed.src))}</button><span class="muted">${ic('arrowR', 16)}</span><button class="pill" id="tpTgt">${esc(langLabel(S.ed.tgt))}</button></div>` +
       (eng === 'llm' ? seg('formal', FORM, 'lblForm') + seg('wGender', GEN, 'lblWriter') + seg('aGender', GEN, 'lblAddr') : '') +
       `<div class="go"><button class="primary" id="tpGo">${t('translate')}</button></div>`;
-    const lp = (id, key) => { $(id).onclick = e => langPop(e.currentTarget, key, { obj:S.ed, langs:edLangs(), noAuto:eng !== 'llm', pins:edPins, isSrc:key === 'src', done:draw }); };
+    const lp = (id, key) => {
+      $(id).onclick = e => {
+        langPop(e.currentTarget, key, { obj:S.ed, langs:edLangs(), noAuto:eng !== 'llm', pins:edPins, isSrc:key === 'src', done:draw });
+        $('#pop').style.zIndex = '50';
+      };
+    };
     lp('#tpSrc', 'src'); lp('#tpTgt', 'tgt');
     $('#tpGo').onclick = () => { tp.classList.add('hidden'); runTrans(sn); };
   };
@@ -716,8 +724,8 @@ async function doSave(kind) {
   try { await window.api.saveFile(name, data, kind); } catch { edStatus(t('readErr')); }
 }
 
-const dictCode = () => S.dictLang || (['de', 'nl'].includes(LANG) ? LANG : 'en');
-const DICTS = [['de', 'Deutsch'], ['en', 'English'], ['nl', 'Nederlands']];
+const dictCode = () => S.dictLang || (['de', 'nl', 'es', 'tr', 'ar'].includes(LANG) ? LANG : 'en');
+const DICTS = [['de', 'Deutsch'], ['en', 'English'], ['nl', 'Nederlands'], ['es', 'Español'], ['tr', 'Türkçe'], ['ar', 'العربية']];
 let scanTimer = null;
 const scheduleScan = () => { clearTimeout(scanTimer); scanTimer = setTimeout(spellScan, 500); };
 const COMMA_SKIP = new Set(['und', 'oder', 'sowie', 'aber', 'doch', 'denn', 'sondern', 'ohne', 'statt', 'anstatt', 'außer', 'als', 'auch', 'nur', 'selbst', 'schon', 'bis', 'zumal', 'gerade', 'besonders', 'erst', 'so', 'nicht']);
@@ -772,9 +780,97 @@ page.addEventListener('contextmenu', async e => {
   Object.assign(m.style, { left:Math.min(e.clientX, innerWidth - 260) + 'px', top:Math.min(e.clientY, innerHeight - 200) + 'px' }); m.classList.remove('hidden');
 });
 
+
+async function showDictManager() {
+  closePops();
+  const d = $('#dictDlg');
+  let words = [];
+  try { words = (await window.api.spellGetPersonal()) || []; } catch {}
+
+  const draw = () => {
+    d.innerHTML = `
+      <div class="dh">
+        <h3 style="margin:0">${t('personalDict')}</h3>
+        <button class="ib" id="dictClose" data-i="x"></button>
+      </div>
+      <div class="dict-add">
+        <input id="dictNewIn" placeholder="${t('addWordPh')}">
+        <button class="primary" id="dictAddBtn">${t('addWord')}</button>
+      </div>
+      <div class="dict-list">
+        ${!words.length ? `<div class="muted" style="padding:12px;text-align:center">${t('noDictWords')}</div>` :
+          words.map((w, idx) => `
+            <div class="dict-row" data-idx="${idx}">
+              <span class="wtxt" contenteditable="true" spellcheck="false">${esc(w)}</span>
+              <div class="dict-acts">
+                <button class="ib dict-save hidden" data-idx="${idx}" title="${t('save')}">${ic('check', 14)}</button>
+                <button class="ib dict-del" data-idx="${idx}" title="${t('del')}">${ic('x', 14)}</button>
+              </div>
+            </div>
+          `).join('')}
+      </div>
+      <div class="dh" style="justify-content:flex-end;margin-top:10px">
+        <button class="ghost" id="dictDoneBtn">${t('close')}</button>
+      </div>
+    `;
+    reicon();
+    const closeDlg = () => d.close();
+    d.querySelector('#dictClose').onclick = closeDlg;
+    d.querySelector('#dictDoneBtn').onclick = closeDlg;
+
+    const addWord = async () => {
+      const inp = d.querySelector('#dictNewIn');
+      const w = inp.value.trim();
+      if (!w) return;
+      if (words.includes(w)) { alert(t('wordExists')); return; }
+      await window.api.spellAdd(w);
+      words.push(w);
+      inp.value = '';
+      draw();
+      spellScan();
+    };
+    d.querySelector('#dictAddBtn').onclick = addWord;
+    d.querySelector('#dictNewIn').onkeydown = e => { if (e.key === 'Enter') addWord(); };
+
+    d.querySelectorAll('.dict-del').forEach(b => {
+      b.onclick = async () => {
+        const idx = +b.dataset.idx;
+        const w = words[idx];
+        await window.api.spellRemove(w);
+        words.splice(idx, 1);
+        draw();
+        spellScan();
+      };
+    });
+
+    d.querySelectorAll('.dict-row .wtxt').forEach(span => {
+      const row = span.closest('.dict-row');
+      const idx = +row.dataset.idx;
+      const saveBtn = row.querySelector('.dict-save');
+      span.oninput = () => saveBtn.classList.remove('hidden');
+      span.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); span.blur(); } };
+      span.onblur = async () => {
+        const newW = span.textContent.trim();
+        const oldW = words[idx];
+        if (newW && newW !== oldW) {
+          await window.api.spellEdit(oldW, newW);
+          words[idx] = newW;
+          spellScan();
+        }
+        saveBtn.classList.add('hidden');
+      };
+      saveBtn.onclick = () => span.blur();
+    });
+  };
+
+  draw();
+  d.showModal();
+}
+
 function renderSb() {
   const d = DICTS.find(x => x[0] === dictCode()) || DICTS[1];
-  sb.innerHTML = `<span id="sbWords"></span><span id="sbStatus" class="sp"></span><button class="ghost" id="sbDict" title="${t('dict')}">${ic('globe', 16)}${d[1]}${ic('chev', 14)}</button>`;
+  sb.innerHTML = `<span id="sbWords"></span><span id="sbStatus" class="sp"></span><button class="ib" id="sbDictWords" title="${t('personalDict')}">${ic('book', 16)}</button><button class="ghost" id="sbDict" title="${t('dict')}">${ic('globe', 16)}${d[1]}${ic('chev', 14)}</button>`;
+  $('#sbDictWords').onclick = showDictManager;
   $('#sbDict').onclick = e => {
     closePops(); const p = $('#pop'); p.innerHTML = '';
     DICTS.forEach(([c, n]) => {
@@ -796,7 +892,66 @@ function updWords() { const w = (page.innerText.trim().match(/\S+/g) || []).leng
 document.execCommand('defaultParagraphSeparator', false, 'p');
 page.innerHTML = localStorage.getItem('edDoc') || '<p><br></p>';
 let saveTimer = null;
+
+function handleMarkdownTrigger() {
+  if (!S.edMarkdown) return;
+  const s = getSelection();
+  if (!s.rangeCount || !s.isCollapsed) return;
+  const node = s.anchorNode;
+  if (!node || node.nodeType !== 3) return;
+  let block = node;
+  while (block && block.parentNode !== page) block = block.parentNode;
+  if (!block) return;
+  const text = node.textContent;
+  const offset = s.anchorOffset;
+  const beforeCaret = text.slice(0, offset);
+
+  // Block triggers at start of line when space typed: # , ## , ### , > , - , * , 1.
+  const mBlock = beforeCaret.match(/^(\#{1,3}|\-|\*|1\.|\>)\s$/);
+  if (mBlock && node === block.firstChild) {
+    const trigger = mBlock[1];
+    node.textContent = text.slice(offset);
+    if (trigger === '#') document.execCommand('formatBlock', false, 'h1');
+    else if (trigger === '##') document.execCommand('formatBlock', false, 'h2');
+    else if (trigger === '###') document.execCommand('formatBlock', false, 'h3');
+    else if (trigger === '>' || trigger === '&gt;') document.execCommand('formatBlock', false, 'blockquote');
+    else if (trigger === '-' || trigger === '*') document.execCommand('insertUnorderedList');
+    else if (trigger === '1.') document.execCommand('insertOrderedList');
+    updTb();
+    return;
+  }
+
+  // Inline formatting: **bold**, *italic*, ~~strike~~, `code`
+  if (beforeCaret.endsWith(' ')) {
+    const m = beforeCaret.slice(0, -1).match(/(\*\*|~~|`|\*)([^\s*`~].*?)\1$/);
+    if (m) {
+      const full = m[0] + ' ';
+      const tag = m[1];
+      const inner = m[2];
+      const startIdx = offset - full.length;
+      const r = document.createRange();
+      r.setStart(node, startIdx);
+      r.setEnd(node, offset);
+      s.removeAllRanges();
+      s.addRange(r);
+      ED.writing = true;
+      try {
+        let rep = '';
+        if (tag === '**') rep = `<b>${esc(inner)}</b>&nbsp;`;
+        else if (tag === '*') rep = `<i>${esc(inner)}</i>&nbsp;`;
+        else if (tag === '~~') rep = `<strike>${esc(inner)}</strike>&nbsp;`;
+        else if (tag === '`') rep = `<code>${esc(inner)}</code>&nbsp;`;
+        document.execCommand('insertHTML', false, rep);
+      } finally {
+        ED.writing = false;
+      }
+      updTb();
+    }
+  }
+}
+
 page.addEventListener('input', e => {
+  if (S.edMarkdown && (e.data === ' ' || e.inputType === 'insertText')) handleMarkdownTrigger();
   updWords(); scheduleScan(); clearTimeout(saveTimer);
   saveTimer = setTimeout(() => { try { localStorage.setItem('edDoc', page.innerHTML); } catch {} }, 800);
   // Undo/Redo: keine alten Diff-Markierungen wiederherstellen
@@ -816,7 +971,21 @@ page.addEventListener('beforeinput', e => {
 page.addEventListener('paste', e => { e.preventDefault(); document.execCommand('insertText', false, e.clipboardData.getData('text/plain')); });
 page.addEventListener('mouseup', () => setTimeout(showBar, 0));
 page.addEventListener('keyup', e => { if (e.shiftKey || e.key.startsWith('Arrow')) showBar(); });
-page.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); newPage(); } });
+page.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); newPage(); return; }
+  if (S.edMarkdown && e.key === 'Enter') {
+    const s = getSelection();
+    if (s.rangeCount && s.isCollapsed) {
+      let b = s.anchorNode;
+      while (b && b.parentNode !== page) b = b.parentNode;
+      if (b && b.textContent.trim() === '---') {
+        e.preventDefault();
+        b.remove();
+        newPage();
+      }
+    }
+  }
+});
 $('#pageWrap').addEventListener('scroll', () => { if (!bar.classList.contains('hidden')) showBar(); });
 document.addEventListener('selectionchange', () => {
   const s = getSelection(); if (s.rangeCount && page.contains(s.anchorNode)) ED.sel = s.getRangeAt(0).cloneRange();

@@ -64,9 +64,17 @@ const spellers = {}; let personal = [];
 const persFile = () => path.join(app.getPath('userData'), 'personal-dictionary.json');
 function speller(lang) {
   if (spellers[lang]) return spellers[lang];
-  const dir = path.join(__dirname, 'node_modules', 'dictionary-' + lang);
-  const sp = require('nspell')(fs.readFileSync(path.join(dir, 'index.aff')), fs.readFileSync(path.join(dir, 'index.dic')));
-  personal.forEach(w => sp.add(w)); return (spellers[lang] = sp);
+  let dir = path.join(__dirname, 'node_modules', 'dictionary-' + lang);
+  if (!fs.existsSync(path.join(dir, 'index.aff'))) {
+    const localDir = path.join(__dirname, 'dict', lang);
+    if (fs.existsSync(path.join(localDir, 'index.aff'))) dir = localDir;
+  }
+  try {
+    const sp = require('nspell')(fs.readFileSync(path.join(dir, 'index.aff')), fs.readFileSync(path.join(dir, 'index.dic')));
+    personal.forEach(w => sp.add(w)); return (spellers[lang] = sp);
+  } catch {
+    return { correct: () => true, suggest: () => [], add: () => {} };
+  }
 }
 const wordOk = (sp, w) => sp.correct(w) || (/[-'’]/.test(w) && w.split(/['’-]/).every(p => !p || sp.correct(p)));
 // Fehler NICHT schlucken - der Renderer loggt sie
@@ -74,6 +82,22 @@ ipcMain.handle('spell:check', (_e, lang, words) => { const sp = speller(lang); r
 ipcMain.handle('spell:suggest', (_e, lang, word) => { try { return speller(lang).suggest(word).slice(0, 5); } catch { return []; } });
 ipcMain.handle('spell:add', (_e, word) => {
   if (!personal.includes(word)) { personal.push(word); try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {} Object.values(spellers).forEach(s => s.add(word)); }
+  return true;
+});
+ipcMain.handle('spell:getPersonal', () => [...personal]);
+ipcMain.handle('spell:remove', (_e, word) => {
+  personal = personal.filter(w => w !== word);
+  try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {}
+  for (const k in spellers) delete spellers[k];
+  return true;
+});
+ipcMain.handle('spell:edit', (_e, oldWord, newWord) => {
+  const idx = personal.indexOf(oldWord);
+  if (idx >= 0 && newWord.trim()) {
+    personal[idx] = newWord.trim();
+    try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {}
+    for (const k in spellers) delete spellers[k];
+  }
   return true;
 });
 

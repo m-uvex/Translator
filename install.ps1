@@ -21,7 +21,7 @@ $script:done = $false
 
 # ---------- Sprachauswahl ----------
 $sysLang = [System.Globalization.CultureInfo]::CurrentUICulture.TwoLetterISOLanguageName
-if ($sysLang -notin @('de','en','nl')) { $sysLang = 'en' }
+if ($sysLang -notin @('de','en','nl','es','tr','ar')) { $sysLang = 'en' }
 
 $T = @{
   de = @{
@@ -99,6 +99,81 @@ $T = @{
     noPy='Python 3.12 kon niet worden geinstalleerd.'; noVenv='Python-omgeving kon niet worden aangemaakt.'; noPip='Python-pakketten konden niet worden geinstalleerd.'
     noOllamaStart='Ollama-server kan niet worden gestart.'; epkgMissing='Electron-pakket ontbreekt (npm install mislukt).'
   }
+  es = @{
+    title='Traductor - Configuracion'; heading='Configurar Traductor'
+    intro='Los programas que falten se descargaran automaticamente de las fuentes oficiales (winget, nodejs.org, ollama.com, python.org, Hugging Face).'
+    folder='Carpeta de instalacion'; ollama='Instalar Ollama (si no esta presente)'
+    models='Descargar modelos de lenguaje para Ollama:'; nllb='Configurar NLLB-200 de Meta (Python 3.12) - versiones:'
+    auto='Iniciar servidor de traduccion automaticamente con la app'
+    desk='Crear acceso directo en el escritorio'; start='Crear accesos en el menu Inicio (incluye desinstalacion)'
+    install='Instalar'; update='Actualizar'; startBtn='Iniciar Traductor'; retry='Reintentar'
+    lang='Idioma'; errTitle='Error de instalacion'
+    needUnzip='Por favor descomprima el archivo ZIP por completo primero y ejecute Installieren.bat desde la carpeta descomprimida.'
+    nodeOk='OK: Node.js presente'; nodeInst='Instalando Node.js (LTS) ...'; nodeDl='Descargando Node.js directamente de nodejs.org ...'
+    elecOk='OK: Electron y paquetes presentes'; elecInst='Instalando Electron ...'; pkgInst='Instalando paquetes npm ...'
+    elecMirror='Reintentando mediante mirror ...'; elecDl='Descargando Electron directamente de GitHub ...'
+    updating='Actualizando instalacion existente ...'; copy='Copiando archivos de la app ...'
+    ollamaOk='OK: Ollama presente'; ollamaInst='Instalando Ollama ...'; ollamaDl='Descargando Ollama directamente de ollama.com ...'; ollamaStart='Iniciando Ollama ...'
+    pyOk='OK: Python 3.12 presente'; pyInst='Instalando Python 3.12 ...'; pyDl='Descargando Python directamente de python.org ...'
+    venv='Creando entorno Python ...'; pip='Instalando paquetes (torch, transformers ...) - esto puede tardar unos minutos ...'
+    modelOk='OK: modelo {0} ya instalado'; modelDl='Descargando modelo de lenguaje {0} ...'; hf='Descargando {0} de Hugging Face ...'
+    allModels='OK: todos los modelos de traduccion seleccionados ya estan presentes'
+    done='OK: listo! La aplicacion esta configurada.'; error='ERROR: '
+    noNode='No se pudo instalar Node.js.'; noElectron='No se pudo instalar Electron (GitHub bloqueado?).'
+    noPackages='No se pudieron instalar los paquetes npm (nspell, diccionarios).'; noOllama='No se pudo instalar Ollama.'
+    noPy='No se pudo instalar Python 3.12.'; noVenv='No se pudo crear el entorno Python.'; noPip='No se pudieron instalar los paquetes Python.'
+    noOllamaStart='No se puede iniciar el servidor Ollama.'; epkgMissing='Falta el paquete Electron (npm install fallido).'
+  }
+  tr = @{
+    title='Cevirmen - Kurulum'; heading='Cevirmen Kurulumu'
+    intro='Eksik programlar resmi kaynaklardan (winget, nodejs.org, ollama.com, python.org, Hugging Face) otomatik indirilir.'
+    folder='Kurulum klasoru'; ollama='Ollama yukle (mevcut degilse)'
+    models='Ollama icin dil modellerini indir:'; nllb='Meta NLLB-200 kurulumu (Python 3.12) - surumler:'
+    auto='Ceviri sunucusunu uygulama ile otomatik baslat'
+    desk='Masaustu kisayolu olustur'; start='Baslat menusu ogeleri olustur (kaldirma dahil)'
+    install='Yukle'; update='Guncelle'; startBtn='Cevirmeni Baslat'; retry='Yeniden dene'
+    lang='Dil'; errTitle='Kurulum hatasi'
+    needUnzip='Lutfen once ZIP dosyasini tamamen cikarin ve cikarilan klasorden Installieren.bat calistirin.'
+    nodeOk='TAMAM: Node.js mevcut'; nodeInst='Node.js (LTS) yukleniyor ...'; nodeDl='Node.js dogrudan nodejs.org uzerinden indiriliyor ...'
+    elecOk='TAMAM: Electron ve paketler mevcut'; elecInst='Electron yukleniyor ...'; pkgInst='npm paketleri yukleniyor ...'
+    elecMirror='Mirror uzerinden tekrar deneniyor ...'; elecDl='Electron dogrudan GitHub uzerinden indiriliyor ...'
+    updating='Mevcut kurulum guncelleniyor ...'; copy='Uygulama dosyalari kopyalaniyor ...'
+    ollamaOk='TAMAM: Ollama mevcut'; ollamaInst='Ollama yukleniyor ...'; ollamaDl='Ollama dogrudan ollama.com uzerinden indiriliyor ...'; ollamaStart='Ollama baslatiliyor ...'
+    pyOk='TAMAM: Python 3.12 mevcut'; pyInst='Python 3.12 yukleniyor ...'; pyDl='Python dogrudan python.org uzerinden indiriliyor ...'
+    venv='Python ortami olusturuluyor ...'; pip='Paketler yukleniyor (torch, transformers ...) - birkac dakika surebilir ...'
+    modelOk='TAMAM: {0} modeli zaten yuklu'; modelDl='Dil modeli {0} indiriliyor ...'; hf='{0} Hugging Face uzerinden indiriliyor ...'
+    allModels='TAMAM: Secilen tum ceviri modelleri zaten mevcut'
+    done='TAMAM: bitti! Uygulama kuruldu.'; error='HATA: '
+    noNode='Node.js yuklenemedi.'; noElectron='Electron yuklenemedi (GitHub engellendi mi?).'
+    noPackages='npm paketleri yuklenemedi (nspell, sozlukler).'; noOllama='Ollama yuklenemedi.'
+    noPy='Python 3.12 yuklenemedi.'; noVenv='Python ortami olusturulamadi.'; noPip='Python paketleri yuklenemedi.'
+    noOllamaStart='Ollama sunucusu baslatilamiyor.'; epkgMissing='Electron paketi eksik (npm install basarisiz).'
+  }
+  ar = @{
+    title='Almotargem - Al Eidad'; heading='Eidad Almotargem'
+    intro='Al barameg al mafqoda yatam tahmiloha talqaiyan men al masader al rasmiya (winget, nodejs.org, ollama.com, python.org, Hugging Face).'
+    folder='Mogallad al tathbeet'; ollama='Tathbeet Ollama (etha lam yakon mawgoodan)'
+    models='Tahmil namatheg al logha li Ollama:'; nllb='Eidad NLLB-200 men Meta (Python 3.12) - al esdarat:'
+    auto='Tashgheel server al targama talqaiyan maa al tatbeeq'
+    desk='Inshaa ekhtesar ala sath al maktab'; start='Inshaa qawaem fi qaemat al bedaya'
+    install='Tathbeet'; update='Tahdeeth'; startBtn='Tashgheel Almotargem'; retry='Iadat al mohawala'
+    lang='Al Logha'; errTitle='Khata fi al eidad'
+    needUnzip='Yorga fak al daght an milaf ZIP awalan thoma tashgheel Installieren.bat men al mogallad.'
+    nodeOk='Tamam: Node.js mawgood'; nodeInst='Gari tathbeet Node.js (LTS) ...'; nodeDl='Tahmil Node.js mobasharatan men nodejs.org ...'
+    elecOk='Tamam: Electron wa al hozam mawgooda'; elecInst='Gari tathbeet Electron ...'; pkgInst='Gari tathbeet hozam npm ...'
+    elecMirror='Iadat al mohawala abr mirror ...'; elecDl='Tahmil Electron mobasharatan men GitHub ...'
+    updating='Tahdeeth al tathbeet al haly ...'; copy='Naskh milafat al tatbeeq ...'
+    ollamaOk='Tamam: Ollama mawgood'; ollamaInst='Gari tathbeet Ollama ...'; ollamaDl='Tahmil Ollama mobasharatan men ollama.com ...'; ollamaStart='Gari tashgheel Ollama ...'
+    pyOk='Tamam: Python 3.12 mawgood'; pyInst='Gari tathbeet Python 3.12 ...'; pyDl='Tahmil Python mobasharatan men python.org ...'
+    venv='Inshaa beeat Python ...'; pip='Tathbeet al hozam (torch, transformers ...) - qad yastaghreq daqaiq ...'
+    modelOk='Tamam: al namothag {0} mothabat belfeel'; modelDl='Gari tahmil namothag al logha {0} ...'; hf='Gari tahmil {0} men Hugging Face ...'
+    allModels='Tamam: gamee namatheg al targama al mokhtara mawgooda'
+    done='Tamam: jahiz! Al tatbeeq moadd belkamel.'; error='KHATA: '
+    noNode='Taathara tathbeet Node.js.'; noElectron='Taathara tathbeet Electron (hal GitHub mahgoob?).'
+    noPackages='Taathara tathbeet hozam npm (nspell, al maagem).'; noOllama='Taathara tathbeet Ollama.'
+    noPy='Taathara tathbeet Python 3.12.'; noVenv='Taathara inshaa beeat Python.'; noPip='Taathara tathbeet hozam Python.'
+    noOllamaStart='La yumken tashgheel khadem Ollama.'; epkgMissing='Hozmat Electron mafqoda (fashila npm install).'
+  }
 }
 
 $script:L = $T[$sysLang]
@@ -128,8 +203,8 @@ $lblLang.Anchor = 'Top,Right'
 $cmbLang = Ctl (New-Object Windows.Forms.ComboBox) 395 18 165 26 ''
 $cmbLang.DropDownStyle = 'DropDownList'
 $cmbLang.Anchor = 'Top,Right'
-[void]$cmbLang.Items.AddRange(@('Deutsch','English','Nederlands'))
-$cmbLang.SelectedIndex = switch ($sysLang) { 'de' { 0 } 'en' { 1 } 'nl' { 2 } default { 1 } }
+[void]$cmbLang.Items.AddRange(@('Deutsch','English','Nederlands','Espanol','Turkce','Arabic'))
+$cmbLang.SelectedIndex = switch ($sysLang) { 'de' { 0 } 'en' { 1 } 'nl' { 2 } 'es' { 3 } 'tr' { 4 } 'ar' { 5 } default { 1 } }
 
 $ctrlRefs = @{}
 
@@ -227,7 +302,7 @@ function Apply-Lang($code) {
   }
 }
 $cmbLang.Add_SelectedIndexChanged({
-  $code = switch ($cmbLang.SelectedIndex) { 0 { 'de' } 1 { 'en' } 2 { 'nl' } default { 'en' } }
+  $code = switch ($cmbLang.SelectedIndex) { 0 { 'de' } 1 { 'en' } 2 { 'nl' } 3 { 'es' } 4 { 'tr' } 5 { 'ar' } default { 'en' } }
   Apply-Lang $code
 })
 

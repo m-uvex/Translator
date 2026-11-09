@@ -184,6 +184,11 @@ class Handler(BaseHTTPRequestHandler):
             d = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
             full = d.get("id") or d.get("model")
             fam, mid, m = find(full)
+            if self.path == "/load":
+                if full not in installed(): return self._json(400, {"error": "Modell nicht installiert"})
+                with lock:
+                    load(full)
+                return self._json(200, {"ok": True, "loaded": full})
             if self.path == "/translate":
                 codes = {l["code"] for l in LANGS}
                 if d.get("src") not in codes or d.get("tgt") not in codes: return self._json(400, {"error": "unbekannte Sprache"})

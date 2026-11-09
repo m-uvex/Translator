@@ -15,7 +15,7 @@
         <div class="card" id="drop">
           <textarea id="input" data-ph="inputPh"></textarea>
           <div id="thumbs"></div>
-          <footer><button class="ib" id="attach" data-i="clip" data-tt="attach"></button><input type="file" id="file" hidden multiple accept="image/*,.txt,.md,.csv,.srt,.json,.html,.pdf,.docx"><span class="muted" id="count"></span><span class="sp"></span><button class="primary" id="go" data-t="translate"></button></footer>
+          <footer><button class="ib" id="attach" data-i="clip" data-tt="attach"></button><input type="file" id="file" hidden multiple accept="image/*,.txt,.md,.csv,.srt,.json,.html,.pdf,.docx"><span class="muted" id="count"></span><span class="sp"></span><button class="ghost hidden" id="stopTr" data-t="stopTr"></button><button class="primary" id="go" data-t="translate"></button></footer>
         </div>
         <div class="card"><div id="output" class="out"></div><footer><span class="muted" id="status"></span><span class="sp"></span><button class="ib" id="copy" data-i="copy" data-tt="copy"></button></footer></div>
       </section>
@@ -40,6 +40,7 @@
 <dialog id="ask"><p id="askText"></p><input id="askIn" class="hidden"><div class="dh"><button class="ghost" id="askNo"></button><button class="primary" id="askYes"></button></div></dialog>
 <dialog id="styleDlg"></dialog>
 <dialog id="sumDlg"></dialog>
+<dialog id="dictDlg"></dialog>
 <dialog id="settings"><div class="dh"><h2 data-t="settings"></h2><button class="ib" id="closeSet" data-i="x"></button></div><div id="setBody"></div>
 <div class="dh"><button class="ghost" id="resetAll" data-t="resetAll"></button></div></dialog>
 <script src="renderer.js"></script><script src="editor.js"></script></body></html>
