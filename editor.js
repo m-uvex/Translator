@@ -183,8 +183,16 @@ async function withBusy(fn) {
   }
 }
 const snapSel = () => { const r = ED.sel; if (!r || r.collapsed) return null; const tx = r.toString().trim(); return tx ? { range:r.cloneRange(), text:tx } : null; };
-const markProcessing = el => el && el.classList && el.classList.add('ai-processing');
-const unmarkProcessing = el => el && el.classList && el.classList.remove('ai-processing');
+const markProcessing = el => {
+  if (!el || !el.classList || el.classList.contains('ai-processing')) return;
+  el.classList.add('ai-processing');
+  dropSpoilerRanges(); scheduleScan();
+};
+const unmarkProcessing = el => {
+  if (!el || !el.classList || !el.classList.contains('ai-processing')) return;
+  el.classList.remove('ai-processing');
+  scheduleScan();
+};
 
 // ---------- Diff-Engine ----------
 let changeId = 0;
@@ -727,14 +735,18 @@ async function doSave(kind) {
 const dictCode = () => S.dictLang || (['de', 'nl', 'es', 'tr', 'ar'].includes(LANG) ? LANG : 'en');
 const DICTS = [['de', 'Deutsch'], ['en', 'English'], ['nl', 'Nederlands'], ['es', 'Español'], ['tr', 'Türkçe'], ['ar', 'العربية']];
 let scanTimer = null;
-const scheduleScan = () => { clearTimeout(scanTimer); scanTimer = setTimeout(spellScan, 500); };
+function scheduleScan() { clearTimeout(scanTimer); scanTimer = setTimeout(spellScan, 500); }
+// Rechtschreib-Markierungen im Spoiler-Bereich ausblenden
+function spoilerNode(n) { const el = n && n.parentElement; return !!(el && el.closest && el.closest('.ai-processing')); }
+function syncSpellHighlight() { if (window.CSS && CSS.highlights) CSS.highlights.set('spell', new Highlight(...ED.ranges.map(x => x.r))); }
+function dropSpoilerRanges() { ED.ranges = ED.ranges.filter(x => !spoilerNode(x.r.startContainer)); syncSpellHighlight(); }
 const COMMA_SKIP = new Set(['und', 'oder', 'sowie', 'aber', 'doch', 'denn', 'sondern', 'ohne', 'statt', 'anstatt', 'außer', 'als', 'auch', 'nur', 'selbst', 'schon', 'bis', 'zumal', 'gerade', 'besonders', 'erst', 'so', 'nicht']);
 async function spellScan() {
   if (!window.CSS || !CSS.highlights || $('#vE').classList.contains('hidden')) return;
   const seq = ++ED.seq;
   if (!S.edSpell) { CSS.highlights.delete('spell'); ED.ranges = []; return; }
   const lang = dictCode(), re = /\p{L}+(?:['’-]\p{L}+)*/gu, occ = [], w = document.createTreeWalker(page, NodeFilter.SHOW_TEXT);
-  while (w.nextNode()) { const n = w.currentNode; re.lastIndex = 0; let m; while ((m = re.exec(n.data))) occ.push({ n, s:m.index, e:m.index + m[0].length, w:m[0] }); }
+  while (w.nextNode()) { const n = w.currentNode; if (spoilerNode(n)) continue; re.lastIndex = 0; let m; while ((m = re.exec(n.data))) occ.push({ n, s:m.index, e:m.index + m[0].length, w:m[0] }); }
   const uniq = [...new Set(occ.map(o => o.w).filter(x => x.length > 1 && x !== x.toUpperCase()))];
   let bad = new Set();
   try { bad = new Set(await window.api.spellCheck(lang, uniq)); }
@@ -748,7 +760,7 @@ async function spellScan() {
   });
   if (lang === 'de') {
     const rc = /(\p{L}+)(\s+)(dass|weil|obwohl|obgleich|sodass|falls)\b/giu, nodes = [];
-    const w2 = document.createTreeWalker(page, NodeFilter.SHOW_TEXT); while (w2.nextNode()) nodes.push(w2.currentNode);
+    const w2 = document.createTreeWalker(page, NodeFilter.SHOW_TEXT); while (w2.nextNode()) { const n = w2.currentNode; if (!spoilerNode(n)) nodes.push(n); }
     nodes.forEach(n => {
       rc.lastIndex = 0; let m;
       while ((m = rc.exec(n.data))) {
