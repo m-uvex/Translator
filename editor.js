@@ -308,9 +308,20 @@ async function selOp(act) {
   const beforeHTML = page.innerHTML;
   await withBusy(async () => {
     if (act === 'synonyms') {
-      const out = await edRun('Give up to 8 synonyms or alternative wordings for the following word or phrase, matching its meaning in context. Respond as JSON: {"synonyms":["..."]}', sn.text, true);
+      const instr = `Give up to 5 synonyms for the word below. Use the language ${langHint()} (the language of the text). Same part of speech and grammatical form. No translations, no explanations, no duplicates. Output JSON: {"synonyms":["..."]}`;
+      const out = await edRun(instr, sn.text, true);
       if (ED.cancelled) return;
-      const list = (JSON.parse(out).synonyms || []).filter(x => typeof x === 'string' && x.toLowerCase() !== sn.text.toLowerCase());
+      let raw = [];
+      try { const j = JSON.parse(out); raw = Array.isArray(j) ? j : (j.synonyms || j.alternatives || []); } catch {}
+      const seen = new Set(), list = [];
+      for (const x of raw) {
+        const s = String(x == null ? '' : x).trim();
+        if (!s || s.length > 40 || /\d/.test(s)) continue;
+        const k = s.toLowerCase();
+        if (k === sn.text.toLowerCase() || seen.has(k)) continue;
+        seen.add(k); list.push(s);
+        if (list.length >= 6) break;
+      }
       const p = $('#alt'), r = bar.getBoundingClientRect(); p.innerHTML = '';
       if (!list.length) p.innerHTML = `<div class="muted" style="padding:4px 8px">${t('noAlts')}</div>`;
       list.forEach(a => {
