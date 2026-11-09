@@ -770,7 +770,8 @@ async function spellScan() {
       }
     });
   }
-  ED.ranges = found; CSS.highlights.set('spell', new Highlight(...found.map(f => f.r)));
+  ED.ranges = found.filter(f => !spoilerNode(f.r.startContainer));
+  CSS.highlights.set('spell', new Highlight(...ED.ranges.map(f => f.r)));
 }
 page.addEventListener('contextmenu', async e => {
   const cr = document.caretRangeFromPoint && document.caretRangeFromPoint(e.clientX, e.clientY); if (!cr) return;
