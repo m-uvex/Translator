@@ -5,7 +5,7 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // Symbole fuer die Icon-Seitenleiste. Die Geschlechter- und Ton-Symbole sind
   // identisch mit denen des Editors (dort per Object.assign(IC, ...) ergaenzt).
   natural:'<path d="M3 9c3-4 6-4 9 0s6 4 9 0"/><path d="M3 15c3-4 6-4 9 0s6 4 9 0"/>',
-  literal:'<path d="M8 5H5v6h6V5zM5 11c0 3 1 4 3 4"/><path d="M17 5h-3v6h6V5zM14 11c0 3 1 4 3 4"/>',
+  literal:'<path d="M5 9h14M5 15h14"/>',
   qmark:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/>',
   nb:'<circle cx="12" cy="13" r="4"/><path d="M12 9V2M8.5 11 3 8M15.5 11 21 8"/>',
   male:'<circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/>',
@@ -535,7 +535,7 @@ async function visionFallback() {
 // Der Abstand zwischen zwei Vorschauen muss mindestens 2*btn betragen, sonst
 // schneiden sich die Knoepfe benachbarter Bilder in den Rand.
 const IMG_CFG = { gap:12, btn:6, pad:14, min:48, max:96, cols:4, maxCols:5, share:0.40, stack:92, step:10, up:9 };
-let imgOpen = false, imgClosing = false;
+let imgOpen = false, imgClosing = false, imgOpening = false;
 const imgArea = () => { const ta = $('#input'); return { w: ta.clientWidth || 320, h: ta.clientHeight || 320 }; };
 function imgFit(n, w, h) {
   const { gap, btn, pad, min, max, cols, maxCols, share } = IMG_CFG;
@@ -604,14 +604,50 @@ function drawThumbs() {
   if (imgOpen) drawOpen(box); else drawStack(box);
   count();
 }
+function openImages() {
+  if (imgOpen || imgClosing || imgOpening) return;
+  const box = $('#thumbs');
+  const src = [...box.querySelectorAll('.thumb')].map(t => t.getBoundingClientRect());
+  if (!src.length) return;
+  imgOpen = true; imgOpening = true;
+  box.innerHTML = '';
+  drawOpen(box);
+  // Umkehrung der Collapse-Animation: Die Vorschauen starten an ihren
+  // Stapelpositionen und wachsen ins Raster. Neue Bilder blenden aus dem
+  // vorderen Stapelbild ein.
+  const last = Math.max(0, images.length - 3), front = src[0];
+  const thumbs = [...box.querySelectorAll('.thumb')];
+  thumbs.forEach((t, i) => {
+    const r = t.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const j = i - last;
+    t.style.transition = 'none';
+    if (j >= 0 && src[j]) {
+      const s = src[j], sc = s.width / r.width;
+      t.style.transform = `translate(${s.left + s.width / 2 - cx}px,${s.top + s.height / 2 - cy}px) scale(${sc}) rotate(${j === 0 ? 6.4 : 0}deg)`;
+      t.style.zIndex = String(30 - j);
+    } else {
+      t.style.transform = `translate(${front.left + front.width / 2 - cx}px,${front.top + front.height / 2 - cy}px) scale(0.6) rotate(6.4deg)`;
+      t.style.opacity = '0';
+    }
+  });
+  box.style.pointerEvents = 'none';
+  void box.offsetWidth;
+  thumbs.forEach(t => { t.style.transition = ''; t.style.transform = ''; t.style.opacity = ''; });
+  setTimeout(() => {
+    box.style.pointerEvents = '';
+    thumbs.forEach(t => { t.style.zIndex = ''; });
+    imgOpening = false;
+  }, 210);
+}
 function collapseImages() {
-  if (!imgOpen || imgClosing) return;
+  if (!imgOpen || imgClosing || imgOpening) return;
   imgClosing = true;
   const box = $('#thumbs');
   box.style.pointerEvents = 'none';
   const { stack: ts, step, up } = IMG_CFG;
   const cr = $('#drop').getBoundingClientRect();
-  const targetLeft = cr.left + 10, targetBottom = cr.bottom - 58;
+  const targetLeft = cr.left + 22, targetBottom = cr.bottom - 58;
   const last = Math.max(0, images.length - 3);
   // Die Bilder sichtbar in den Stapel zurueckrutschen lassen (FLIP-Animation).
   [...box.querySelectorAll('.thumb')].forEach((t, i) => {
@@ -660,7 +696,7 @@ async function addFiles(files) {
 $('#thumbs').onclick = e => {
   const b = e.target.closest('.rm');
   if (b) { images.splice(+b.dataset.n, 1); if (!images.length) imgOpen = false; drawThumbs(); return; }
-  if (!imgOpen) { imgOpen = true; drawThumbs(); }
+  if (!imgOpen) { openImages(); }
 };
 $('#attach').onclick = () => $('#file').click(); $('#file').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
 const drop = $('#drop'); drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); }; drop.ondragleave = () => drop.classList.remove('over');
