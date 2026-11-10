@@ -53,9 +53,9 @@ footer{display:flex;align-items:center;gap:8px;padding:8px 12px}.sp{flex:1}.mute
 .side h3.sh{margin:0 4px 16px;font-size:15px}
 .sgrp{display:block}
 .sgrp+.sgrp{margin-top:6px}
-.sgrp .slab{display:block;color:var(--muted);font-size:12.5px;line-height:1.25;padding:0 2px 2px}
+.sgrp .slab{display:block;color:var(--muted);font-size:12.5px;line-height:1.25;padding:0 2px 10px}
 .sgrp .list{width:100%}
-.side .opt{padding:8px 9px;font-size:14px}
+.side .opt{padding:6.5px 9px;font-size:14px}
 .sgrp.icons+.sgrp.icons{margin-top:20px}
 .sgrp .seg{flex-wrap:wrap}
 .ctx{background:var(--soft);border-radius:var(--r);padding:10px 12px}
