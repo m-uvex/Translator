@@ -30,10 +30,6 @@ Object.assign(IC, {
   wand:'<path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/>',
   plus:'<path d="M12 5v14M5 12h14"/>', pencil:'<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>',
   cpu:'<rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
-  // Prisma fuer die Modell-/KI-Auswahl oben rechts im Editor: ein Strahl
-  // laeuft durch ein Prisma. Symbol fuer Verarbeitung/Umformung, ohne Roboter,
-  // Funke, Gehirn, Kopf oder Buchstaben.
-  spark:'<path d="M12 3.2 20.5 19H3.5z"/><path d="M1.5 11.5h5.6M16.9 11.5h5.6"/>',
   chev:'<path d="M6 9l6 6 6-6"/>', arrowR:'<path d="M5 12h14M13 6l6 6-6 6"/>',
   male:'<circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/>', female:'<circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 18h6"/>',
   nb:'<circle cx="12" cy="13" r="4"/><path d="M12 9V2M8.5 11 3 8M15.5 11 21 8"/>', qmark:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/>', dash:'<path d="M6 12h12"/>',
@@ -690,7 +686,7 @@ function renderTb() {
   }
   const mBtn = document.createElement('button');
   mBtn.id = 'tbModel'; mBtn.className = 'ib tb-model';
-  mBtn.dataset.i = 'spark'; mBtn.dataset.tt = 'modelMenu';
+  mBtn.dataset.i = 'cpu'; mBtn.dataset.tt = 'modelMenu';
   mBtn.onclick = e => modelMenu(e.currentTarget);
   tb.appendChild(mBtn);
   applyI18n(); reicon(); updTb();
