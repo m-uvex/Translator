@@ -60,7 +60,7 @@ const K = {
   noVisionPull:[(v, s) => `Dieses Modell kann keine Bilder lesen. ${v} (${s}) herunterladen, das Bilder versteht?`, (v, s) => `This model can't read images. Download ${v} (${s}), which can?`],
   switchTo:[v => `Zu ${v} wechseln`, v => `Switch to ${v}`], download:[v => `${v} laden`, v => `Download ${v}`], cancel:['Abbrechen','Cancel'],
   pulling:[(m, p) => `Lade ${m} … ${p}`, (m, p) => `Downloading ${m} … ${p}`], pullErr:['Download fehlgeschlagen','Download failed'],
-  s_url:['Ollama-Adresse','Ollama address'], s_nllb:['NLLB-Server-Adresse','NLLB server address'], s_ui:['Anzeigesprache','Display language'], s_theme:['Design','Theme'],
+  s_url:['Ollama-Adresse','Ollama address'], s_nllb:['NLLB-Server-Adresse','NLLB server address'], s_ui:['Anzeigesprache','Display language'], s_theme:['Darstellung','Theme'],
   s_start:['Beim Start öffnen','Open at startup'], s_workspace:['Sichtbare Arbeitsplätze','Visible workspaces'],
   s_helper:['Modell für Wortalternativen (bei TranslateGemma/NLLB)','Model for word alternatives (for TranslateGemma/NLLB)'], s_sys:['System-Prompt','System prompt'],
   s_temp:['Temperatur (niedriger = konsistenter)','Temperature (lower = more consistent)'], s_ctx:['Kontextlänge (num_ctx)','Context length (num_ctx)'],
