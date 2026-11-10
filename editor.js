@@ -6,6 +6,15 @@ const diffPanel = document.createElement('div');
 diffPanel.id = 'diffPanel'; diffPanel.className = 'diff-panel hidden';
 $('#vE').appendChild(diffPanel);
 
+// Weiche Rechtschreibwellen: eigenes Canvas ueber der Seite. Die native
+// Darstellung (text-decoration:underline wavy) ist zu spitz und laesst sich
+// weder in der Form noch in der Bewegung beeinflussen.
+const spellCv = document.createElement('canvas');
+spellCv.id = 'spellOverlay'; spellCv.setAttribute('aria-hidden', 'true');
+$('#pageWrap').appendChild(spellCv);
+const spellCtx = spellCv.getContext('2d');
+let spellPhase = 0, spellRAF = 0, spellLast = 0, spellRects = [];
+
 Object.assign(IC, {
   undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>', redo:'<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>',
   bold:'<path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/>', italic:'<path d="M14 5h-4M14 19h-4M15 5l-6 14"/>', underline:'<path d="M7 4v7a5 5 0 0 0 10 0V4M5 20h14"/>',
@@ -21,8 +30,10 @@ Object.assign(IC, {
   wand:'<path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/>',
   plus:'<path d="M12 5v14M5 12h14"/>', pencil:'<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>',
   cpu:'<rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
-  // Einzelner Funke fuer die Modell-/KI-Auswahl oben rechts im Editor.
-  spark:'<path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/>',
+  // Prisma fuer die Modell-/KI-Auswahl oben rechts im Editor: ein Strahl
+  // laeuft durch ein Prisma. Symbol fuer Verarbeitung/Umformung, ohne Roboter,
+  // Funke, Gehirn, Kopf oder Buchstaben.
+  spark:'<path d="M12 3.2 20.5 19H3.5z"/><path d="M1.5 11.5h5.6M16.9 11.5h5.6"/>',
   chev:'<path d="M6 9l6 6 6-6"/>', arrowR:'<path d="M5 12h14M13 6l6 6-6 6"/>',
   male:'<circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/>', female:'<circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 18h6"/>',
   nb:'<circle cx="12" cy="13" r="4"/><path d="M12 9V2M8.5 11 3 8M15.5 11 21 8"/>', qmark:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/>', dash:'<path d="M6 12h12"/>',
@@ -77,6 +88,7 @@ X('pagebreak','Seitenumbruch','Page break','Pagina-einde','Salto de página','Sa
 
 S.ed = Object.assign({ src:'auto', tgt:'en', formal:'standard', wGender:'unknown', aGender:'unknown' }, S.ed || {});
 S.edStyles = S.edStyles || []; S.edWrite = S.edWrite || ''; S.edTrans = S.edTrans || ''; S.dictLang = S.dictLang || ''; if (S.edSpell === undefined) S.edSpell = true;
+if (S.edSpellAnim === undefined) S.edSpellAnim = false;
 const ED = { busy:false, writing:false, cancelled:false, sel:null, ranges:[], ignored:new Set(), seq:0 };
 const generalModels = () => Object.keys(caps).filter(n => caps[n].includes('completion') && !isTg(n));
 const writeModel = () => (S.edWrite && generalModels().includes(S.edWrite)) ? S.edWrite : (helperModel() || generalModels()[0] || null);
@@ -760,13 +772,79 @@ let scanTimer = null;
 function scheduleScan() { clearTimeout(scanTimer); scanTimer = setTimeout(spellScan, 500); }
 // Rechtschreib-Markierungen im Spoiler-Bereich ausblenden
 function spoilerNode(n) { const el = n && n.parentElement; return !!(el && el.closest && el.closest('.ai-processing')); }
-function syncSpellHighlight() { if (window.CSS && CSS.highlights) CSS.highlights.set('spell', new Highlight(...ED.ranges.map(x => x.r))); }
+function syncSpellHighlight() { if (window.CSS && CSS.highlights) CSS.highlights.set('spell', new Highlight(...ED.ranges.map(x => x.r))); layoutSpell(); }
 function dropSpoilerRanges() { ED.ranges = ED.ranges.filter(x => !spoilerNode(x.r.startContainer)); syncSpellHighlight(); }
+
+// ---------- Weiches Wellen-Overlay ----------
+// Die Wellen werden als Sinuslinie auf ein Canvas gezeichnet: runde Enden,
+// kleine Amplitude und lange Wellenlaenge wirken weicher als die native
+// Unterstreichung. Das Canvas liegt ueber der Seite, nimmt keine Klicks an und
+// wird im Druck/PDF komplett ausgeblendet.
+const SPELL_AMP = 1.2, SPELL_LEN = 8.2, SPELL_SPEED = 5;
+function spellVisible() { return !!S.edSpell && !$('#vE').classList.contains('hidden') && ED.ranges.length > 0; }
+function drawSpell() {
+  const dpr = window.devicePixelRatio || 1;
+  spellCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  spellCtx.clearRect(0, 0, spellCv.width / dpr, spellCv.height / dpr);
+  if (!spellRects.length) return;
+  spellCtx.strokeStyle = '#e5484d';
+  spellCtx.lineWidth = 1.3;
+  spellCtx.lineCap = 'round';
+  spellCtx.lineJoin = 'round';
+  for (const r of spellRects) {
+    const y = r.y + r.h - 1.4;
+    spellCtx.beginPath();
+    for (let x = 0; x <= r.w; x += 0.5) {
+      const yy = y + Math.sin((x / SPELL_LEN) * Math.PI * 2 + spellPhase) * SPELL_AMP;
+      if (x === 0) spellCtx.moveTo(r.x, yy); else spellCtx.lineTo(r.x + x, yy);
+    }
+    spellCtx.stroke();
+  }
+}
+function layoutSpell() {
+  if (!spellVisible()) { stopSpellAnim(); spellRects = []; spellCv.style.display = 'none'; return; }
+  const wrap = $('#pageWrap'), dpr = window.devicePixelRatio || 1;
+  const w = Math.max(1, wrap.scrollWidth), h = Math.max(1, wrap.scrollHeight);
+  if (spellCv.width !== Math.round(w * dpr) || spellCv.height !== Math.round(h * dpr)) {
+    spellCv.width = Math.round(w * dpr); spellCv.height = Math.round(h * dpr);
+  }
+  spellCv.style.width = w + 'px'; spellCv.style.height = h + 'px';
+  spellCv.style.display = 'block';
+  const wr = wrap.getBoundingClientRect(), rects = [];
+  ED.ranges.forEach(f => {
+    let rs; try { rs = f.r.getClientRects(); } catch { return; }
+    for (const rc of rs) {
+      if (rc.width < 1 || rc.height < 1) continue;
+      rects.push({ x: rc.left - wr.left + wrap.scrollLeft, y: rc.top - wr.top + wrap.scrollTop, w: rc.width, h: rc.height });
+    }
+  });
+  spellRects = rects;
+  drawSpell();
+  if (S.edSpellAnim) startSpellAnim(); else stopSpellAnim();
+}
+function spellLoop(t) {
+  spellRAF = 0;
+  if (!spellVisible() || !S.edSpellAnim) { spellLast = 0; return; }
+  if (!spellLast) spellLast = t;
+  const dt = Math.min(0.12, (t - spellLast) / 1000);
+  spellLast = t;
+  spellPhase += dt * Math.PI * 2 * (SPELL_SPEED / SPELL_LEN);
+  drawSpell();
+  spellRAF = requestAnimationFrame(spellLoop);
+}
+function startSpellAnim() {
+  if (spellRAF || !spellVisible() || !S.edSpellAnim) return;
+  spellLast = 0; spellRAF = requestAnimationFrame(spellLoop);
+}
+function stopSpellAnim() { if (spellRAF) cancelAnimationFrame(spellRAF); spellRAF = 0; spellLast = 0; }
+window.edSpellAnim = () => { if (!S.edSpellAnim) spellPhase = 0; layoutSpell(); };
+$('#pageWrap').addEventListener('scroll', () => { if (spellVisible()) layoutSpell(); }, { passive: true });
+window.addEventListener('resize', () => layoutSpell());
 const COMMA_SKIP = new Set(['und', 'oder', 'sowie', 'aber', 'doch', 'denn', 'sondern', 'ohne', 'statt', 'anstatt', 'außer', 'als', 'auch', 'nur', 'selbst', 'schon', 'bis', 'zumal', 'gerade', 'besonders', 'erst', 'so', 'nicht']);
 async function spellScan() {
   if (!window.CSS || !CSS.highlights || $('#vE').classList.contains('hidden')) return;
   const seq = ++ED.seq;
-  if (!S.edSpell) { CSS.highlights.delete('spell'); ED.ranges = []; return; }
+  if (!S.edSpell) { CSS.highlights.delete('spell'); ED.ranges = []; layoutSpell(); return; }
   const lang = dictCode(), re = /\p{L}+(?:['’-]\p{L}+)*/gu, occ = [], w = document.createTreeWalker(page, NodeFilter.SHOW_TEXT);
   while (w.nextNode()) { const n = w.currentNode; if (spoilerNode(n)) continue; re.lastIndex = 0; let m; while ((m = re.exec(n.data))) occ.push({ n, s:m.index, e:m.index + m[0].length, w:m[0] }); }
   const uniq = [...new Set(occ.map(o => o.w).filter(x => x.length > 1 && x !== x.toUpperCase()))];
@@ -794,6 +872,7 @@ async function spellScan() {
   }
   ED.ranges = found.filter(f => !spoilerNode(f.r.startContainer));
   CSS.highlights.set('spell', new Highlight(...ED.ranges.map(f => f.r)));
+  layoutSpell();
 }
 page.addEventListener('contextmenu', async e => {
   const cr = document.caretRangeFromPoint && document.caretRangeFromPoint(e.clientX, e.clientY); if (!cr) return;
@@ -803,7 +882,7 @@ page.addEventListener('contextmenu', async e => {
   if (hit.kind === 'comma') {
     const h = document.createElement('div'); h.className = 'row hd'; h.textContent = t('commaMissing'); m.append(h);
     row(t('insComma'), () => { const r = document.createRange(); r.setStart(hit.node, hit.pos); r.collapse(true); const s = getSelection(); s.removeAllRanges(); s.addRange(r); page.focus(); ED.writing = true; try { document.execCommand('insertText', false, ','); } finally { ED.writing = false; } });
-    row(t('ignoreW'), () => { ED.ranges = ED.ranges.filter(x => x !== hit); CSS.highlights.set('spell', new Highlight(...ED.ranges.map(x => x.r))); });
+    row(t('ignoreW'), () => { ED.ranges = ED.ranges.filter(x => x !== hit); CSS.highlights.set('spell', new Highlight(...ED.ranges.map(x => x.r))); layoutSpell(); });
   } else {
     let sug = []; try { sug = await window.api.spellSuggest(dictCode(), hit.word); } catch {}
     if (!sug.length) { const h = document.createElement('div'); h.className = 'row hd'; h.textContent = t('noSug'); m.append(h); }

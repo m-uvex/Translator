@@ -131,7 +131,8 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
 .tsel{font:inherit;font-size:13px;color:var(--text);background-color:var(--soft);border:0;border-radius:999px;padding:6px 26px 6px 10px;max-width:160px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none' stroke='%236e6e73' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1l4 4 4-4'/></svg>");background-repeat:no-repeat;background-position:right 9px center;background-size:10px 6px}
 :root.dark .tsel{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none' stroke='%239a9a9f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1l4 4 4-4'/></svg>")}
 @media (prefers-color-scheme:dark){:root:not(.light) .tsel{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none' stroke='%239a9a9f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1l4 4 4-4'/></svg>")}}
-#pageWrap{flex:1;overflow:auto;background:var(--soft);border-radius:20px;padding:28px 16px;min-height:0}
+#pageWrap{position:relative;flex:1;overflow:auto;background:var(--soft);border-radius:20px;padding:28px 16px;min-height:0}
+#spellOverlay{position:absolute;left:0;top:0;z-index:2;pointer-events:none;display:none}
 #page{max-width:794px;min-height:1040px;margin:0 auto;background:var(--card);border-radius:22px;box-shadow:0 2px 14px #0000001a;padding:64px 72px;outline:0;font:16px/1.65 "Segoe UI Variable","Segoe UI",system-ui,sans-serif}
 #page h1{font-size:2em;margin:.6em 0 .3em}#page h2{font-size:1.5em;margin:.6em 0 .3em}#page h3{font-size:1.2em;margin:.6em 0 .3em}
 #page p{margin:0 0 .6em}#page blockquote{margin:.6em 0;padding:.2em 1em;border-left:3px solid var(--accent);color:var(--muted)}
@@ -146,7 +147,9 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
 .ctxbar{position:fixed;z-index:20;display:flex;align-items:center;gap:2px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:0 6px 24px #0003}
 .ctxbar .spin{display:none;margin:8px 14px}.ctxbar.working .ib{display:none}.ctxbar.working .spin{display:block}
 .spin{width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--accent-ink);border-radius:50%;animation:sp .8s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
-::highlight(spell){text-decoration:underline wavy #e5484d;text-decoration-thickness:1.5px}
+/* Die sichtbaren Wellen zeichnet #spellOverlay (weiche Sinuslinie); die native
+   Markierung bleibt nur als Datenquelle fuer ED.ranges unsichtbar. */
+::highlight(spell){text-decoration:none;background:none;color:inherit}
 .trpop{position:fixed;z-index:25;padding:12px;min-width:280px}.trrow{display:flex;align-items:center;gap:6px;margin:8px 0}.trrow .lbl{width:78px;font-size:12px;color:var(--muted)}
 .seg{display:flex;gap:2px}.seg .ib{width:32px;height:32px;border-radius:50%}.seg .ib.on{background:var(--accent);color:var(--on-accent)}.seg .ib:hover{background:var(--accent-hover);color:var(--on-accent)}
 .trpop .pill{min-width:0;padding:6px 14px}.trpop .go{display:flex;justify-content:flex-end;margin-top:10px}
@@ -225,4 +228,7 @@ html[dir="rtl"] .view{order:1}
 html[dir="rtl"] main{padding:16px 0 16px 8px}
 html[dir="rtl"] .tb{padding:6px 10px 6px 52px}
 html[dir="rtl"] .tb .tb-model{right:auto;left:6px}
-@media print{.rail,.side,#vT,.pop,.tb,.sbar,.ctxbar,.diff-panel{display:none!important}html,body,.app{height:auto!important;overflow:visible!important;display:block!important}#vE{display:block!important;padding:0}#pageWrap{overflow:visible;padding:0;background:none}#page{box-shadow:none;border-radius:0;padding:0;margin:0;min-height:0;max-width:none;color:#000;background:#fff}}
+@media print{.rail,.side,#vT,.pop,.tb,.sbar,.ctxbar,.diff-panel{display:none!important}html,body,.app{height:auto!important;overflow:visible!important;display:block!important}#vE{display:block!important;padding:0}#pageWrap{overflow:visible;padding:0;background:none}#page{box-shadow:none;border-radius:0;padding:0;margin:0;min-height:0;max-width:none;color:#000;background:#fff;caret-color:transparent!important}
+  #spellOverlay{display:none!important}
+  ::highlight(spell){text-decoration:none!important;background:none!important;color:inherit!important}
+  ::selection{background:transparent!important;color:inherit!important}}
