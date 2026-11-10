@@ -99,6 +99,9 @@ const OPS = {
 };
 // Wird dynamisch mit Wörterbuch-Sprache befüllt (siehe proofreadPrompt)
 const PROOFREAD_SYS = 'You are a proofreader. You correct only spelling, grammar, punctuation and obvious typos. You never translate, never change wording or style.';
+// Eigener Systemprompt fuer Synonyme: verhindert, dass Formulierungs-Anweisungen
+// ("Alternative", "Ersatz") in die Ergebnisliste "hineinbluten".
+const SYNONYM_SYS = 'You are a thesaurus. Output only valid JSON.';
 
 function langHint() {
   const c = (typeof dictCode === 'function') ? dictCode() : (S.dictLang || 'de');
@@ -128,6 +131,14 @@ async function edRun(instr, text, json) {
 async function edRunProofread(text) {
   const m = writeModel(); if (!m) throw new Error(t('noWrite'));
   return chat([{ role:'system', content:PROOFREAD_SYS }, { role:'user', content:`${proofreadPrompt()}\n\n<text>\n${text}\n</text>` }], { model:m });
+}
+// Nur die Markierung, direkt im Auftrag - kein Satzkontext, kein Tag-Wrapper.
+// Kurzer Prompt = schnelle Antwort.
+async function edRunSynonyms(text) {
+  const m = writeModel(); if (!m) throw new Error(t('noWrite'));
+  const w = String(text).replace(/"/g, "'");
+  const instr = `Give up to 5 ${langHint()} synonyms that could replace the word "${w}" in a sentence. Same part of speech and grammatical form. No translations, no explanations, no duplicates. Output JSON: {"synonyms":["..."]}`;
+  return chat([{ role:'system', content:SYNONYM_SYS }, { role:'user', content:instr }], { model:m, format:'json', options:{ num_predict:200 } });
 }
 function replaceRange(range, text) {
   page.focus();
@@ -308,8 +319,7 @@ async function selOp(act) {
   const beforeHTML = page.innerHTML;
   await withBusy(async () => {
     if (act === 'synonyms') {
-      const instr = `Give up to 5 synonyms for the word below. Use the language ${langHint()} (the language of the text). Same part of speech and grammatical form. No translations, no explanations, no duplicates. Output JSON: {"synonyms":["..."]}`;
-      const out = await edRun(instr, sn.text, true);
+      const out = await edRunSynonyms(sn.text);
       if (ED.cancelled) return;
       let raw = [];
       try { const j = JSON.parse(out); raw = Array.isArray(j) ? j : (j.synonyms || j.alternatives || []); } catch {}

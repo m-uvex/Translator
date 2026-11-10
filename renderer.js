@@ -306,9 +306,9 @@ function modelPop(btn) {
   const r = btn.getBoundingClientRect(); Object.assign(p.style, { left:Math.max(8, r.right - 300) + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden');
 }
 
-async function chat(messages, { stream, format, onToken, model, signal } = {}) {
+async function chat(messages, { stream, format, onToken, model, signal, options } = {}) {
   const mdl = model || S.model;
-  const body = { model:mdl, messages, stream:!!stream, options:{ temperature:S.temp, num_ctx:S.numctx } };
+  const body = { model:mdl, messages, stream:!!stream, options:{ temperature:S.temp, num_ctx:S.numctx, ...(options || {}) } };
   if (format) body.format = format;
   if (mdl.startsWith('gpt-oss')) body.think = 'low';
   else if (isThinking(mdl)) body.think = false;
