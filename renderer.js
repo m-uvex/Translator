@@ -235,6 +235,11 @@ const save = () => localStorage.setItem('s', JSON.stringify(S));
 // Migration: Symbol-Layout und dynamisches Markdown sind die neuen Standardwerte;
 // bestehende Installationen uebernehmen sie einmalig (Flag verhindert spaetere Ueberschreibung).
 if (!S.uiDefaults) { S.uiMode = 'icons'; S.edMarkdown = false; S.uiDefaults = true; save(); }
+// Klassik-Layout vorerst deaktiviert (Nutzerwunsch): Das Programm nutzt immer
+// das Symbol-Layout. Zum Reaktivieren diese Zeile entfernen und uiMode wieder
+// in FIELDS/GROUPS sowie in lists() aufnehmen.
+S.uiMode = 'icons';
+save();
 setLang();
 
 
@@ -499,7 +504,9 @@ $('#srcBtn').onclick = e => langPop(e.currentTarget, 'src'); $('#tgtBtn').onclic
 $('#swap').onclick = () => { if (S.src === 'auto') return; [S.src, S.tgt] = [S.tgt, S.src]; if (lastTr) { $('#input').value = lastTr; lastTr = ''; $('#output').textContent = ''; count(); } save(); upd(); };
 
 function drawStyles() {
-  const mode = S.uiMode === 'icons' ? 'icons' : 'classic';
+  // Klassik-Layout vorerst deaktiviert (Nutzerwunsch): immer Symbol-Layout.
+  // Zum Reaktivieren wieder S.uiMode === 'icons' ? 'icons' : 'classic' verwenden.
+  const mode = 'icons';
   $('#styles').innerHTML = `<h3 class="sh">${t('h_style')}</h3>` + Object.entries(STY).map(([k, g]) => {
     const opts = g.opts.map(o => mode === 'icons'
       ? `<button class="ib${S.style[k] === o[0] ? ' on' : ''}" data-k="${k}" data-v="${o[0]}" title="${esc(t('o_' + o[0]))}" aria-label="${esc(t('o_' + o[0]))}">${ic(o[1], 18)}</button>`
@@ -720,8 +727,11 @@ $('#refresh').onclick = async () => {
   try { await loadModels(); } finally { $('#refresh').classList.remove('spinning'); }
 };
 
-const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['start','s_start','start'],['workspace','s_workspace','workspace'],['uiMode','s_uiMode','uiMode'],['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['edMarkdown','s_mdMode','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number']];
-const GROUPS = [['s_groupGeneral',['uiLang','theme','start','workspace','uiMode']],['s_groupFeatures',['bootModel','profanityFilter','edMarkdown']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
+const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['start','s_start','start'],['workspace','s_workspace','workspace'],
+  // Klassik-Layout vorerst deaktiviert (Nutzerwunsch): Symbol-Layout ist fest.
+  // Zum Reaktivieren ['uiMode','s_uiMode','uiMode'] hier wieder aufnehmen.
+  ['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['edMarkdown','s_mdMode','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number']];
+const GROUPS = [['s_groupGeneral',['uiLang','theme','start','workspace']],['s_groupFeatures',['bootModel','profanityFilter','edMarkdown']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
 function drawSettings() {
   const sel = (k, o, bool) => `<select data-k="${k}"${bool ? ' data-bool="1"' : ''}>${o.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
   const lists = k =>
@@ -729,7 +739,8 @@ function drawSettings() {
     k === 'theme' ? [['auto', t('autoSys')], ['light', t('light')], ['dark', t('dark')]] :
     k === 'start' ? [['tr', t('startTr')], ['ed', t('startEd')], ['last', t('startLast')]] :
     k === 'workspace' ? [['both', t('wsBoth')], ['tr', t('wsTr')], ['ed', t('wsEd')]] :
-    k === 'uiMode' ? [['classic', t('o_classic')], ['icons', t('o_icons')]] :
+    // Klassik-Layout vorerst deaktiviert (Nutzerwunsch).
+    // k === 'uiMode' ? [['classic', t('o_classic')], ['icons', t('o_icons')]] :
     k === 'helper' ? [['', t('autoO')], ...Object.keys(caps).filter(n => caps[n].includes('completion') && !isTg(n)).map(n => [n, n])] : null;
   // Zuruecksetzen ist ein reiner Icon-Button; der Name erscheint nur als Tooltip.
   // Das Icon wird direkt eingesetzt, weil reicon() nur im Editor-Scope existiert.
@@ -751,7 +762,21 @@ function drawSettings() {
   applyI18n();
   drawMt();
 }
-function renderAll() { setLang(); applyI18n(); upd(); drawStyles(); drawGloss(); updModelBtn(); count(); if ($('#settings').open) drawSettings(); if (window.edRender) window.edRender(); }
+// Die weisse Optionskarte im Symbol-Layout beginnt auf derselben Hoehe wie das
+// Uebersetzungsausgabefeld; Kontext und Glossar ruecken dadurch mit nach unten.
+function alignSideTop() {
+  const side = document.querySelector('#vT .side');
+  const out = document.querySelector('#vT .panes .card:nth-child(2)');
+  if (!side || !out || !side.offsetParent) return;
+  const top = Math.round(out.getBoundingClientRect().top - side.getBoundingClientRect().top);
+  side.style.paddingTop = Math.max(14, top) + 'px';
+}
+function renderAll() { setLang(); applyI18n(); upd(); drawStyles(); drawGloss(); updModelBtn(); count(); if ($('#settings').open) drawSettings(); alignSideTop(); if (window.edRender) window.edRender(); }
+window.addEventListener('resize', alignSideTop);
+window.trAlignSide = alignSideTop;
+const sideObs = new ResizeObserver(() => alignSideTop());
+const sideHdr = document.querySelector('#vT header'); if (sideHdr) sideObs.observe(sideHdr);
+const sidePanes = document.querySelector('#vT .panes'); if (sidePanes) sideObs.observe(sidePanes);
 $('#setBody').addEventListener('input', e => {
   const k = e.target.dataset.k; if (!k) return;
   let v = e.target.type === 'number' ? +e.target.value : e.target.value;

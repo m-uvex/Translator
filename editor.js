@@ -21,6 +21,8 @@ Object.assign(IC, {
   wand:'<path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/>',
   plus:'<path d="M12 5v14M5 12h14"/>', pencil:'<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>',
   cpu:'<rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
+  // Einzelner Funke fuer die Modell-/KI-Auswahl oben rechts im Editor.
+  spark:'<path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/>',
   chev:'<path d="M6 9l6 6 6-6"/>', arrowR:'<path d="M5 12h14M13 6l6 6-6 6"/>',
   male:'<circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/>', female:'<circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 18h6"/>',
   nb:'<circle cx="12" cy="13" r="4"/><path d="M12 9V2M8.5 11 3 8M15.5 11 21 8"/>', qmark:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/>', dash:'<path d="M6 12h12"/>',
@@ -619,6 +621,9 @@ function askText(text, yes, no, val) {
 }
 async function addLink() { const keep = ED.sel; const u = await askText(t('linkQ'), t('save'), t('cancel'), 'https://'); if (u) { ED.sel = keep; cmd('createLink', u); } }
 
+// Strg+Enter: fuegt einen Seitenumbruch ein. Der Umbruch ist vorerst wieder der
+// einfache gestrichelte Trenner; das echte Mehrseiten-Layout wurde auf
+// Nutzerwunsch zurueckgenommen, weil es im Betrieb zu unruhig aussah.
 function newPage() {
   const sel = getSelection();
   let ref = null;
@@ -677,7 +682,7 @@ function renderTb() {
   }
   const mBtn = document.createElement('button');
   mBtn.id = 'tbModel'; mBtn.className = 'ib tb-model';
-  mBtn.dataset.i = 'cpu'; mBtn.dataset.tt = 'modelMenu';
+  mBtn.dataset.i = 'spark'; mBtn.dataset.tt = 'modelMenu';
   mBtn.onclick = e => modelMenu(e.currentTarget);
   tb.appendChild(mBtn);
   applyI18n(); reicon(); updTb();
@@ -742,14 +747,14 @@ $('#edFile').onchange = async e => {
 };
 function savePop(btn) {
   closePops(); const p = $('#pop'); p.innerHTML = '';
-  [['md', 'Markdown (.md)'], ['html', 'HTML (.html)'], ['txt', 'Text (.txt)'], ['pdf', 'PDF (.pdf)']].forEach(([k, l]) => {
+  [['md', 'Markdown (.md)'], ['txt', 'Text (.txt)'], ['pdf', 'PDF (.pdf)']].forEach(([k, l]) => {
     const r = document.createElement('div'); r.className = 'row'; r.textContent = l; r.onclick = () => { closePops(); doSave(k); }; p.append(r);
   });
   const r = btn.getBoundingClientRect(); Object.assign(p.style, { left:r.left + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden');
 }
 async function doSave(kind) {
   const name = (page.querySelector('h1,h2,h3')?.textContent.trim().slice(0, 40).replace(/[\\/:*?"<>|]/g, '') || 'Document');
-  const data = kind === 'md' ? toMd(page).trim() + '\n' : kind === 'html' ? `<!doctype html><meta charset="utf-8"><title>${esc(name)}</title><body style="font-family:Segoe UI,sans-serif;max-width:800px;margin:2em auto;line-height:1.6">${page.innerHTML}</body>` : page.innerText;
+  const data = kind === 'md' ? toMd(page).trim() + '\n' : page.innerText;
   try { await window.api.saveFile(name, data, kind); } catch { edStatus(t('readErr')); }
 }
 
@@ -1033,6 +1038,7 @@ function showView(v) {
   $('#nvTr').classList.toggle('active', v === 'tr'); $('#nvEd').classList.toggle('active', v === 'ed');
   S.view = v; save(); closePops(); $('#trPop').classList.add('hidden'); hideBar();
   if (v === 'ed') { updWords(); scheduleScan(); }
+  if (v === 'tr' && window.trAlignSide) window.trAlignSide();
 }
 function applyWorkspace() {
   const w = S.workspace || 'both';
