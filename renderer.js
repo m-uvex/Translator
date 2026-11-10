@@ -34,7 +34,7 @@ const K = {
   inputPh:['Text eingeben oder Datei hineinziehen …','Type text or drop a file here …'], attach:['Datei anhängen','Attach file'], translate:['Übersetzen','Translate'],
   copy:['Kopieren','Copy'], copied:['Kopiert','Copied'], chars:[n => `${n} Zeichen`, n => `${n} characters`],
   auto:['Sprache erkennen','Detect language'], searchLang:['Sprache suchen …','Search language …'], noHits:['Keine Treffer','No results'], pin:['Anpinnen','Pin'],
-  h_style:['Übersetzungsstil','Translation style'], l_type:['Typ','Type'], l_formal:['Ton','Tone'], h_gender:['Geschlechtsangaben','Gender details'], l_gender:['Empfänger*in','Addressee'], l_writer:['Absender*in','Writer'],
+  h_style:['Übersetzungsstil','Translation style'], l_type:['Art','Type'], l_formal:['Ton','Tone'], l_gender:['Empfänger*in','Addressee'], l_writer:['Absender*in','Writer'],
   o_natural:['Natürlich','Natural'], o_literal:['Wörtlich','Literal'], o_standard:['Standard','Standard'], o_formal:['Formell','Formal'], o_informal:['Informell','Informal'],
   o_unknown:['Unbekannt','Unknown'], o_neutral:['Neutral','Neutral'], o_male:['Männlich','Male'], o_female:['Weiblich','Female'],
   s_uiMode:['Seitenleiste','Sidebar'], o_classic:['Klassisch (Text)','Classic (text)'], o_icons:['Symbole','Icons'],
@@ -73,7 +73,7 @@ const K = {
 const NL = {
   stopTr:'Stoppen', stopped:'Vertaling gestopt', on:'Aan', off:'Uit', s_bootModel:'Laatst gebruikte model voorverwarmen bij opstarten', s_profanity:'Vloekfilter inschakelen', s_mdMode:'Dynamische Markdown', s_groupFeatures:'Extra functies', personalDict:'Persoonlijk woordenboek', dictWords:'Opgeslagen woorden', addWord:'Woord toevoegen', addWordPh:'Nieuw woord typen …', noDictWords:'Geen woorden in persoonlijk woordenboek', edit:'Bewerken', wordExists:'Woord bestaat al',
   settings:'Instellingen', swap:'Wisselen', reloadModels:'Modellen opnieuw laden', inputPh:'Typ tekst of sleep een bestand hierheen …', attach:'Bestand toevoegen', translate:'Vertalen', copy:'Kopiëren', copied:'Gekopieerd',
-  chars:n => `${n} tekens`, auto:'Taal detecteren', searchLang:'Taal zoeken …', noHits:'Geen resultaten', pin:'Vastpinnen', h_style:'Vertaalstijl', l_type:'Type', l_formal:'Toon', h_gender:'Geslachtsgegevens', l_gender:'Ontvanger*', l_writer:'Afzender*',
+  chars:n => `${n} tekens`, auto:'Taal detecteren', searchLang:'Taal zoeken …', noHits:'Geen resultaten', pin:'Vastpinnen', h_style:'Vertaalstijl', l_type:'Type', l_formal:'Toon', l_gender:'Ontvanger*', l_writer:'Afzender*',
   s_uiMode:'Zijbalk', o_classic:'Klassiek (tekst)', o_icons:'Pictogrammen', imgMax:n => `Maximaal ${n} afbeeldingen mogelijk.`, imgOpenTip:'Afbeeldingen tonen',
   o_natural:'Natuurlijk', o_literal:'Letterlijk', o_standard:'Standaard', o_formal:'Formeel', o_informal:'Informeel', o_unknown:'Onbekend', o_neutral:'Neutraal', o_male:'Mannelijk', o_female:'Vrouwelijk',
   context:'Context', ctxPh:'bijv. “Tekst uit de handleiding van een koffiemachine”', glossary:'Woordenlijst', addEntry:'+ Item', term:'Term', termT:'Vertaling', remove:'Verwijderen',
@@ -97,7 +97,7 @@ const NL = {
 
 const ES = {
   settings:'Configuración', swap:'Intercambiar', reloadModels:'Recargar modelos', inputPh:'Escribe el texto o arrastra un archivo aquí …', attach:'Adjuntar archivo', translate:'Traducir', copy:'Copiar', copied:'Copiado',
-  chars:n => `${n} caracteres`, auto:'Detectar idioma', searchLang:'Buscar idioma …', noHits:'Sin resultados', pin:'Fijar', h_style:'Estilo de traducción', l_type:'Tipo', l_formal:'Tono', h_gender:'Datos de género', l_gender:'Receptor*', l_writer:'Remitente*',
+  chars:n => `${n} caracteres`, auto:'Detectar idioma', searchLang:'Buscar idioma …', noHits:'Sin resultados', pin:'Fijar', h_style:'Estilo de traducción', l_type:'Tipo', l_formal:'Tono', l_gender:'Receptor*', l_writer:'Remitente*',
   s_uiMode:'Barra lateral', o_classic:'Clásica (texto)', o_icons:'Iconos', imgMax:n => `Máximo ${n} imágenes.`, imgOpenTip:'Mostrar imágenes',
   o_natural:'Natural', o_literal:'Literal', o_standard:'Estándar', o_formal:'Formal', o_informal:'Informal', o_unknown:'Desconocido', o_neutral:'Neutro', o_male:'Masculino', o_female:'Femenino',
   context:'Contexto', ctxPh:'p. ej. “Texto del manual de una cafetera”', glossary:'Glosario', addEntry:'+ Entrada', term:'Término', termT:'Traducción', remove:'Eliminar',
@@ -123,7 +123,7 @@ const ES = {
 
 const TR = {
   settings:'Ayarlar', swap:'Değiştir', reloadModels:'Modelleri yeniden yükle', inputPh:'Metin girin veya buraya bir dosya bırakın …', attach:'Dosya ekle', translate:'Çevir', copy:'Kopyala', copied:'Kopyalandı',
-  chars:n => `${n} karakter`, auto:'Dili algıla', searchLang:'Dil ara …', noHits:'Sonuç bulunamadı', pin:'Sabitle', h_style:'Çeviri stili', l_type:'Tür', l_formal:'Ton', h_gender:'Cinsiyet bilgileri', l_gender:'Alıcı*', l_writer:'Gönderen*',
+  chars:n => `${n} karakter`, auto:'Dili algıla', searchLang:'Dil ara …', noHits:'Sonuç bulunamadı', pin:'Sabitle', h_style:'Çeviri stili', l_type:'Tür', l_formal:'Ton', l_gender:'Alıcı*', l_writer:'Gönderen*',
   s_uiMode:'Kenar çubuğu', o_classic:'Klasik (metin)', o_icons:'Simgeler', imgMax:n => `En fazla ${n} görsel.`, imgOpenTip:'Görselleri göster',
   o_natural:'Doğal', o_literal:'Birebir', o_standard:'Standart', o_formal:'Resmi', o_informal:'Samimi', o_unknown:'Bilinmiyor', o_neutral:'Nötr', o_male:'Erkek', o_female:'Kadın',
   context:'Bağlam', ctxPh:'ör. “Bir kahve makinesi kılavuzundan metin”', glossary:'Sözlük', addEntry:'+ Giriş', term:'Kavram', termT:'Çeviri', remove:'Kaldır',
@@ -149,7 +149,7 @@ const TR = {
 
 const AR = {
   settings:'الإعدادات', swap:'تبديل', reloadModels:'إعادة تحميل النماذج', inputPh:'اكتب نصاً أو أسقط ملفاً هنا …', attach:'إرفاق ملف', translate:'ترجمة', copy:'نسخ', copied:'تم النسخ',
-  chars:n => `${n} حرف`, auto:'تحديد تلقائي للغة', searchLang:'بحث عن لغة …', noHits:'لا توجد نتائج', pin:'تثبيت', h_style:'أسلوب الترجمة', l_type:'النوع', l_formal:'النبرة', h_gender:'بيانات الجنس', l_gender:'المستلم*', l_writer:'المرسل*',
+  chars:n => `${n} حرف`, auto:'تحديد تلقائي للغة', searchLang:'بحث عن لغة …', noHits:'لا توجد نتائج', pin:'تثبيت', h_style:'أسلوب الترجمة', l_type:'النوع', l_formal:'النبرة', l_gender:'المستلم*', l_writer:'المرسل*',
   s_uiMode:'الشريط الجانبي', o_classic:'كلاسيكي (نص)', o_icons:'رموز', imgMax:n => `الحد الأقصى ${n} صور.`, imgOpenTip:'عرض الصور',
   o_natural:'طبيعي', o_literal:'حرفي', o_standard:'قياسي', o_formal:'رسمي', o_informal:'غير رسمي', o_unknown:'غير محدد', o_neutral:'محايد', o_male:'مذكر', o_female:'مؤنث',
   context:'السياق', ctxPh:'مثال: “نص من دليل مستخدم آلة القهوة”', glossary:'المسرد', addEntry:'+ إضافة', term:'المصطلح', termT:'الترجمة', remove:'إزالة',
@@ -219,7 +219,7 @@ const engName = c => (OLLAMA_LANGS.find(l => l[0] === c) || [0, 0, c])[2] || nll
 const STY = {
   type:{ h:'l_type', opts:[['natural','natural','Translate naturally and idiomatically.'],['literal','literal','Translate as literally as possible, staying close to the source wording and structure.']] },
   formal:{ h:'l_formal', opts:[['standard','dash',''],['formal','hat','Use a formal register (e.g. formal address forms).'],['informal','smile','Use an informal, casual register (e.g. informal address forms).']] },
-  gender:{ h:'l_gender', sect:'h_gender', opts:[['unknown','qmark',''],['neutral','nb','Use gender-neutral wording for the addressed person.'],['male','male','The addressed person is male; use matching grammatical forms.'],['female','female','The addressed person is female; use matching grammatical forms.']] },
+  gender:{ h:'l_gender', opts:[['unknown','qmark',''],['neutral','nb','Use gender-neutral wording for the addressed person.'],['male','male','The addressed person is male; use matching grammatical forms.'],['female','female','The addressed person is female; use matching grammatical forms.']] },
   writer:{ h:'l_writer', opts:[['unknown','qmark',''],['neutral','nb',''],['male','male',''],['female','female','']] }
 };
 const D = { url:'http://localhost:11434', nllb:'http://127.0.0.1:8765', model:'', pref:'', theme:'auto', uiLang:'auto', start:'tr', workspace:'both', helper:'', src:'auto', tgt:'en',
@@ -501,8 +501,7 @@ function drawStyles() {
     const opts = g.opts.map(o => mode === 'icons'
       ? `<button class="ib${S.style[k] === o[0] ? ' on' : ''}" data-k="${k}" data-v="${o[0]}" title="${esc(t('o_' + o[0]))}" aria-label="${esc(t('o_' + o[0]))}">${ic(o[1], 18)}</button>`
       : `<div class="opt${S.style[k] === o[0] ? ' sel' : ''}" data-k="${k}" data-v="${o[0]}"><span class="ck">${S.style[k] === o[0] ? ic('check') : ''}</span>${t('o_' + o[0])}</div>`).join('');
-    return (g.sect ? `<h3 class="sh sub">${t(g.sect)}</h3>` : '') +
-      `<div class="sgrp ${mode}"><span class="slab">${t(g.h)}</span>` +
+    return `<div class="sgrp ${mode}"><span class="slab">${t(g.h)}</span>` +
       (mode === 'icons' ? `<div class="seg">${opts}</div>` : `<div class="list">${opts}</div>`) + '</div>';
   }).join('');
 }

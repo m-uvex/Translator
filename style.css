@@ -47,20 +47,17 @@ footer{display:flex;align-items:center;gap:8px;padding:8px 12px}.sp{flex:1}.mute
 .opt{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:14px;cursor:pointer}
 .opt+.opt{border-top:1px solid var(--line);border-radius:0}.opt.sel{color:var(--accent-ink)}
 .opt .ck{width:18px;color:var(--accent-ink)}
-/* Kompakte Seitenleiste: Label links, Optionen rechts. So passen alle
-   Stilgruppen ohne Scrollen in die Standardhoehe. */
+/* Kompakte Seitenleiste: Label als Blockzeile ueber den Optionen, damit alle
+   Stilgruppen ohne Scrollen in die Standardhoehe passen. */
 .side{padding:14px 14px;gap:8px}
-.side h3.sh{margin:0 4px 4px;font-size:15px}
-.side h3.sh.sub{margin:20px 4px 8px;font-size:13px;font-weight:600;color:var(--muted)}
-.sgrp{display:flex;gap:10px;align-items:flex-start}
-.sgrp+.sgrp{margin-top:8px}
-.sgrp .slab{flex:none;width:84px;color:var(--muted);font-size:12.5px;line-height:1.25;padding:11px 0 0 2px}
-.sgrp .list{flex:1;min-width:0}
-.side .opt{padding:9px 9px;font-size:14px}
-.sgrp.icons{align-items:center}
+.side h3.sh{margin:0 4px 16px;font-size:15px}
+.sgrp{display:block}
+.sgrp+.sgrp{margin-top:6px}
+.sgrp .slab{display:block;color:var(--muted);font-size:12.5px;line-height:1.25;padding:0 2px 2px}
+.sgrp .list{width:100%}
+.side .opt{padding:8px 9px;font-size:14px}
 .sgrp.icons+.sgrp.icons{margin-top:20px}
-.sgrp.icons .slab{padding-top:0}
-.sgrp .seg{flex-wrap:wrap;flex:1;min-width:0}
+.sgrp .seg{flex-wrap:wrap}
 .ctx{background:var(--soft);border-radius:var(--r);padding:10px 12px}
 .ctx summary{cursor:pointer;list-style:none;font-weight:600;display:flex;align-items:center;gap:8px}
 .ctx summary::before{content:"";border:5px solid transparent;border-left:7px solid var(--muted);border-right:0;transition:transform .15s}
