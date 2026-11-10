@@ -67,7 +67,7 @@ X('save','Speichern','Save','Opslaan'); X('del','Löschen','Delete','Verwijderen
 X('st_pro','Professionell','Professional','Professioneel'); X('st_casual','Locker','Casual','Los'); X('st_concise','Prägnant','Concise','Beknopt'); X('st_formal','Förmlich','Formal','Formeel'); X('st_creative','Kreativ','Creative','Creatief'); X('st_simple','Einfach','Simple','Eenvoudig');
 X('confNew','Aktuelles Dokument verwerfen und ein neues beginnen?','Discard the current document and start a new one?','Huidig document verwerpen en een nieuw beginnen?','¿Descartar el documento actual y comenzar uno nuevo?','Mevcut belgeyi atıp yenisine başlansın mı?','هل تريد تجاهل المستند الحالي وبدء مستند جديد؟');
 X('sumTitle','Zusammenfassung','Summary','Samenvatting'); X('insTop','Am Anfang einfügen','Insert at top','Bovenaan invoegen'); X('replAll','Text ersetzen','Replace text','Tekst vervangen');
-X('lblWriter','Absender','Writer','Schrijver'); X('lblAddr','Adressat','Addressee','Geadresseerde'); X('lblForm','Ton','Tone','Toon');
+X('lblWriter','Absender*in','Writer','Afzender*','Remitente*','Gönderen*','المرسل*'); X('lblAddr','Empfänger*in','Addressee','Ontvanger*','Receptor*','Alıcı*','المستلم*'); X('lblForm','Ton','Tone','Toon','Tono','Ton','النبرة');
 X('noChanges','Keine Änderungen gefunden','No changes found','Geen wijzigingen gevonden');
 X('proofTitle','Änderungen prüfen','Review changes','Wijzigingen controleren','Revisar cambios','Değişiklikleri incele','مراجعة التغييرات');
 X('accept','Übernehmen','Accept','Overnemen','Aceptar','Kabul et','قبول'); X('reject','Ablehnen','Reject','Afwijzen','Rechazar','Reddet','رفض');
@@ -1028,6 +1028,7 @@ document.addEventListener('selectionchange', () => {
 ['#pop', '#alt', '#cm', '#trPop'].forEach(id => $(id).addEventListener('mousedown', e => { if (!e.target.closest('input,select,textarea')) e.preventDefault(); }));
 document.addEventListener('mousedown', e => { if (!e.target.closest('#trPop,.ctxbar,#pop,#diffPanel')) $('#trPop').classList.add('hidden'); });
 function showView(v) {
+  if (window.trCollapseImages) window.trCollapseImages();
   $('#vT').classList.toggle('hidden', v !== 'tr'); $('#vE').classList.toggle('hidden', v !== 'ed');
   $('#nvTr').classList.toggle('active', v === 'tr'); $('#nvEd').classList.toggle('active', v === 'ed');
   S.view = v; save(); closePops(); $('#trPop').classList.add('hidden'); hideBar();

@@ -30,12 +30,16 @@ footer{display:flex;align-items:center;gap:8px;padding:8px 12px}.sp{flex:1}.mute
 .ghost{background:var(--soft);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--text)}
 .w{border-radius:6px;cursor:pointer}.w:hover{background:color-mix(in srgb,var(--accent) 35%,transparent);color:var(--accent-ink)}
 .out.busy{opacity:.5}
-#thumbs{display:flex;gap:10px;padding:0 16px;flex-wrap:wrap}
-#thumbs .thumb{position:relative;display:inline-block;line-height:0}
-#thumbs .thumb img{height:48px;border-radius:10px;display:block}
-#thumbs .thumb .rm{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#d32f2f;color:#fff;border:2px solid var(--card);padding:0;opacity:0;transition:opacity .15s;display:grid;place-items:center;cursor:pointer}
+#drop{position:relative}
+#thumbs{position:absolute;left:10px;bottom:58px;z-index:6;padding:0;display:block}
+#thumbs .thumb{position:absolute;left:0;bottom:0;line-height:0;transition:transform .2s ease,opacity .2s ease}
+#thumbs .thumb img{width:100%;height:100%;object-fit:cover;border-radius:12px;display:block;background:var(--soft);box-shadow:0 6px 18px #00000038,0 1px 4px #00000024}
+#thumbs .thumb .rm{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--text);color:var(--bg);border:2px solid var(--card);padding:0;opacity:0;transition:opacity .15s;display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 8px #00000040,0 1px 3px #0000002e}
 #thumbs .thumb .rm svg{display:block;width:10px;height:10px}
 #thumbs .thumb:hover .rm,#thumbs .thumb .rm:focus{opacity:1}
+#thumbs.stack{cursor:pointer}
+#thumbs.open{display:grid;grid-template-columns:repeat(var(--cols,4),var(--ts,96px));gap:12px;align-content:end;justify-content:start}
+#thumbs.open .thumb{position:relative;left:auto;bottom:auto;width:var(--ts,96px);height:var(--ts,96px);transform:none}
 .side{padding:20px 16px;overflow:auto;display:flex;flex-direction:column;gap:10px}
 .side h3{margin:10px 0 4px;font-size:17px}
 .side label{display:block;color:var(--muted);font-size:13px;margin:10px 4px 6px}
@@ -43,6 +47,19 @@ footer{display:flex;align-items:center;gap:8px;padding:8px 12px}.sp{flex:1}.mute
 .opt{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:14px;cursor:pointer}
 .opt+.opt{border-top:1px solid var(--line);border-radius:0}.opt.sel{color:var(--accent-ink)}
 .opt .ck{width:18px;color:var(--accent-ink)}
+/* Kompakte Seitenleiste: Label links, Optionen rechts. So passen alle
+   Stilgruppen ohne Scrollen in die Standardhoehe. */
+.side{padding:14px 14px;gap:8px}
+.side h3.sh{margin:0 4px 2px;font-size:15px}
+.side h3.sh.sub{margin:8px 4px 2px;font-size:13px;font-weight:600;color:var(--muted)}
+.sgrp{display:flex;gap:10px;align-items:flex-start}
+.sgrp+.sgrp{margin-top:2px}
+.sgrp .slab{flex:none;width:84px;color:var(--muted);font-size:12.5px;line-height:1.25;padding:9px 0 0 2px}
+.sgrp .list{flex:1;min-width:0}
+.side .opt{padding:6px 9px;font-size:14px}
+.sgrp.icons{align-items:center}
+.sgrp.icons .slab{padding-top:0}
+.sgrp .seg{flex-wrap:wrap;flex:1;min-width:0}
 .ctx{background:var(--soft);border-radius:var(--r);padding:10px 12px}
 .ctx summary{cursor:pointer;list-style:none;font-weight:600;display:flex;align-items:center;gap:8px}
 .ctx summary::before{content:"";border:5px solid transparent;border-left:7px solid var(--muted);border-right:0;transition:transform .15s}
