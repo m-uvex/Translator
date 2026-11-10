@@ -57,6 +57,7 @@ footer{display:flex;align-items:center;gap:8px;padding:8px 12px}.sp{flex:1}.mute
 .sgrp .list{width:100%}
 .side .opt{padding:6.5px 9px;font-size:14px}
 .sgrp.icons+.sgrp.icons{margin-top:20px}
+#llmOnly:has(.sgrp.icons) .ctx{margin-top:8px}
 .sgrp .seg{flex-wrap:wrap}
 .ctx{background:var(--soft);border-radius:var(--r);padding:10px 12px}
 .ctx summary{cursor:pointer;list-style:none;font-weight:600;display:flex;align-items:center;gap:8px}
