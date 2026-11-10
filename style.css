@@ -72,9 +72,16 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
 .set.row-set .ctl{display:flex;align-items:center;gap:2px;flex:none;margin-inline-start:auto}
 /* Breite richtet sich ausschliesslich nach der laengsten Option (kein min/max),
    damit Optionstexte niemals abgeschnitten werden (ausdruecklicher Nutzerwunsch).
-   Text steht rechtsbuendig am Pfeil, die Zeilen sind dadurch unterschiedlich breit. */
-.set.row-set select{width:auto;min-width:0;max-width:none;flex:none;text-align:right;text-align-last:right;padding-right:24px}
-[dir="rtl"] .set.row-set select{text-align:left;text-align-last:left;padding-right:12px;padding-left:24px}
+   Eigener Pfeil wie bei .tsel: nur so laesst sich der Text direkt an den Pfeil
+   ruecken; der native Pfeil reserviert einen festen, nicht beeinflussbaren Abstand.
+   text-align gilt fuer den geschlossenen Wert, option{text-align} haelt die
+   ausgeklappte Liste linksbuendig (sonst waere sie ebenfalls rechtsbuendig). */
+.set.row-set select{appearance:none;-webkit-appearance:none;width:auto;min-width:0;max-width:none;flex:none;text-align:right;text-align-last:right;padding-right:26px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none' stroke='%236e6e73' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1l4 4 4-4'/></svg>");
+  background-repeat:no-repeat;background-position:right 8px center;background-size:10px 6px}
+.set.row-set select option{text-align:left}
+[dir="rtl"] .set.row-set select{text-align:left;text-align-last:left;padding-right:12px;padding-left:26px;background-position:left 8px center}
+[dir="rtl"] .set.row-set select option{text-align:right}
 .set .ib{width:32px;height:32px}
 #llmOnly{display:flex;flex-direction:column;gap:10px}
 .plain .w{cursor:text}.plain .w:hover{background:none;color:inherit}
