@@ -33,9 +33,8 @@ Object.assign(IC, {
   book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5M8 7h7"/>', heart:'<path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.7A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/>',
   coffee:'<path d="M5 8h11v6a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5zM16 10h2a2 2 0 0 1 0 4h-2M8 3v2M12 3v2"/>', megaphone:'<path d="M3 11v2a1 1 0 0 0 1 1h3l8 4V6L7 10H4a1 1 0 0 0-1 1zM19 9a4 4 0 0 1 0 6"/>',
   leaf:'<path d="M5 19c0-9 5-14 15-14 0 10-5 15-14 15M5 19l8-8"/>',
-  // Neu: Doppel-Symbole fuer "alle annehmen / alle ablehnen"
-  checkAll:'<path d="M2 12l4 4 8-10"/><path d="M9 13l4 4 9-11"/>',
-  crossAll:'<path d="M2 4l6 8M8 4l-6 8"/><path d="M14 4l6 8M20 4l-6 8"/>'
+  // Doppeltes Haekchen fuer "alle verbleibenden annehmen".
+  checkAll:'<path d="M2 12l4 4 8-10"/><path d="M9 13l4 4 9-11"/>'
 });
 const reicon = () => document.querySelectorAll('[data-i]').forEach(e => e.innerHTML = ic(e.dataset.i));
 
@@ -74,7 +73,6 @@ X('noChanges','Keine Änderungen gefunden','No changes found','Geen wijzigingen 
 X('proofTitle','Änderungen prüfen','Review changes','Wijzigingen controleren','Revisar cambios','Değişiklikleri incele','مراجعة التغييرات');
 X('accept','Übernehmen','Accept','Overnemen','Aceptar','Kabul et','قبول'); X('reject','Ablehnen','Reject','Afwijzen','Rechazar','Reddet','رفض');
 X('acceptAll','Alle verbleibenden übernehmen','Accept all remaining','Alle resterende overnemen','Aceptar todo lo restante','Kalanların tümünü kabul et','قبول جميع المتبقي');
-X('rejectAll','Alle verbleibenden ablehnen','Reject all remaining','Alle resterende afwijzen','Rechazar todo lo restante','Kalanların tümünü reddet','رفض جميع المتبقي');
 X('pagebreak','Seitenumbruch','Page break','Pagina-einde','Salto de página','Sayfa sonu','فاصل صفحة');
 
 S.ed = Object.assign({ src:'auto', tgt:'en', formal:'standard', wGender:'unknown', aGender:'unknown' }, S.ed || {});
@@ -248,7 +246,7 @@ function decideChange(id, accept) {
   if (row) { row.dataset.done = '1'; row.style.opacity = '0.45'; row.style.pointerEvents = 'none'; }
   if ([...diffPanel.querySelectorAll('.diff-row')].every(r => r.dataset.done)) finishDiff('discard-pending');
 }
-// mode: 'accept-all' | 'reject-all' | 'discard-pending'
+// mode: 'accept-all' | 'discard-pending' (Schliessen lehnt alle offenen ab)
 function finishDiff(mode) {
   if (diffPanel._finishing) return;
   diffPanel._finishing = true;
@@ -272,7 +270,6 @@ function showDiffPanel(changes, beforeHTML) {
       <b>${t('proofTitle')}</b>
       <span class="pheadacts">
         <button class="ib" id="diffAccAll" title="${t('acceptAll')}">${ic('checkAll', 16)}</button>
-        <button class="ib" id="diffRejAll" title="${t('rejectAll')}">${ic('crossAll', 16)}</button>
         <button class="ib" id="diffClose" title="${t('close')}">${ic('x', 16)}</button>
       </span>
     </header>
@@ -288,7 +285,6 @@ function showDiffPanel(changes, beforeHTML) {
   diffPanel.classList.remove('hidden');
   diffPanel.querySelector('#diffClose').onclick = () => finishDiff('discard-pending');
   diffPanel.querySelector('#diffAccAll').onclick = () => finishDiff('accept-all');
-  diffPanel.querySelector('#diffRejAll').onclick = () => finishDiff('reject-all');
   diffPanel.querySelectorAll('[data-acc]').forEach(b => b.onclick = () => decideChange(b.dataset.acc, true));
   diffPanel.querySelectorAll('[data-rej]').forEach(b => b.onclick = () => decideChange(b.dataset.rej, false));
 }
