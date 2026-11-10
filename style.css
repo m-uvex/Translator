@@ -66,6 +66,12 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
 .set{margin:10px 0}.set .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .set input,.set textarea,.set select{width:100%;font:inherit;color:var(--text);background:var(--soft);border:0;border-radius:12px;padding:9px 12px;outline:0}
 .set textarea{height:150px;resize:vertical}
+/* Einstellungen mit Auswahlfeld: Titel links, Menue rechts, Zuruecksetzen-Icon ganz rechts */
+.set.row-set{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0}
+.set.row-set>b{flex:1;min-width:0;font-weight:600}
+.set.row-set .ctl{display:flex;align-items:center;gap:2px;flex:none}
+.set.row-set select{width:auto;min-width:130px;max-width:230px}
+.set .ib{width:32px;height:32px}
 #llmOnly{display:flex;flex-direction:column;gap:10px}
 .plain .w{cursor:text}.plain .w:hover{background:none;color:inherit}
 .mrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.mrow button:disabled{opacity:.5}

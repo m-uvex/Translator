@@ -8,9 +8,10 @@ document.querySelectorAll('[data-i]').forEach(e => e.innerHTML = ic(e.dataset.i)
 
 const K = {
   stopTr:['Stopp','Stop'], stopped:['Übersetzung angehalten','Translation stopped'],
+  on:['An','On'], off:['Aus','Off'],
   s_bootModel:['Letztes Modell beim Start vorwärmen','Preload last used model at startup'],
   s_profanity:['Schimpfwortfilter aktivieren','Enable profanity filter'],
-  s_mdMode:['Dynamisches Markdown (wie Obsidian)','Dynamic Markdown (like Obsidian)'],
+  s_mdMode:['Dynamisches Markdown','Dynamic Markdown'],
   s_groupFeatures:['Zusatzfunktionen','Additional features'],
   personalDict:['Eigenes Wörterbuch','Personal dictionary'],
   dictWords:['Gespeicherte Wörter','Saved words'],
@@ -57,7 +58,7 @@ const K = {
   confDel:[id => `${id} wirklich löschen? Das Modell kann später erneut geladen werden.`, id => `Really delete ${id}? You can download it again later.`]
 };
 const NL = {
-  stopTr:'Stoppen', stopped:'Vertaling gestopt', s_bootModel:'Laatst gebruikte model voorverwarmen bij opstarten', s_profanity:'Vloekfilter inschakelen', s_mdMode:'Dynamische Markdown (zoals Obsidian)', s_groupFeatures:'Extra functies', personalDict:'Persoonlijk woordenboek', dictWords:'Opgeslagen woorden', addWord:'Woord toevoegen', addWordPh:'Nieuw woord typen …', noDictWords:'Geen woorden in persoonlijk woordenboek', edit:'Bewerken', wordExists:'Woord bestaat al',
+  stopTr:'Stoppen', stopped:'Vertaling gestopt', on:'Aan', off:'Uit', s_bootModel:'Laatst gebruikte model voorverwarmen bij opstarten', s_profanity:'Vloekfilter inschakelen', s_mdMode:'Dynamische Markdown', s_groupFeatures:'Extra functies', personalDict:'Persoonlijk woordenboek', dictWords:'Opgeslagen woorden', addWord:'Woord toevoegen', addWordPh:'Nieuw woord typen …', noDictWords:'Geen woorden in persoonlijk woordenboek', edit:'Bewerken', wordExists:'Woord bestaat al',
   settings:'Instellingen', swap:'Wisselen', reloadModels:'Modellen opnieuw laden', inputPh:'Typ tekst of sleep een bestand hierheen …', attach:'Bestand toevoegen', translate:'Vertalen', copy:'Kopiëren', copied:'Gekopieerd',
   chars:n => `${n} tekens`, auto:'Taal detecteren', searchLang:'Taal zoeken …', noHits:'Geen resultaten', pin:'Vastpinnen', h_style:'Vertaalstijl', l_type:'Type', l_formal:'Formaliteit', h_gender:'Geslachtsvoorkeuren', l_gender:'Aangesproken persoon',
   o_natural:'Natuurlijk', o_literal:'Letterlijk', o_standard:'Standaard', o_formal:'Formeel', o_informal:'Informeel', o_unknown:'Onbekend', o_neutral:'Neutraal', o_male:'Mannelijk', o_female:'Vrouwelijk',
@@ -101,7 +102,7 @@ const ES = {
   nllbH:'NLLB-200', mInst:'Instalado', mNot:'No instalado', mLoad:p => `Descargando … ${p} %`, mErr:e => `Error: ${e}`, bDl:'Descargar', bDel:'Eliminar', bBusy:'Descargando …',
   serverDown:'El servidor de traducción no está disponible. Se instala con el asistente y se inicia con la app.',
   confBig:(id, gb) => `${id} tiene un tamaño de ${gb} GB y requiere bastante memoria y tiempo. ¿Descargar igualmente?`, confDel:id => `¿Realmente eliminar ${id}? Puedes descargarlo nuevamente más tarde.`,
-  stopTr:'Detener', stopped:'Traducción detenida', s_bootModel:'Precargar último modelo al iniciar', s_profanity:'Filtro de malas palabras', s_mdMode:'Markdown dinámico en editor (tipo Obsidian)',
+  stopTr:'Detener', stopped:'Traducción detenida', on:'Activado', off:'Desactivado', s_bootModel:'Precargar último modelo al iniciar', s_profanity:'Filtro de malas palabras', s_mdMode:'Markdown dinámico en el editor',
   personalDict:'Diccionario personal', dictWords:'Palabras guardadas', addWord:'Añadir palabra', addWordPh:'Nueva palabra …', noDictWords:'No hay palabras en el diccionario personal', edit:'Editar', wordExists:'La palabra ya existe'
 };
 
@@ -126,7 +127,7 @@ const TR = {
   nllbH:'NLLB-200', mInst:'Yüklü', mNot:'Yüklü değil', mLoad:p => `İndiriliyor … %${p}`, mErr:e => `Hata: ${e}`, bDl:'İndir', bDel:'Sil', bBusy:'İndiriliyor …',
   serverDown:'Çeviri sunucusuna ulaşılamıyor. Kurulum sihirbazı ile kurulur ve uygulamayla birlikte başlar.',
   confBig:(id, gb) => `${id} boyutu ${gb} GB ve çok bellek gerektirir. Yine de indirilsin mi?`, confDel:id => `${id} gerçekten silinsin mi? Daha sonra tekrar indirebilirsiniz.`,
-  stopTr:'Durdur', stopped:'Çeviri durduruldu', s_bootModel:'Başlangıçta son kullanılan modeli ön yükle', s_profanity:'Küfür filtresini etkinleştir', s_mdMode:'Editörde dinamik Markdown (Obsidian gibi)',
+  stopTr:'Durdur', stopped:'Çeviri durduruldu', on:'Açık', off:'Kapalı', s_bootModel:'Başlangıçta son kullanılan modeli ön yükle', s_profanity:'Küfür filtresini etkinleştir', s_mdMode:'Editörde dinamik Markdown',
   personalDict:'Kişisel sözlük', dictWords:'Kayıtlı kelimeler', addWord:'Kelime ekle', addWordPh:'Yeni kelime yazın …', noDictWords:'Kişisel sözlükte kayıtlı kelime yok', edit:'Düzenle', wordExists:'Kelime zaten mevcut'
 };
 
@@ -151,7 +152,7 @@ const AR = {
   nllbH:'NLLB-200', mInst:'مثبت', mNot:'غير مثبت', mLoad:p => `جاري التنزيل … ${p} %`, mErr:e => `خطأ: ${e}`, bDl:'تنزيل', bDel:'حذف', bBusy:'جاري التنزيل …',
   serverDown:'خادم الترجمة غير متاح. يتم تثبيته عبر المعالج ويعمل مع التطبيق.',
   confBig:(id, gb) => `حجم ${id} هو ${gb} غيغابايت ويتطلب ذاكرة ووقت. هل تريد التنزيل؟`, confDel:id => `هل تريد حقاً حذف ${id}؟ يمكنك تنزيله لاحقاً.`,
-  stopTr:'إيقاف', stopped:'تم إيقاف الترجمة', s_bootModel:'تحميل النموذج مسبقاً عند البدء', s_profanity:'فلتر الكلمات البذيئة', s_mdMode:'ماركداون ديناميكي في المحرر (مثل أوبسيديان)',
+  stopTr:'إيقاف', stopped:'تم إيقاف الترجمة', on:'مفعّل', off:'معطّل', s_bootModel:'تحميل النموذج مسبقاً عند البدء', s_profanity:'فلتر الكلمات البذيئة', s_mdMode:'ماركداون ديناميكي في المحرر',
   personalDict:'القاموس الشخصي', dictWords:'الكلمات المحفوظة', addWord:'إضافة كلمة', addWordPh:'اكتب كلمة جديدة …', noDictWords:'لا توجد كلمات في القاموس الشخصي', edit:'تعديل', wordExists:'الكلمة موجودة بالفعل'
 };
 window.K = K; window.NL = NL; window.ES = ES; window.TR = TR; window.AR = AR;
@@ -540,29 +541,42 @@ $('#refresh').onclick = async () => {
   try { await loadModels(); } finally { $('#refresh').classList.remove('spinning'); }
 };
 
-const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['start','s_start','start'],['workspace','s_workspace','workspace'],['bootModel','s_bootModel','check'],['profanityFilter','s_profanity','check'],['edMarkdown','s_mdMode','check'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number']];
+const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['start','s_start','start'],['workspace','s_workspace','workspace'],['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['edMarkdown','s_mdMode','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number']];
 const GROUPS = [['s_groupGeneral',['uiLang','theme','start','workspace']],['s_groupFeatures',['bootModel','profanityFilter','edMarkdown']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
 function drawSettings() {
-  const sel = (k, o) => `<select data-k="${k}">${o.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
-  const field = ([k, l, ty]) => `<div class="set"><div class="top"><b>${t(l)}</b><button class="ghost" data-r="${k}">${t('reset')}</button></div>` +
-    (ty === 'check' ? `<label class="opt" style="margin-top:6px"><input data-k="${k}" type="checkbox"${S[k] ? ' checked' : ''} style="width:auto;margin-right:8px"><span>${t(l)}</span></label>` :
-ty === 'area' ? `<textarea data-k="${k}"></textarea>` :
-     ty === 'ui' ? sel(k, [['auto', t('autoO')], ['de','Deutsch'], ['en','English'], ['nl','Nederlands'], ['es','Español'], ['tr','Türkçe'], ['ar','العربية']]) :
-     ty === 'theme' ? sel(k, [['auto', t('autoSys')], ['light', t('light')], ['dark', t('dark')]]) :
-     ty === 'start' ? sel(k, [['tr', t('startTr')], ['ed', t('startEd')], ['last', t('startLast')]]) :
-     ty === 'workspace' ? sel(k, [['both', t('wsBoth')], ['tr', t('wsTr')], ['ed', t('wsEd')]]) :
-     ty === 'helper' ? sel(k, [['', t('autoO')], ...Object.keys(caps).filter(n => caps[n].includes('completion') && !isTg(n)).map(n => [n, n])]) :
-     `<input data-k="${k}" type="${ty}" step="${k === 'temp' ? 0.1 : 256}">`) + '</div>';
+  const sel = (k, o, bool) => `<select data-k="${k}"${bool ? ' data-bool="1"' : ''}>${o.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
+  const lists = k =>
+    k === 'uiLang' ? [['auto', t('autoO')], ['de','Deutsch'], ['en','English'], ['nl','Nederlands'], ['es','Español'], ['tr','Türkçe'], ['ar','العربية']] :
+    k === 'theme' ? [['auto', t('autoSys')], ['light', t('light')], ['dark', t('dark')]] :
+    k === 'start' ? [['tr', t('startTr')], ['ed', t('startEd')], ['last', t('startLast')]] :
+    k === 'workspace' ? [['both', t('wsBoth')], ['tr', t('wsTr')], ['ed', t('wsEd')]] :
+    k === 'helper' ? [['', t('autoO')], ...Object.keys(caps).filter(n => caps[n].includes('completion') && !isTg(n)).map(n => [n, n])] : null;
+  // Zuruecksetzen ist ein reiner Icon-Button; der Name erscheint nur als Tooltip.
+  // Das Icon wird direkt eingesetzt, weil reicon() nur im Editor-Scope existiert.
+  const rst = k => `<button class="ib" data-r="${k}" data-tt="reset">${ic('refresh', 16)}</button>`;
+  const field = ([k, l, ty]) => {
+    if (ty === 'bool' || lists(k)) {
+      const bool = ty === 'bool';
+      const list = bool ? [['1', t('on')], ['0', t('off')]] : lists(k);
+      return `<div class="set row-set"><b>${t(l)}</b><span class="ctl">${sel(k, list, bool)}${rst(k)}</span></div>`;
+    }
+    return `<div class="set"><div class="top"><b>${t(l)}</b>${rst(k)}</div>` +
+      (ty === 'area' ? `<textarea data-k="${k}"></textarea>` :
+       `<input data-k="${k}" type="${ty}" step="${k === 'temp' ? 0.1 : 256}">`) + '</div>';
+  };
   const byKey = Object.fromEntries(FIELDS.map(f => [f[0], f]));
   $('#setBody').innerHTML = GROUPS.map(([h, ks]) => `<h3 class="sect">${t(h)}</h3>` + ks.map(k => field(byKey[k])).join('')).join('') +
     `<h3 class="sect">${t('nllbH')}</h3><div id="mtBox"></div>`;
-  $('#setBody').querySelectorAll('[data-k]').forEach(el => el.value = S[el.dataset.k]);
+  $('#setBody').querySelectorAll('[data-k]').forEach(el => { const v = S[el.dataset.k]; el.value = el.dataset.bool ? (v ? '1' : '0') : v; });
+  applyI18n();
   drawMt();
 }
 function renderAll() { setLang(); applyI18n(); upd(); drawStyles(); drawGloss(); updModelBtn(); count(); if ($('#settings').open) drawSettings(); if (window.edRender) window.edRender(); }
 $('#setBody').addEventListener('input', e => {
   const k = e.target.dataset.k; if (!k) return;
-  S[k] = e.target.type === 'checkbox' ? e.target.checked : (e.target.type === 'number' ? +e.target.value : e.target.value); save();
+  let v = e.target.type === 'number' ? +e.target.value : e.target.value;
+  if (e.target.dataset.bool) v = v === '1';
+  S[k] = v; save();
   if (k === 'theme') applyTheme(); if (k === 'uiLang') renderAll(); if (k === 'workspace' && window.edWorkspace) window.edWorkspace();
 });
 $('#setBody').addEventListener('change', e => { if (e.target.dataset.k === 'url' || e.target.dataset.k === 'nllb') { retries = 0; loadModels(); } });
