@@ -50,6 +50,7 @@ footer{display:flex;align-items:center;gap:8px;padding:8px 12px}.sp{flex:1}.mute
 /* Kompakte Seitenleiste: Label als Blockzeile ueber den Optionen, damit alle
    Stilgruppen ohne Scrollen in die Standardhoehe passen. */
 .side{padding:14px 14px;gap:8px}
+.side:has(.sgrp.classic){padding-right:22px}
 .side h3.sh{margin:0 4px 16px;font-size:15px}
 .sgrp{display:block}
 .sgrp+.sgrp{margin-top:6px}
