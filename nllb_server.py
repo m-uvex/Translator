@@ -49,6 +49,10 @@ CODE = re.compile(r"^[a-z]{3}_[A-Z][a-z]{3}$")
 lock = threading.RLock()
 jobs = {}
 cur = {"id": None, "tok": None, "model": None}
+# Laufende Uebersetzungen, die der Client abgebrochen hat. Die IDs kommen mit
+# /translate und werden von /cancel gesetzt; die StoppingCriteria in
+# translate_line pruefen die Menge waehrend model.generate.
+cancelled = set()
 
 def all_models():
     for fam, f in FAMILIES.items():
@@ -56,6 +60,7 @@ def all_models():
             yield f"{fam}:{mid}", fam, mid, m
 
 def find(full):
+    if not full: return None, None, None
     fam, _, mid = full.partition(":")
     if fam in FAMILIES and mid in FAMILIES[fam]["models"]:
         return fam, mid, FAMILIES[fam]["models"][mid]
@@ -155,13 +160,20 @@ def load(full):
         model = AutoModelForSeq2SeqLM.from_pretrained(repo, local_files_only=True, **kw)
     cur.update(id=full, tok=tok, model=model.eval())
 
-def translate_line(text, src, tgt):
+def translate_line(text, src, tgt, req=None):
     import torch
+    from transformers import StoppingCriteria, StoppingCriteriaList
     tok, model = cur["tok"], cur["model"]; tok.src_lang = src
     enc = tok(text, return_tensors="pt", truncation=True, max_length=512)
+
+    class Cancel(StoppingCriteria):
+        def __call__(self, input_ids, scores, **kwargs):
+            return bool(req and req in cancelled)
+
     with torch.no_grad():
         out = model.generate(**enc, forced_bos_token_id=tok.convert_tokens_to_ids(tgt), num_beams=4,
-                             max_new_tokens=int(enc["input_ids"].shape[1] * 2 + 16))
+                             max_new_tokens=int(enc["input_ids"].shape[1] * 2 + 16),
+                             stopping_criteria=StoppingCriteriaList([Cancel()]))
     return tok.batch_decode(out, skip_special_tokens=True)[0]
 
 class Handler(BaseHTTPRequestHandler):
@@ -182,6 +194,14 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
             d = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
+            if self.path == "/cancel":
+                req = d.get("req")
+                if req:
+                    cancelled.add(req)
+                    # Schutz gegen verwaiste IDs (Client sendet /cancel evtl. nach
+                    # dem Ende der Anfrage); die Menge bleibt so klein.
+                    if len(cancelled) > 64: cancelled.clear(); cancelled.add(req)
+                return self._json(200, {"ok": True})
             full = d.get("id") or d.get("model")
             fam, mid, m = find(full)
             if self.path == "/load":
@@ -193,17 +213,32 @@ class Handler(BaseHTTPRequestHandler):
                 codes = {l["code"] for l in LANGS}
                 if d.get("src") not in codes or d.get("tgt") not in codes: return self._json(400, {"error": "unbekannte Sprache"})
                 if full not in installed(): return self._json(400, {"error": "Modell nicht installiert"})
+                req = d.get("req")
+                if req and req in cancelled:
+                    cancelled.discard(req)
+                    return self._json(200, {"translation": "", "cancelled": True})
                 with lock:
                     load(full)
-                    res = "\n".join(translate_line(l, d["src"], d["tgt"]) if l.strip() else "" for l in d.get("text", "").split("\n"))
-                return self._json(200, {"translation": res})
+                    out = []
+                    for l in d.get("text", "").split("\n"):
+                        if req and req in cancelled: break
+                        out.append(translate_line(l, d["src"], d["tgt"], req) if l.strip() else "")
+                    res = "\n".join(out)
+                aborted = bool(req and req in cancelled)
+                if req: cancelled.discard(req)
+                return self._json(200, {"translation": res, "cancelled": aborted})
             if not m: return self._json(400, {"error": "unbekanntes Modell"})
             if self.path == "/models/install": start_job(full)
             elif self.path == "/models/delete": delete(full)
             else: return self._json(404, {"error": "not found"})
             self._json(200, {"ok": True})
+        except (BrokenPipeError, ConnectionResetError):
+            # Der Client hat abgebrochen (Stopp-Knopf); die Antwort kann nicht
+            # mehr zugestellt werden. Kein Fehler im Server.
+            pass
         except Exception as e:
-            self._json(500, {"error": str(e)})
+            try: self._json(500, {"error": str(e)})
+            except Exception: pass
     def log_message(self, *a): pass
 
 if __name__ == "__main__":

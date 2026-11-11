@@ -211,8 +211,12 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
 .diff-row .acts{display:flex;gap:2px}
 .diff-row .acts .ib{width:28px;height:28px}
 #refresh.spinning svg{animation:sp .8s linear infinite}
-#stopTr{background:color-mix(in srgb,#e5484d 15%,var(--soft));color:#e5484d;border-radius:999px;padding:8px 18px;font-weight:600}
-#stopTr:hover{background:color-mix(in srgb,#e5484d 25%,var(--soft))}
+/* Stopp-Knopf im Ausgabefooter: nur waehrend des Generierens sichtbar,
+   reines Stoppschild-Icon in Rot, kein Text. */
+#stopTr{color:#e5484d}
+#stopTr svg{width:20px;height:20px}
+#stopTr:hover{background:color-mix(in srgb,#e5484d 16%,var(--soft));color:#e5484d}
+#stopTr:disabled{opacity:.45}
 #dictDlg{width:min(480px,92vw)}
 #dictDlg .dict-list{max-height:45vh;overflow:auto;margin:12px 0;border:1px solid var(--line);border-radius:12px;padding:4px}
 #dictDlg .dict-row{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px}

@@ -1,5 +1,7 @@
 const $ = s => document.querySelector(s);
-const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/>', swap:'<path d="M17 4l4 4-4 4M21 8H7M7 20l-4-4 4-4M3 16h14"/>', refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>', clip:'<path d="M21 11l-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/>', copy:'<rect x="9" y="9" width="11" height="11" rx="3"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>', star:'<path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-3-5.5 3 1-6.2L3 9.6l6.2-.9z"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>', check:'<path d="M5 12l5 5 9-10"/>',
+const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/>', swap:'<path d="M17 4l4 4-4 4M21 8H7M7 20l-4-4 4-4M3 16h14"/>', refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>', clip:'<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>', copy:'<rect x="9" y="9" width="11" height="11" rx="3"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
+  // Stoppschild ohne Schrift: achteckiger Ring, bewusst kein Quadrat (Kamera-Optik).
+  stop:'<path fill-rule="evenodd" d="M8.6 2.5h6.8l6.1 6.1v6.8l-6.1 6.1H8.6L2.5 15.4V8.6zM10.4 6.5 6.5 10.4v3.2l3.9 3.9h3.2l3.9-3.9v-3.2l-3.9-3.9z" fill="currentColor" stroke="none"/>', star:'<path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-3-5.5 3 1-6.2L3 9.6l6.2-.9z"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>', check:'<path d="M5 12l5 5 9-10"/>',
   eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
   languages:'<path d="M4 6h9M8.5 4v2M6 6c.8 3 3 5.5 6 7M12 6c-.8 3-3 5.5-6 7M13 20l4-9 4 9M14.5 17h5"/>', doc:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',
   // Symbole fuer die Icon-Seitenleiste. Die Geschlechter- und Ton-Symbole sind
@@ -18,7 +20,7 @@ const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(
 document.querySelectorAll('[data-i]').forEach(e => e.innerHTML = ic(e.dataset.i));
 
 const K = {
-  stopTr:['Halt','Stop'], stopped:['Übersetzung angehalten','Translation stopped'],
+  stopTr:['Stoppen','Stop'], stopped:['Übersetzung angehalten','Translation stopped'],
   on:['An','On'], off:['Aus','Off'],
   s_bootModel:['Letztes Modell beim Hochfahren vorwärmen','Preload last used model at startup'],
   s_profanity:['Schimpfwortfilter aktivieren','Enable profanity filter'],
@@ -63,11 +65,11 @@ const K = {
   s_url:['Ollama-Adresse','Ollama address'], s_nllb:['NLLB-Server-Adresse','NLLB server address'], s_ui:['Anzeigesprache','Display language'], s_theme:['Darstellung','Theme'],
   s_start:['Beim Hochfahren öffnen','Open at startup'], s_workspace:['Sichtbare Arbeitsplätze','Visible workspaces'],
   s_helper:['Modell für Ersatzwörter (bei TranslateGemma/NLLB)','Model for word alternatives (for TranslateGemma/NLLB)'], s_sys:['System-Anweisung','System prompt'],
-  s_temp:['Temperatur (niedriger = gleichbleibender)','Temperature (lower = more consistent)'], s_ctx:['Kontext-Länge (num_ctx)','Context length (num_ctx)'],
+  s_temp:['Temperatur (niedriger = beständiger)','Temperature (lower = more consistent)'], s_ctx:['Kontext-Länge (num_ctx)','Context length (num_ctx)'],
   s_groupGeneral:['Allgemein','General'], s_groupConn:['Verbindungen','Connections'], s_groupTrans:['Übersetzung','Translation'],
   startTr:['Übersetzer öffnen','Open translator'], startEd:['Text-Bearbeitung öffnen','Open text editor'], startLast:['Zuletzt verwendetes öffnen','Open last used'],
   wsBoth:['Beide','Both'], wsTr:['Nur Übersetzer','Translator only'], wsEd:['Nur Text-Bearbeitung','Text editor only'],
-  reset:['Zurücksetzen','Reset'], resetAll:['Alles zurücksetzen','Reset all'], autoSys:['Von selbst (System)','Automatic (system)'], autoO:['Von selbst','Automatic'], light:['Hell','Light'], dark:['Dunkel','Dark'],
+  reset:['Zurücksetzen','Reset'], resetAll:['Alles zurücksetzen','Reset all'], autoSys:['Von selbst (System)','Automatic (system)'], autoO:['Von selbst','Automatic'], autoModel:['Automatisch (Programm wählt)','Automatic (app chooses)'], light:['Hell','Light'], dark:['Dunkel','Dark'],
   nllbH:['NLLB-200','NLLB-200'], mInst:['Eingerichtet','Installed'], mNot:['Nicht eingerichtet','Not installed'], mLoad:[p => `Lädt … ${p} %`, p => `Downloading … ${p}%`],
   mErr:[e => `Fehler: ${e}`, e => `Error: ${e}`], bDl:['Herunterladen','Download'], bDel:['Löschen','Delete'], bBusy:['Lädt …','Downloading …'],
   serverDown:['Der Übersetzungs-Server ist nicht erreichbar. Er wird bei der Einrichtung (Installieren.bat) miteingerichtet und läuft mit dem Programm an.','The translation server is not reachable. It is installed by the setup wizard (Installieren.bat) and starts with the app.'],
@@ -93,7 +95,7 @@ const NL = {
   s_helper:'Model voor woordalternatieven (bij TranslateGemma/NLLB)', s_sys:'Systeemprompt', s_temp:'Temperatuur (lager = consistenter)', s_ctx:'Contextlengte (num_ctx)',
   s_groupGeneral:'Algemeen', s_groupConn:'Verbindingen', s_groupTrans:'Vertaling',
   startTr:'Vertaler openen', startEd:'Tekstbewerking openen', startLast:'Laatst gebruikte openen', wsBoth:'Beide', wsTr:'Alleen vertaler', wsEd:'Alleen tekstbewerking',
-  reset:'Herstellen', resetAll:'Alles herstellen', autoSys:'Automatisch (systeem)', autoO:'Automatisch', light:'Licht', dark:'Donker',
+  reset:'Herstellen', resetAll:'Alles herstellen', autoSys:'Automatisch (systeem)', autoO:'Automatisch', autoModel:'Automatisch (programma kiest)', light:'Licht', dark:'Donker',
   nllbH:'NLLB-200', mInst:'Geïnstalleerd', mNot:'Niet geïnstalleerd', mLoad:p => `Downloaden … ${p} %`, mErr:e => `Fout: ${e}`, bDl:'Downloaden', bDel:'Verwijderen', bBusy:'Bezig …',
   serverDown:'De vertaalserver is niet bereikbaar. Die wordt door de installatiewizard (Installieren.bat) geïnstalleerd en start met de app.',
   confBig:(id, gb) => `${id} is ${gb} GB groot en heeft veel werkgeheugen en tijd nodig. Toch downloaden?`, confDel:id => `${id} echt verwijderen? Je kunt het later opnieuw downloaden.`
@@ -117,7 +119,7 @@ const ES = {
   s_helper:'Modelo para alternativas de palabras (TranslateGemma/NLLB)', s_sys:'Prompt del sistema', s_temp:'Temperatura (menor = más consistente)', s_ctx:'Longitud de contexto (num_ctx)',
   s_groupGeneral:'General', s_groupConn:'Conexiones', s_groupTrans:'Traducción', s_groupFeatures:'Ajustes adicionales',
   startTr:'Abrir traductor', startEd:'Abrir editor', startLast:'Abrir último usado', wsBoth:'Ambos', wsTr:'Solo traductor', wsEd:'Solo editor',
-  reset:'Restablecer', resetAll:'Restablecer todo', autoSys:'Automático (sistema)', autoO:'Automático', light:'Claro', dark:'Oscuro',
+  reset:'Restablecer', resetAll:'Restablecer todo', autoSys:'Automático (sistema)', autoO:'Automático', autoModel:'Automático (la aplicación elige)', light:'Claro', dark:'Oscuro',
   nllbH:'NLLB-200', mInst:'Instalado', mNot:'No instalado', mLoad:p => `Descargando … ${p} %`, mErr:e => `Error: ${e}`, bDl:'Descargar', bDel:'Eliminar', bBusy:'Descargando …',
   serverDown:'El servidor de traducción no está disponible. Se instala con el asistente y se inicia con la app.',
   confBig:(id, gb) => `${id} tiene un tamaño de ${gb} GB y requiere bastante memoria y tiempo. ¿Descargar igualmente?`, confDel:id => `¿Realmente eliminar ${id}? Puedes descargarlo nuevamente más tarde.`,
@@ -143,7 +145,7 @@ const TR = {
   s_helper:'Kelime alternatifleri modeli (TranslateGemma/NLLB için)', s_sys:'Sistem komutu', s_temp:'Sıcaklık (düşük = daha tutarlı)', s_ctx:'Bağlam uzunluğu (num_ctx)',
   s_groupGeneral:'Genel', s_groupConn:'Bağlantılar', s_groupTrans:'Çeviri', s_groupFeatures:'Ek ayarlar',
   startTr:'Çevirmeni aç', startEd:'Metin düzenleyiciyi aç', startLast:'Son kullanılanı aç', wsBoth:'Her ikisi', wsTr:'Yalnızca çevirmen', wsEd:'Yalnızca editör',
-  reset:'Sıfırla', resetAll:'Tümünü sıfırla', autoSys:'Otomatik (sistem)', autoO:'Otomatik', light:'Açık', dark:'Koyu',
+  reset:'Sıfırla', resetAll:'Tümünü sıfırla', autoSys:'Otomatik (sistem)', autoO:'Otomatik', autoModel:'Otomatik (uygulama seçer)', light:'Açık', dark:'Koyu',
   nllbH:'NLLB-200', mInst:'Yüklü', mNot:'Yüklü değil', mLoad:p => `İndiriliyor … %${p}`, mErr:e => `Hata: ${e}`, bDl:'İndir', bDel:'Sil', bBusy:'İndiriliyor …',
   serverDown:'Çeviri sunucusuna ulaşılamıyor. Kurulum sihirbazı ile kurulur ve uygulamayla birlikte başlar.',
   confBig:(id, gb) => `${id} boyutu ${gb} GB ve çok bellek gerektirir. Yine de indirilsin mi?`, confDel:id => `${id} gerçekten silinsin mi? Daha sonra tekrar indirebilirsiniz.`,
@@ -169,7 +171,7 @@ const AR = {
   s_helper:'نموذج بدائل الكلمات (مع TranslateGemma/NLLB)', s_sys:'توجيه النظام', s_temp:'درجة الحرارة (أقل = أكثر دقة)', s_ctx:'طول السياق (num_ctx)',
   s_groupGeneral:'عام', s_groupConn:'الاتصالات', s_groupTrans:'الترجمة', s_groupFeatures:'إعدادات إضافية',
   startTr:'فتح المترجم', startEd:'فتح المحرر', startLast:'فتح آخر مستخدم', wsBoth:'كلاهما', wsTr:'المترجم فقط', wsEd:'المحرر فقط',
-  reset:'إعادة تعيين', resetAll:'إعادة تعيين الكل', autoSys:'تلقائي (النظام)', autoO:'تلقائي', light:'فاتح', dark:'داكن',
+  reset:'إعادة تعيين', resetAll:'إعادة تعيين الكل', autoSys:'تلقائي (النظام)', autoO:'تلقائي', autoModel:'تلقائي (يختار التطبيق)', light:'فاتح', dark:'داكن',
   nllbH:'NLLB-200', mInst:'مثبت', mNot:'غير مثبت', mLoad:p => `جاري التنزيل … ${p} %`, mErr:e => `خطأ: ${e}`, bDl:'تنزيل', bDel:'حذف', bBusy:'جاري التنزيل …',
   serverDown:'خادم الترجمة غير متاح. يتم تثبيته عبر المعالج ويعمل مع التطبيق.',
   confBig:(id, gb) => `حجم ${id} هو ${gb} غيغابايت ويتطلب ذاكرة ووقت. هل تريد التنزيل؟`, confDel:id => `هل تريد حقاً حذف ${id}؟ يمكنك تنزيله لاحقاً.`,
@@ -376,7 +378,7 @@ function filterProfanity(text, final = true, tgt = S.tgt, src = S.src) {
   return out;
 }
 
-let caps = {}, images = [], lastSrc = '', lastTr = '', busy = false, retries = 0, MODEL_OPTS = [], currentAbortController = null;
+let caps = {}, images = [], lastSrc = '', lastTr = '', busy = false, retries = 0, MODEL_OPTS = [], currentAbortController = null, currentReq = null, currentMt = false;
 const isMt = (m = S.model) => /^(nllb|omt):/.test(m || '');
 const isTg = m => /translategemma/i.test(m || '');
 const noAuto = () => isMt() || isTg(S.model);
@@ -515,7 +517,7 @@ async function translateCore(text, o) {
     const out = [];
     for (const line of text.split('\n')) {
       if (!line.trim()) { out.push(''); continue; }
-      const r = await fetch(S.nllb + '/translate', { method:'POST', body:JSON.stringify({ text:line, src:o.src, tgt:o.tgt, model:o.model }), signal:o.signal });
+      const r = await fetch(S.nllb + '/translate', { method:'POST', body:JSON.stringify({ text:line, src:o.src, tgt:o.tgt, model:o.model, req:o.req }), signal:o.signal });
       if (!r.ok) throw new Error((await r.json()).error || r.status);
       out.push((await r.json()).translation); if (o.onToken) o.onToken(fin(out.join('\n')));
     }
@@ -527,20 +529,53 @@ async function translateCore(text, o) {
   if (o.images?.length) msg.images = o.images.map(i => i.b64);
   return fin(await chat([{ role:'system', content:S.sys }, msg], opt));
 }
+// Der Stopp-Knopf erscheint ausschliesslich waehrend eines Laufs. Er ist ein
+// reiner Icon-Button (Stoppschild ohne Schrift) und sitzt neben dem Kopieren-Icon.
+// Die kurze Verzoegerung verhindert ein Aufblitzen bei sehr schnellen Laeufen.
+let stopShowTimer = 0;
+function showStop(on) {
+  clearTimeout(stopShowTimer);
+  const b = $('#stopTr');
+  if (on) {
+    stopShowTimer = setTimeout(() => { if (busy) { b.classList.remove('hidden'); b.disabled = false; } }, 150);
+  } else { b.classList.add('hidden'); b.disabled = true; }
+}
+function stopTranslation() {
+  if (!currentAbortController) return;
+  const req = currentReq, mt = currentMt;
+  $('#stopTr').disabled = true;
+  currentAbortController.abort();
+  // Bei NLLB/OMT laeuft die Berechnung im Python-Server weiter, wenn nur der
+  // Browser-Request abgebrochen wird. /cancel setzt dort ein Abbruchsignal, das
+  // die StoppingCriteria in model.generate pruefen.
+  if (mt && req) fetch(S.nllb + '/cancel', { method:'POST', body:JSON.stringify({ req }) }).catch(() => {});
+}
 async function translate() {
   const text = $('#input').value.trim();
   if (busy || (!text && !images.length)) return;
   if (!S.model) return status(t('noModel'));
   if ((isMt() || isTg(S.model)) && S.src === 'auto') return status(t('needSrc'));
   if (images.length && (isMt() || !hasVision(S.model)) && !(await visionFallback())) return;
-  busy = true; $('#go').disabled = true; status(t('translating'));
+  busy = true; $('#go').disabled = true; showStop(true); status(t('translating'));
+  currentAbortController = new AbortController();
+  currentMt = isMt();
+  currentReq = 'tr-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
   try {
     lastSrc = text; $('#output').textContent = '';
     const live = x => $('#output').textContent = x;
-    lastTr = await translateCore(text, { model:S.model, src:S.src, tgt:S.tgt, style:S.style, writer:S.style.writer, ctxt:S.ctxt, gloss:S.gloss, images, onToken:live });
+    lastTr = await translateCore(text, { model:S.model, src:S.src, tgt:S.tgt, style:S.style, writer:S.style.writer, ctxt:S.ctxt, gloss:S.gloss, images, onToken:live, signal:currentAbortController.signal, req:currentReq });
     renderOut(); status('');
-  } catch (e) { status(t('error', String(e.message).slice(0, 120))); }
-  busy = false; $('#go').disabled = false;
+  } catch (e) {
+    if (e.name === 'AbortError' || currentAbortController?.signal.aborted) {
+      // Teilübersetzung behalten und als Wörter klickbar machen.
+      lastTr = $('#output').textContent;
+      if (lastTr) renderOut();
+      status(t('stopped'));
+    } else status(t('error', String(e.message).slice(0, 120)));
+  } finally {
+    busy = false; $('#go').disabled = false; showStop(false);
+    currentAbortController = null; currentReq = null; currentMt = false;
+  }
 }
 function renderOut() {
   const o = $('#output'); o.innerHTML = '';
@@ -834,7 +869,7 @@ $('#input').oninput = () => {
   }
 };
 $('#input').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); translate(); } };
-$('#go').onclick = translate; $('#copy').onclick = () => { navigator.clipboard.writeText(lastTr || $('#output').textContent); status(t('copied')); };
+$('#go').onclick = translate; $('#stopTr').onclick = stopTranslation; $('#copy').onclick = () => { navigator.clipboard.writeText(lastTr || $('#output').textContent); status(t('copied')); };
 $('#refresh').onclick = async () => {
   if ($('#refresh').classList.contains('spinning')) return;
   $('#refresh').classList.add('spinning'); status(t('reloadModels')); retries = 0;
@@ -856,7 +891,7 @@ function drawSettings() {
     // Klassik-Layout vorerst deaktiviert (Nutzerwunsch).
     // k === 'uiMode' ? [['classic', t('o_classic')], ['icons', t('o_icons')]] :
     k === 'profanityStyle' ? [['stars', t('o_stars')], ['symbols', t('o_symbols')]] :
-    k === 'helper' ? [['', t('autoO')], ...Object.keys(caps).filter(n => caps[n].includes('completion') && !isTg(n)).map(n => [n, n])] : null;
+    k === 'helper' ? [['', t('autoModel')], ...Object.keys(caps).filter(n => caps[n].includes('completion') && !isTg(n)).map(n => [n, n])] : null;
   // Zuruecksetzen ist ein reiner Icon-Button; der Name erscheint nur als Tooltip.
   // Das Icon wird direkt eingesetzt, weil reicon() nur im Editor-Scope existiert.
   const rst = k => `<button class="ib" data-r="${k}" data-tt="reset">${ic('refresh', 16)}</button>`;
