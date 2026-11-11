@@ -1003,6 +1003,10 @@ function renderDock(center = true) {
 }
 function dockOpen() {
   if (!ED.docs.length) return;
+  // Das Menue gehoert zum Editor. Ohne diese Pruefung konnte ein programmatischer
+  // Klick auf #sbDocs (etwa aus einem Testskript) das Dock ueber dem Uebersetzer
+  // anzeigen, obwohl der Schalter dort gar nicht sichtbar ist.
+  if ($('#vE').classList.contains('hidden')) return;
   syncDocEntry();
   docDock.classList.add('opening');
   docDock.classList.remove('hidden');
