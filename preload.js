@@ -8,5 +8,9 @@ contextBridge.exposeInMainWorld('api', {
   spellRemove: word => ipcRenderer.invoke('spell:remove', word),
   spellEdit: (oldWord, newWord) => ipcRenderer.invoke('spell:edit', oldWord, newWord),
   saveFile: (name, data, kind) => ipcRenderer.invoke('file:save', name, data, kind),
+  libList: () => ipcRenderer.invoke('lib:list'),
+  libRead: id => ipcRenderer.invoke('lib:read', id),
+  libSave: doc => ipcRenderer.invoke('lib:save', doc),
+  libDelete: id => ipcRenderer.invoke('lib:delete', id),
   fontsList: () => ipcRenderer.invoke('fonts:list')
 });

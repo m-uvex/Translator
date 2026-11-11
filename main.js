@@ -110,6 +110,52 @@ ipcMain.handle('file:save', async (_e, name, data, kind) => {
   return true;
 });
 
+// ---------- Datei-Bibliothek des Texteditors ----------
+// Jedes Dokument liegt als echte HTML-Datei in %APPDATA%/<App>/library,
+// daneben eine kleine JSON-Datei mit Name und Zeitstempeln. So bleiben die
+// Dateien auch ausserhalb der App lesbar, und die Vorschau kann den Inhalt
+// direkt laden. Die IDs werden auf unkritische Zeichen beschraenkt, damit
+// kein Pfad aus dem Renderer in fremde Ordner zeigen kann.
+const libDir = () => {
+  const d = path.join(app.getPath('userData'), 'library');
+  fs.mkdirSync(d, { recursive: true });
+  return d;
+};
+const libId = id => String(id || '').replace(/[^a-zA-Z0-9_-]/g, '');
+const libHtml = id => path.join(libDir(), libId(id) + '.html');
+const libMeta = id => path.join(libDir(), libId(id) + '.json');
+ipcMain.handle('lib:list', () => {
+  try {
+    const d = libDir();
+    return fs.readdirSync(d).filter(f => f.endsWith('.json')).map(f => {
+      try {
+        const m = JSON.parse(fs.readFileSync(path.join(d, f), 'utf8'));
+        const html = fs.readFileSync(libHtml(m.id), 'utf8');
+        return { id: m.id, name: m.name, created: m.created, updated: m.updated, html };
+      } catch { return null; }
+    }).filter(Boolean).sort((a, b) => b.updated - a.updated);
+  } catch { return []; }
+});
+ipcMain.handle('lib:read', (_e, id) => {
+  try {
+    const m = JSON.parse(fs.readFileSync(libMeta(id), 'utf8'));
+    return { id: m.id, name: m.name, created: m.created, updated: m.updated, html: fs.readFileSync(libHtml(id), 'utf8') };
+  } catch { return null; }
+});
+ipcMain.handle('lib:save', (_e, doc) => {
+  const id = libId(doc && doc.id) || ('d' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+  let created = Date.now();
+  try { created = JSON.parse(fs.readFileSync(libMeta(id), 'utf8')).created || created; } catch {}
+  const meta = { id, name: String((doc && doc.name) || 'Dokument').slice(0, 120), created, updated: Date.now() };
+  fs.writeFileSync(libHtml(id), String((doc && doc.html) || ''), 'utf8');
+  fs.writeFileSync(libMeta(id), JSON.stringify(meta), 'utf8');
+  return meta;
+});
+ipcMain.handle('lib:delete', (_e, id) => {
+  for (const f of [libHtml(id), libMeta(id)]) { try { fs.unlinkSync(f); } catch {} }
+  return true;
+});
+
 app.whenReady().then(() => {
   try { personal = JSON.parse(fs.readFileSync(persFile(), 'utf8')); } catch {}
   session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => cb(permission === 'local-fonts'));

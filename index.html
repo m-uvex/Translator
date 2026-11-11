@@ -2,7 +2,7 @@
 <meta name="color-scheme" content="light dark"><link rel="stylesheet" href="style.css"></head><body>
 <div class="app">
   <nav class="rail">
-    <div class="rg"><button class="ib rb active" id="nvTr" data-i="languages" data-tt="navTr"></button><button class="ib rb" id="nvEd" data-i="doc" data-tt="navEd"></button></div>
+    <div class="rg"><button class="ib rb active" id="nvTr" data-i="languages" data-tt="navTr"></button><button class="ib rb" id="nvEd" data-i="doc" data-tt="navEd"></button><button class="ib rb" id="nvLib" data-i="library" data-tt="navLib"></button></div>
     <div class="rg"><button class="ib" id="openSettings" data-i="sliders" data-tt="settings"></button></div>
   </nav>
   <div id="vT" class="view">
@@ -34,6 +34,11 @@
     <div class="sbar" id="edBar"></div>
     <div class="ctxbar hidden" id="ctxBar"></div>
     <input type="file" id="edFile" hidden accept=".txt,.md,.html,.docx,.pdf">
+  </div>
+  <div id="vL" class="view hidden">
+    <header class="libhead"><h2 data-t="libTitle"></h2><span class="sp"></span><span class="muted" id="libCount"></span></header>
+    <div id="libGrid" class="libgrid"></div>
+    <div id="libEmpty" class="libempty hidden"><p data-t="libEmpty"></p><p class="muted" data-t="libEmptyHint"></p></div>
   </div>
 </div>
 <div id="pop" class="pop hidden"></div><div id="alt" class="pop alt hidden"></div><div id="cm" class="pop hidden"></div><div id="trPop" class="pop trpop hidden"></div>

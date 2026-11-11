@@ -31,6 +31,9 @@ Object.assign(IC, {
   plus:'<path d="M12 5v14M5 12h14"/>', pencil:'<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>',
   cpu:'<rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
   chev:'<path d="M6 9l6 6 6-6"/>', arrowR:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  // Zwei uebereinanderliegende Seiten: Schalter fuer die in der Sitzung
+  // geoeffneten Dokumente in der Statusleiste.
+  docs:'<path d="M8 3h7l4 4v12H8z"/><path d="M15 3v4h4M4 7v14h10v-4"/>',
   male:'<circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/>', female:'<circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 18h6"/>',
   nb:'<circle cx="12" cy="13" r="4"/><path d="M12 9V2M8.5 11 3 8M15.5 11 21 8"/>', qmark:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/>', dash:'<path d="M6 12h12"/>',
   hat:'<path d="M6 15V6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v9M3 15h18M4 15v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1M6 11h12"/>', smile:'<circle cx="12" cy="12" r="9"/><path d="M8 14c1 1.5 2.3 2 4 2s3-.5 4-2M9 9.5h.01M15 9.5h.01"/>',
@@ -73,6 +76,21 @@ const reicon = () => document.querySelectorAll('[data-i]').forEach(e => e.innerH
 
 const X = (k, de, en, nl, es, tr, ar) => { K[k] = [de, en]; NL[k] = nl; if (window.ES && es) ES[k] = es; if (window.TR && tr) TR[k] = tr; if (window.AR && ar) AR[k] = ar; };
 X('navTr','Übersetzer','Translator','Vertaler','Traductor','Çevirmen','المترجم'); X('navEd','Textbearbeitung','Text editor','Tekstbewerking','Editor de texto','Metin düzenleyici','محرر النصوص');
+// Datei-Bibliothek: Rail-Icon unter dem Editor, Liste mit Vorschau, Oeffnen
+// per Klick und Entfernen per Kreuz in der Ecke.
+X('navLib','Datei-Bibliothek','File library','Bestandsbibliotheek','Biblioteca de archivos','Dosya kitaplığı','مكتبة الملفات');
+X('libTitle','Datei-Bibliothek','File library','Bestandsbibliotheek','Biblioteca de archivos','Dosya kitaplığı','مكتبة الملفات');
+X('libEmpty','Noch keine Dokumente in der Bibliothek.','No documents in the library yet.','Nog geen documenten in de bibliotheek.','Aún no hay documentos en la biblioteca.','Kitaplıkta henüz belge yok.','لا توجد مستندات في المكتبة بعد.');
+X('libEmptyHint','Speichern Sie ein Dokument im Texteditor, um es hier wiederzufinden.','Save a document in the text editor to find it here.','Sla een document op in de teksteditor om het hier terug te vinden.','Guarda un documento en el editor de texto para encontrarlo aquí.','Burada bulmak için metin düzenleyicide bir belge kaydedin.','احفظ مستندًا في محرر النصوص لتجده هنا.');
+X('libSave','In Bibliothek speichern','Save to library','In bibliotheek opslaan','Guardar en la biblioteca','Kitaplığa kaydet','حفظ في المكتبة');
+X('libSaved','In Bibliothek gespeichert','Saved to library','Opgeslagen in bibliotheek','Guardado en la biblioteca','Kitaplığa kaydedildi','تم الحفظ في المكتبة');
+X('libDeleteQ','Dieses Dokument aus der Bibliothek entfernen?','Remove this document from the library?','Dit document uit de bibliotheek verwijderen?','¿Quitar este documento de la biblioteca?','Bu belge kitaplıktan kaldırılsın mı?','إزالة هذا المستند من المكتبة؟');
+X('libUntitled','Dokument','Document','Document','Documento','Belge','مستند');
+X('libCount', n => `${n} Dokumente`, n => `${n} documents`, n => `${n} documenten`, n => `${n} documentos`, n => `${n} belge`, n => `${n} مستندات`);
+// Sitzungsliste im Editor: Schalter in der Statusleiste, Karten mit Vorschau,
+// Schliessen per Kreuz und Umsortieren per Ziehen.
+X('sessionDocs','Geöffnete Dokumente','Open documents','Geopende documenten','Documentos abiertos','Açık belgeler','المستندات المفتوحة');
+X('dockClose','Aus der Sitzung schließen','Close from session','Uit de sessie sluiten','Cerrar de la sesión','Oturumdan kapat','إغلاق من الجلسة');
 X('fNew','Neues Dokument','New document','Nieuw document','Nuevo documento','Yeni belge','مستند جديد'); X('fOpen','Öffnen','Open','Openen','Abrir','Aç','فتح'); X('fSave','Speichern unter …','Save as …','Opslaan als …','Guardar como …','Farklı kaydet …','حفظ باسم …');
 X('undo','Rückgängig','Undo','Ongedaan maken','Deshacer','Geri al','تراجع'); X('redo','Wiederholen','Redo','Opnieuw','Rehacer','Yinele','إعادة');
 X('bold','Fett','Bold','Vet','Negrita','Kalın','عريض'); X('italic','Schräg','Italic','Cursief','Cursiva','İtalik','مائل'); X('underline','Unterstrichen','Underline','Onderstreept','Subrayado','Altı çizili','تسطير'); X('strike','Durchgestrichen','Strikethrough','Doorgehaald','Tachado','Üstü çizili','يتوسطه خط');
@@ -112,8 +130,12 @@ X('pagebreak','Seitenumbruch','Page break','Pagina-einde','Salto de página','Sa
 
 S.ed = Object.assign({ src:'auto', tgt:'en', formal:'standard', wGender:'unknown', aGender:'unknown' }, S.ed || {});
 S.edStyles = S.edStyles || []; S.edWrite = S.edWrite || ''; S.edTrans = S.edTrans || ''; S.dictLang = S.dictLang || ''; if (S.edSpell === undefined) S.edSpell = true;
-if (S.edSpellAnim === undefined) S.edSpellAnim = false;
-const ED = { busy:false, writing:false, cancelled:false, sel:null, ranges:[], ignored:new Set(), seq:0 };
+if (S.edSpellAnim === undefined) S.edSpellAnim = true;
+// Einmalige Migration: Die schlaengelnden Wellen sind jetzt Standard. Wer die
+// Einstellung vorher nie bewusst gesetzt hat, bekommt sie beim ersten Start
+// nach diesem Update eingeschaltet; danach gilt wieder die Nutzerwahl.
+if (!S.edSpellAnimDefault) { S.edSpellAnim = true; S.edSpellAnimDefault = true; save(); }
+const ED = { busy:false, writing:false, cancelled:false, sel:null, ranges:[], ignored:new Set(), seq:0, docId:null, docs:[], docKey:null, docSeq:0 };
 const generalModels = () => Object.keys(caps).filter(n => caps[n].includes('completion') && !isTg(n));
 const writeModel = () => (S.edWrite && generalModels().includes(S.edWrite)) ? S.edWrite : (helperModel() || generalModels()[0] || null);
 const transModel = () => MODEL_OPTS.some(o => o.value === S.edTrans) ? S.edTrans : (MODEL_OPTS.some(o => o.value === S.pref) ? S.pref : (MODEL_OPTS[0]?.value || null));
@@ -768,33 +790,344 @@ function toMd(node) {
   });
   return o;
 }
-async function newDoc() { if (page.textContent.trim() && !(await ask(t('confNew'), t('yes'), t('cancel')))) return; setDoc('<p><br></p>'); }
-function setDoc(html) { page.innerHTML = html; page.dispatchEvent(new Event('input')); page.scrollTop = 0; }
+async function newDoc() {
+  if (page.textContent.trim() && !(await ask(t('confNew'), t('yes'), t('cancel')))) return;
+  // Ein bereits leeres, ungespeichertes Dokument wird wiederverwendet, statt
+  // fuer jeden Klick auf "Neu" eine weitere leere Karte anzulegen.
+  const cur = currentDocEntry();
+  if (cur && !cur.id && !page.textContent.trim() && !page.querySelector('img,hr')) { applyDocEntry(cur); return; }
+  setDoc('<p><br></p>');
+}
+// ---------- Sitzungsdokumente ----------
+// Jedes in dieser Sitzung geoeffnete Dokument bleibt als Eintrag in ED.docs
+// erhalten. Der aktive Eintrag wird vor jedem Wechsel aus der Seite
+// zurueckgesichert, damit ungespeicherte Aenderungen nicht verloren gehen.
+function currentDocEntry() { return ED.docs.find(d => d.key === ED.docKey) || null; }
+function syncDocEntry() {
+  const e = currentDocEntry();
+  if (!e) return;
+  e.html = page.innerHTML;
+  e.name = docName();
+}
+function applyDocEntry(e) {
+  ED.docKey = e.key;
+  ED.docId = e.id || null;
+  try { localStorage.setItem('edDocId', ED.docId || ''); } catch {}
+  page.innerHTML = e.html || '<p><br></p>';
+  page.dispatchEvent(new Event('input'));
+  page.scrollTop = 0;
+}
+function setDoc(html, id = null) {
+  syncDocEntry();
+  let e = id ? ED.docs.find(d => d.id === id) : null;
+  if (!e) {
+    e = { key:'s' + (++ED.docSeq), id:id || null, name:t('libUntitled'), html: html || '<p><br></p>' };
+    ED.docs.push(e);
+  }
+  applyDocEntry(e);
+  e.name = docName();
+}
+// Fremdes und gespeichertes HTML wird vor dem Einsetzen entschaerft: Skripte,
+// Styles, Frames und Event-Attribute fliegen raus, javascript:-URLs ebenfalls.
+function cleanHtml(html) {
+  const d = new DOMParser().parseFromString(String(html || ''), 'text/html');
+  d.querySelectorAll('script,style,iframe,object,link,meta').forEach(n => n.remove());
+  d.querySelectorAll('*').forEach(n => [...n.attributes].forEach(a => {
+    if (/^on/i.test(a.name)) n.removeAttribute(a.name);
+    if ((a.name === 'href' || a.name === 'src') && /^\s*javascript:/i.test(a.value)) n.removeAttribute(a.name);
+  }));
+  return d.body.innerHTML || '<p><br></p>';
+}
 $('#edFile').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try {
     if (/\.(pdf|docx)$/i.test(f.name)) { const x = await window.api.extract(f.name, await f.arrayBuffer()); if (!x) return edStatus(t('noText')); setDoc(paragraphs(x)); }
     else if (/\.md$/i.test(f.name)) setDoc(mdToHtml(await f.text()));
-    else if (/\.html?$/i.test(f.name)) {
-      const d = new DOMParser().parseFromString(await f.text(), 'text/html');
-      d.querySelectorAll('script,style,iframe,object').forEach(n => n.remove());
-      d.querySelectorAll('*').forEach(n => [...n.attributes].forEach(a => { if (/^on/i.test(a.name)) n.removeAttribute(a.name); }));
-      setDoc(d.body.innerHTML || '<p><br></p>');
-    } else setDoc(paragraphs(await f.text()));
+    else if (/\.html?$/i.test(f.name)) setDoc(cleanHtml(await f.text()));
+    else setDoc(paragraphs(await f.text()));
   } catch { edStatus(t('readErr')); }
 };
+function docName() {
+  return page.querySelector('h1,h2,h3')?.textContent.trim().slice(0, 40).replace(/[\\/:*?"<>|]/g, '') || t('libUntitled');
+}
+// Legt das aktuelle Dokument in der Bibliothek ab bzw. aktualisiert den Eintrag.
+// Die ID bleibt ueber Neustarts erhalten (localStorage), damit wiederholtes
+// Speichern keine Dubletten erzeugt.
+async function libUpsert() {
+  if (!page.textContent.trim()) return null;
+  ED.docId = ED.docId || ('d' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+  try {
+    const m = await window.api.libSave({ id: ED.docId, name: docName(), html: page.innerHTML });
+    if (m && m.id) {
+      ED.docId = m.id;
+      const cur = currentDocEntry();
+      if (cur) { cur.id = m.id; cur.name = m.name || docName(); cur.html = page.innerHTML; }
+      try { localStorage.setItem('edDocId', m.id); } catch {}
+    }
+    return m;
+  } catch { return null; }
+}
 function savePop(btn) {
   closePops(); const p = $('#pop'); p.innerHTML = '';
-  [['md', 'Markdown (.md)'], ['txt', 'Text (.txt)'], ['pdf', 'PDF (.pdf)']].forEach(([k, l]) => {
-    const r = document.createElement('div'); r.className = 'row'; r.textContent = l; r.onclick = () => { closePops(); doSave(k); }; p.append(r);
-  });
+  const add = (label, fn) => {
+    const r = document.createElement('div'); r.className = 'row'; r.textContent = label;
+    r.onclick = () => { closePops(); fn(); }; p.append(r);
+  };
+  add(t('libSave'), async () => { if (await libUpsert()) edStatus(t('libSaved')); });
+  p.append(document.createElement('hr'));
+  [['md', 'Markdown (.md)'], ['txt', 'Text (.txt)'], ['pdf', 'PDF (.pdf)']].forEach(([k, l]) => add(l, () => doSave(k)));
   const r = btn.getBoundingClientRect(); Object.assign(p.style, { left:r.left + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden');
 }
 async function doSave(kind) {
-  const name = (page.querySelector('h1,h2,h3')?.textContent.trim().slice(0, 40).replace(/[\\/:*?"<>|]/g, '') || 'Document');
+  const name = docName();
   const data = kind === 'md' ? toMd(page).trim() + '\n' : page.innerText;
-  try { await window.api.saveFile(name, data, kind); } catch { edStatus(t('readErr')); }
+  try {
+    // Ein erfolgreicher Export landet zusaetzlich in der Bibliothek, damit
+    // erstellte Dateien dort ohne eigenen Schritt wiederzufinden sind.
+    if (await window.api.saveFile(name, data, kind)) await libUpsert();
+  } catch { edStatus(t('readErr')); }
 }
+
+// ---------- Datei-Bibliothek ----------
+// Die Liste kommt aus dem Main-Prozess (echte HTML-Dateien plus Metadaten).
+// Die Vorschau zeigt den Anfang des Dokuments in einer kleinen Seite; das
+// Entfernen nutzt dasselbe Kreuz wie die Bildvorschauen (#thumbs .rm).
+function libDate(ts) {
+  try { return new Date(ts).toLocaleString(LANG, { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
+  catch { return ''; }
+}
+async function drawLib() {
+  const grid = $('#libGrid'), empty = $('#libEmpty');
+  let items = [];
+  try { items = await window.api.libList(); } catch {}
+  $('#libCount').textContent = items.length ? t('libCount', items.length) : '';
+  empty.classList.toggle('hidden', items.length > 0);
+  grid.innerHTML = '';
+  for (const e of items) {
+    const card = document.createElement('div');
+    card.className = 'libcard'; card.dataset.id = e.id; card.tabIndex = 0;
+    card.innerHTML = `<div class="libprev"></div><div class="libmeta"><div class="libname">${esc(e.name)}</div><div class="libdate">${esc(libDate(e.updated))}</div></div><button class="rm" title="${esc(t('remove'))}">${ic('x', 14)}</button>`;
+    const doc = document.createElement('div'); doc.className = 'doc'; doc.innerHTML = cleanHtml(e.html);
+    card.querySelector('.libprev').append(doc);
+    card.onclick = ev => { if (!ev.target.closest('.rm')) libOpen(e.id); };
+    card.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); libOpen(e.id); } };
+    card.querySelector('.rm').onclick = ev => { ev.stopPropagation(); libRemove(e.id); };
+    grid.append(card);
+  }
+}
+async function libOpen(id) {
+  // Ist das Dokument bereits in dieser Sitzung offen, wird die Sitzungsfassung
+  // gezeigt; sonst wuerde ein erneutes Oeffnen ungespeicherte Aenderungen
+  // ueberschreiben.
+  const open = ED.docs.find(d => d.id === id);
+  if (open) { syncDocEntry(); applyDocEntry(open); showView('ed'); return; }
+  let e = null;
+  try { e = await window.api.libRead(id); } catch {}
+  if (!e) return edStatus(t('readErr'));
+  setDoc(cleanHtml(e.html), id);
+  showView('ed');
+}
+async function libRemove(id) {
+  if (!(await ask(t('libDeleteQ'), t('yes'), t('cancel')))) return;
+  const grid = $('#libGrid');
+  const first = new Map([...grid.children].map(c => [c.dataset.id, c.getBoundingClientRect()]));
+  try { await window.api.libDelete(id); } catch {}
+  await drawLib();
+  // FLIP-Animation: die verbleibenden Karten gleiten von ihrer alten an die
+  // neue Position, statt zu springen. Nur Karten, die sich wirklich bewegen.
+  [...grid.children].forEach(c => {
+    const f = first.get(c.dataset.id); if (!f) return;
+    const l = c.getBoundingClientRect();
+    const dx = f.left - l.left, dy = f.top - l.top;
+    if (!dx && !dy) return;
+    c.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }],
+      { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
+  });
+}
+
+// ---------- Sitzungsliste: in dieser Sitzung geoeffnete Dokumente ----------
+// Die Karten liegen vor einer breiten Flaeche und ragen oben darueber hinaus.
+// Die aktive Karte ist am groessten; ein Klick wechselt, Ziehen sortiert um.
+const docDock = document.createElement('div');
+docDock.id = 'docDock'; docDock.className = 'hidden';
+docDock.innerHTML = '<div class="dockpanel"></div><div id="dockStrip"></div>';
+document.body.appendChild(docDock);
+const dockStrip = docDock.querySelector('#dockStrip');
+let dockDrag = null, dockSkipClick = false;
+
+function centerDock(card, smooth = false) {
+  // scrollIntoView rechnet die Richtung (auch RTL) selbst aus und klemmt am
+  // Rand, sodass bei wenigen Dokumenten kein leerer Streifen entsteht.
+  card.scrollIntoView({ block:'nearest', inline:'center', behavior: smooth ? 'smooth' : 'auto' });
+}
+function renderDock(center = true) {
+  dockStrip.innerHTML = '';
+  ED.docs.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'dockcard' + (d.key === ED.docKey ? ' on' : '');
+    card.dataset.key = d.key; card.tabIndex = 0;
+    card.innerHTML = `<div class="dockprev"><div class="doc">${cleanHtml(d.html)}</div></div><div class="dockname">${esc(d.name || t('libUntitled'))}</div><button class="rm dockrm" title="${esc(t('dockClose'))}">${ic('x', 12)}</button>`;
+    card.onclick = ev => {
+      if (ev.target.closest('.rm')) return;
+      if (dockSkipClick) { dockSkipClick = false; return; }
+      dockPick(d.key);
+    };
+    card.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); dockPick(d.key); } };
+    card.querySelector('.dockrm').onclick = ev => { ev.stopPropagation(); dockRemove(d.key); };
+    card.addEventListener('pointerdown', ev => dockDragStart(ev, card));
+    dockStrip.append(card);
+  });
+  const active = dockStrip.querySelector('.dockcard.on');
+  if (active && center) requestAnimationFrame(() => centerDock(active));
+}
+function dockOpen() {
+  if (!ED.docs.length) return;
+  syncDocEntry();
+  docDock.classList.add('opening');
+  docDock.classList.remove('hidden');
+  renderDock();
+  setTimeout(() => docDock.classList.remove('opening'), 300);
+}
+function dockClose() {
+  docDock.classList.add('hidden');
+  docDock.classList.remove('opening');
+  dockDrag = null;
+}
+function dockToggle() { if (docDock.classList.contains('hidden')) dockOpen(); else dockClose(); }
+function dockPick(key) {
+  const e = ED.docs.find(d => d.key === key);
+  if (!e) return;
+  if (e.key !== ED.docKey) { syncDocEntry(); applyDocEntry(e); }
+  dockClose();
+}
+function dockRemove(key) {
+  const i = ED.docs.findIndex(d => d.key === key);
+  if (i < 0) return;
+  const active = ED.docs[i].key === ED.docKey;
+  if (active) syncDocEntry();
+  const before = new Map([...dockStrip.children].map(c => [c.dataset.key, c.getBoundingClientRect()]));
+  ED.docs.splice(i, 1);
+  if (active) {
+    // Aktives Dokument geschlossen: auf den Nachbarn wechseln oder, wenn
+    // keines mehr uebrig ist, ein leeres Dokument anlegen. Das Menue schliesst,
+    // weil sich das aktive Dokument geaendert hat.
+    if (!ED.docs.length) {
+      ED.docKey = null; ED.docId = null;
+      const blank = { key:'s' + (++ED.docSeq), id:null, name:t('libUntitled'), html:'<p><br></p>' };
+      ED.docs.push(blank);
+      applyDocEntry(blank);
+    } else applyDocEntry(ED.docs[Math.min(i, ED.docs.length - 1)]);
+    dockClose();
+    return;
+  }
+  renderDock(false);
+  // FLIP: die verbleibenden Karten ruecken mit derselben Kurve nach.
+  [...dockStrip.children].forEach(c => {
+    const f = before.get(c.dataset.key); if (!f) return;
+    const l = c.getBoundingClientRect();
+    const dx = f.left - l.left, dy = f.top - l.top;
+    if (!dx && !dy) return;
+    c.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }],
+      { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
+  });
+}
+function dockDragStart(ev, card) {
+  if (ev.button !== 0 || ev.target.closest('.rm')) return;
+  const rects = new Map([...dockStrip.children].map(c => [c.dataset.key, c.getBoundingClientRect()]));
+  dockDrag = {
+    card, key:card.dataset.key, index:[...dockStrip.children].indexOf(card),
+    target:[...dockStrip.children].indexOf(card), startX:ev.clientX, startY:ev.clientY,
+    pointerId:ev.pointerId, moved:false, rects,
+    gap:parseFloat(getComputedStyle(dockStrip).columnGap) || 18
+  };
+  try { card.setPointerCapture(ev.pointerId); } catch {}
+  card.addEventListener('pointermove', dockDragMove);
+  card.addEventListener('pointerup', dockDragEnd);
+  card.addEventListener('pointercancel', dockDragEnd);
+}
+function dockDragMove(ev) {
+  const d = dockDrag; if (!d || ev.pointerId !== d.pointerId) return;
+  const dx = ev.clientX - d.startX, dy = ev.clientY - d.startY;
+  if (!d.moved) {
+    if (Math.hypot(dx, dy) < 6) return;
+    d.moved = true;
+    d.card.classList.add('dragging');
+    dockStrip.classList.add('dragging');
+  }
+  ev.preventDefault();
+  d.card.style.transform = `translateX(${dx}px)`;
+  const start = d.rects.get(d.key);
+  const center = start.left + start.width / 2 + dx;
+  const rtl = getComputedStyle(dockStrip).direction === 'rtl';
+  let target = 0;
+  [...dockStrip.children].forEach(c => {
+    if (c === d.card) return;
+    const b = d.rects.get(c.dataset.key);
+    const before = rtl ? center < b.left + b.width / 2 : center > b.left + b.width / 2;
+    if (before) target++;
+  });
+  d.target = target;
+  const shift = d.card.offsetWidth + d.gap;
+  [...dockStrip.children].forEach((c, i) => {
+    if (c === d.card) return;
+    let tx = 0;
+    if (i > d.index && i <= d.target) tx = -shift;
+    else if (i >= d.target && i < d.index) tx = shift;
+    if (rtl) tx = -tx;
+    c.style.transition = 'transform .18s cubic-bezier(.2,.8,.2,1)';
+    c.style.transform = tx ? `translateX(${tx}px)` : '';
+  });
+}
+function dockDragEnd(ev) {
+  const d = dockDrag; if (!d || ev.pointerId !== d.pointerId) return;
+  dockDrag = null;
+  d.card.removeEventListener('pointermove', dockDragMove);
+  d.card.removeEventListener('pointerup', dockDragEnd);
+  d.card.removeEventListener('pointercancel', dockDragEnd);
+  try { d.card.releasePointerCapture(d.pointerId); } catch {}
+  d.card.classList.remove('dragging');
+  dockStrip.classList.remove('dragging');
+  if (!d.moved) { d.card.style.transform = ''; return; }
+  // Nach dem Ziehen kein Klick mehr; der naechste echte Klick soll wieder greifen.
+  dockSkipClick = true;
+  setTimeout(() => { dockSkipClick = false; }, 0);
+  const before = new Map([...dockStrip.children].map(c => [c.dataset.key, c.getBoundingClientRect()]));
+  [...dockStrip.children].forEach(c => { c.style.transition = 'none'; c.style.transform = ''; });
+  const from = ED.docs.findIndex(x => x.key === d.key);
+  if (d.target !== from && d.target >= 0) {
+    const [entry] = ED.docs.splice(from, 1);
+    ED.docs.splice(Math.min(d.target, ED.docs.length), 0, entry);
+    renderDock(false);
+  }
+  // FLIP von der aktuellen (gezogenen) Position an die neue Endposition.
+  [...dockStrip.children].forEach(c => {
+    const f = before.get(c.dataset.key); if (!f) return;
+    const l = c.getBoundingClientRect();
+    const dx = f.left - l.left, dy = f.top - l.top;
+    c.style.transition = '';
+    if (!dx && !dy) return;
+    c.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }],
+      { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' });
+  });
+}
+dockStrip.addEventListener('wheel', ev => {
+  if (!ev.deltaY) return;
+  dockStrip.scrollLeft += ev.deltaY;
+  ev.preventDefault();
+}, { passive:false });
+document.addEventListener('keydown', ev => {
+  if (docDock.classList.contains('hidden')) return;
+  if (ev.key === 'Escape') { dockClose(); ev.preventDefault(); }
+  else if (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') {
+    dockStrip.scrollBy({ left:(ev.key === 'ArrowRight' ? 1 : -1) * 220, behavior:'smooth' });
+    ev.preventDefault();
+  }
+});
+document.addEventListener('mousedown', ev => {
+  if (docDock.classList.contains('hidden')) return;
+  if (ev.target.closest('#docDock,#sbDocs')) return;
+  dockClose();
+});
 
 const dictCode = () => S.dictLang || (['de', 'nl', 'es', 'tr', 'ar'].includes(LANG) ? LANG : 'en');
 const DICTS = [['de', 'Deutsch'], ['en', 'English'], ['nl', 'Nederlands'], ['es', 'Español'], ['tr', 'Türkçe'], ['ar', 'العربية']];
@@ -804,6 +1137,16 @@ function scheduleScan() { clearTimeout(scanTimer); scanTimer = setTimeout(spellS
 function spoilerNode(n) { const el = n && n.parentElement; return !!(el && el.closest && el.closest('.ai-processing')); }
 function syncSpellHighlight() { if (window.CSS && CSS.highlights) CSS.highlights.set('spell', new Highlight(...ED.ranges.map(x => x.r))); layoutSpell(); }
 function dropSpoilerRanges() { ED.ranges = ED.ranges.filter(x => !spoilerNode(x.r.startContainer)); syncSpellHighlight(); }
+// Entfernt alle Markierungen eines Wortes sofort, bevor der asynchrone Scan
+// antwortet. Das verhindert, dass die Welle nach "Zum Wörterbuch hinzufügen"
+// oder "Ignorieren" sichtbar stehen bleibt, wenn der Scan aus irgendeinem
+// Grund verworfen wird (Sequenzwechsel, IPC-Fehler).
+function dropWordRanges(word) {
+  const w = String(word || '').toLowerCase();
+  if (!w) return;
+  ED.ranges = ED.ranges.filter(x => String(x.word || '').toLowerCase() !== w);
+  syncSpellHighlight();
+}
 
 // ---------- Weiches Wellen-Overlay ----------
 // Die Wellen werden als Sinuslinie auf ein Canvas gezeichnet: runde Enden,
@@ -832,7 +1175,16 @@ function drawSpell() {
   }
 }
 function layoutSpell() {
-  if (!spellVisible()) { stopSpellAnim(); spellRects = []; spellCv.style.display = 'none'; return; }
+  if (!spellVisible()) {
+    stopSpellAnim(); spellRects = [];
+    // Canvas auch im versteckten Zustand leeren: sonst bleiben alte rote
+    // Pixel im Puffer und blitzen auf, wenn die Ebene spaeter wieder sichtbar
+    // wird, bevor der naechste Scan neu zeichnet.
+    spellCtx.setTransform(1, 0, 0, 1, 0, 0);
+    spellCtx.clearRect(0, 0, spellCv.width, spellCv.height);
+    spellCv.style.display = 'none';
+    return;
+  }
   const wrap = $('#pageWrap'), dpr = window.devicePixelRatio || 1;
   const w = Math.max(1, wrap.scrollWidth), h = Math.max(1, wrap.scrollHeight);
   if (spellCv.width !== Math.round(w * dpr) || spellCv.height !== Math.round(h * dpr)) {
@@ -912,14 +1264,20 @@ page.addEventListener('contextmenu', async e => {
   if (hit.kind === 'comma') {
     const h = document.createElement('div'); h.className = 'row hd'; h.textContent = t('commaMissing'); m.append(h);
     row(t('insComma'), () => { const r = document.createRange(); r.setStart(hit.node, hit.pos); r.collapse(true); const s = getSelection(); s.removeAllRanges(); s.addRange(r); page.focus(); ED.writing = true; try { document.execCommand('insertText', false, ','); } finally { ED.writing = false; } });
-    row(t('ignoreW'), () => { ED.ranges = ED.ranges.filter(x => x !== hit); CSS.highlights.set('spell', new Highlight(...ED.ranges.map(x => x.r))); layoutSpell(); });
+    row(t('ignoreW'), () => { ED.ranges = ED.ranges.filter(x => x !== hit); syncSpellHighlight(); });
   } else {
     let sug = []; try { sug = await window.api.spellSuggest(dictCode(), hit.word); } catch {}
     if (!sug.length) { const h = document.createElement('div'); h.className = 'row hd'; h.textContent = t('noSug'); m.append(h); }
     sug.forEach(s => row(s, () => { const s2 = getSelection(); s2.removeAllRanges(); s2.addRange(hit.r); page.focus(); ED.writing = true; try { document.execCommand('insertText', false, s); } finally { ED.writing = false; } }, true));
     m.append(document.createElement('hr'));
-    row(t('addDict'), async () => { await window.api.spellAdd(hit.word); spellScan(); });
-    row(t('ignoreW'), () => { ED.ignored.add(hit.word.toLowerCase()); spellScan(); });
+    row(t('addDict'), async () => {
+      // Sofort alle Wellen dieses Wortes entfernen; der Scan bestaetigt das
+      // danach nur noch. So bleibt die Linie auch bei einem IPC-Fehler nicht
+      // stehen.
+      dropWordRanges(hit.word);
+      try { await window.api.spellAdd(hit.word); } finally { dropWordRanges(hit.word); spellScan(); }
+    });
+    row(t('ignoreW'), () => { ED.ignored.add(hit.word.toLowerCase()); dropWordRanges(hit.word); spellScan(); });
   }
   Object.assign(m.style, { left:Math.min(e.clientX, innerWidth - 260) + 'px', top:Math.min(e.clientY, innerHeight - 200) + 'px' }); m.classList.remove('hidden');
 });
@@ -969,6 +1327,7 @@ async function showDictManager() {
       if (words.includes(w)) { alert(t('wordExists')); return; }
       await window.api.spellAdd(w);
       words.push(w);
+      dropWordRanges(w);
       inp.value = '';
       draw();
       spellScan();
@@ -1013,7 +1372,8 @@ async function showDictManager() {
 
 function renderSb() {
   const d = DICTS.find(x => x[0] === dictCode()) || DICTS[1];
-  sb.innerHTML = `<span id="sbWords"></span><span id="sbStatus" class="sp"></span><button class="ib" id="sbDictWords" title="${t('personalDict')}">${ic('book', 16)}</button><button class="ghost" id="sbDict" title="${t('dict')}">${ic('globe', 16)}${d[1]}${ic('chev', 14)}</button>`;
+  sb.innerHTML = `<span id="sbWords"></span><span id="sbStatus" class="sp"></span><button class="ib" id="sbDocs" title="${t('sessionDocs')}">${ic('docs', 16)}</button><button class="ib" id="sbDictWords" title="${t('personalDict')}">${ic('book', 16)}</button><button class="ghost" id="sbDict" title="${t('dict')}">${ic('globe', 16)}${d[1]}${ic('chev', 14)}</button>`;
+  $('#sbDocs').onclick = e => { e.stopPropagation(); dockToggle(); };
   $('#sbDictWords').onclick = showDictManager;
   $('#sbDict').onclick = e => {
     closePops(); const p = $('#pop'); p.innerHTML = '';
@@ -1035,6 +1395,9 @@ function updWords() { const w = (page.innerText.trim().match(/\S+/g) || []).leng
 
 document.execCommand('defaultParagraphSeparator', false, 'p');
 page.innerHTML = localStorage.getItem('edDoc') || '<p><br></p>';
+ED.docId = localStorage.getItem('edDocId') || null;
+ED.docs = [{ key:'s0', id:ED.docId, name:docName(), html:page.innerHTML }];
+ED.docKey = 's0';
 let saveTimer = null;
 
 function handleMarkdownTrigger() {
@@ -1140,9 +1503,13 @@ document.addEventListener('mousedown', e => { if (!e.target.closest('#trPop,.ctx
 function showView(v) {
   if (window.trCollapseImages) window.trCollapseImages();
   $('#vT').classList.toggle('hidden', v !== 'tr'); $('#vE').classList.toggle('hidden', v !== 'ed');
+  $('#vL').classList.toggle('hidden', v !== 'lib');
   $('#nvTr').classList.toggle('active', v === 'tr'); $('#nvEd').classList.toggle('active', v === 'ed');
+  $('#nvLib').classList.toggle('active', v === 'lib');
   S.view = v; save(); closePops(); $('#trPop').classList.add('hidden'); hideBar();
+  dockClose();
   if (v === 'ed') { updWords(); scheduleScan(); }
+  if (v === 'lib') drawLib();
   if (v === 'tr' && window.trAlignSide) window.trAlignSide();
 }
 function applyWorkspace() {
@@ -1150,14 +1517,22 @@ function applyWorkspace() {
   const single = w !== 'both';
   $('#nvTr').classList.toggle('hidden', single);
   $('#nvEd').classList.toggle('hidden', single);
-  if (single && S.view !== w) showView(w);
+  // Die Bibliothek gehoert zum Editor: Ist der Editor-Arbeitsplatz abgeschaltet
+  // (nur Uebersetzer), verschwindet auch ihr Rail-Icon.
+  $('#nvLib').classList.toggle('hidden', w === 'tr');
+  if (w === 'tr' && S.view === 'lib') showView('tr');
+  else if (single && S.view !== w && S.view !== 'lib') showView(w);
 }
 $('#nvTr').onclick = () => showView('tr'); $('#nvEd').onclick = () => showView('ed');
+$('#nvLib').onclick = () => showView(S.view === 'lib' ? 'ed' : 'lib');
 window.edRender = () => { buildBar(); renderTb(); renderSb(); applyI18n(); reicon(); applyWorkspace(); scheduleScan(); };
 window.edModels = () => { fixEdLangs(); renderTb(); };
 window.edWorkspace = applyWorkspace;
 window.edShowView = showView;
-const startView = () => ((S.start === 'last' ? (S.view || 'tr') : (S.start || 'tr')) === 'ed' ? 'ed' : 'tr');
+const startView = () => {
+  const v = S.start === 'last' ? (S.view || 'tr') : (S.start || 'tr');
+  return (v === 'ed' || v === 'lib') ? 'ed' : 'tr';
+};
 buildBar(); renderTb(); renderSb(); reicon(); setLang(); renderAll(); showView(startView()); applyWorkspace();
 loadSystemFonts().then(() => renderTb());
 })();
