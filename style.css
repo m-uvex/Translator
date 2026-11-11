@@ -175,14 +175,19 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
    links die Editor-Leinwand, rechts die weisse Seite. Dadurch entstand an der
    linken Kante ein grauer Streifen in falscher Farbe. */
 .dockpanel{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(1500px,calc(100% - 64px));height:150px;background:var(--soft);border:1px solid var(--line);border-radius:24px;box-shadow:0 16px 40px #00000024}
-#dockStrip{position:relative;width:min(1500px,calc(100% - 64px));height:262px;display:flex;align-items:flex-end;gap:14px;overflow-x:auto;overflow-y:hidden;padding:58px 22px 18px;scrollbar-width:none;pointer-events:auto}
+/* Der Streifen scrollt waagerecht und schneidet deshalb alles ab, was aus ihm
+   herausragt. Der seitliche Innenabstand (60px) ist so gross wie der groesste
+   Schlagschatten einer Karte (52px); sonst wird der Schatten der linken bzw.
+   rechten Karte an der Kante des Streifens hart abgeschnitten und erscheint
+   als grauer Streifen in falscher Farbe (siehe Abschnitt 9). */
+#dockStrip{position:relative;width:min(1500px,calc(100% - 64px));height:262px;display:flex;align-items:flex-end;gap:14px;overflow-x:auto;overflow-y:hidden;padding:58px 60px 18px;scrollbar-width:none;pointer-events:auto}
 #dockStrip::-webkit-scrollbar{display:none}
 #dockStrip.dragging{cursor:grabbing}
-.dockcard{position:relative;flex:0 0 auto;width:118px;height:136px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 40px #00000033,0 4px 12px #0000001f;cursor:grab;user-select:none;touch-action:none;display:flex;flex-direction:column;overflow:hidden;transition:width .22s cubic-bezier(.2,.8,.2,1),height .22s cubic-bezier(.2,.8,.2,1),border-color .18s,box-shadow .18s,transform .18s}
+.dockcard{position:relative;flex:0 0 auto;width:118px;height:136px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 16px 36px #00000033,0 4px 12px #0000001f;cursor:grab;user-select:none;touch-action:none;display:flex;flex-direction:column;overflow:hidden;transition:width .22s cubic-bezier(.2,.8,.2,1),height .22s cubic-bezier(.2,.8,.2,1),border-color .18s,box-shadow .18s,transform .18s}
 .dockcard:hover{transform:translateY(-4px);border-color:var(--accent)}
-.dockcard.on{width:154px;height:186px;border-color:var(--accent);box-shadow:0 28px 64px #0000003d,0 6px 16px #00000026}
+.dockcard.on{width:154px;height:186px;border-color:var(--accent);box-shadow:0 24px 52px #0000003d,0 6px 16px #00000026}
 .dockcard.on:hover{transform:translateY(-4px)}
-.dockcard.dragging{z-index:6;cursor:grabbing;transition:none;box-shadow:0 32px 72px #0000004d,0 8px 18px #0000002e}
+.dockcard.dragging{z-index:6;cursor:grabbing;transition:none;box-shadow:0 28px 52px #0000004d,0 8px 18px #0000002e}
 .dockprev{flex:1;min-height:0;margin:8px 8px 0;background:var(--card);border-radius:10px;box-shadow:inset 0 0 0 1px var(--line);padding:8px;overflow:hidden}
 .dockprev .doc{font-size:6.5px;line-height:1.32;color:var(--text);height:100%;overflow:hidden;overflow-wrap:anywhere}
 .dockprev .doc h1{font-size:10px;margin:0 0 3px}.dockprev .doc h2{font-size:9px;margin:0 0 3px}.dockprev .doc h3{font-size:8px;margin:0 0 3px}

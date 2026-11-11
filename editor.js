@@ -32,11 +32,11 @@ Object.assign(IC, {
   cpu:'<rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
   chev:'<path d="M6 9l6 6 6-6"/>', arrowR:'<path d="M5 12h14M13 6l6 6-6 6"/>',
   // Schalter fuer die in der Sitzung geoeffneten Dokumente in der Statusleiste.
-  // Ein offenes Fenster in der Mitte, links und rechts davon je ein zu etwa einem
-  // Drittel angeschnittenes Nachbarfenster: Die Rahmen der Nachbarn sind als
-  // eckige Klammern gezeichnet (geschlossen links, offen rechts), damit das Icon
-  // wie ein Fensterstapel wirkt und nicht wie ein Kopieren/Einfuegen-Symbol.
-  docs:'<rect x="8" y="5" width="8" height="14" rx="1.6"/><path d="M6 5H4.2A1.2 1.2 0 0 0 3 6.2v11.6A1.2 1.2 0 0 0 4.2 19H6"/><path d="M18 5h1.8A1.2 1.2 0 0 1 21 6.2v11.6a1.2 1.2 0 0 1-1.2 1.2H18"/>',
+  // Drei geschlossene Rechtecke nebeneinander: das offene Fenster in der Mitte,
+  // links und rechts je ein schmales, angeschnittenes Nachbarfenster. Bewusst
+  // ohne Eckrundung und ohne Fuellung, damit die drei Fenster auch bei 16px
+  // noch als getrennte Rahmen lesbar bleiben.
+  docs:'<rect x="2.5" y="5.2" width="2.6" height="13.6"/><rect x="7.7" y="6" width="8.6" height="12"/><rect x="18.9" y="5.2" width="2.6" height="13.6"/>',
   male:'<circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/>', female:'<circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 18h6"/>',
   nb:'<circle cx="12" cy="13" r="4"/><path d="M12 9V2M8.5 11 3 8M15.5 11 21 8"/>', qmark:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/>', dash:'<path d="M6 12h12"/>',
   hat:'<path d="M6 15V6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v9M3 15h18M4 15v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1M6 11h12"/>', smile:'<circle cx="12" cy="12" r="9"/><path d="M8 14c1 1.5 2.3 2 4 2s3-.5 4-2M9 9.5h.01M15 9.5h.01"/>',
