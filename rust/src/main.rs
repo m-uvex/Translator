@@ -5,6 +5,7 @@ mod i18n;
 mod library;
 mod net;
 mod settings;
+mod spell;
 
 use eframe::egui;
 

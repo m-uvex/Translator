@@ -161,5 +161,5 @@ dieselben Prompt-Regeln und dieselben Ablagedateien.
 | Schimpfwortfilter, Sternchen-Ersetzung, geschützte Zeichenketten | umgesetzt |
 | Bilder, PDF-/DOCX-Import, Wortalternativen, Ersatzwort-Anpassung | offen |
 | Editor: Markdown-Formatierung mit Umschaltern, Undo/Redo, Sitzungsliste, Diff-Probelesen, KI-Operationen, Ablage, Export | umgesetzt (ohne Rich-Text-Seite) |
-| Rechtschreibprüfung mit Hunspell | offen (Wörterbuchverwaltung umgesetzt) |
+| Rechtschreibprüfung mit Hunspell (spellbook, Prüffenster mit Vorschlägen, persönliches Wörterbuch) | umgesetzt (ohne Wellenlinien im Text) |
 | Seitenumbruch, PDF-Export | offen |

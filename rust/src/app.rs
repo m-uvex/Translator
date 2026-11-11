@@ -133,6 +133,13 @@ pub struct App {
     dict_words: Vec<String>,
     dict_new: String,
     rename: Option<usize>,
+    spell: crate::spell::Spell,
+    spell_hits: Vec<crate::spell::Misspelled>,
+    spell_error: Option<String>,
+    spell_scanned_doc: String,
+    spell_scan_at: f64,
+    show_spell: bool,
+    show_spell_lang: bool,
 
     syn_word: String,
     syn_out: Vec<String>,
@@ -215,6 +222,13 @@ impl App {
             dict_words,
             dict_new: String::new(),
             rename: None,
+            spell: crate::spell::Spell::new(),
+            spell_hits: Vec::new(),
+            spell_error: None,
+            spell_scanned_doc: String::new(),
+            spell_scan_at: 0.0,
+            show_spell: false,
+            show_spell_lang: false,
             syn_word: String::new(),
             syn_out: Vec::new(),
             show_settings: false,
@@ -605,6 +619,16 @@ impl App {
     }
 }
 
+/// Verfuegbare Woerterbuchsprachen (wie `DICTS` in `editor.js`).
+const DICTS: [(&str, &str); 6] = [
+    ("de", "Deutsch"),
+    ("en", "English"),
+    ("nl", "Nederlands"),
+    ("es", "Español"),
+    ("tr", "Türkçe"),
+    ("ar", "العربية"),
+];
+
 fn byte_idx(s: &str, char_idx: usize) -> usize {
     s.char_indices()
         .nth(char_idx)
@@ -778,6 +802,8 @@ impl eframe::App for App {
         self.syn_window(ctx);
         self.confirm_window(ctx);
         self.diff_window(ctx);
+        self.spell_window(ctx);
+        self.spell_lang_window(ctx);
     }
 }
 
@@ -1451,6 +1477,7 @@ impl App {
                 });
                 if let Some(i) = remove {
                     self.dict_words.remove(i);
+                    self.spell_scanned_doc.clear();
                     changed = true;
                 }
                 ui.separator();
@@ -1467,6 +1494,7 @@ impl App {
                         } else {
                             self.dict_words.push(word);
                             self.dict_new.clear();
+                            self.spell_scanned_doc.clear();
                             changed = true;
                         }
                     }
@@ -1803,13 +1831,42 @@ impl App {
                 if icon_btn(ui, &pal, "✎", false).on_hover_text(t(lang, "personal_dict")).clicked() {
                     self.show_dict = true;
                 }
-                ui.label(
-                    RichText::new(lang_label(&self.set.dict_lang, &self.nllb_langs))
-                        .size(12.0)
-                        .color(pal.muted),
-                );
+                if icon_btn(ui, &pal, "abc", self.show_spell && self.set.ed_spell)
+                    .on_hover_text(t(lang, "spell_title"))
+                    .clicked()
+                {
+                    self.show_spell = !self.show_spell;
+                    self.spell_scanned_doc.clear();
+                }
+                if ui
+                    .add(
+                        egui::Button::new(
+                            RichText::new(format!(
+                                "{} ▾",
+                                lang_label(&self.set.dict_lang, &self.nllb_langs)
+                            ))
+                            .size(12.0)
+                            .color(pal.muted),
+                        )
+                        .fill(Color32::TRANSPARENT),
+                    )
+                    .on_hover_text(t(lang, "dict"))
+                    .clicked()
+                {
+                    self.show_spell_lang = true;
+                }
+                if self.set.ed_spell && !self.spell_hits.is_empty() {
+                    ui.label(
+                        RichText::new(format!("{}", self.spell_hits.len()))
+                            .size(12.0)
+                            .color(Color32::from_rgb(0xb9, 0x1c, 0x1c)),
+                    )
+                    .on_hover_text(t(lang, "spell_title"));
+                }
             });
         });
+
+        self.schedule_spell(ui.ctx());
 
         if self.show_sessions {
             self.session_dock(ui);
@@ -2279,6 +2336,294 @@ impl App {
         }
         if !open {
             self.diff = None;
+        }
+    }
+
+    // ---- Rechtschreibung ---------------------------------------------------
+    fn schedule_spell(&mut self, ctx: &egui::Context) {
+        if !self.set.ed_spell {
+            self.spell_hits.clear();
+            return;
+        }
+        if self.doc.trim().is_empty() {
+            self.spell_hits.clear();
+            self.spell_error = None;
+            self.spell_scanned_doc.clear();
+            return;
+        }
+        if self.spell_scanned_doc == self.doc {
+            return;
+        }
+        let now = ctx.input(|i| i.time);
+        if now - self.spell_scan_at < 0.5 {
+            ctx.request_repaint_after(std::time::Duration::from_millis(250));
+            return;
+        }
+        self.spell_scan_at = now;
+        self.rescan_spell();
+    }
+
+    fn rescan_spell(&mut self) {
+        let lang = self.set.dict_lang.clone();
+        match self.spell.scan(&lang, &self.doc, &self.dict_words) {
+            Ok(hits) => {
+                self.spell_hits = hits;
+                self.spell_error = None;
+            }
+            Err(code) => {
+                self.spell_hits.clear();
+                self.spell_error = Some(code);
+            }
+        }
+        self.spell_scanned_doc = self.doc.clone();
+    }
+
+    fn save_personal_dict(&self) {
+        let path = crate::settings::data_dir().join("personal-dictionary.json");
+        if let Ok(text) = serde_json::to_string_pretty(&self.dict_words) {
+            let _ = std::fs::write(path, text);
+        }
+    }
+
+    /// Ersetzt ein Wort im ganzen Dokument, aber nur als ganzes Wort.
+    fn replace_word_all(&mut self, from: &str, to: &str) {
+        if from.is_empty() || from == to {
+            return;
+        }
+        let chars: Vec<char> = self.doc.chars().collect();
+        let needle: Vec<char> = from.chars().collect();
+        let mut out = String::with_capacity(self.doc.len());
+        let mut i = 0usize;
+        let mut replaced = false;
+        while i < chars.len() {
+            let fits = i + needle.len() <= chars.len() && chars[i..i + needle.len()] == needle[..];
+            if fits {
+                let before_ok = i == 0 || !chars[i - 1].is_alphanumeric();
+                let after = i + needle.len();
+                let after_ok = after >= chars.len() || !chars[after].is_alphanumeric();
+                if before_ok && after_ok {
+                    out.extend(to.chars());
+                    i = after;
+                    replaced = true;
+                    continue;
+                }
+            }
+            out.push(chars[i]);
+            i += 1;
+        }
+        if replaced {
+            self.push_undo();
+            self.doc = out;
+            self.saved = false;
+            self.set.doc = self.doc.clone();
+            self.save_set();
+            self.sync_active_session();
+            self.spell_scanned_doc.clear();
+        }
+    }
+
+    fn spell_window(&mut self, ctx: &egui::Context) {
+        if !self.show_spell {
+            return;
+        }
+        let pal = self.pal;
+        let lang = self.lang;
+        let mut open = true;
+        let mut recheck = false;
+        let mut add_word: Option<String> = None;
+        let mut ignore_word: Option<String> = None;
+        let mut replace: Option<(String, String)> = None;
+        let hits = self.spell_hits.clone();
+        let error = self.spell_error.clone();
+        let enabled = self.set.ed_spell;
+        egui::Window::new(t(lang, "spell_title"))
+            .id(egui::Id::new("spell_win"))
+            .open(&mut open)
+            .collapsible(false)
+            .default_width(520.0)
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.checkbox(&mut self.set.ed_spell, t(lang, "spell_on"));
+                    ui.label(
+                        RichText::new(lang_label(&self.set.dict_lang, &self.nllb_langs))
+                            .size(12.0)
+                            .color(pal.muted),
+                    );
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button(t(lang, "spell_recheck")).clicked() {
+                            recheck = true;
+                        }
+                    });
+                });
+                ui.separator();
+                if !enabled {
+                    ui.label(RichText::new(t(lang, "s_spellanim")).color(pal.muted));
+                    return;
+                }
+                if let Some(code) = &error {
+                    ui.label(
+                        RichText::new(t(lang, "spell_missing"))
+                            .strong()
+                            .color(Color32::from_rgb(0xb9, 0x1c, 0x1c)),
+                    );
+                    ui.label(
+                        RichText::new(
+                            t(lang, "spell_missing_hint").replace("<sprache>", code),
+                        )
+                        .size(12.0)
+                        .color(pal.muted),
+                    );
+                    return;
+                }
+                if hits.is_empty() {
+                    ui.label(RichText::new(t(lang, "spell_no_errors")).color(pal.muted));
+                    return;
+                }
+                egui::ScrollArea::vertical()
+                    .id_source("spell_list")
+                    .max_height(420.0)
+                    .show(ui, |ui| {
+                        for hit in &hits {
+                            egui::Frame::none()
+                                .fill(pal.soft)
+                                .rounding(Rounding::same(10.0))
+                                .inner_margin(egui::Margin::same(8.0))
+                                .show(ui, |ui| {
+                                    ui.horizontal_wrapped(|ui| {
+                                        ui.label(
+                                            RichText::new(&hit.word)
+                                                .size(14.0)
+                                                .color(Color32::from_rgb(0xb9, 0x1c, 0x1c))
+                                                .underline(),
+                                        );
+                                        ui.label(
+                                            RichText::new(format!("×{}", hit.count))
+                                                .size(11.0)
+                                                .color(pal.muted),
+                                        );
+                                        if !hit.suggestions.is_empty() {
+                                            ui.label(
+                                                RichText::new(t(lang, "suggestions"))
+                                                    .size(11.0)
+                                                    .color(pal.muted),
+                                            );
+                                        }
+                                        for s in &hit.suggestions {
+                                            if ui
+                                                .add(
+                                                    egui::Button::new(
+                                                        RichText::new(s).size(13.0),
+                                                    )
+                                                    .fill(pal.card)
+                                                    .rounding(Rounding::same(999.0)),
+                                                )
+                                                .on_hover_text(t(lang, "replace_all"))
+                                                .clicked()
+                                            {
+                                                replace = Some((hit.word.clone(), s.clone()));
+                                            }
+                                        }
+                                    });
+                                    ui.horizontal(|ui| {
+                                        if ui.button(t(lang, "add_to_dict")).clicked() {
+                                            add_word = Some(hit.word.clone());
+                                        }
+                                        if ui.button(t(lang, "ignore")).clicked() {
+                                            ignore_word = Some(hit.word.clone());
+                                        }
+                                    });
+                                });
+                            ui.add_space(4.0);
+                        }
+                    });
+            });
+
+        if let Some((from, to)) = replace {
+            self.replace_word_all(&from, &to);
+            self.rescan_spell();
+        }
+        if let Some(word) = add_word {
+            if !self.dict_words.iter().any(|w| w.to_lowercase() == word.to_lowercase()) {
+                self.dict_words.push(word);
+                self.save_personal_dict();
+            }
+            self.rescan_spell();
+        }
+        if let Some(word) = ignore_word {
+            self.spell.ignore(&word);
+            self.rescan_spell();
+        }
+        if recheck {
+            self.spell_scanned_doc.clear();
+            self.rescan_spell();
+        }
+        self.save_set();
+        if !open {
+            self.show_spell = false;
+        }
+    }
+
+    fn spell_lang_window(&mut self, ctx: &egui::Context) {
+        if !self.show_spell_lang {
+            return;
+        }
+        let lang = self.lang;
+        let mut open = true;
+        let mut pick: Option<String> = None;
+        egui::Window::new(t(lang, "dict"))
+            .id(egui::Id::new("spell_lang_win"))
+            .open(&mut open)
+            .collapsible(false)
+            .resizable(false)
+            .default_width(260.0)
+            .show(ctx, |ui| {
+                ui.checkbox(&mut self.set.ed_spell, t(lang, "spell_on"));
+                ui.separator();
+                for (code, name) in DICTS {
+                    let on = self.set.dict_lang == code;
+                    if ui
+                        .add(
+                            egui::Button::new(
+                                RichText::new(if on {
+                                    format!("• {}", name)
+                                } else {
+                                    name.to_string()
+                                })
+                                .color(if on { self.pal.accent_ink } else { self.pal.text }),
+                            )
+                            .fill(Color32::TRANSPARENT),
+                        )
+                        .clicked()
+                    {
+                        pick = Some(code.to_string());
+                    }
+                }
+                ui.separator();
+                let missing: Vec<&str> = DICTS
+                    .iter()
+                    .filter(|(c, _)| !self.spell.has_dict(c))
+                    .map(|(c, _)| *c)
+                    .collect();
+                if !missing.is_empty() {
+                    ui.label(
+                        RichText::new(format!(
+                            "{}: {}",
+                            t(lang, "spell_missing"),
+                            missing.join(", ")
+                        ))
+                        .size(11.0)
+                        .color(self.pal.muted),
+                    );
+                }
+            });
+        if let Some(code) = pick {
+            self.set.dict_lang = code;
+            self.spell_scanned_doc.clear();
+            self.save_set();
+        }
+        self.save_set();
+        if !open {
+            self.show_spell_lang = false;
         }
     }
 
