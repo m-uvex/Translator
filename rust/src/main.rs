@@ -1,4 +1,5 @@
 mod app;
+mod editor;
 mod engine;
 mod i18n;
 mod library;

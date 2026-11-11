@@ -160,6 +160,6 @@ dieselben Prompt-Regeln und dieselben Ablagedateien.
 | Stilgruppen, Zusammenhang, Glossar | umgesetzt |
 | Schimpfwortfilter, Sternchen-Ersetzung, geschützte Zeichenketten | umgesetzt |
 | Bilder, PDF-/DOCX-Import, Wortalternativen, Ersatzwort-Anpassung | offen |
-| Editor: Klartext/Markdown, KI-Operationen, Ablage, Export | umgesetzt (ohne Rich-Text-Formatierung) |
+| Editor: Markdown-Formatierung mit Umschaltern, Undo/Redo, Sitzungsliste, Diff-Probelesen, KI-Operationen, Ablage, Export | umgesetzt (ohne Rich-Text-Seite) |
 | Rechtschreibprüfung mit Hunspell | offen (Wörterbuchverwaltung umgesetzt) |
-| Sitzungsliste, Diff-Ansicht, Seitenumbruch, PDF-Export | offen |
+| Seitenumbruch, PDF-Export | offen |

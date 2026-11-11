@@ -5,6 +5,7 @@ use crate::engine::{
     PromptCtx, OLLAMA_LANGS,
 };
 use crate::i18n::{t, Lang};
+use crate::editor::{self, DiffState, Part, Snapshot};
 use crate::library::{self, Meta};
 use crate::net::{self, Cfg, Model, Msg};
 use crate::settings::{Settings, EDITOR_SYS};
@@ -74,6 +75,17 @@ impl Palette {
 enum Confirm {
     LibDelete(String),
     ModelDelete(String),
+    SessionClose(usize),
+}
+
+/// Ein Dokument der Sitzungsliste (nur im Speicher, wie in der
+/// Electron-Fassung). `saved_text` ist der zuletzt gespeicherte Stand und
+/// dient der Erkennung ungespeicherter Aenderungen.
+pub struct SessionDoc {
+    pub key: u64,
+    pub name: String,
+    pub text: String,
+    pub saved_text: String,
 }
 
 pub struct App {
@@ -102,6 +114,16 @@ pub struct App {
     last_src: String,
     last_tr: String,
     sel: Option<(usize, usize)>,
+    pending_sel: Option<(usize, usize)>,
+    pending_diff: bool,
+    sessions: Vec<SessionDoc>,
+    active_session: usize,
+    next_key: u64,
+    show_sessions: bool,
+    diff: Option<DiffState>,
+    undo: Vec<Snapshot>,
+    redo: Vec<Snapshot>,
+    last_undo: f64,
 
     lib: Vec<Meta>,
     doc: String,
@@ -171,6 +193,21 @@ impl App {
             last_src: String::new(),
             last_tr: String::new(),
             sel: None,
+            pending_sel: None,
+            pending_diff: false,
+            sessions: vec![SessionDoc {
+                key: 0,
+                name: String::new(),
+                text: set.doc.clone(),
+                saved_text: set.doc.clone(),
+            }],
+            active_session: 0,
+            next_key: 1,
+            show_sessions: false,
+            diff: None,
+            undo: Vec::new(),
+            redo: Vec::new(),
+            last_undo: 0.0,
             lib: library::list(),
             doc: set.doc.clone(),
             doc_id: set.doc_id.clone(),
@@ -331,10 +368,30 @@ impl App {
                 Msg::Done(text) => {
                     self.busy = false;
                     if self.editor_job {
-                        self.doc = text;
                         self.editor_job = false;
+                        let clean = text.trim_end().to_string();
+                        if self.pending_diff {
+                            self.pending_diff = false;
+                            self.diff = Some(DiffState::new(&self.doc, &clean));
+                        } else if let Some((a, b)) = self.pending_sel {
+                            if b > a {
+                                let doc = self.doc.clone();
+                                let ba = editor::char_to_byte(&doc, a);
+                                let bb = editor::char_to_byte(&doc, b);
+                                let replaced = format!("{}{}{}", &doc[..ba], clean, &doc[bb..]);
+                                self.push_undo();
+                                self.doc = replaced;
+                            }
+                        } else {
+                            self.push_undo();
+                            self.doc = clean;
+                        }
+                        self.pending_sel = None;
                         self.saved = false;
                         self.status = String::new();
+                        self.set.doc = self.doc.clone();
+                        self.save_set();
+                        self.sync_active_session();
                     } else {
                         let clean = filter_profanity(
                             &strip_stars(&text, &self.last_src),
@@ -478,6 +535,11 @@ impl App {
         };
         self.busy = true;
         self.editor_job = true;
+        self.pending_diff = kind == "proofread";
+        self.pending_sel = match self.sel {
+            Some((a, b)) if b > a => Some((a, b)),
+            _ => None,
+        };
         self.stop.store(false, Ordering::SeqCst);
         self.status = t(self.lang, "translating");
         let sys = EDITOR_SYS.to_string();
@@ -715,6 +777,7 @@ impl eframe::App for App {
         self.style_window(ctx);
         self.syn_window(ctx);
         self.confirm_window(ctx);
+        self.diff_window(ctx);
     }
 }
 
@@ -1439,7 +1502,6 @@ impl App {
         if !self.show_syn {
             return;
         }
-        let pal = self.pal;
         let lang = self.lang;
         let mut open = true;
         let mut ask = false;
@@ -1541,6 +1603,9 @@ impl App {
                     let mid = id.split(':').nth(1).unwrap_or("").to_string();
                     net::spawn_model_action(self.cfg(), mid, "delete", self.tx.clone());
                 }
+                Confirm::SessionClose(idx) => {
+                    self.close_session(idx);
+                }
             }
             self.confirm = None;
         }
@@ -1553,43 +1618,103 @@ impl App {
     fn editor(&mut self, ui: &mut egui::Ui) {
         let pal = self.pal;
         let lang = self.lang;
+        self.handle_shortcuts(ui.ctx());
+
         ui.horizontal_wrapped(|ui| {
             if ui.button(t(lang, "new_doc")).clicked() {
-                if !self.doc.trim().is_empty() {
-                    self.save_doc_to_tray(false);
-                }
-                self.doc.clear();
-                self.doc_id = None;
-                self.set.doc.clear();
-                self.save_set();
-                self.saved = true;
+                self.new_document();
             }
             if ui.button(t(lang, "open")).clicked() {
-                if let Some(path) = rfd::FileDialog::new()
-                    .add_filter("Dokument", &["txt", "md", "html"])
-                    .pick_file()
-                {
-                    if let Ok(text) = std::fs::read_to_string(&path) {
-                        self.doc = text;
-                        self.doc_id = None;
-                        self.saved = false;
-                    }
-                }
+                self.import_document();
             }
             if ui.button(t(lang, "save")).clicked() {
                 self.save_doc_to_tray(true);
             }
-            if ui.button(t(lang, "save_to_tray")).clicked() {
-                self.save_doc_to_tray(true);
-            }
             if ui.button(t(lang, "export")).clicked() {
-                if let Some(path) = rfd::FileDialog::new()
-                    .set_file_name(format!("{}.md", library::doc_name(&self.doc, "Dokument")))
-                    .save_file()
+                self.export_document();
+            }
+            ui.separator();
+            if icon_btn(ui, &pal, "↶", false)
+                .on_hover_text(t(lang, "undo"))
+                .clicked()
+            {
+                self.undo();
+            }
+            if icon_btn(ui, &pal, "↷", false)
+                .on_hover_text(t(lang, "redo"))
+                .clicked()
+            {
+                self.redo();
+            }
+            ui.separator();
+            if icon_btn(ui, &pal, "B", self.selection_wrapped("**", "**"))
+                .on_hover_text(t(lang, "bold"))
+                .clicked()
+            {
+                self.format_wrap("**", "**");
+            }
+            if icon_btn(ui, &pal, "I", self.selection_wrapped("*", "*"))
+                .on_hover_text(t(lang, "italic"))
+                .clicked()
+            {
+                self.format_wrap("*", "*");
+            }
+            if icon_btn(ui, &pal, "U", self.selection_wrapped("<u>", "</u>"))
+                .on_hover_text(t(lang, "underline"))
+                .clicked()
+            {
+                self.format_wrap("<u>", "</u>");
+            }
+            if icon_btn(ui, &pal, "S", self.selection_wrapped("~~", "~~"))
+                .on_hover_text(t(lang, "strike"))
+                .clicked()
+            {
+                self.format_wrap("~~", "~~");
+            }
+            if icon_btn(ui, &pal, "`", self.selection_wrapped("`", "`"))
+                .on_hover_text("Code")
+                .clicked()
+            {
+                self.format_wrap("`", "`");
+            }
+            ui.separator();
+            for (label, prefix) in [("H1", "# "), ("H2", "## "), ("H3", "### ")] {
+                if icon_btn(ui, &pal, label, false)
+                    .on_hover_text(t(lang, "heading"))
+                    .clicked()
                 {
-                    let _ = std::fs::write(path, &self.doc);
-                    self.status = t(lang, "saved");
+                    self.format_line(prefix);
                 }
+            }
+            if icon_btn(ui, &pal, "•", false)
+                .on_hover_text(t(lang, "list"))
+                .clicked()
+            {
+                self.format_line("- ");
+            }
+            if icon_btn(ui, &pal, "1.", false)
+                .on_hover_text(t(lang, "list"))
+                .clicked()
+            {
+                self.format_line("1. ");
+            }
+            if icon_btn(ui, &pal, "»", false)
+                .on_hover_text(t(lang, "quote"))
+                .clicked()
+            {
+                self.format_line("> ");
+            }
+            if icon_btn(ui, &pal, "Link", false)
+                .on_hover_text(t(lang, "link"))
+                .clicked()
+            {
+                self.format_link();
+            }
+            if icon_btn(ui, &pal, "⊘", false)
+                .on_hover_text(t(lang, "clear_fmt"))
+                .clicked()
+            {
+                self.clear_formatting();
             }
             ui.separator();
             if ui.button(t(lang, "shorten")).clicked() {
@@ -1607,17 +1732,11 @@ impl App {
             if ui.button(t(lang, "synonyms")).clicked() {
                 self.show_syn = true;
             }
-            ui.separator();
-            if icon_btn(ui, &pal, "B", false).on_hover_text(t(lang, "bold")).clicked() {
-                self.wrap_selection("**", "**");
-            }
-            if icon_btn(ui, &pal, "I", false).clicked() {
-                self.wrap_selection("*", "*");
-            }
         });
         ui.add_space(6.0);
 
-        let h = ui.available_height() - 40.0;
+        let reserved = if self.show_sessions { 150.0 } else { 74.0 };
+        let h = (ui.available_height() - reserved).max(120.0);
         egui::Frame::none()
             .fill(pal.card)
             .stroke(Stroke::new(1.0_f32, pal.line))
@@ -1628,6 +1747,7 @@ impl App {
                     .id_source("doc_scroll")
                     .max_height(h)
                     .show(ui, |ui| {
+                        let before = self.doc.clone();
                         let out = egui::TextEdit::multiline(&mut self.doc)
                             .frame(false)
                             .desired_width(f32::INFINITY)
@@ -1640,13 +1760,28 @@ impl App {
                             self.sel = Some((a.min(b), a.max(b)));
                         }
                         if out.response.changed() {
+                            let now = ui.input(|i| i.time);
+                            if now - self.last_undo > 1.0 {
+                                self.undo.push(Snapshot {
+                                    text: before,
+                                    sel: self.sel,
+                                    at: now,
+                                });
+                                if self.undo.len() > 200 {
+                                    self.undo.remove(0);
+                                }
+                                self.redo.clear();
+                                self.last_undo = now;
+                            }
                             self.saved = false;
                             self.set.doc = self.doc.clone();
                             self.save_set();
+                            self.sync_active_session();
                         }
                     });
             });
         ui.add_space(6.0);
+
         ui.horizontal(|ui| {
             let words = self.doc.split_whitespace().count();
             ui.label(
@@ -1655,35 +1790,332 @@ impl App {
                     .color(pal.muted),
             );
             ui.label(RichText::new(&self.status).size(12.0).color(pal.muted));
+            if !self.saved {
+                ui.label(RichText::new("•").size(12.0).color(pal.accent_ink));
+            }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.button(t(lang, "personal_dict")).clicked() {
+                if icon_btn(ui, &pal, "▤", self.show_sessions)
+                    .on_hover_text(t(lang, "session_docs"))
+                    .clicked()
+                {
+                    self.show_sessions = !self.show_sessions;
+                }
+                if icon_btn(ui, &pal, "✎", false).on_hover_text(t(lang, "personal_dict")).clicked() {
                     self.show_dict = true;
                 }
-                ui.label(RichText::new(lang_label(&self.set.dict_lang, &self.nllb_langs)).size(12.0).color(pal.muted));
+                ui.label(
+                    RichText::new(lang_label(&self.set.dict_lang, &self.nllb_langs))
+                        .size(12.0)
+                        .color(pal.muted),
+                );
             });
         });
+
+        if self.show_sessions {
+            self.session_dock(ui);
+        }
     }
 
-    fn wrap_selection(&mut self, left: &str, right: &str) {
-        let doc = self.doc.clone();
-        if let Some((a, b)) = self.sel {
-            if b > a {
-                let ba = byte_idx(&doc, a);
-                let bb = byte_idx(&doc, b);
-                let mut out = String::new();
-                out.push_str(&doc[..ba]);
-                out.push_str(left);
-                out.push_str(&doc[ba..bb]);
-                out.push_str(right);
-                out.push_str(&doc[bb..]);
-                self.doc = out;
-                self.saved = false;
-                return;
+    // ---- Sitzungsliste ----------------------------------------------------
+    fn session_dock(&mut self, ui: &mut egui::Ui) {
+        let pal = self.pal;
+        let lang = self.lang;
+        self.sync_active_session();
+        let mut switch: Option<usize> = None;
+        let mut close: Option<usize> = None;
+        egui::Frame::none()
+            .fill(pal.soft)
+            .stroke(Stroke::new(1.0_f32, pal.line))
+            .rounding(Rounding::same(18.0))
+            .inner_margin(egui::Margin::same(10.0))
+            .show(ui, |ui| {
+                egui::ScrollArea::horizontal()
+                    .id_source("session_dock")
+                    .max_height(120.0)
+                    .show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            for i in 0..self.sessions.len() {
+                                let active = i == self.active_session;
+                                let name = self.sessions[i].name.clone();
+                                let dirty = self.sessions[i].text != self.sessions[i].saved_text;
+                                let fill = if active { pal.accent } else { pal.card };
+                                let ink = if active { pal.on_accent } else { pal.text };
+                                egui::Frame::none()
+                                    .fill(fill)
+                                    .stroke(Stroke::new(1.0_f32, pal.line))
+                                    .rounding(Rounding::same(12.0))
+                                    .inner_margin(egui::Margin::same(8.0))
+                                    .show(ui, |ui| {
+                                        ui.allocate_ui(egui::vec2(132.0, 74.0), |ui| {
+                                            ui.vertical(|ui| {
+                                                ui.horizontal(|ui| {
+                                                    let text = RichText::new(name.chars().take(20).collect::<String>())
+                                                        .size(12.0)
+                                                        .color(ink);
+                                                    if ui
+                                                        .add(egui::Button::new(text).fill(Color32::TRANSPARENT))
+                                                        .clicked()
+                                                    {
+                                                        switch = Some(i);
+                                                    }
+                                                    if icon_btn(ui, &pal, "✕", false)
+                                                        .on_hover_text(t(lang, "close_session"))
+                                                        .clicked()
+                                                    {
+                                                        close = Some(i);
+                                                    }
+                                                });
+                                                ui.label(
+                                                    RichText::new(if dirty { "•" } else { " " })
+                                                        .size(11.0)
+                                                        .color(ink),
+                                                );
+                                            });
+                                        });
+                                    });
+                                ui.add_space(4.0);
+                            }
+                        });
+                    });
+            });
+        if let Some(i) = switch {
+            self.switch_session(i);
+        }
+        if let Some(i) = close {
+            let dirty = self
+                .sessions
+                .get(i)
+                .map(|s| s.text != s.saved_text)
+                .unwrap_or(false);
+            if dirty && Some(i) != Some(self.active_session) {
+                self.ask_confirm(t(lang, "discard_q"), Confirm::SessionClose(i));
+            } else if dirty && i == self.active_session {
+                self.ask_confirm(t(lang, "discard_q"), Confirm::SessionClose(i));
+            } else {
+                self.close_session(i);
             }
         }
-        self.doc.push_str(left);
-        self.doc.push_str(right);
+    }
+
+    fn handle_shortcuts(&mut self, ctx: &egui::Context) {
+        let undo = egui::KeyboardShortcut::new(egui::Modifiers::CTRL, egui::Key::Z);
+        let redo = egui::KeyboardShortcut::new(
+            egui::Modifiers {
+                ctrl: true,
+                shift: true,
+                ..egui::Modifiers::default()
+            },
+            egui::Key::Z,
+        );
+        let redo_alt = egui::KeyboardShortcut::new(egui::Modifiers::CTRL, egui::Key::Y);
+        let save = egui::KeyboardShortcut::new(egui::Modifiers::CTRL, egui::Key::S);
+        let new = egui::KeyboardShortcut::new(egui::Modifiers::CTRL, egui::Key::N);
+        if ctx.input_mut(|i| i.consume_shortcut(&undo)) {
+            self.undo();
+        }
+        if ctx.input_mut(|i| i.consume_shortcut(&redo)) {
+            self.redo();
+        }
+        if ctx.input_mut(|i| i.consume_shortcut(&redo_alt)) {
+            self.redo();
+        }
+        if ctx.input_mut(|i| i.consume_shortcut(&save)) {
+            self.save_doc_to_tray(true);
+        }
+        if ctx.input_mut(|i| i.consume_shortcut(&new)) {
+            self.new_document();
+        }
+    }
+
+    fn push_undo(&mut self) {
+        self.undo.push(Snapshot {
+            text: self.doc.clone(),
+            sel: self.sel,
+            at: 0.0,
+        });
+        if self.undo.len() > 200 {
+            self.undo.remove(0);
+        }
+        self.redo.clear();
+    }
+
+    fn undo(&mut self) {
+        if let Some(snap) = self.undo.pop() {
+            self.redo.push(Snapshot {
+                text: self.doc.clone(),
+                sel: self.sel,
+                at: 0.0,
+            });
+            self.doc = snap.text;
+            self.sel = snap.sel;
+            self.saved = false;
+            self.set.doc = self.doc.clone();
+            self.save_set();
+            self.sync_active_session();
+        }
+    }
+
+    fn redo(&mut self) {
+        if let Some(snap) = self.redo.pop() {
+            self.undo.push(Snapshot {
+                text: self.doc.clone(),
+                sel: self.sel,
+                at: 0.0,
+            });
+            self.doc = snap.text;
+            self.sel = snap.sel;
+            self.saved = false;
+            self.set.doc = self.doc.clone();
+            self.save_set();
+            self.sync_active_session();
+        }
+    }
+
+    fn selection(&self) -> (usize, usize) {
+        let end = self.doc.chars().count();
+        self.sel.unwrap_or((end, end))
+    }
+
+    fn selection_wrapped(&self, left: &str, right: &str) -> bool {
+        let sel = self.selection();
+        if sel.1 <= sel.0 {
+            return false;
+        }
+        let inner = editor::selected(&self.doc, sel);
+        inner.starts_with(left) && inner.ends_with(right)
+    }
+
+    fn format_wrap(&mut self, left: &str, right: &str) {
+        self.push_undo();
+        let (text, sel) = editor::wrap_selection(&self.doc, self.selection(), left, right);
+        self.doc = text;
+        self.sel = Some(sel);
         self.saved = false;
+        self.set.doc = self.doc.clone();
+        self.save_set();
+    }
+
+    fn format_line(&mut self, prefix: &str) {
+        self.push_undo();
+        let (text, sel) = editor::toggle_line_prefix(&self.doc, self.selection(), prefix);
+        self.doc = text;
+        self.sel = Some(sel);
+        self.saved = false;
+        self.set.doc = self.doc.clone();
+        self.save_set();
+    }
+
+    fn format_link(&mut self) {
+        self.push_undo();
+        let (text, sel) = editor::make_link(&self.doc, self.selection());
+        self.doc = text;
+        self.sel = Some(sel);
+        self.saved = false;
+        self.set.doc = self.doc.clone();
+        self.save_set();
+    }
+
+    fn clear_formatting(&mut self) {
+        self.push_undo();
+        let (text, sel) = editor::strip_markup(&self.doc, self.selection());
+        self.doc = text;
+        self.sel = Some(sel);
+        self.saved = false;
+        self.set.doc = self.doc.clone();
+        self.save_set();
+    }
+
+    fn sync_active_session(&mut self) {
+        let name = library::doc_name(&self.doc, &t(self.lang, "doc_name"));
+        if let Some(s) = self.sessions.get_mut(self.active_session) {
+            s.text = self.doc.clone();
+            s.name = name;
+        }
+    }
+
+    fn new_document(&mut self) {
+        if !self.doc.trim().is_empty() {
+            self.save_doc_to_tray(false);
+        }
+        self.sync_active_session();
+        let name = t(self.lang, "doc_name");
+        self.sessions.push(SessionDoc {
+            key: self.next_key,
+            name,
+            text: String::new(),
+            saved_text: String::new(),
+        });
+        self.next_key += 1;
+        self.active_session = self.sessions.len() - 1;
+        self.doc.clear();
+        self.doc_id = None;
+        self.set.doc.clear();
+        self.set.doc_id = None;
+        self.sel = None;
+        self.saved = true;
+        self.save_set();
+    }
+
+    fn switch_session(&mut self, idx: usize) {
+        if idx >= self.sessions.len() || idx == self.active_session {
+            return;
+        }
+        self.sync_active_session();
+        self.active_session = idx;
+        self.doc = self.sessions[idx].text.clone();
+        self.doc_id = None;
+        self.set.doc = self.doc.clone();
+        self.set.doc_id = None;
+        self.sel = None;
+        self.saved = self.sessions[idx].text == self.sessions[idx].saved_text;
+        self.save_set();
+    }
+
+    fn close_session(&mut self, idx: usize) {
+        if idx >= self.sessions.len() || self.sessions.len() == 1 {
+            return;
+        }
+        self.sessions.remove(idx);
+        if self.active_session >= self.sessions.len() {
+            self.active_session = self.sessions.len() - 1;
+        } else if idx < self.active_session {
+            self.active_session -= 1;
+        }
+        self.doc = self.sessions[self.active_session].text.clone();
+        self.doc_id = None;
+        self.set.doc = self.doc.clone();
+        self.set.doc_id = None;
+        self.sel = None;
+        self.saved = self.sessions[self.active_session].text
+            == self.sessions[self.active_session].saved_text;
+        self.save_set();
+    }
+
+    fn import_document(&mut self) {
+        if let Some(path) = rfd::FileDialog::new()
+            .add_filter("Dokument", &["txt", "md", "html"])
+            .pick_file()
+        {
+            if let Ok(text) = std::fs::read_to_string(&path) {
+                self.push_undo();
+                self.doc = text;
+                self.doc_id = None;
+                self.sel = None;
+                self.saved = false;
+                self.sync_active_session();
+            }
+        }
+    }
+
+    fn export_document(&mut self) {
+        let name = library::doc_name(&self.doc, &t(self.lang, "doc_name"));
+        if let Some(path) = rfd::FileDialog::new()
+            .set_file_name(format!("{}.md", name))
+            .save_file()
+        {
+            let _ = std::fs::write(path, &self.doc);
+            self.status = t(self.lang, "saved");
+        }
     }
 
     fn save_doc_to_tray(&mut self, quiet: bool) {
@@ -1696,9 +2128,157 @@ impl App {
             self.save_set();
             self.lib = library::list();
             self.saved = true;
+            self.sync_active_session();
+            if let Some(s) = self.sessions.get_mut(self.active_session) {
+                s.saved_text = self.doc.clone();
+                s.name = name;
+            }
             if quiet {
                 self.status = t(lang, "saved");
             }
+        }
+    }
+
+    // ---- Probelesen (Diff) ------------------------------------------------
+    fn diff_window(&mut self, ctx: &egui::Context) {
+        let Some(diff) = self.diff.clone() else { return };
+        let pal = self.pal;
+        let lang = self.lang;
+        let mut open = true;
+        let mut accept_all = false;
+        let mut discard_all = false;
+        let mut toggle: Option<usize> = None;
+        let mut apply = false;
+        egui::Window::new(t(lang, "diff_title"))
+            .id(egui::Id::new("diff_win"))
+            .open(&mut open)
+            .collapsible(false)
+            .default_width(620.0)
+            .show(ctx, |ui| {
+                let hunks: Vec<(String, String)> = diff
+                    .parts
+                    .iter()
+                    .filter_map(|p| match p {
+                        Part::Hunk { old, new } => Some((old.clone(), new.clone())),
+                        _ => None,
+                    })
+                    .collect();
+                ui.label(
+                    RichText::new(format!(
+                        "{} {} · {} / {}",
+                        hunks.len(),
+                        t(lang, "diff_hunks"),
+                        diff.accepted_count(),
+                        hunks.len()
+                    ))
+                    .size(12.0)
+                    .color(pal.muted),
+                );
+                ui.horizontal(|ui| {
+                    if ui.button(t(lang, "accept_all")).clicked() {
+                        accept_all = true;
+                    }
+                    if ui.button(t(lang, "discard_all")).clicked() {
+                        discard_all = true;
+                    }
+                });
+                ui.separator();
+                if hunks.is_empty() {
+                    ui.label(RichText::new(t(lang, "diff_empty")).color(pal.muted));
+                }
+                egui::ScrollArea::vertical()
+                    .id_source("diff_list")
+                    .max_height(300.0)
+                    .show(ui, |ui| {
+                        let green = Color32::from_rgb(0x1f, 0x7a, 0x3a);
+                        let red = Color32::from_rgb(0xb9, 0x1c, 0x1c);
+                        for (i, (old, new)) in hunks.iter().enumerate() {
+                            let on = diff.accepted.get(i).copied().unwrap_or(true);
+                            egui::Frame::none()
+                                .fill(pal.soft)
+                                .rounding(Rounding::same(10.0))
+                                .inner_margin(egui::Margin::same(8.0))
+                                .show(ui, |ui| {
+                                    ui.horizontal_wrapped(|ui| {
+                                        ui.label(
+                                            RichText::new(old.trim())
+                                                .size(13.0)
+                                                .color(red)
+                                                .strikethrough(),
+                                        );
+                                        ui.label(RichText::new("→").size(12.0).color(pal.muted));
+                                        ui.label(RichText::new(new.trim()).size(13.0).color(green));
+                                    });
+                                    ui.horizontal(|ui| {
+                                        let label = if on { t(lang, "discard") } else { t(lang, "accept") };
+                                        if ui.button(label).clicked() {
+                                            toggle = Some(i);
+                                        }
+                                        ui.label(
+                                            RichText::new(if on {
+                                                t(lang, "accept")
+                                            } else {
+                                                t(lang, "discard")
+                                            })
+                                            .size(11.0)
+                                            .color(pal.muted),
+                                        );
+                                    });
+                                });
+                            ui.add_space(4.0);
+                        }
+                    });
+                ui.separator();
+                egui::ScrollArea::vertical()
+                    .id_source("diff_preview")
+                    .max_height(150.0)
+                    .show(ui, |ui| {
+                        ui.label(RichText::new(diff.result()).size(13.0).color(pal.text));
+                    });
+                ui.horizontal(|ui| {
+                    if ui
+                        .add(
+                            egui::Button::new(
+                                RichText::new(t(lang, "apply")).color(pal.on_accent),
+                            )
+                            .fill(pal.accent)
+                            .rounding(Rounding::same(999.0)),
+                        )
+                        .clicked()
+                    {
+                        apply = true;
+                    }
+                    if ui.button(t(lang, "cancel")).clicked() {
+                        self.diff = None;
+                    }
+                });
+            });
+
+        if let Some(d) = self.diff.as_mut() {
+            if accept_all {
+                d.set_all(true);
+            }
+            if discard_all {
+                d.set_all(false);
+            }
+            if let Some(i) = toggle {
+                if let Some(a) = d.accepted.get_mut(i) {
+                    *a = !*a;
+                }
+            }
+        }
+        if apply {
+            let result = self.diff.as_ref().map(|d| d.result()).unwrap_or_default();
+            self.push_undo();
+            self.doc = result;
+            self.diff = None;
+            self.saved = false;
+            self.set.doc = self.doc.clone();
+            self.save_set();
+            self.sync_active_session();
+        }
+        if !open {
+            self.diff = None;
         }
     }
 
