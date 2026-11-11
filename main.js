@@ -101,6 +101,31 @@ ipcMain.handle('spell:edit', (_e, oldWord, newWord) => {
   return true;
 });
 
+// Export und Import des persoenlichen Woerterbuchs. Der Export schreibt eine
+// einfache JSON-Liste, der Import mischt die Eintraege ohne Duplikate dazu.
+ipcMain.handle('dict:export', async () => {
+  const r = await dialog.showSaveDialog(win, { defaultPath: 'woerterbuch.json', filters: [{ name: 'JSON', extensions: ['json'] }] });
+  if (r.canceled || !r.filePath) return -1;
+  try { fs.writeFileSync(r.filePath, JSON.stringify(personal, null, 2), 'utf8'); return personal.length; }
+  catch { return -1; }
+});
+ipcMain.handle('dict:import', async () => {
+  const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: 'JSON', extensions: ['json'] }] });
+  if (r.canceled || !r.filePaths.length) return null;
+  try {
+    const arr = JSON.parse(fs.readFileSync(r.filePaths[0], 'utf8'));
+    if (!Array.isArray(arr)) return { error: true };
+    let added = 0;
+    for (const w of arr) {
+      const word = typeof w === 'string' ? w.trim() : '';
+      if (word && !personal.includes(word)) { personal.push(word); added++; }
+    }
+    try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {}
+    for (const k in spellers) delete spellers[k];
+    return { added, total: personal.length };
+  } catch { return { error: true }; }
+});
+
 ipcMain.handle('file:save', async (_e, name, data, kind) => {
   const names = { md:'Markdown', html:'HTML', txt:'Text', pdf:'PDF' };
   const r = await dialog.showSaveDialog(win, { defaultPath: name + '.' + kind, filters: [{ name: names[kind], extensions: [kind] }] });

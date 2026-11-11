@@ -31,6 +31,8 @@ Object.assign(IC, {
   plus:'<path d="M12 5v14M5 12h14"/>', pencil:'<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>',
   cpu:'<rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
   chev:'<path d="M6 9l6 6 6-6"/>', arrowR:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  upload:'<path d="M12 16V3M7 8l5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
+  download:'<path d="M12 3v13M7 11l5 5 5-5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>',
   // Schalter fuer die in der Sitzung geoeffneten Dokumente in der Statusleiste.
   // Drei geschlossene Rechtecke nebeneinander: das offene Fenster in der Mitte,
   // links und rechts je ein schmales, angeschnittenes Nachbarfenster. Bewusst
@@ -109,6 +111,10 @@ X('shorten','Kürzen','Shorten','Inkorten','Acortar','Kısalt','تقصير'); X(
 X('synonyms','Sinnverwandte Wörter','Synonyms','Synoniemen','Sinónimos','Eş anlamlılar','مرادفات'); X('styleB','Ausdrucksweise','Style','Stijl','Estilo','Stil','الأسلوب'); X('translateSel','Übersetzen','Translate','Vertalen','Traducir','Çevir','ترجمة');
 X('modelMenu','Modelle','Models','Modellen','Modelos','Modeller','النماذج'); X('writeModel','Schreibmodell','Writing model','Schrijfmodel','Modelo de escritura','Yazma modeli','نموذج الكتابة'); X('transModel','Übersetzungsmodell','Translation model','Vertaalmodel','Modelo de traducción','Çeviri modeli','نموذج الترجمة');
 X('dict','Wörterbuch','Dictionary','Woordenboek','Diccionario','Sözlük','القاموس'); X('spellOn','Rechtschreibung prüfen','Check spelling','Spelling controleren','Revisar ortografía','Yazımı denetle','تدقيق إملائي');
+X('dictExport','Wörterbuch exportieren','Export dictionary','Woordenboek exporteren','Exportar diccionario','Sözlüğü dışa aktar','تصدير القاموس'); X('dictImport','Wörterbuch importieren','Import dictionary','Woordenboek importeren','Importar diccionario','Sözlüğü içe aktar','استيراد القاموس');
+X('dictExported', n => `${n} Wörter exportiert`, n => `${n} words exported`, n => `${n} woorden geëxporteerd`, n => `${n} palabras exportadas`, n => `${n} kelime dışa aktarıldı`, n => `تم تصدير ${n} كلمة`);
+X('dictImported', n => `${n} Wörter importiert`, n => `${n} words imported`, n => `${n} woorden geïmporteerd`, n => `${n} palabras importadas`, n => `${n} kelime içe aktarıldı`, n => `تم استيراد ${n} كلمة`);
+X('dictImportErr','Wörterbuch konnte nicht gelesen werden','Could not read the dictionary','Woordenboek kon niet worden gelezen','No se pudo leer el diccionario','Sözlük okunamadı','تعذر قراءة القاموس');
 X('addDict','Zum Wörterbuch hinzufügen','Add to dictionary','Aan woordenboek toevoegen','Añadir al diccionario','Sözlüğe ekle','إضافة إلى القاموس'); X('ignoreW','Ignorieren','Ignore','Negeren','Ignorar','Yoksay','تجاهل');
 X('commaMissing','Hier fehlt vermutlich ein Komma','A comma is probably missing here','Hier ontbreekt waarschijnlijk een komma','Probablemente falta una coma','Muhtemelen virgül eksik','ربما تنقص فاصلة'); X('insComma','Komma einfügen','Insert comma','Komma invoegen','Insertar coma','Virgül ekle','إدراج فاصلة'); X('noSug','Keine Vorschläge','No suggestions','Geen suggesties','Sin sugerencias','Öneri yok','لا توجد اقتراحات');
 K.words = [n => `${n} Wörter`, n => `${n} words`]; NL.words = n => `${n} woorden`; if (window.ES) ES.words = n => `${n} palabras`; if (window.TR) TR.words = n => `${n} kelime`; if (window.AR) AR.words = n => `${n} كلمة`;
@@ -1324,7 +1330,12 @@ async function showDictManager() {
     d.innerHTML = `
       <div class="dh">
         <h3 style="margin:0">${t('personalDict')}</h3>
-        <button class="ib" id="dictClose" data-i="x"></button>
+        <span class="sp"></span>
+        <div style="display:flex;gap:2px">
+          <button class="ib" id="dictExport" title="${t('dictExport')}">${ic('upload', 16)}</button>
+          <button class="ib" id="dictImport" title="${t('dictImport')}">${ic('download', 16)}</button>
+          <button class="ib" id="dictClose" data-i="x"></button>
+        </div>
       </div>
       <div class="dict-add">
         <input id="dictNewIn" placeholder="${t('addWordPh')}">
@@ -1350,6 +1361,21 @@ async function showDictManager() {
     const closeDlg = () => d.close();
     d.querySelector('#dictClose').onclick = closeDlg;
     d.querySelector('#dictDoneBtn').onclick = closeDlg;
+
+    d.querySelector('#dictExport').onclick = async () => {
+      const n = await window.api.dictExport();
+      if (n >= 0) edStatus(t('dictExported', n));
+    };
+    d.querySelector('#dictImport').onclick = async () => {
+      const r = await window.api.dictImport();
+      if (r && r.error) { edStatus(t('dictImportErr')); return; }
+      if (r) {
+        words = (await window.api.spellGetPersonal()) || [];
+        draw();
+        spellScan();
+        edStatus(t('dictImported', r.added));
+      }
+    };
 
     const addWord = async () => {
       const inp = d.querySelector('#dictNewIn');

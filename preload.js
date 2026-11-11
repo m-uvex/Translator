@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('api', {
   spellGetPersonal: () => ipcRenderer.invoke('spell:getPersonal'),
   spellRemove: word => ipcRenderer.invoke('spell:remove', word),
   spellEdit: (oldWord, newWord) => ipcRenderer.invoke('spell:edit', oldWord, newWord),
+  dictExport: () => ipcRenderer.invoke('dict:export'),
+  dictImport: () => ipcRenderer.invoke('dict:import'),
   saveFile: (name, data, kind) => ipcRenderer.invoke('file:save', name, data, kind),
   libList: () => ipcRenderer.invoke('lib:list'),
   libRead: id => ipcRenderer.invoke('lib:read', id),
