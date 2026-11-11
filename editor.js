@@ -115,6 +115,7 @@ X('dictExport','Wörterbuch exportieren','Export dictionary','Woordenboek export
 X('dictExported', n => `${n} Wörter exportiert`, n => `${n} words exported`, n => `${n} woorden geëxporteerd`, n => `${n} palabras exportadas`, n => `${n} kelime dışa aktarıldı`, n => `تم تصدير ${n} كلمة`);
 X('dictImported', n => `${n} Wörter importiert`, n => `${n} words imported`, n => `${n} woorden geïmporteerd`, n => `${n} palabras importadas`, n => `${n} kelime içe aktarıldı`, n => `تم استيراد ${n} كلمة`);
 X('dictImportErr','Wörterbuch konnte nicht gelesen werden','Could not read the dictionary','Woordenboek kon niet worden gelezen','No se pudo leer el diccionario','Sözlük okunamadı','تعذر قراءة القاموس');
+X('dictImportNone', n => `Keine neuen Wörter – ${n} bereits vorhanden`, n => `No new words – ${n} already present`, n => `Geen nieuwe woorden – ${n} al aanwezig`, n => `Ninguna palabra nueva – ${n} ya existían`, n => `Yeni kelime yok – ${n} zaten var`, n => `لا توجد كلمات جديدة – ${n} موجودة بالفعل`);
 X('addDict','Zum Wörterbuch hinzufügen','Add to dictionary','Aan woordenboek toevoegen','Añadir al diccionario','Sözlüğe ekle','إضافة إلى القاموس'); X('ignoreW','Ignorieren','Ignore','Negeren','Ignorar','Yoksay','تجاهل');
 X('commaMissing','Hier fehlt vermutlich ein Komma','A comma is probably missing here','Hier ontbreekt waarschijnlijk een komma','Probablemente falta una coma','Muhtemelen virgül eksik','ربما تنقص فاصلة'); X('insComma','Komma einfügen','Insert comma','Komma invoegen','Insertar coma','Virgül ekle','إدراج فاصلة'); X('noSug','Keine Vorschläge','No suggestions','Geen suggesties','Sin sugerencias','Öneri yok','لا توجد اقتراحات');
 K.words = [n => `${n} Wörter`, n => `${n} words`]; NL.words = n => `${n} woorden`; if (window.ES) ES.words = n => `${n} palabras`; if (window.TR) TR.words = n => `${n} kelime`; if (window.AR) AR.words = n => `${n} كلمة`;
@@ -762,6 +763,15 @@ function renderTb() {
   applyI18n(); reicon(); updTb();
 }
 function updTb() {
+  // Nur auswerten, wenn die Auswahl in der Seite liegt. Steht sie in einem
+  // anderen contenteditable (etwa im Woerterbuch-Dialog), meldet
+  // document.queryCommandState den Zustand dieses Elements, und die
+  // Werkzeugleiste leuchtet scheinbar grundlos auf.
+  const sel = getSelection();
+  if (!sel || !sel.rangeCount || !page.contains(sel.anchorNode)) {
+    tb.querySelectorAll('[data-cmd]').forEach(b => b.classList.remove('on'));
+    return;
+  }
   tb.querySelectorAll('[data-cmd]').forEach(b => { let on = false; try { on = document.queryCommandState(b.dataset.cmd); } catch {} b.classList.toggle('on', on); });
   try {
     const v = (document.queryCommandValue('formatBlock') || 'p').toLowerCase(), h = tb.querySelector('[data-sel=heading]');
@@ -1373,7 +1383,8 @@ async function showDictManager() {
         words = (await window.api.spellGetPersonal()) || [];
         draw();
         spellScan();
-        edStatus(t('dictImported', r.added));
+        if (r.added) edStatus(t('dictImported', r.added));
+        else edStatus(t('dictImportNone', r.skipped || 0));
       }
     };
 
@@ -1561,6 +1572,25 @@ $('#pageWrap').addEventListener('scroll', () => { if (!bar.classList.contains('h
 document.addEventListener('selectionchange', () => {
   const s = getSelection(); if (s.rangeCount && page.contains(s.anchorNode)) ED.sel = s.getRangeAt(0).cloneRange();
   if (!ED.busy && (!s.rangeCount || s.isCollapsed)) hideBar(); updTb();
+});
+// Strg+A im Editor: Hat die Seite keinen Fokus (etwa nach einem Klick auf die
+// Werkzeugleiste oder einen Dialog), markiert der Browser sonst das ganze
+// Dokument samt Seitenleiste und Statusleiste. Solange der Editor sichtbar ist
+// und kein Eingabefeld den Fokus hat, markiert Strg+A deshalb nur den Text der
+// Seite.
+document.addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+  if (e.key !== 'a' && e.key !== 'A') return;
+  if ($('#vE').classList.contains('hidden')) return;
+  const ae = document.activeElement;
+  if (ae && ae !== page && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT' || ae.isContentEditable)) return;
+  if (page.contains(ae)) return;
+  e.preventDefault();
+  page.focus();
+  const r = document.createRange(); r.selectNodeContents(page);
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  ED.sel = r.cloneRange();
+  updTb();
 });
 ['#pop', '#alt', '#cm', '#trPop'].forEach(id => $(id).addEventListener('mousedown', e => { if (!e.target.closest('input,select,textarea')) e.preventDefault(); }));
 document.addEventListener('mousedown', e => { if (!e.target.closest('#trPop,.ctxbar,#pop,#diffPanel')) $('#trPop').classList.add('hidden'); });

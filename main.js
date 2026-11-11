@@ -102,7 +102,45 @@ ipcMain.handle('spell:edit', (_e, oldWord, newWord) => {
 });
 
 // Export und Import des persoenlichen Woerterbuchs. Der Export schreibt eine
-// einfache JSON-Liste, der Import mischt die Eintraege ohne Duplikate dazu.
+// einfache JSON-Liste. Der Import liest auch Textlisten (eine Zeile pro Wort)
+// und vergleicht ohne Ruecksicht auf Gross-/Kleinschreibung, damit dasselbe
+// Wort nicht in zwei Schreibweisen doppelt in der Liste landet - weder gegen
+// den Bestand noch innerhalb der importierten Datei.
+const dictKey = w => String(w).trim().toLocaleLowerCase();
+function dictWord(raw) {
+  if (typeof raw === 'string') return raw.trim();
+  if (raw && typeof raw.word === 'string') return raw.word.trim();
+  return '';
+}
+function mergeDictWords(existing, incoming) {
+  const seen = new Set(), list = [];
+  for (const raw of existing) {
+    const word = dictWord(raw);
+    if (!word || seen.has(dictKey(word))) continue;
+    seen.add(dictKey(word)); list.push(word);
+  }
+  let added = 0, skipped = 0;
+  for (const raw of incoming) {
+    const word = dictWord(raw);
+    if (!word || seen.has(dictKey(word))) { skipped++; continue; }
+    seen.add(dictKey(word)); list.push(word); added++;
+  }
+  return { list, added, skipped };
+}
+// JSON-Liste, JSON mit words-Array oder reine Textliste. Ein BOM am
+// Dateianfang (Windows-Editor) wuerde sonst jeden JSON.parse scheitern lassen.
+function parseDictFile(text) {
+  const raw = String(text).replace(/^\uFEFF/, '').trim();
+  if (!raw) return [];
+  try {
+    const data = JSON.parse(raw);
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.words)) return data.words;
+    if (typeof data === 'string') return [data];
+    if (data && typeof data === 'object') return Object.keys(data);
+    return [];
+  } catch { return raw.split(/[\r\n;,]+/); }
+}
 ipcMain.handle('dict:export', async () => {
   const r = await dialog.showSaveDialog(win, { defaultPath: 'woerterbuch.json', filters: [{ name: 'JSON', extensions: ['json'] }] });
   if (r.canceled || !r.filePath) return -1;
@@ -110,19 +148,14 @@ ipcMain.handle('dict:export', async () => {
   catch { return -1; }
 });
 ipcMain.handle('dict:import', async () => {
-  const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: 'JSON', extensions: ['json'] }] });
+  const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: 'JSON oder Text', extensions: ['json', 'txt'] }] });
   if (r.canceled || !r.filePaths.length) return null;
   try {
-    const arr = JSON.parse(fs.readFileSync(r.filePaths[0], 'utf8'));
-    if (!Array.isArray(arr)) return { error: true };
-    let added = 0;
-    for (const w of arr) {
-      const word = typeof w === 'string' ? w.trim() : '';
-      if (word && !personal.includes(word)) { personal.push(word); added++; }
-    }
+    const merged = mergeDictWords(personal, parseDictFile(fs.readFileSync(r.filePaths[0], 'utf8')));
+    personal = merged.list;
     try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {}
     for (const k in spellers) delete spellers[k];
-    return { added, total: personal.length };
+    return { added: merged.added, skipped: merged.skipped, total: personal.length };
   } catch { return { error: true }; }
 });
 
