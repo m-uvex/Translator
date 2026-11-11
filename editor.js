@@ -31,9 +31,10 @@ Object.assign(IC, {
   plus:'<path d="M12 5v14M5 12h14"/>', pencil:'<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>',
   cpu:'<rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
   chev:'<path d="M6 9l6 6 6-6"/>', arrowR:'<path d="M5 12h14M13 6l6 6-6 6"/>',
-  // Zwei uebereinanderliegende Seiten: Schalter fuer die in der Sitzung
-  // geoeffneten Dokumente in der Statusleiste.
-  docs:'<path d="M8 3h7l4 4v12H8z"/><path d="M15 3v4h4M4 7v14h10v-4"/>',
+  // Drei aufgereihte Seitenkarten (aktive Karte mittig): Schalter fuer die in der Sitzung
+  // geoeffneten Dokumente in der Statusleiste. Bewusst keine zwei versetzten Seiten,
+  // um Verwechslungen mit Kopieren/Einfuegen zu vermeiden.
+  docs:'<path d="M7 8H4a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 4 18h3M17 8h3a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1-1.5 1.5h-3"/><rect x="7" y="4" width="10" height="16" rx="2"/><path d="M10.5 9.5h3M10.5 13.5h3"/>',
   male:'<circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/>', female:'<circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 18h6"/>',
   nb:'<circle cx="12" cy="13" r="4"/><path d="M12 9V2M8.5 11 3 8M15.5 11 21 8"/>', qmark:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/>', dash:'<path d="M6 12h12"/>',
   hat:'<path d="M6 15V6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v9M3 15h18M4 15v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1M6 11h12"/>', smile:'<circle cx="12" cy="12" r="9"/><path d="M8 14c1 1.5 2.3 2 4 2s3-.5 4-2M9 9.5h.01M15 9.5h.01"/>',
@@ -120,6 +121,9 @@ X('save','Speichern','Save','Opslaan'); X('del','Löschen','Delete','Verwijderen
 // Alternative, falls es stoert: "Professionell" (wie im Englischen).
 X('st_pro','Fachlich','Professional','Professioneel'); X('st_casual','Locker','Casual','Los'); X('st_concise','Knapp','Concise','Beknopt'); X('st_formal','Gehoben','Formal','Formeel'); X('st_creative','Einfallsreich','Creative','Creatief'); X('st_simple','Einfach','Simple','Eenvoudig');
 X('confNew','Aktuelles Dokument verwerfen und ein neues beginnen?','Discard the current document and start a new one?','Huidig document verwerpen en een nieuw beginnen?','¿Descartar el documento actual y comenzar uno nuevo?','Mevcut belgeyi atıp yenisine başlansın mı?','هل تريد تجاهل المستند الحالي وبدء مستند جديد؟');
+X('confDiscard','Ungespeicherte Änderungen an diesem Dokument verwerfen?','Discard unsaved changes to this document?','Niet-opgeslagen wijzigingen in dit document verwerpen?','¿Descartar los cambios no guardados en este documento?','Bu belgedeki kaydedilmemiş değişiklikler atılsın mı?','هل تريد تجاهل التغييرات غير المحفوظة في هذا المستند؟');
+X('confQuitDiscard','Ungespeicherte Änderungen verwerfen und das Programm beenden?','Discard unsaved changes and quit?','Niet-opgeslagen wijzigingen verwerpen en afsluiten?','¿Descartar los cambios no guardados y salir?','Kaydedilmemiş değişiklikleri atıp çıkılsın mı?','هل تريد تجاهل التغييرات غير المحفوظة والخروج؟');
+X('discard','Verwerfen','Discard','Verwerpen','Descartar','At','تجاهل');
 X('sumTitle','Zusammenfassung','Summary','Samenvatting'); X('insTop','Am Anfang einfügen','Insert at top','Bovenaan invoegen'); X('replAll','Text ersetzen','Replace text','Tekst vervangen');
 X('lblWriter','Absender*in','Writer','Afzender*','Remitente*','Gönderen*','المرسل*'); X('lblAddr','Empfänger*in','Addressee','Ontvanger*','Receptor*','Alıcı*','المستلم*'); X('lblForm','Ton','Tone','Toon','Tono','Ton','النبرة');
 X('noChanges','Keine Änderungen gefunden','No changes found','Geen wijzigingen gevonden');
@@ -790,8 +794,7 @@ function toMd(node) {
   });
   return o;
 }
-async function newDoc() {
-  if (page.textContent.trim() && !(await ask(t('confNew'), t('yes'), t('cancel')))) return;
+function newDoc() {
   // Ein bereits leeres, ungespeichertes Dokument wird wiederverwendet, statt
   // fuer jeden Klick auf "Neu" eine weitere leere Karte anzulegen.
   const cur = currentDocEntry();
@@ -809,6 +812,18 @@ function syncDocEntry() {
   e.html = page.innerHTML;
   e.name = docName();
 }
+function isDocDirty(d) {
+  if (!d) return false;
+  if (d.key === ED.docKey) d.html = page.innerHTML;
+  const temp = document.createElement('div');
+  temp.innerHTML = d.html || '';
+  const hasContent = !!(temp.textContent.trim() || temp.querySelector('img,hr'));
+  if (!hasContent) return false;
+  if (d.savedHtml !== undefined && d.savedHtml !== null) {
+    return cleanHtml(d.html) !== cleanHtml(d.savedHtml);
+  }
+  return true;
+}
 function applyDocEntry(e) {
   ED.docKey = e.key;
   ED.docId = e.id || null;
@@ -821,7 +836,8 @@ function setDoc(html, id = null) {
   syncDocEntry();
   let e = id ? ED.docs.find(d => d.id === id) : null;
   if (!e) {
-    e = { key:'s' + (++ED.docSeq), id:id || null, name:t('libUntitled'), html: html || '<p><br></p>' };
+    const isBlank = !html || html === '<p><br></p>';
+    e = { key:'s' + (++ED.docSeq), id:id || null, name:t('libUntitled'), html: html || '<p><br></p>', savedHtml: isBlank ? (html || '<p><br></p>') : (id ? html : null) };
     ED.docs.push(e);
   }
   applyDocEntry(e);
@@ -861,7 +877,7 @@ async function libUpsert() {
     if (m && m.id) {
       ED.docId = m.id;
       const cur = currentDocEntry();
-      if (cur) { cur.id = m.id; cur.name = m.name || docName(); cur.html = page.innerHTML; }
+      if (cur) { cur.id = m.id; cur.name = m.name || docName(); cur.html = page.innerHTML; cur.savedHtml = page.innerHTML; }
       try { localStorage.setItem('edDocId', m.id); } catch {}
     }
     return m;
@@ -924,7 +940,10 @@ async function libOpen(id) {
   let e = null;
   try { e = await window.api.libRead(id); } catch {}
   if (!e) return edStatus(t('readErr'));
-  setDoc(cleanHtml(e.html), id);
+  const clean = cleanHtml(e.html);
+  setDoc(clean, id);
+  const cur = currentDocEntry();
+  if (cur) cur.savedHtml = clean;
   showView('ed');
 }
 async function libRemove(id) {
@@ -1000,11 +1019,15 @@ function dockPick(key) {
   if (e.key !== ED.docKey) { syncDocEntry(); applyDocEntry(e); }
   dockClose();
 }
-function dockRemove(key) {
+async function dockRemove(key) {
   const i = ED.docs.findIndex(d => d.key === key);
   if (i < 0) return;
-  const active = ED.docs[i].key === ED.docKey;
-  if (active) syncDocEntry();
+  const doc = ED.docs[i];
+  if (doc.key === ED.docKey) syncDocEntry();
+  if (isDocDirty(doc)) {
+    if (!(await ask(t('confDiscard'), t('discard'), t('cancel')))) return;
+  }
+  const active = doc.key === ED.docKey;
   const before = new Map([...dockStrip.children].map(c => [c.dataset.key, c.getBoundingClientRect()]));
   ED.docs.splice(i, 1);
   if (active) {
@@ -1013,7 +1036,7 @@ function dockRemove(key) {
     // weil sich das aktive Dokument geaendert hat.
     if (!ED.docs.length) {
       ED.docKey = null; ED.docId = null;
-      const blank = { key:'s' + (++ED.docSeq), id:null, name:t('libUntitled'), html:'<p><br></p>' };
+      const blank = { key:'s' + (++ED.docSeq), id:null, name:t('libUntitled'), html:'<p><br></p>', savedHtml:'<p><br></p>' };
       ED.docs.push(blank);
       applyDocEntry(blank);
     } else applyDocEntry(ED.docs[Math.min(i, ED.docs.length - 1)]);
@@ -1396,8 +1419,15 @@ function updWords() { const w = (page.innerText.trim().match(/\S+/g) || []).leng
 document.execCommand('defaultParagraphSeparator', false, 'p');
 page.innerHTML = localStorage.getItem('edDoc') || '<p><br></p>';
 ED.docId = localStorage.getItem('edDocId') || null;
-ED.docs = [{ key:'s0', id:ED.docId, name:docName(), html:page.innerHTML }];
+ED.docs = [{ key:'s0', id:ED.docId, name:docName(), html:page.innerHTML, savedHtml:null }];
 ED.docKey = 's0';
+if (ED.docId && window.api?.libRead) {
+  window.api.libRead(ED.docId).then(libDoc => {
+    if (libDoc && cleanHtml(libDoc.html) === cleanHtml(page.innerHTML)) {
+      if (ED.docs[0]) ED.docs[0].savedHtml = page.innerHTML;
+    }
+  }).catch(() => {});
+}
 let saveTimer = null;
 
 function handleMarkdownTrigger() {
@@ -1533,6 +1563,17 @@ const startView = () => {
   const v = S.start === 'last' ? (S.view || 'tr') : (S.start || 'tr');
   return (v === 'ed' || v === 'lib') ? 'ed' : 'tr';
 };
+if (window.api?.onRequestClose) {
+  window.api.onRequestClose(async () => {
+    syncDocEntry();
+    const dirty = ED.docs.some(d => isDocDirty(d));
+    if (dirty) {
+      showView('ed');
+      if (!(await ask(t('confQuitDiscard'), t('discard'), t('cancel')))) return;
+    }
+    window.api.forceQuit();
+  });
+}
 buildBar(); renderTb(); renderSb(); reicon(); setLang(); renderAll(); showView(startView()); applyWorkspace();
 loadSystemFonts().then(() => renderTb());
 })();

@@ -156,6 +156,12 @@ ipcMain.handle('lib:delete', (_e, id) => {
   return true;
 });
 
+let forceQuit = false;
+ipcMain.handle('app:forceQuit', () => {
+  forceQuit = true;
+  if (win && !win.isDestroyed()) win.close();
+});
+
 app.whenReady().then(() => {
   try { personal = JSON.parse(fs.readFileSync(persFile(), 'utf8')); } catch {}
   session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => cb(permission === 'local-fonts'));
@@ -164,6 +170,11 @@ app.whenReady().then(() => {
   win = new BrowserWindow({ width: 1280, height: 820, minWidth: 980, minHeight: 600, autoHideMenuBar: true,
     ...(fs.existsSync(icon) ? { icon } : {}),
     webPreferences: { webSecurity: false, preload: path.join(__dirname, 'preload.js') } });
+  win.on('close', e => {
+    if (forceQuit) return;
+    e.preventDefault();
+    if (win && !win.isDestroyed()) win.webContents.send('app:request-close');
+  });
   win.loadFile('index.html', nllbWanted ? { query: { nllb: '1' } } : {});
 });
 app.on('will-quit', () => { killTree(nllb); killTree(ollama); });

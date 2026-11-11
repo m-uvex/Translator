@@ -12,5 +12,7 @@ contextBridge.exposeInMainWorld('api', {
   libRead: id => ipcRenderer.invoke('lib:read', id),
   libSave: doc => ipcRenderer.invoke('lib:save', doc),
   libDelete: id => ipcRenderer.invoke('lib:delete', id),
-  fontsList: () => ipcRenderer.invoke('fonts:list')
+  fontsList: () => ipcRenderer.invoke('fonts:list'),
+  onRequestClose: cb => ipcRenderer.on('app:request-close', () => cb()),
+  forceQuit: () => ipcRenderer.invoke('app:forceQuit')
 });
