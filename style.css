@@ -277,6 +277,9 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
    Reines Achteck in der Icon-Farbe, kein Text, keine Sonderfarbe. */
 #stopTr svg{width:20px;height:20px}
 #stopTr:disabled{opacity:.45}
+/* Kopieren-Icon im Ausgabefooter: minimale Grosseangleichung ans Stopp-Schild,
+   damit beide Icons visuell gleich gross wirken (beide 20px statt 18px Default). */
+#copy svg{width:20px;height:20px}
 #dictDlg{width:min(480px,92vw)}
 #dictDlg .dict-list{max-height:45vh;overflow:auto;margin:12px 0;border:1px solid var(--line);border-radius:12px;padding:4px}
 #dictDlg .dict-row{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px}
