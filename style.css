@@ -170,7 +170,11 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
    Karten tragen einen weichen Schlagschatten. */
 #docDock{position:fixed;left:56px;right:12px;bottom:72px;z-index:44;display:flex;justify-content:center;pointer-events:none;padding:0 24px}
 #docDock.hidden{display:none}
-.dockpanel{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(1500px,calc(100% - 64px));height:150px;background:color-mix(in srgb,var(--soft) 92%,transparent);border:1px solid var(--line);border-radius:24px;box-shadow:0 16px 40px #00000024;backdrop-filter:blur(14px)}
+/* Die Flaeche hinter den Seitenkarten ist bewusst deckend. Mit transparenter
+   Farbe und backdrop-filter nahm sie die Farbe dessen an, was hinter ihr lag:
+   links die Editor-Leinwand, rechts die weisse Seite. Dadurch entstand an der
+   linken Kante ein grauer Streifen in falscher Farbe. */
+.dockpanel{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(1500px,calc(100% - 64px));height:150px;background:var(--soft);border:1px solid var(--line);border-radius:24px;box-shadow:0 16px 40px #00000024}
 #dockStrip{position:relative;width:min(1500px,calc(100% - 64px));height:262px;display:flex;align-items:flex-end;gap:14px;overflow-x:auto;overflow-y:hidden;padding:58px 22px 18px;scrollbar-width:none;pointer-events:auto}
 #dockStrip::-webkit-scrollbar{display:none}
 #dockStrip.dragging{cursor:grabbing}

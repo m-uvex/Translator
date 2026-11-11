@@ -31,10 +31,12 @@ Object.assign(IC, {
   plus:'<path d="M12 5v14M5 12h14"/>', pencil:'<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>',
   cpu:'<rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
   chev:'<path d="M6 9l6 6 6-6"/>', arrowR:'<path d="M5 12h14M13 6l6 6-6 6"/>',
-  // Drei aufgereihte Seitenkarten (aktive Karte mittig): Schalter fuer die in der Sitzung
-  // geoeffneten Dokumente in der Statusleiste. Bewusst keine zwei versetzten Seiten,
-  // um Verwechslungen mit Kopieren/Einfuegen zu vermeiden.
-  docs:'<path d="M7 8H4a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 4 18h3M17 8h3a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1-1.5 1.5h-3"/><rect x="7" y="4" width="10" height="16" rx="2"/><path d="M10.5 9.5h3M10.5 13.5h3"/>',
+  // Schalter fuer die in der Sitzung geoeffneten Dokumente in der Statusleiste.
+  // Ein offenes Fenster in der Mitte, links und rechts davon je ein zu etwa einem
+  // Drittel angeschnittenes Nachbarfenster: Die Rahmen der Nachbarn sind als
+  // eckige Klammern gezeichnet (geschlossen links, offen rechts), damit das Icon
+  // wie ein Fensterstapel wirkt und nicht wie ein Kopieren/Einfuegen-Symbol.
+  docs:'<rect x="8" y="5" width="8" height="14" rx="1.6"/><path d="M6 5H4.2A1.2 1.2 0 0 0 3 6.2v11.6A1.2 1.2 0 0 0 4.2 19H6"/><path d="M18 5h1.8A1.2 1.2 0 0 1 21 6.2v11.6a1.2 1.2 0 0 1-1.2 1.2H18"/>',
   male:'<circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/>', female:'<circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 18h6"/>',
   nb:'<circle cx="12" cy="13" r="4"/><path d="M12 9V2M8.5 11 3 8M15.5 11 21 8"/>', qmark:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/>', dash:'<path d="M6 12h12"/>',
   hat:'<path d="M6 15V6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v9M3 15h18M4 15v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1M6 11h12"/>', smile:'<circle cx="12" cy="12" r="9"/><path d="M8 14c1 1.5 2.3 2 4 2s3-.5 4-2M9 9.5h.01M15 9.5h.01"/>',
@@ -77,15 +79,15 @@ const reicon = () => document.querySelectorAll('[data-i]').forEach(e => e.innerH
 
 const X = (k, de, en, nl, es, tr, ar) => { K[k] = [de, en]; NL[k] = nl; if (window.ES && es) ES[k] = es; if (window.TR && tr) TR[k] = tr; if (window.AR && ar) AR[k] = ar; };
 X('navTr','Übersetzer','Translator','Vertaler','Traductor','Çevirmen','المترجم'); X('navEd','Textbearbeitung','Text editor','Tekstbewerking','Editor de texto','Metin düzenleyici','محرر النصوص');
-// Datei-Bibliothek: Rail-Icon unter dem Editor, Liste mit Vorschau, Oeffnen
-// per Klick und Entfernen per Kreuz in der Ecke.
-X('navLib','Datei-Bibliothek','File library','Bestandsbibliotheek','Biblioteca de archivos','Dosya kitaplığı','مكتبة الملفات');
-X('libTitle','Datei-Bibliothek','File library','Bestandsbibliotheek','Biblioteca de archivos','Dosya kitaplığı','مكتبة الملفات');
-X('libEmpty','Noch keine Dokumente in der Bibliothek.','No documents in the library yet.','Nog geen documenten in de bibliotheek.','Aún no hay documentos en la biblioteca.','Kitaplıkta henüz belge yok.','لا توجد مستندات في المكتبة بعد.');
-X('libEmptyHint','Speichern Sie ein Dokument im Texteditor, um es hier wiederzufinden.','Save a document in the text editor to find it here.','Sla een document op in de teksteditor om het hier terug te vinden.','Guarda un documento en el editor de texto para encontrarlo aquí.','Burada bulmak için metin düzenleyicide bir belge kaydedin.','احفظ مستندًا في محرر النصوص لتجده هنا.');
-X('libSave','In Bibliothek speichern','Save to library','In bibliotheek opslaan','Guardar en la biblioteca','Kitaplığa kaydet','حفظ في المكتبة');
-X('libSaved','In Bibliothek gespeichert','Saved to library','Opgeslagen in bibliotheek','Guardado en la biblioteca','Kitaplığa kaydedildi','تم الحفظ في المكتبة');
-X('libDeleteQ','Dieses Dokument aus der Bibliothek entfernen?','Remove this document from the library?','Dit document uit de bibliotheek verwijderen?','¿Quitar este documento de la biblioteca?','Bu belge kitaplıktan kaldırılsın mı?','إزالة هذا المستند من المكتبة؟');
+// Dokumentenablage (frueher "Datei-Bibliothek"): Rail-Icon unter dem Editor,
+// Liste mit Vorschau, Oeffnen per Klick und Entfernen per Kreuz in der Ecke.
+X('navLib','Dokumentenablage','Document tray','Documentenlade','Bandeja de documentos','Belge tepsisi','درج المستندات');
+X('libTitle','Dokumentenablage','Document tray','Documentenlade','Bandeja de documentos','Belge tepsisi','درج المستندات');
+X('libEmpty','Noch keine Dokumente in der Ablage.','No documents in the tray yet.','Nog geen documenten in de lade.','Aún no hay documentos en la bandeja.','Tepside henüz belge yok.','لا توجد مستندات في الدرج بعد.');
+X('libEmptyHint','Speichern Sie ein Dokument im Texteditor, um es in der Ablage wiederzufinden.','Save a document in the text editor to find it in the tray.','Sla een document op in de teksteditor om het in de lade terug te vinden.','Guarda un documento en el editor de texto para encontrarlo en la bandeja.','Burada bulmak için metin düzenleyicide bir belge kaydedin.','احفظ مستندًا في محرر النصوص لتجده في الدرج.');
+X('libSave','In der Ablage speichern','Save to tray','In de lade opslaan','Guardar en la bandeja','Tepsiye kaydet','حفظ في الدرج');
+X('libSaved','In der Ablage gespeichert','Saved to tray','Opgeslagen in de lade','Guardado en la bandeja','Tepsiye kaydedildi','تم الحفظ في الدرج');
+X('libDeleteQ','Dieses Dokument aus der Ablage entfernen?','Remove this document from the tray?','Dit document uit de lade verwijderen?','¿Quitar este documento de la bandeja?','Bu belge tepside kaldırılsın mı?','إزالة هذا المستند من الدرج؟');
 X('libUntitled','Dokument','Document','Document','Documento','Belge','مستند');
 X('libCount', n => `${n} Dokumente`, n => `${n} documents`, n => `${n} documenten`, n => `${n} documentos`, n => `${n} belge`, n => `${n} مستندات`);
 // Sitzungsliste im Editor: Schalter in der Statusleiste, Karten mit Vorschau,
@@ -866,7 +868,7 @@ $('#edFile').onchange = async e => {
 function docName() {
   return page.querySelector('h1,h2,h3')?.textContent.trim().slice(0, 40).replace(/[\\/:*?"<>|]/g, '') || t('libUntitled');
 }
-// Legt das aktuelle Dokument in der Bibliothek ab bzw. aktualisiert den Eintrag.
+// Legt das aktuelle Dokument in der Ablage ab bzw. aktualisiert den Eintrag.
 // Die ID bleibt ueber Neustarts erhalten (localStorage), damit wiederholtes
 // Speichern keine Dubletten erzeugt.
 async function libUpsert() {
@@ -898,13 +900,13 @@ async function doSave(kind) {
   const name = docName();
   const data = kind === 'md' ? toMd(page).trim() + '\n' : page.innerText;
   try {
-    // Ein erfolgreicher Export landet zusaetzlich in der Bibliothek, damit
+    // Ein erfolgreicher Export landet zusaetzlich in der Ablage, damit
     // erstellte Dateien dort ohne eigenen Schritt wiederzufinden sind.
     if (await window.api.saveFile(name, data, kind)) await libUpsert();
   } catch { edStatus(t('readErr')); }
 }
 
-// ---------- Datei-Bibliothek ----------
+// ---------- Dokumentenablage ----------
 // Die Liste kommt aus dem Main-Prozess (echte HTML-Dateien plus Metadaten).
 // Die Vorschau zeigt den Anfang des Dokuments in einer kleinen Seite; das
 // Entfernen nutzt dasselbe Kreuz wie die Bildvorschauen (#thumbs .rm).
