@@ -16,5 +16,9 @@ contextBridge.exposeInMainWorld('api', {
   libDelete: id => ipcRenderer.invoke('lib:delete', id),
   fontsList: () => ipcRenderer.invoke('fonts:list'),
   onRequestClose: cb => ipcRenderer.on('app:request-close', () => cb()),
-  forceQuit: () => ipcRenderer.invoke('app:forceQuit')
+  forceQuit: () => ipcRenderer.invoke('app:forceQuit'),
+  winMinimize: () => ipcRenderer.invoke('win:minimize'),
+  winToggleMax: () => ipcRenderer.invoke('win:toggleMax'),
+  winClose: () => ipcRenderer.invoke('win:close'),
+  onWinState: cb => ipcRenderer.on('win:state', (_e, max) => cb(max))
 });

@@ -10,8 +10,17 @@
 ::-webkit-scrollbar-thumb:hover{background:#808084b3;background-clip:padding-box}
 ::-webkit-scrollbar-button{display:none;width:0;height:0}
 ::-webkit-scrollbar-corner{background:transparent}
-body{font:15px/1.5 "Segoe UI Variable","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text)}
-.app{display:grid;grid-template-columns:56px 1fr;height:100%}
+body{font:15px/1.5 "Segoe UI Variable","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+/* Eigene Fensterleiste statt der weissen Windows-Leiste. Sie ist die einzige
+   Draggable-Region (die Knoepfe sind no-drag) und uebernimmt die Farben der
+   App. Die Hoehe von 32px entspricht der frueheren Windows-Titelleiste, damit
+   die Seitenleiste bei 1280x820 weiterhin ohne Scrollen passt. */
+.titlebar{display:flex;align-items:center;gap:8px;height:32px;padding:0 6px 0 12px;background:var(--bg);flex:none;-webkit-app-region:drag;user-select:none}
+.tbname{font-size:12.5px;color:var(--muted);letter-spacing:.02em;white-space:nowrap}
+.tbctl{display:flex;align-items:center;gap:2px;-webkit-app-region:no-drag}
+.tbb{width:28px;height:28px;border-radius:50%;-webkit-app-region:no-drag}
+html[dir="rtl"] .titlebar{padding:0 12px 0 6px}
+.app{display:grid;grid-template-columns:56px 1fr;flex:1;min-height:0}
 .view{min-width:0;min-height:0}
 #vT{display:grid;grid-template-columns:1fr 300px}
 .rail{display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:12px 0}
@@ -296,7 +305,7 @@ html[dir="rtl"] main{padding:16px 0 16px 8px}
 html[dir="rtl"] .tb{padding:6px 10px 6px 52px}
 html[dir="rtl"] .tb .tb-model{right:auto;left:6px}
 html[dir="rtl"] #docDock{left:12px;right:56px}
-@media print{.rail,.side,#vT,#vE,#vL,#docDock,.pop,.tb,.sbar,.ctxbar,.diff-panel{display:none!important}html,body,.app{height:auto!important;overflow:visible!important;display:block!important}#vE{display:block!important;padding:0}#pageWrap{overflow:visible;padding:0;background:none}#page{box-shadow:none;border-radius:0;padding:0;margin:0;min-height:0;max-width:none;color:#000;background:#fff;caret-color:transparent!important}
+@media print{.titlebar,.rail,.side,#vT,#vE,#vL,#docDock,.pop,.tb,.sbar,.ctxbar,.diff-panel{display:none!important}html,body,.app{height:auto!important;overflow:visible!important;display:block!important}#vE{display:block!important;padding:0}#pageWrap{overflow:visible;padding:0;background:none}#page{box-shadow:none;border-radius:0;padding:0;margin:0;min-height:0;max-width:none;color:#000;background:#fff;caret-color:transparent!important}
   #spellOverlay{display:none!important}
   ::highlight(spell){text-decoration:none!important;background:none!important;color:inherit!important}
   ::selection{background:transparent!important;color:inherit!important}}

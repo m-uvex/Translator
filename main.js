@@ -181,6 +181,17 @@ ipcMain.handle('lib:delete', (_e, id) => {
   return true;
 });
 
+// Eigene Fensterleiste (frame:false). Die drei Knoepfe im Renderer rufen diese
+// Kanaele auf; Schliessen laeuft bewusst ueber win.close(), damit die bestehende
+// Rueckfrage aus dem close-Handler erhalten bleibt.
+ipcMain.handle('win:minimize', () => { if (win && !win.isDestroyed()) win.minimize(); });
+ipcMain.handle('win:toggleMax', () => {
+  if (!win || win.isDestroyed()) return false;
+  win.isMaximized() ? win.unmaximize() : win.maximize();
+  return win.isMaximized();
+});
+ipcMain.handle('win:close', () => { if (win && !win.isDestroyed()) win.close(); });
+
 let forceQuit = false;
 ipcMain.handle('app:forceQuit', () => {
   forceQuit = true;
@@ -192,9 +203,11 @@ app.whenReady().then(() => {
   session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => cb(permission === 'local-fonts'));
   startOllama(); startNllb();
   const icon = path.join(__dirname, 'build', 'icon.ico');
-  win = new BrowserWindow({ width: 1280, height: 820, minWidth: 980, minHeight: 600, autoHideMenuBar: true,
+  win = new BrowserWindow({ width: 1280, height: 820, minWidth: 980, minHeight: 600, autoHideMenuBar: true, frame: false,
     ...(fs.existsSync(icon) ? { icon } : {}),
     webPreferences: { webSecurity: false, preload: path.join(__dirname, 'preload.js') } });
+  const sendWinState = () => { if (win && !win.isDestroyed()) win.webContents.send('win:state', win.isMaximized()); };
+  win.on('maximize', sendWinState); win.on('unmaximize', sendWinState);
   win.on('close', e => {
     if (forceQuit) return;
     e.preventDefault();
