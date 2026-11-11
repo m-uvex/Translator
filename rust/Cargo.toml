@@ -1,0 +1,17 @@
+[package]
+name = "uebersetzer"
+version = "0.1.0"
+edition = "2021"
+description = "Lokaler Uebersetzer und Texteditor (Rust-Neufassung der Electron-App)"
+authors = ["Janek"]
+
+[dependencies]
+eframe = { version = "0.27.2", default-features = false, features = ["default_fonts", "glow"] }
+egui = "0.27.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ureq = { version = "2.10", default-features = false, features = ["json"] }
+rfd = "0.14"
+
+[profile.release]
+opt-level = 2

@@ -1,0 +1,8 @@
+# Linker fuer die GNU-Toolchain. Rustup liefert keinen Linker mit; MinGW
+# (WinLibs, ueber winget installiert) stellt gcc/ar/dlltool bereit.
+[target.x86_64-pc-windows-gnu]
+linker = "C:/Users/janek/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/gcc.exe"
+ar = "C:/Users/janek/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin/ar.exe"
+
+[net]
+git-fetch-with-cli = true

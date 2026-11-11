@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<base href="../../">
+<title>Referenz-Harness (nur für Screenshots)</title>
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="style.css">
+<script>
+/* Referenz-Harness: laedt die unveraenderte Electron-Oberflaeche in einem
+   Browser, damit Screenshots aller Ansichten und Menues entstehen koennen.
+   Die Electron-Bruecke window.api und die lokalen Dienste werden hier durch
+   Attrappen ersetzt. Diese Datei ist reines Referenzmaterial und nicht Teil
+   der Anwendung. */
+const DOC1 = '<h1>Bedienungsanleitung Kaffeemaschine</h1><p>Fuellen Sie den Wassertank vor dem ersten Gebrauch bis zur Markierung.</p><p>Waehlen Sie anschliessend die gewuenschte Staerke.</p>';
+const DOC2 = '<h1>Protokoll vom 11. November</h1><p>Alle Punkte wurden besprochen. Naechster Termin folgt.</p>';
+window.api = {
+  extract: async () => '',
+  spellCheck: async (_l, words) => words.filter(w => w.length > 9),
+  spellSuggest: async () => ['Vorschlag'],
+  spellAdd: async () => true,
+  spellGetPersonal: async () => ['Kaffeemaschine', 'Bedienungsanleitung'],
+  spellRemove: async () => true,
+  spellEdit: async () => true,
+  dictExport: async () => 2,
+  dictImport: async () => ({ added: 1, total: 3 }),
+  saveFile: async () => true,
+  libList: async () => ([
+    { id: 'd1', name: 'Bedienungsanleitung Kaffeemaschine', created: 1762800000, updated: 1762900000, html: DOC1 },
+    { id: 'd2', name: 'Protokoll vom 11. November', created: 1762700000, updated: 1762810000, html: DOC2 },
+    { id: 'd3', name: 'Notizen zur Übersetzung', created: 1762400000, updated: 1762500000, html: '<h1>Notizen</h1><p>Glossar und Stil festhalten.</p>' }
+  ]),
+  libRead: async id => ({ id, name: 'Bedienungsanleitung Kaffeemaschine', created: 1762800000, updated: 1762900000, html: DOC1 }),
+  libSave: async () => 'd4',
+  libDelete: async () => true,
+  fontsList: async () => ['Segoe UI', 'Arial', 'Calibri'],
+  onRequestClose: () => {},
+  forceQuit: () => {},
+  winMinimize: () => {}, winToggleMax: () => {}, winClose: () => {},
+  onWinState: () => {}
+};
+/* Attrappen der lokalen Dienste */
+const json = o => Promise.resolve({ ok: true, json: async () => o, text: async () => JSON.stringify(o) });
+const realFetch = window.fetch.bind(window);
+window.fetch = (url, opt = {}) => {
+  const u = String(url);
+  if (u.includes('/api/tags')) return json({ models: [{ name: 'gemma3:4b' }, { name: 'llama3.1:8b' }, { name: 'translategemma:9b' }, { name: 'qwen3:8b' }] });
+  if (u.includes('/api/show')) {
+    const model = JSON.parse(opt.body || '{}').model || '';
+    const caps = model === 'gemma3:4b' ? ['completion', 'vision'] : model === 'qwen3:8b' ? ['completion', 'thinking'] : ['completion'];
+    return json({ capabilities: caps });
+  }
+  if (u.includes('/api/chat')) {
+    const answer = 'Fuellen Sie den Wassertank vor dem ersten Gebrauch bis zur Markierung, und waehlen Sie danach die gewuenschte Staerke.';
+    let body = {};
+    try { body = JSON.parse(opt.body || '{}'); } catch {}
+    if (body.stream) {
+      const enc = new TextEncoder();
+      const chunks = answer.match(/.{1,18}/gs) || [answer];
+      const stream = new ReadableStream({
+        start(c) {
+          chunks.forEach(part => c.enqueue(enc.encode(JSON.stringify({ message: { content: part } }) + '\n')));
+          c.close();
+        }
+      });
+      return Promise.resolve({ ok: true, body: stream, json: async () => ({}), text: async () => '' });
+    }
+    return json({ message: { content: answer } });
+  }
+  if (u.includes('/api/generate')) return json({});
+  if (u.endsWith('/languages')) return json([
+    { code: 'deu_Latn', name: 'Deutsch' }, { code: 'eng_Latn', name: 'Englisch' }, { code: 'fra_Latn', name: 'Franzoesisch' }
+  ]);
+  if (u.endsWith('/models')) return json([
+    { family: 'nllb', id: '600M', gb: 2.4, installed: true },
+    { family: 'nllb', id: '1.3B', gb: 4.9, installed: false }
+  ]);
+  return json({});
+};
+</script>
+</head>
+<body>
+<div class="titlebar"><span class="tbname" data-t="appTitle"></span><span class="sp"></span><div class="tbctl"><button class="ib tbb" id="winMin" data-i="winMin" data-tt="winMin"></button><button class="ib tbb" id="winMax" data-i="winMax" data-tt="winMax"></button><button class="ib tbb" id="winClose" data-i="x" data-tt="winClose"></button></div></div>
+<div class="app">
+  <nav class="rail">
+    <div class="rg"><button class="ib rb active" id="nvTr" data-i="languages" data-tt="navTr"></button><button class="ib rb" id="nvEd" data-i="doc" data-tt="navEd"></button><button class="ib rb" id="nvLib" data-i="library" data-tt="navLib"></button></div>
+    <div class="rg"><button class="ib" id="openSettings" data-i="sliders" data-tt="settings"></button></div>
+  </nav>
+  <div id="vT" class="view">
+    <main>
+      <header>
+        <div class="langs"><button class="pill" id="srcBtn"></button><button class="ib" id="swap" data-i="swap" data-tt="swap"></button><button class="pill" id="tgtBtn"></button></div>
+        <div class="model"><button class="pill" id="modelBtn"></button><button class="ib" id="refresh" data-i="refresh" data-tt="reloadModels"></button></div>
+      </header>
+      <section class="panes">
+        <div class="card" id="drop">
+          <textarea id="input" data-ph="inputPh"></textarea>
+          <div id="thumbs"></div>
+          <footer><button class="ib" id="attach" data-i="clip" data-tt="attach"></button><input type="file" id="file" hidden multiple accept="image/*,.txt,.md,.csv,.srt,.json,.html,.pdf,.docx"><span class="muted" id="count"></span><span class="sp"></span><button class="primary" id="go" data-t="translate"></button></footer>
+        </div>
+        <div class="card"><div id="output" class="out"></div><footer><span class="muted" id="status"></span><span class="sp"></span><button class="ib hidden" id="stopTr" data-i="stop" data-tt="stopTr"></button><button class="ib" id="copy" data-i="copy" data-tt="copy"></button></footer></div>
+      </section>
+    </main>
+    <aside class="side">
+      <div id="llmOnly"><div id="styles"></div>
+        <details class="ctx"><summary data-t="context"></summary><textarea id="ctx" data-ph="ctxPh"></textarea></details>
+        <details class="ctx"><summary data-t="glossary"></summary><div id="glossList"></div><button class="ghost" id="glAdd" data-t="addEntry"></button></details>
+      </div>
+      <p id="nllbNote" class="muted hidden"></p>
+    </aside>
+  </div>
+  <div id="vE" class="view hidden">
+    <div class="tb" id="edTb"></div>
+    <div id="pageWrap"><div id="page" contenteditable="true" spellcheck="false"></div></div>
+    <div class="sbar" id="edBar"></div>
+    <div class="ctxbar hidden" id="ctxBar"></div>
+    <input type="file" id="edFile" hidden accept=".txt,.md,.html,.docx,.pdf">
+  </div>
+  <div id="vL" class="view hidden">
+    <header class="libhead"><h2 data-t="libTitle"></h2><span class="sp"></span><span class="muted" id="libCount"></span></header>
+    <div id="libGrid" class="libgrid"></div>
+    <div id="libEmpty" class="libempty hidden"><p data-t="libEmpty"></p><p class="muted" data-t="libEmptyHint"></p></div>
+  </div>
+</div>
+<div id="pop" class="pop hidden"></div><div id="alt" class="pop alt hidden"></div><div id="cm" class="pop hidden"></div><div id="trPop" class="pop trpop hidden"></div>
+<dialog id="ask"><p id="askText"></p><input id="askIn" class="hidden"><div class="dh"><button class="ghost" id="askNo"></button><button class="primary" id="askYes"></button></div></dialog>
+<dialog id="styleDlg"></dialog>
+<dialog id="sumDlg"></dialog>
+<dialog id="dictDlg"></dialog>
+<dialog id="settings"><div class="dh"><h2 data-t="settings"></h2><button class="ib" id="closeSet" data-i="x"></button></div><div id="setBody"></div>
+<div class="dh"><button class="ghost" id="resetAll" data-t="resetAll"></button></div></dialog>
+<script src="renderer.js"></script><script src="editor.js"></script>
+</body>
+</html>
