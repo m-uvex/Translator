@@ -243,6 +243,7 @@ fn strings(k: &str) -> Six {
         "spell_title"   => ("Rechtschreibung", "Spelling", "Spelling", "Ortografía", "Yazım", "الإملاء"),
         "spell_missing" => ("Wörterbuch nicht gefunden", "Dictionary not found", "Woordenboek niet gevonden", "Diccionario no encontrado", "Sözlük bulunamadı", "القاموس غير موجود"),
         "spell_missing_hint" => ("Legen Sie index.aff und index.dic unter dict/<sprache>/ ab (oder installieren Sie das npm-Paket dictionary-<sprache>).", "Place index.aff and index.dic under dict/<language>/ (or install the npm package dictionary-<language>).", "Plaats index.aff en index.dic onder dict/<taal>/ (of installeer dictionary-<taal>).", "Coloque index.aff e index.dic en dict/<idioma>/.", "index.aff ve index.dic dosyalarını dict/<dil>/ altına koyun.", "ضع index.aff و index.dic تحت dict/<اللغة>/."),
+        "spell_off_hint" => ("Die Rechtschreibung ist ausgeschaltet.", "Spelling is turned off.", "Spelling staat uit.", "La corrección ortográfica está desactivada.", "Yazım denetimi kapalı.", "تدقيق الإملاء متوقف."),
         "spell_recheck" => ("Erneut prüfen", "Check again", "Opnieuw controleren", "Comprobar de nuevo", "Yeniden denetle", "إعادة التدقيق"),
         "spell_no_errors" => ("Keine Fehler gefunden", "No errors found", "Geen fouten gevonden", "No se encontraron errores", "Hata bulunamadı", "لم يتم العثور على أخطاء"),
         "ignore"       => ("Ignorieren", "Ignore", "Negeren", "Ignorar", "Yoksay", "تجاهل"),

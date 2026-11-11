@@ -2457,7 +2457,7 @@ impl App {
                 });
                 ui.separator();
                 if !enabled {
-                    ui.label(RichText::new(t(lang, "s_spellanim")).color(pal.muted));
+                    ui.label(RichText::new(t(lang, "spell_off_hint")).color(pal.muted));
                     return;
                 }
                 if let Some(code) = &error {
