@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 10. November 2026, App-Version 1.5.0 (package.json). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 11. November 2026, App-Version 1.5.0 (package.json). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
