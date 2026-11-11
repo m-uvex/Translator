@@ -40,9 +40,9 @@ const K = {
   s_mdMode:['Dynamisches Markdown','Dynamic Markdown'],
   s_spellAnim:['Rechtschreibwellen schlängeln','Animate spelling squiggles'],
   s_autoCopy:['Ausgabe automatisch kopieren','Copy output automatically'],
-  // Kurzer Titel; die Abhaengigkeit von "Ausgabe automatisch kopieren" steht
-  // in der Doku und ist aus der Reihenfolge der beiden Optionen ersichtlich.
-  s_autoCopyTyped:['Nur handgetippte Texte automatisch kopieren','Only auto-copy hand-typed text'],
+  // Kurzer Titel: erst die Ausgabe, dann die Bedingung. Wirksam wird die
+  // Option nur zusammen mit "Ausgabe automatisch kopieren" (siehe Doku).
+  s_autoCopyTyped:['Ausgabe nur bei getippter Eingabe kopieren','Copy output only for typed input'],
   s_groupFeatures:['Weitere Einstellungen','Additional settings'],
   personalDict:['Eigenes Wörterbuch','Personal dictionary'],
   dictWords:['Gespeicherte Wörter','Saved words'],
@@ -95,7 +95,7 @@ const K = {
 };
 const NL = {
   appTitle:'Vertaler', winMin:'Minimaliseren', winMax:'Maximaliseren', winRestore:'Herstellen', winClose:'Sluiten',
-  stopTr:'Stoppen', stopped:'Vertaling gestopt', on:'Aan', off:'Uit', s_bootModel:'Laatst gebruikte model voorverwarmen bij opstarten', s_profanity:'Vloekfilter inschakelen', s_profanityStyle:'Vervanging voor vloekwoorden', s_autoCopy:'Uitvoer automatisch kopiëren', s_autoCopyTyped:'Alleen handmatig getypte tekst automatisch kopiëren', o_stars:'Sterretjes (****)', o_symbols:'Symbolen (@#$%&!)', s_mdMode:'Dynamische Markdown', s_spellAnim:'Spellingsgolven animeren', s_groupFeatures:'Extra instellingen', personalDict:'Persoonlijk woordenboek', dictWords:'Opgeslagen woorden', addWord:'Woord toevoegen', addWordPh:'Nieuw woord typen …', noDictWords:'Geen woorden in persoonlijk woordenboek', edit:'Bewerken', wordExists:'Woord bestaat al',
+  stopTr:'Stoppen', stopped:'Vertaling gestopt', on:'Aan', off:'Uit', s_bootModel:'Laatst gebruikte model voorverwarmen bij opstarten', s_profanity:'Vloekfilter inschakelen', s_profanityStyle:'Vervanging voor vloekwoorden', s_autoCopy:'Uitvoer automatisch kopiëren', s_autoCopyTyped:'Uitvoer alleen bij getypte invoer kopiëren', o_stars:'Sterretjes (****)', o_symbols:'Symbolen (@#$%&!)', s_mdMode:'Dynamische Markdown', s_spellAnim:'Spellingsgolven animeren', s_groupFeatures:'Extra instellingen', personalDict:'Persoonlijk woordenboek', dictWords:'Opgeslagen woorden', addWord:'Woord toevoegen', addWordPh:'Nieuw woord typen …', noDictWords:'Geen woorden in persoonlijk woordenboek', edit:'Bewerken', wordExists:'Woord bestaat al',
   settings:'Instellingen', swap:'Wisselen', reloadModels:'Modellen opnieuw laden', inputPh:'Typ tekst of sleep een bestand hierheen …', attach:'Bestand toevoegen', translate:'Vertalen', copy:'Kopiëren', copied:'Gekopieerd',
   chars:n => `${n} tekens`, auto:'Taal detecteren', searchLang:'Taal zoeken …', noHits:'Geen resultaten', pin:'Vastpinnen', h_style:'Vertaalstijl', l_type:'Type', l_formal:'Toon', l_gender:'Ontvanger*', l_writer:'Afzender*',
   s_uiMode:'Zijbalk', o_classic:'Klassiek (tekst)', o_icons:'Pictogrammen', imgMax:n => `Maximaal ${n} afbeeldingen mogelijk.`, imgOpenTip:'Afbeeldingen tonen',
@@ -142,7 +142,7 @@ const ES = {
   nllbH:'NLLB-200', mInst:'Instalado', mNot:'No instalado', mLoad:p => `Descargando … ${p} %`, mErr:e => `Error: ${e}`, bDl:'Descargar', bDel:'Eliminar', bBusy:'Descargando …',
   serverDown:'El servidor de traducción no está disponible. Se instala con el asistente y se inicia con la app.',
   confBig:(id, gb) => `${id} tiene un tamaño de ${gb} GB y requiere bastante memoria y tiempo. ¿Descargar igualmente?`, confDel:id => `¿Realmente eliminar ${id}? Puedes descargarlo nuevamente más tarde.`,
-  stopTr:'Detener', stopped:'Traducción detenida', on:'Activado', off:'Desactivado', s_bootModel:'Precargar último modelo al iniciar', s_profanity:'Filtro de malas palabras', s_profanityStyle:'Sustitución de palabras malsonantes', s_autoCopy:'Copiar la salida automáticamente', s_autoCopyTyped:'Copiar automáticamente solo el texto escrito a mano', o_stars:'Asteriscos (****)', o_symbols:'Símbolos (@#$%&!)', s_mdMode:'Markdown dinámico en el editor', s_spellAnim:'Animar las ondulaciones ortográficas',
+  stopTr:'Detener', stopped:'Traducción detenida', on:'Activado', off:'Desactivado', s_bootModel:'Precargar último modelo al iniciar', s_profanity:'Filtro de malas palabras', s_profanityStyle:'Sustitución de palabras malsonantes', s_autoCopy:'Copiar la salida automáticamente', s_autoCopyTyped:'Copiar la salida solo con texto tecleado', o_stars:'Asteriscos (****)', o_symbols:'Símbolos (@#$%&!)', s_mdMode:'Markdown dinámico en el editor', s_spellAnim:'Animar las ondulaciones ortográficas',
   personalDict:'Diccionario personal', dictWords:'Palabras guardadas', addWord:'Añadir palabra', addWordPh:'Nueva palabra …', noDictWords:'No hay palabras en el diccionario personal', edit:'Editar', wordExists:'La palabra ya existe'
 };
 
@@ -169,7 +169,7 @@ const TR = {
   nllbH:'NLLB-200', mInst:'Yüklü', mNot:'Yüklü değil', mLoad:p => `İndiriliyor … %${p}`, mErr:e => `Hata: ${e}`, bDl:'İndir', bDel:'Sil', bBusy:'İndiriliyor …',
   serverDown:'Çeviri sunucusuna ulaşılamıyor. Kurulum sihirbazı ile kurulur ve uygulamayla birlikte başlar.',
   confBig:(id, gb) => `${id} boyutu ${gb} GB ve çok bellek gerektirir. Yine de indirilsin mi?`, confDel:id => `${id} gerçekten silinsin mi? Daha sonra tekrar indirebilirsiniz.`,
-  stopTr:'Durdur', stopped:'Çeviri durduruldu', on:'Açık', off:'Kapalı', s_bootModel:'Başlangıçta son kullanılan modeli ön yükle', s_profanity:'Küfür filtresini etkinleştir', s_profanityStyle:'Küfürlerin değiştirilmesi', s_autoCopy:'Çıktıyı otomatik kopyala', s_autoCopyTyped:'Yalnızca elle yazılan metni otomatik kopyala', o_stars:'Yıldızlar (****)', o_symbols:'Semboller (@#$%&!)', s_mdMode:'Editörde dinamik Markdown', s_spellAnim:'Yazım dalgalarını canlandır',
+  stopTr:'Durdur', stopped:'Çeviri durduruldu', on:'Açık', off:'Kapalı', s_bootModel:'Başlangıçta son kullanılan modeli ön yükle', s_profanity:'Küfür filtresini etkinleştir', s_profanityStyle:'Küfürlerin değiştirilmesi', s_autoCopy:'Çıktıyı otomatik kopyala', s_autoCopyTyped:'Çıktıyı yalnızca yazılan metinde kopyala', o_stars:'Yıldızlar (****)', o_symbols:'Semboller (@#$%&!)', s_mdMode:'Editörde dinamik Markdown', s_spellAnim:'Yazım dalgalarını canlandır',
   personalDict:'Kişisel sözlük', dictWords:'Kayıtlı kelimeler', addWord:'Kelime ekle', addWordPh:'Yeni kelime yazın …', noDictWords:'Kişisel sözlükte kayıtlı kelime yok', edit:'Düzenle', wordExists:'Kelime zaten mevcut'
 };
 
@@ -196,7 +196,7 @@ const AR = {
   nllbH:'NLLB-200', mInst:'مثبت', mNot:'غير مثبت', mLoad:p => `جاري التنزيل … ${p} %`, mErr:e => `خطأ: ${e}`, bDl:'تنزيل', bDel:'حذف', bBusy:'جاري التنزيل …',
   serverDown:'خادم الترجمة غير متاح. يتم تثبيته عبر المعالج ويعمل مع التطبيق.',
   confBig:(id, gb) => `حجم ${id} هو ${gb} غيغابايت ويتطلب ذاكرة ووقت. هل تريد التنزيل؟`, confDel:id => `هل تريد حقاً حذف ${id}؟ يمكنك تنزيله لاحقاً.`,
-  stopTr:'إيقاف', stopped:'تم إيقاف الترجمة', on:'مفعّل', off:'معطّل', s_bootModel:'تحميل النموذج مسبقاً عند البدء', s_profanity:'فلتر الكلمات البذيئة', s_profanityStyle:'استبدال الكلمات البذيئة', s_autoCopy:'نسخ الناتج تلقائياً', s_autoCopyTyped:'نسخ النص المكتوب يدوياً فقط تلقائياً', o_stars:'نجوم (****)', o_symbols:'رموز (@#$%&!)', s_mdMode:'ماركداون ديناميكي في المحرر', s_spellAnim:'تحريك موجات التدقيق الإملائي',
+  stopTr:'إيقاف', stopped:'تم إيقاف الترجمة', on:'مفعّل', off:'معطّل', s_bootModel:'تحميل النموذج مسبقاً عند البدء', s_profanity:'فلتر الكلمات البذيئة', s_profanityStyle:'استبدال الكلمات البذيئة', s_autoCopy:'نسخ الناتج تلقائياً', s_autoCopyTyped:'نسخ الناتج فقط عند الكتابة يدوياً', o_stars:'نجوم (****)', o_symbols:'رموز (@#$%&!)', s_mdMode:'ماركداون ديناميكي في المحرر', s_spellAnim:'تحريك موجات التدقيق الإملائي',
   personalDict:'القاموس الشخصي', dictWords:'الكلمات المحفوظة', addWord:'إضافة كلمة', addWordPh:'اكتب كلمة جديدة …', noDictWords:'لا توجد كلمات في القاموس الشخصي', edit:'تعديل', wordExists:'الكلمة موجودة بالفعل'
 };
 window.K = K; window.NL = NL; window.ES = ES; window.TR = TR; window.AR = AR;
