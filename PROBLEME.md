@@ -7,9 +7,9 @@ mit Commit-Kurz-Hash.
 
 ## Gerade in Arbeit
 
-- **Buffy:** P1, P2, P3, P7, P11, P12, P14, P17, P20, P21 und P22 sind erledigt.
-  Im Augenblick nichts in Arbeit — wartet auf die Auswahl des nächsten Punktes.
-  P18 und P19 sind aufgenommen und noch nicht angefasst.
+- **Buffy:** P1, P2, P3, P7, P11, P12, P14, P17, P18, P19, P20, P21, P22 und P23
+  sind erledigt. Im Augenblick nichts in Arbeit — wartet auf die Auswahl des
+  nächsten Punktes.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
   (`1863576`). P15 und P4 sind damit ganz erledigt, P5/P6/P8/P10/P13 fuer diese
@@ -55,11 +55,12 @@ mit Commit-Kurz-Hash.
 | P15 | **Übersetzer-Textfelder** sollen keinen Trennstrich zu ihren Knöpfen haben und sich fast bis zum Boden strecken. | erledigt (`1863576`) |
 | P16 | **Überschriften-Dropdown** im Editor: Verhalten und Aussehen gegen die Vorlage prüfen (gesetzt sind H1–H3 über `editor::set_heading`). | zu prüfen |
 | P17 | **NLLB-Server startet nicht mit der App:** Schalter in den Einstellungen fehlte, der Server musste von Hand gestartet werden. | erledigt (`b0ebe30`) |
-| P18 | **Modellbezogene Symbole zu nah am Modellnamen** im Übersetzer-Arbeitsplatz: Auge (Sehen) und Denk-Symbol kleben am Namen; Abstand wie in der Vorlage (`.mpill` in `style.css`) herstellen. | offen |
-| P19 | **Karte der Translation-Style-Optionen rutscht aus dem Fenster:** Die rechte Kante der Stil-Seitenleiste ist nicht mehr zu sehen; Breite und Abstände so setzen, dass die Karte vollständig im Fenster liegt. | offen |
+| P18 | **Modellbezogene Symbole zu nah am Modellnamen** im Übersetzer-Arbeitsplatz: Auge (Sehen) und Denk-Symbol kleben am Namen; Abstand wie in der Vorlage (`.mpill` in `style.css`) herstellen. | erledigt (`8273e8d`), 6 px Abstand wie `.mi` |
+| P19 | **Karte der Translation-Style-Optionen rutscht aus dem Fenster:** Die rechte Kante der Stil-Seitenleiste ist nicht mehr zu sehen; Breite und Abstände so setzen, dass die Karte vollständig im Fenster liegt. | erledigt (`8273e8d`), Leiste vollständig im Fenster |
 | P20 | **Wörterzähler in der Statusleiste steht nicht mittig:** Zahl und Meldung kleben am oberen Rand der Karte, während die Knöpfe rechts mittig sitzen. | erledigt (`bce4125`), mittig am laufenden Fenster geprüft |
 | P21 | **Schreibseite wird zu früh abgeschnitten:** In der Vorlage endet die Seite erst an der Kante der Fläche, auf der sie liegt; sie muss die Fläche immer ausfüllen. | erledigt (`bce4125`), Seite endet an der Kante der Fläche |
 | P22 | **Fensterecken sind eckig:** Die Vorlage läuft im normalen Windows-Fenster mit abgerundeten Ecken, die Rust-Fassung ohne Titelleiste hat eckige. | erledigt (`bce4125`), Ecken am Fenster gerundet |
+| P23 | **Modell-Auswahl-Menü lässt sich nicht öffnen:** Es blitzt kurz auf und schließt sich sofort wieder, im Übersetzer wie im Text-Arbeitsplatz. | erledigt (`8273e8d`), nicht angeklickt geprüft |
 
 ## Erledigt
 
