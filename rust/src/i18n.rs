@@ -206,7 +206,7 @@ fn strings(k: &str) -> Six {
         "ws_ed"        => ("Nur Textbearbeitung", "Text editor only", "Alleen tekstbewerking", "Solo editor", "Yalnızca editör", "المحرر فقط"),
         "auto_sys"     => ("Automatisch (System)", "Automatic (system)", "Automatisch (systeem)", "Automático (sistema)", "Otomatik (sistem)", "تلقائي (النظام)"),
         "auto_o"       => ("Automatisch", "Automatic", "Automatisch", "Automático", "Otomatik", "تلقائي"),
-        "auto_model"   => ("Automatisch (Programm wählt)", "Automatic (app chooses)", "Automatisch (programma kiest)", "Automático (la aplicación elige)", "Otomatik (uygulama seçer)", "تلقائي (التطبيق يختار)"),
+        "auto_model"   => ("Automatisch", "Automatic", "Automatisch", "Automático", "Otomatik", "تلقائي"),
         "light"        => ("Hell", "Light", "Licht", "Claro", "Açık", "فاتح"),
         "dark"         => ("Dunkel", "Dark", "Donker", "Oscuro", "Koyu", "داكن"),
         "o_stars"      => ("Sternchen (****)", "Asterisks (****)", "Sterretjes (****)", "Asteriscos (****)", "Yıldızlar (****)", "نجوم (****)"),

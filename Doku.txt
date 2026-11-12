@@ -548,3 +548,7 @@ Die Markierung mit der Maus war auf der weißen Schreibseite kaum zu erkennen. S
 
 Das Einstellungsfenster hatte zwei Wege zum Schließen: das Kreuz im Kopf und einen eigenen Knopf „Schließen“ neben „Alles zurücksetzen“. In `index.html` steht dort nur ein Knopf (`#resetAll`), geschlossen wird über das Kreuz. Der zweite Knopf ist entfallen; „Alles zurücksetzen“ hat dabei die Form von `.ghost` bekommen (weicher Grund, Rundung 999, 13 px Schrift). Gespeichert wird beim Schließen weiterhin.
 
+## 45. Kurze Beschriftung der Modellwahl auf „Automatisch“
+
+Die Auswahl „Automatisch (Programm wählt)“ war so breit, dass sie in den Einstellungen neben langen Beschriftungen umbrechen musste. In beiden Fassungen heißt die Option jetzt nur noch „Automatisch“ (englisch „Automatic“, niederländisch „Automatisch“, spanisch „Automático“, türkisch „Otomatik“, arabisch „تلقائي“) — in der Rust-Fassung der Schlüssel `auto_model` in `i18n.rs`, in der Electron-Fassung `autoModel` in `renderer.js`. Der Zusatz erklärte nichts, was die Option nicht schon sagt.
+

@@ -11,7 +11,7 @@ mit Commit-Kurz-Hash.
   P23, P25, P26, P27, P28, P29, P30, P31, P33, P36, P39, P40 und P41 sind
   erledigt, P9 nachgesehen (Rest: Dokumentenablage, Fensterleiste).
   Nachgetragen: P32 bis P41 (fehlende Funktionen) und P42 bis P55 (Rückmeldung
-  des Nutzers zum Editor). P42 bis P51 sowie P53, P55 bis P67 sind erledigt.
+  des Nutzers zum Editor). P42 bis P51 sowie P53, P55 bis P68 sind erledigt.
   Offen bleiben P24, P32, P34, P35, P37, P38, P52 und P54.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
@@ -114,6 +114,7 @@ lesen, wird der Punkt geschlossen.
 | P65 | **Text und Auswahlfeld überlappen in den Einstellungen:** Bei langen Beschriftungen lag das Menü über dem Text. | erledigt: `set_row` misst die Beschriftung und bricht bei Bedarf um, Auswahl dann rechts darunter |
 | P66 | **Textmarkierung zu hell:** Akzent bei 55 % Deckkraft war auf der weißen Seite kaum sichtbar. | erledigt: deckende Mischung aus 70 % Akzent und 30 % Akzenttinte |
 | P67 | **Zweiter Schließen-Knopf in den Einstellungen:** Die Vorlage hat dort nur „Alles zurücksetzen“, geschlossen wird über das Kreuz. | erledigt: Knopf entfernt, „Alles zurücksetzen“ als `.ghost` |
+| P68 | **Zu breite Beschriftung „Automatisch (Programm wählt)“:** Dadurch musste die Zeile umbrechen. | erledigt: nur noch „Automatisch“ — in beiden Fassungen (`auto_model` / `autoModel`) |
 | P56 | **Sprachauswahl-Menü:** Punkt vor der eingestellten Sprache (die Vorlage markiert nur über die Farbe), Trennstrich zwischen angepinnten und übrigen Sprachen fehlte, Suchfeld zu klein. | erledigt: Markierung nur farbig, Reihenfolge „Sprache erkennen“, Angepinnte, Strich, Rest; Suchfeld 34 px/15 px |
 | P57 | **Erster Wechsel in den Editor dauert lange:** Die Rechtschreibprüfung lief im Zeichen-Thread und berechnete für jedes falsch geschriebene Wort Vorschläge (gemessen: 30 s für 20 von 1649 Wörtern in einem 206-KB-Text). | erledigt: `scan` ohne Vorschläge, `suggest` einzeln, Prüfung in `SpellWorker` (eigener Thread, Wörterbuch bleibt dort), Menü holt Vorschläge beim Öffnen |
 | P58 | **Zu wenig Abstand unter der Seite:** Unter der Schreibseite blieben 8 px bis zur Kante; `#pageWrap` hat 28 px. | erledigt: unteres Polster der Fläche 28 px wie oben |
