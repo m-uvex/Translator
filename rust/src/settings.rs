@@ -92,7 +92,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            url: "http://localhost:11434".into(),
+            url: "http://127.0.0.1:11434".into(),
             nllb: "http://127.0.0.1:8765".into(),
             model: String::new(),
             pref: String::new(),

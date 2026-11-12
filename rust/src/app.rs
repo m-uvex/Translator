@@ -108,6 +108,8 @@ pub struct App {
     mt_models: Vec<serde_json::Value>,
     warmed: bool,
     models_loading: bool,
+    /// Verbindungsfehler beim Abruf der Modellliste (Text der Fehlermeldung).
+    models_error: Option<String>,
 
     input: String,
     output: String,
@@ -213,6 +215,7 @@ impl App {
             mt_models: Vec::new(),
             warmed: false,
             models_loading: false,
+            models_error: None,
             input: String::new(),
             output: String::new(),
             last_src: String::new(),
@@ -352,7 +355,11 @@ impl App {
             net::spawn_warmup(self.cfg(), self.set.model.clone());
         }
         if self.models.is_empty() {
-            self.status = t(self.lang, "no_models");
+            self.status = if self.models_error.is_some() {
+                t(self.lang, "ollama_down")
+            } else {
+                t(self.lang, "no_models")
+            };
         }
     }
 
@@ -375,6 +382,19 @@ impl App {
                 Msg::Models(list) => {
                     self.models_loading = false;
                     self.upd_models(list);
+                }
+                Msg::Url(u) => {
+                    if self.set.url != u {
+                        self.set.url = u.clone();
+                        self.save_set();
+                        self.status = t(self.lang, "ollama_via").replace("<url>", &u);
+                    }
+                }
+                Msg::ModelsError(e) => {
+                    self.models_error = Some(e);
+                    if self.models.is_empty() {
+                        self.status = t(self.lang, "ollama_down");
+                    }
                 }
                 Msg::Meta { langs, models } => {
                     if !langs.is_empty() {
@@ -929,6 +949,7 @@ impl App {
                     .clicked()
                 {
                     self.models_loading = true;
+                    self.models_error = None;
                     net::spawn_models(self.cfg(), self.tx.clone(), Vec::new());
                 }
             });
@@ -1330,6 +1351,7 @@ impl App {
         let lang = self.lang;
         let mut open = true;
         let mut pick: Option<String> = None;
+        let mut retry = false;
         egui::Window::new(t(lang, "nav_tr"))
             .id(egui::Id::new("models_win"))
             .open(&mut open)
@@ -1338,7 +1360,24 @@ impl App {
             .default_width(420.0)
             .show(ctx, |ui| {
                 if self.models.is_empty() {
-                    ui.label(RichText::new(t(lang, "wait_ollama")).color(pal.muted));
+                    if let Some(err) = &self.models_error {
+                        ui.label(
+                            RichText::new(t(lang, "ollama_down"))
+                                .strong()
+                                .color(Color32::from_rgb(0xb9, 0x1c, 0x1c)),
+                        );
+                        ui.label(RichText::new(err).size(12.0).color(pal.muted));
+                        ui.label(
+                            RichText::new(t(lang, "ollama_hint").replace("<url>", &self.set.url))
+                                .size(12.0)
+                                .color(pal.muted),
+                        );
+                        if ui.button(t(lang, "reload")).clicked() {
+                            retry = true;
+                        }
+                    } else {
+                        ui.label(RichText::new(t(lang, "wait_ollama")).color(pal.muted));
+                    }
                 }
                 egui::ScrollArea::vertical().max_height(420.0).show(ui, |ui| {
                     for m in &self.models {
@@ -1365,6 +1404,10 @@ impl App {
                     }
                 });
             });
+        if retry {
+            self.models_error = None;
+            net::spawn_models(self.cfg(), self.tx.clone(), Vec::new());
+        }
         if let Some(name) = pick {
             self.set.pref = name.clone();
             self.set.model = name;
