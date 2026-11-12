@@ -8,7 +8,7 @@ mit Commit-Kurz-Hash.
 ## Gerade in Arbeit
 
 - **Buffy:** P1, P2, P3, P7, P11, P12, P14, P16, P17, P18, P19, P20, P21, P22,
-  P23, P25, P26, P27, P28 und P29 sind erledigt, P9 nachgesehen (Rest:
+  P23, P25, P26, P27, P28, P29 und P30 sind erledigt, P9 nachgesehen (Rest:
   Dokumentenablage, Fensterleiste). Offen: P24 (Schrift- und Größenauswahl
   fehlen). Im Augenblick nichts in Arbeit — wartet auf die Auswahl des nächsten
   Punktes.
@@ -69,6 +69,7 @@ mit Commit-Kurz-Hash.
 | P27 | **Sprachauswahlmenü falsch dargestellt:** Namen und Sterne standen in eigenen Rahmen, die Scrollleiste überdeckte die Stern-Knöpfe, und für Koreanisch, Japanisch und Chinesisch fehlten die Schriften (leere Kästchen). | erledigt (`66919e5`): Zeilen wie `.row` mit Hover statt Rahmen, Stern als reines Symbol mit Platz vor der Leiste, Malgun/Yu Gothic/YaHei nachgeladen |
 | P28 | **„MT“ neben TranslateGemma ist unverständlich** und als Buchstaben-Kennzeichnung unerwünscht; Symbole mit Buchstaben sind ausdrücklich nicht erlaubt. | erledigt (`aabba79`): Pfeil-Symbol `swap` mit erklärendem Hinweis `mt_tip` |
 | P29 | **„Alternativmodell“ bleibt leer:** Die Einstellung für Ersatzwörter war ein freies Feld ohne Auswahlmöglichkeiten. | erledigt (`5135758`): Auswahlliste „Automatisch“ plus alle allgemeinen Ollama-Modelle |
+| P30 | **Oberflächensprache lässt sich nicht live ändern:** Nur Englisch wirkte sofort, alle anderen brauchten einen Neustart. | erledigt (`59c46c5`): Sprache wird in jedem Bild aus den Einstellungen gelesen |
 
 ## Erledigt
 
