@@ -2618,12 +2618,24 @@ impl App {
                                         pal.soft,
                                     );
                                 }
-                                crate::icons::paint(
-                                    ui.painter(),
-                                    stern_rect.shrink(5.0),
-                                    "star",
-                                    if pinned { pal.accent_ink } else { pal.muted },
-                                );
+                                // Angepinnt gefuellt, sonst nur Umriss — wie
+                                // `.star.on svg{fill:currentColor}` der Vorlage.
+                                let stern_mitte = stern_rect.shrink(5.0);
+                                if pinned {
+                                    crate::icons::paint_filled(
+                                        ui.painter(),
+                                        stern_mitte,
+                                        "star",
+                                        pal.accent_ink,
+                                    );
+                                } else {
+                                    crate::icons::paint(
+                                        ui.painter(),
+                                        stern_mitte,
+                                        "star",
+                                        pal.muted,
+                                    );
+                                }
                                 if sresp.on_hover_text(t(lang, "pin")).clicked() {
                                     stern = true;
                                 }
@@ -2898,7 +2910,12 @@ impl App {
                         ("stars", t(lang, "o_stars")),
                         ("symbols", t(lang, "o_symbols")),
                     ]);
-                    set_bool(ui, &pal, "ed_markdown", lang, t(lang, "s_md").as_str(), &mut self.set.ed_markdown);
+                    // „Dynamisches Markdown“ gibt es nur in der Electron-Fassung:
+                    // dort wird der Inhalt als HTML gehalten und beim Tippen in
+                    // Bloecke umgewandelt. Der Rust-Editor schreibt Markdown als
+                    // Text, die Zeichen `# ` und `- ` sind schon die Auszeichnung;
+                    // ein Schalter haette hier keine Wirkung.
+
                     set_bool(
                         ui,
                         &pal,

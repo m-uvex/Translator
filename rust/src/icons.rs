@@ -54,6 +54,67 @@ pub fn paint(painter: &Painter, rect: Rect, name: &str, color: Color32) {
     }
 }
 
+/// Wie `paint`, fuellt aber geschlossene Pfade zusaetzlich aus — die Vorlage
+/// fuellt den Stern der angepinnten Sprachen (`.star.on svg{fill:currentColor}`).
+/// Gefuellt wird als Faecher vom Schwerpunkt; das passt fuer sternfoermige
+/// Umrisse wie den Stern, andere Symbole werden nur gezeichnet.
+pub fn paint_filled(painter: &Painter, rect: Rect, name: &str, color: Color32) {
+    let Some(shapes) = icon(name) else { return };
+    let side = rect.width().min(rect.height());
+    if side <= 0.0 {
+        return;
+    }
+    let scale = side / 24.0;
+    let origin = rect.center() - Vec2::splat(side * 0.5);
+    let stroke = Stroke::new((1.8 * scale).max(1.0), color);
+    let map = |p: [f32; 2]| origin + Vec2::new(p[0] * scale, p[1] * scale);
+
+    for shape in shapes {
+        if let Shape::Path(d) = shape {
+            for poly in flatten(d) {
+                if poly.len() < 3 {
+                    if poly.len() == 2 {
+                        let pts: Vec<Pos2> = poly.iter().map(|p| map(*p)).collect();
+                        painter.add(EguiShape::line(pts, stroke));
+                    }
+                    continue;
+                }
+                let pts: Vec<Pos2> = poly.iter().map(|p| map(*p)).collect();
+                let mut mitte = Vec2::ZERO;
+                for pt in &pts {
+                    mitte += pt.to_vec2();
+                }
+                let mitte = Pos2::new(
+                    mitte.x / pts.len() as f32,
+                    mitte.y / pts.len() as f32,
+                );
+                for i in 0..pts.len() {
+                    let a = pts[i];
+                    let b = pts[(i + 1) % pts.len()];
+                    painter.add(EguiShape::convex_polygon(
+                        vec![mitte, a, b],
+                        color,
+                        Stroke::NONE,
+                    ));
+                }
+                painter.add(EguiShape::line(pts, stroke));
+            }
+        } else {
+            // Kreise und Rechtecke wie in `paint` nur als Strich.
+            match shape {
+                Shape::Circle(cx, cy, r) => {
+                    painter.circle_stroke(map([*cx, *cy]), r * scale, stroke);
+                }
+                Shape::Rect(x, y, w, h, rx) => {
+                    let r = Rect::from_min_size(map([*x, *y]), Vec2::new(w * scale, h * scale));
+                    painter.rect_stroke(r, Rounding::same(rx * scale), stroke);
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
 enum Tok {
     Cmd(char),
     Num(f32),

@@ -558,3 +558,11 @@ Jede LLM-gestützte Bearbeitung im Editor beendete das Programm. Im Protokoll st
 
 Für die Fehlersuche wichtig: Das Programm schreibt panics auf die Standardfehlerausgabe; beim Start mit `> /tmp/app.log 2>&1` steht die Ursache dort im Klartext.
 
+
+## 47. „Dynamisches Markdown“ in der Rust-Fassung entfernt
+
+Die Einstellung `ed_markdown` („Dynamisches Markdown“, `s_md`) stand im Einstellungsfenster, ohne dass irgendwo etwas sie gelesen hätte. Sie kann in der Rust-Fassung auch nichts bewirken: Der Editor hält den Text als Markdown (`doc`), `# ` und `- ` sind dort bereits die Auszeichnung. Die Electron-Fassung arbeitet dagegen mit HTML-Blöcken und wandelt die Zeichen beim Tippen um (`handleMarkdownTrigger` in `editor.js`). Der Schalter ist deshalb aus `settings_window` in `app.rs` entfernt; das Feld `ed_markdown` bleibt in `settings.rs`, damit gespeicherte Einstellungen unverändert gelesen werden können.
+
+## 48. Angepinnte Sprachen mit gefülltem Stern
+
+Die Vorlage füllt den Stern einer angepinnten Sprache (`style.css`: `.star.on svg{fill:currentColor}`). `icons::paint` zeichnet jedoch nur Umrisse, sodass angepinnt und nicht angepinnt fast gleich aussahen. Neu ist `icons::paint_filled` in `icons.rs`: Es füllt geschlossene Pfade als Fächer vom Schwerpunkt — das ist für sternförmige Umrisse wie den Stern richtig und für die übrigen Symbole unerheblich, weil nur der Stern gefüllt aufgerufen wird. `lang_popup` in `app.rs` benutzt es für `pinned` mit `pal.accent_ink`, sonst weiterhin `paint` mit `pal.muted`.
