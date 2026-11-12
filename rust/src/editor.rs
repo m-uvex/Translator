@@ -477,3 +477,89 @@ mod heading_tests {
         assert_eq!(heading_of("a\n### Drei", 4), 3);
     }
 }
+
+/// Auszeichnung zu reinem Text, wie `page.innerText` in der Vorlage: Kopf-
+/// und Listenzeichen fallen weg, Sterne, Ticks und Linkklammern ebenfalls.
+pub fn plain_text(doc: &str) -> String {
+    let mut out: Vec<String> = Vec::new();
+    for line in doc.lines() {
+        let mut text = line.trim_end().to_string();
+        let mut rest = text.trim_start();
+        // Überschriften, Zitate, Listen: nur der Text bleibt.
+        while let Some(stripped) = rest
+            .strip_prefix('#')
+            .or_else(|| rest.strip_prefix('>'))
+            .or_else(|| rest.strip_prefix("- "))
+        {
+            rest = stripped.trim_start();
+        }
+        if let Some(stripped) = rest.strip_prefix("1. ") {
+            rest = stripped.trim_start();
+        }
+        text = rest.to_string();
+        text = text.replace("**", "").replace("~~", "").replace("`", "");
+        text = text.replace('*', "");
+        // Links `[Text](Ziel)` werden zu ihrem Text.
+        let mut ohne = String::with_capacity(text.len());
+        let mut chars = text.chars().peekable();
+        while let Some(c) = chars.next() {
+            if c == '[' {
+                let mut label = String::new();
+                let mut tiefe = 1;
+                for c in chars.by_ref() {
+                    if c == '[' {
+                        tiefe += 1;
+                    } else if c == ']' {
+                        tiefe -= 1;
+                        if tiefe == 0 {
+                            break;
+                        }
+                    }
+                    label.push(c);
+                }
+                let mut ziel = String::new();
+                if chars.peek() == Some(&'(') {
+                    chars.next();
+                    for c in chars.by_ref() {
+                        if c == ')' {
+                            break;
+                        }
+                        ziel.push(c);
+                    }
+                }
+                if ziel.is_empty() {
+                    ohne.push('[');
+                    ohne.push_str(&label);
+                    ohne.push(']');
+                } else {
+                    ohne.push_str(&label);
+                }
+            } else {
+                ohne.push(c);
+            }
+        }
+        out.push(ohne);
+    }
+    out.join("
+")
+}
+
+#[cfg(test)]
+mod plain_tests {
+    use super::plain_text;
+
+    #[test]
+    fn auszeichnung_faellt_weg() {
+        let text = "# Titel
+
+**fett** und *kursiv* mit `Code`.
+- Punkt
+[Seite](https://a.b)";
+        let rein = plain_text(text);
+        assert!(rein.starts_with("Titel"));
+        assert!(!rein.contains("**"));
+        assert!(!rein.contains("https"));
+        assert!(rein.contains("Punkt"));
+        assert!(rein.contains("Seite"));
+    }
+}

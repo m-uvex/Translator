@@ -443,3 +443,21 @@ Die Oberflaechensprache stand nur beim Start fest: `App::new` bestimmte `self.la
 Das Menue am Globus-Knopf war ein mittiger Dialog mit Kaestchen, zwei Trennstrichen und Sprachknoepfen, die ihren eigenen Rahmen mitbrachten. Die Vorlage oeffnet dort ein Popup **oberhalb** des Knopfes (`#pop` in `editor.js`): je eine Zeile `.row` pro Woerterbuch, ein Trennstrich, dann eine Zeile „Rechtschreibung pruefen“ mit Haken auf der rechten Seite.
 
 `App::dict_menu` ersetzt `spell_lang_window`: das Menue haengt an `dict_anchor` (der Knopf merkt sich sein Rechteck beim Klick), steht mit `pivot(RIGHT_BOTTOM)` acht Pixel ueber dem Knopf, hat 240 px Breite und nutzt `pop_card()` als Karte. Die Zeilen zeichnet der neue Helfer `row_zeile` — 32 px hoch, 10er Rundung, Hintergrund nur beim Ueberfahren, Name links, gewaehlter Eintrag mit Punkt und Akzentfarbe, optional ein Haken rechts. Ein Klick daneben oder Escape schliesst, ein Klick auf ein Woerterbuch uebernimmt es und prueft neu.
+
+## 32. Speichern-Menue, PDF, Woerterbuchdatei, Wellen und Karten
+
+Der Speichern-Knopf des Editors schrieb sofort eine Markdown-Datei. Wie `savePop` in `editor.js` oeffnet er jetzt ein verankertes Menue: „In Ablage speichern“, dann ein Trennstrich und die drei Formate Markdown, Text und PDF. `App::save_menu` zeichnet es mit `pop_at` und `row_zeile`, `App::export_document_as` schreibt die Datei und legt sie zusaetzlich in der Ablage ab — der frueher eigene Export-Knopf faellt damit weg.
+
+Fuer PDF gibt es das neue Modul `pdf.rs`: A4, Helvetica, 60 px Rand, Wortumbruch auf 92 Zeichen, mehrere Seiten, WinAnsi-Kodierung und maskierte Klammern. Text und PDF entstehen aus `editor::plain_text`, das Auszeichnung entfernt wie `page.innerText` in der Vorlage (Kopf- und Listenzeichen, Sterne, Ticks, Linkklammern).
+
+Das Woerterbuchfenster hat im Kopf zwei Knoepfe: `upload` schreibt die Wortliste als Textdatei (ein Wort je Zeile), `download` liest eine solche Datei ein und ergaenzt die Liste ohne Doppelte. Beides laeuft nach dem Dialog, damit der Dateiauswahl nichts im Weg steht.
+
+Die Einstellung „Rechtschreibwellen schlaengeln“ (`ed_spell_anim`) ist neu; `paint_spell_marks` verschiebt die Sinuswelle mit der Zeit und fordert alle 60 ms ein neues Bild an, solange sie an ist.
+
+Die Karten der Sitzungsleiste lassen sich ziehen: `session_dock` merkt sich beim Druecken die Karte unter dem Zeiger, beim Loslassen wandert sie an die Stelle unter dem Zeiger, alle dazwischen ruecken um eins, und `verschieben` rechnet den Platz der aktiven Karte mit. Die Karte unter dem Zeiger bekommt einen Akzentrahmen.
+
+## 33. Ersatzwoerter in der Ausgabe
+
+Die Ausgabe war ein festes Etikett. Jetzt legt der Uebersetzer den Text als `LayoutJob` selbst aus, fuellt ihn ueber `ui.painter().galley` und fragt bei einem Klick ueber `galley.cursor_from_pos` nach dem Zeichen. `App::open_alternatives` bestimmt daraus das Wort (nur Buchstaben und Ziffern), zaehlt die wievielte Stelle im Satz gemeint ist und schickt eine Anfrage ueber `net::spawn_alts` an das Schreibmodell; die Antwort kommt als `Msg::Alts` und landet im Menue `alt_menu_window` (verankert unter dem Zeiger, Zeilen wie `.row`).
+
+Ein Klick auf eine Alternative ruft `App::reword`: das Modell formuliert nur die Stelle um, `Msg::Done` schreibt das Ergebnis in die Ausgabe und kopiert es bei Bedarf. Ist das Uebersetzungsmodell ein MT-Modell oder fehlt das Schreibmodell, sagt die Statusleiste das statt zu fragen.

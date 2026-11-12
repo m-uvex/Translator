@@ -2,6 +2,7 @@ mod app;
 mod editor;
 mod engine;
 mod fenster;
+mod pdf;
 mod icons;
 mod icons_data;
 mod i18n;

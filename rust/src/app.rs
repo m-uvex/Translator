@@ -81,9 +81,19 @@ enum Confirm {
 /// Ein Dokument der Sitzungsliste (nur im Speicher, wie in der
 /// Electron-Fassung). `saved_text` ist der zuletzt gespeicherte Stand und
 /// dient der Erkennung ungespeicherter Aenderungen.
+/// Menue mit Ersatzwoertern unter einem Wort der Ausgabe (`#alt` in der Vorlage).
+#[derive(Clone)]
+struct AltMenu {
+    wort: String,
+    nr: usize,
+    pos: egui::Pos2,
+    list: Option<Vec<String>>,
+    fehler: bool,
+}
+
 /// Offenes Rechtsklick-Menue zu einem falsch geschriebenen Wort.
 #[derive(Clone)]
-pub struct SpellMenu {
+struct SpellMenu {
     pub word: String,
     pub pos: egui::Pos2,
 }
@@ -154,6 +164,11 @@ pub struct App {
     show_spell: bool,
     show_spell_lang: bool,
     dict_anchor: Option<egui::Rect>,
+    show_save_menu: bool,
+    alt_menu: Option<AltMenu>,
+    reword_job: bool,
+    save_anchor: Option<egui::Rect>,
+    dock_drag: Option<usize>,
     /// Bildschirmrechteck der aktuellen Textauswahl; steuert die schwebende
     /// Kontextleiste (`context_bar`).
     bar_rect: Option<egui::Rect>,
@@ -277,6 +292,11 @@ impl App {
             show_spell: false,
             show_spell_lang: false,
             dict_anchor: None,
+            show_save_menu: false,
+            alt_menu: None,
+            reword_job: false,
+            save_anchor: None,
+            dock_drag: None,
             bar_rect: None,
             bar_hover: false,
             spell_anchor: None,
@@ -477,9 +497,38 @@ impl App {
                         self.output = text;
                     }
                 }
+                Msg::Alts(list, fehler) => {
+                    if let Some(menu) = self.alt_menu.as_mut() {
+                        let wort = menu.wort.to_lowercase();
+                        menu.fehler = !fehler.is_empty();
+                        menu.list = Some(
+                            list.into_iter()
+                                .filter(|a| !a.is_empty() && a.to_lowercase() != wort)
+                                .take(6)
+                                .collect(),
+                        );
+                    }
+                    self.status = String::new();
+                }
                 Msg::Done(text) => {
                     self.busy = false;
-                    if self.syn_job {
+                    if self.reword_job {
+                        self.reword_job = false;
+                        let clean = filter_profanity(
+                            &strip_stars(&text, &self.last_src),
+                            &self.set.tgt,
+                            &self.set.src,
+                            &self.set.profanity_style,
+                        );
+                        if !clean.trim().is_empty() {
+                            self.output = clean.clone();
+                            self.last_tr = clean;
+                            if self.set.auto_copy {
+                                ctx.output_mut(|o| o.copied_text = self.last_tr.clone());
+                            }
+                        }
+                        self.status = String::new();
+                    } else if self.syn_job {
                         self.syn_job = false;
                         self.syn_out = json_strings(&text)
                             .into_iter()
@@ -546,6 +595,7 @@ impl App {
                     self.busy = false;
                     self.editor_job = false;
                     self.mini_job = false;
+                    self.reword_job = false;
                     self.last_tr = self.output.clone();
                     self.status = t(self.lang, "stopped");
                 }
@@ -553,6 +603,7 @@ impl App {
                     self.busy = false;
                     self.editor_job = false;
                     self.mini_job = false;
+                    self.reword_job = false;
                     self.status = format!("{}: {}", t(self.lang, "error"), e);
                 }
             }
@@ -1173,6 +1224,20 @@ fn side_label(
 
 /// Zeile in einem ankergebundenen Menue wie `.row` in `style.css`: 32 px hoch,
 /// Hintergrund nur beim Ueberfahren, Name links, optional ein Haken rechts.
+/// Rechnet einen Kartenplatz nach dem Umsortieren um: die gezogene Karte landet
+/// bei `nach`, alle dazwischen ruecken um eins weiter.
+fn verschieben(aktiv: usize, von: usize, nach: usize) -> usize {
+    if aktiv == von {
+        nach
+    } else if von < nach && aktiv > von && aktiv <= nach {
+        aktiv - 1
+    } else if von > nach && aktiv >= nach && aktiv < von {
+        aktiv + 1
+    } else {
+        aktiv
+    }
+}
+
 fn row_zeile(ui: &mut egui::Ui, p: &Palette, label: &str, sel: bool, haken: bool) -> bool {
     let breite = ui.available_width();
     let (rect, resp) = ui.allocate_exact_size(egui::vec2(breite, 32.0), egui::Sense::click());
@@ -1505,6 +1570,8 @@ impl eframe::App for App {
         self.diff_window(ctx);
         self.spell_window(ctx);
         self.dict_menu(ctx);
+        self.save_menu(ctx);
+        self.alt_menu_window(ctx);
         self.style_bar_window(ctx);
         self.mini_window(ctx);
         self.spell_menu_window(ctx);
@@ -1740,23 +1807,41 @@ impl App {
                                     })
                                     .show(ui, |ui| {
                                         ui.set_width(ui.available_width());
-                                        ui.add(
-                                            egui::Label::new(
-                                                RichText::new(if self.output.is_empty() {
-                                                    " ".to_string()
-                                                } else {
-                                                    filter_profanity(
-                                                        &self.output,
-                                                        &self.set.tgt,
-                                                        &self.set.src,
-                                                        &self.set.profanity_style,
-                                                    )
-                                                })
-                                                .size(17.0)
-                                                .color(pal.text),
+                                        let text = if self.output.is_empty() {
+                                            " ".to_string()
+                                        } else {
+                                            filter_profanity(
+                                                &self.output,
+                                                &self.set.tgt,
+                                                &self.set.src,
+                                                &self.set.profanity_style,
                                             )
-                                            .wrap(true),
+                                        };
+                                        // Wie `#output .w` in der Vorlage: jedes Wort ist
+                                        // anklickbar und bietet Ersatzwoerter an.
+                                        let font = egui::FontId::proportional(17.0);
+                                        let galley = ui.fonts(|f| {
+                                            f.layout(
+                                                text.clone(),
+                                                font,
+                                                pal.text,
+                                                ui.available_width(),
+                                            )
+                                        });
+                                        let (rect, resp) = ui.allocate_exact_size(
+                                            galley.size(),
+                                            egui::Sense::click(),
                                         );
+                                        ui.painter().galley(rect.min, galley.clone(), pal.text);
+                                        if resp.clicked() {
+                                            if let Some(pos) = resp.interact_pointer_pos() {
+                                                let idx = galley
+                                                    .cursor_from_pos(pos - rect.min)
+                                                    .ccursor
+                                                    .index;
+                                                self.open_alternatives(&text, idx, pos);
+                                            }
+                                        }
                                     });
                             });
                         egui::Frame::none()
@@ -2438,6 +2523,14 @@ impl App {
                         ("symbols", t(lang, "o_symbols")),
                     ]);
                     set_bool(ui, &pal, "ed_markdown", lang, t(lang, "s_md").as_str(), &mut self.set.ed_markdown);
+                    set_bool(
+                        ui,
+                        &pal,
+                        "ed_spell_anim",
+                        lang,
+                        t(lang, "s_spellanim").as_str(),
+                        &mut self.set.ed_spell_anim,
+                    );
                     set_bool(ui, &pal, "auto_copy", lang, t(lang, "s_autocopy").as_str(), &mut self.set.auto_copy);
                     set_bool(
                         ui,
@@ -2576,8 +2669,27 @@ impl App {
         let lang = self.lang;
         let mut open = true;
         let mut changed = false;
+        let mut export = false;
+        let mut import = false;
         dialog(ctx, "dict_win", &t(lang, "personal_dict"), 420.0, &pal, &mut open, |ui| {
-                ui.label(RichText::new(t(lang, "dict_words")).color(pal.muted));
+                // Kopf wie im Vorbild: Titel links, rechts Export und Import.
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new(t(lang, "dict_words")).color(pal.muted));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if icon_btn(ui, &pal, "upload", false)
+                            .on_hover_text(t(lang, "dict_export"))
+                            .clicked()
+                        {
+                            export = true;
+                        }
+                        if icon_btn(ui, &pal, "download", false)
+                            .on_hover_text(t(lang, "dict_import"))
+                            .clicked()
+                        {
+                            import = true;
+                        }
+                    });
+                });
                 if self.dict_words.is_empty() {
                     ui.label(RichText::new(t(lang, "no_dict_words")).color(pal.muted));
                 }
@@ -2629,6 +2741,34 @@ impl App {
                     }
                 });
             });
+        if export {
+            if let Some(path) = rfd::FileDialog::new()
+                .set_file_name("woerterbuch.txt")
+                .save_file()
+            {
+                let _ = std::fs::write(path, self.dict_words.join("
+"));
+                self.status = t(lang, "saved");
+            }
+        }
+        if import {
+            if let Some(path) = rfd::FileDialog::new().pick_file() {
+                if let Ok(text) = std::fs::read_to_string(&path) {
+                    for wort in text.lines().map(str::trim).filter(|w| !w.is_empty()) {
+                        if !self
+                            .dict_words
+                            .iter()
+                            .any(|w| w.to_lowercase() == wort.to_lowercase())
+                        {
+                            self.dict_words.push(wort.to_string());
+                            changed = true;
+                        }
+                    }
+                    self.spell_scanned_doc.clear();
+                    self.status = t(lang, "dict_loaded");
+                }
+            }
+        }
         if changed {
             let path = crate::settings::data_dir().join("personal-dictionary.json");
             if let Ok(text) = serde_json::to_string_pretty(&self.dict_words) {
@@ -2809,17 +2949,11 @@ impl App {
             {
                 self.import_document();
             }
-            if icon_btn(ui, &pal, "save", false)
-                .on_hover_text(t(lang, "save"))
-                .clicked()
-            {
-                self.save_doc_to_tray(true);
-            }
-            if icon_btn(ui, &pal, "download", false)
-                .on_hover_text(t(lang, "export"))
-                .clicked()
-            {
-                self.export_document();
+            // Wie `savePop` in `editor.js`: ein Menue statt direktem Schreiben.
+            let save_resp = icon_btn(ui, &pal, "save", false).on_hover_text(t(lang, "save"));
+            if save_resp.clicked() {
+                self.save_anchor = Some(save_resp.rect);
+                self.show_save_menu = !self.show_save_menu;
             }
             ui.separator();
             if icon_btn(ui, &pal, "undo", false)
@@ -3200,6 +3334,7 @@ impl App {
         self.sync_active_session();
         let mut switch: Option<usize> = None;
         let mut close: Option<usize> = None;
+        let mut rects: Vec<egui::Rect> = Vec::new();
         egui::Frame::none()
             .fill(pal.soft)
             .stroke(Stroke::new(1.0_f32, pal.line))
@@ -3217,7 +3352,7 @@ impl App {
                                 let dirty = self.sessions[i].text != self.sessions[i].saved_text;
                                 let fill = if active { pal.accent } else { pal.card };
                                 let ink = if active { pal.on_accent } else { pal.text };
-                                egui::Frame::none()
+                                let karte = egui::Frame::none()
                                     .fill(fill)
                                     .stroke(Stroke::new(1.0_f32, pal.line))
                                     .rounding(Rounding::same(12.0))
@@ -3250,7 +3385,51 @@ impl App {
                                             });
                                         });
                                     });
+                                rects.push(karte.response.rect);
                                 ui.add_space(4.0);
+                            }
+
+                            // Karten ziehen wie `dockDragStart/Move/End` in der
+                            // Vorlage: die Karte unter dem Zeiger nimmt den Platz,
+                            // die gezogene rueckt nach.
+                            let ctx = ui.ctx();
+                            let zeiger = ctx.input(|i| i.pointer.interact_pos());
+                            let gedrueckt = ctx.input(|i| i.pointer.primary_pressed());
+                            let losgelassen = ctx.input(|i| i.pointer.primary_released());
+                            if gedrueckt {
+                                self.dock_drag =
+                                    zeiger.and_then(|pos| rects.iter().position(|r| r.contains(pos)));
+                            }
+                            if losgelassen {
+                                if let (Some(von), Some(pos)) = (self.dock_drag.take(), zeiger) {
+                                    if let Some(nach) =
+                                        rects.iter().position(|r| r.contains(pos))
+                                    {
+                                        if nach != von
+                                            && nach < self.sessions.len()
+                                            && von < self.sessions.len()
+                                        {
+                                            let karte = self.sessions.remove(von);
+                                            self.sessions.insert(nach, karte);
+                                            self.active_session = verschieben(
+                                                self.active_session,
+                                                von,
+                                                nach,
+                                            );
+                                        }
+                                    }
+                                }
+                            }
+                            if let (Some(von), Some(pos)) = (self.dock_drag, zeiger) {
+                                if let Some(nach) = rects.iter().position(|r| r.contains(pos)) {
+                                    if nach != von {
+                                        ui.painter().rect_stroke(
+                                            rects[nach],
+                                            Rounding::same(12.0),
+                                            Stroke::new(1.5_f32, pal.accent),
+                                        );
+                                    }
+                                }
                             }
                         });
                     });
@@ -3592,6 +3771,13 @@ impl App {
         let painter = ui.painter();
         let offset = out.galley_pos.to_vec2();
         let color = Color32::from_rgb(0xd0, 0x3a, 0x3a);
+        // Wie `startSpellAnim` in der Vorlage: die Wellen wandern, solange die
+        // Einstellung an ist. Ohne sie stehen sie still.
+        let phase = if self.set.ed_spell_anim {
+            ui.input(|i| i.time) as f32 * 6.0
+        } else {
+            0.0
+        };
         let mut anchor: Option<egui::Pos2> = None;
         self.spell_mark_rects.clear();
         for (a, b) in marks {
@@ -3625,12 +3811,16 @@ impl App {
             for i in 0..=steps {
                 let t = i as f32 / steps as f32;
                 let x = x0 + (x1 - x0) * t;
-                let dy = 1.4 * ((x - x0) * std::f32::consts::TAU / 6.0).sin();
+                let dy = 1.4 * ((x - x0) * std::f32::consts::TAU / 6.0 + phase).sin();
                 pts.push(egui::pos2(x, y + dy));
             }
             painter.add(egui::Shape::line(pts, Stroke::new(1.4_f32, color)));
         }
         self.spell_anchor = anchor;
+        if self.set.ed_spell_anim {
+            ui.ctx()
+                .request_repaint_after(std::time::Duration::from_millis(60));
+        }
     }
 
     /// Rechtsklick-Menue auf einem falsch geschriebenen Wort: Vorschlaege aus
@@ -3805,6 +3995,245 @@ impl App {
         self.save_set();
     }
 
+    /// Menue am Speichern-Knopf wie `savePop` in `editor.js`: Ablage,
+    /// dann Markdown, Text und PDF.
+    /// Wort unter dem Zeiger bestimmen und Ersatzwoerter anfragen.
+    fn open_alternatives(&mut self, text: &str, idx: usize, pos: egui::Pos2) {
+        if self.busy || self.last_tr.trim().is_empty() {
+            return;
+        }
+        let lang = self.lang;
+        if is_mt(&self.set.model) {
+            self.status = t(lang, "nllb_no_alt");
+            return;
+        }
+        let Some(helper) = self.write_model() else {
+            self.status = t(lang, "need_helper");
+            return;
+        };
+        let chars: Vec<char> = text.chars().collect();
+        if chars.is_empty() {
+            return;
+        }
+        let mut a = idx.min(chars.len() - 1);
+        if !chars[a].is_alphanumeric() && a > 0 {
+            a -= 1;
+        }
+        if !chars[a].is_alphanumeric() {
+            return;
+        }
+        let mut start = a;
+        while start > 0 && chars[start - 1].is_alphanumeric() {
+            start -= 1;
+        }
+        let mut ende = a;
+        while ende + 1 < chars.len() && chars[ende + 1].is_alphanumeric() {
+            ende += 1;
+        }
+        let wort: String = chars[start..=ende].iter().collect();
+        if wort.trim().is_empty() {
+            return;
+        }
+        // Wie in der Vorlage: die wievielte Stelle dieses Wortes ist gemeint.
+        let lower = wort.to_lowercase();
+        let mut nr = 1usize;
+        let mut i = 0usize;
+        while i < start {
+            if chars[i].is_alphanumeric() && (i == 0 || !chars[i - 1].is_alphanumeric()) {
+                let mut e = i;
+                while e + 1 < start && chars[e + 1].is_alphanumeric() {
+                    e += 1;
+                }
+                let davor: String = chars[i..=e].iter().collect();
+                if davor.to_lowercase() == lower {
+                    nr += 1;
+                }
+                i = e + 1;
+            } else {
+                i += 1;
+            }
+        }
+        let src = if self.set.src == "auto" {
+            String::new()
+        } else {
+            format!(" ({})", eng_name(&self.set.src, &self.nllb_langs))
+        };
+        let tgt = eng_name(&self.set.tgt, &self.nllb_langs);
+        let quelle = if self.last_src.is_empty() {
+            "(image)".to_string()
+        } else {
+            self.last_src.clone()
+        };
+        let stelle = if nr > 1 {
+            format!(" (occurrence #{})", nr)
+        } else {
+            String::new()
+        };
+        let prompt = format!(
+            "Source{}: {}\nTranslation ({}): {}\n\nGive up to 6 alternative {} words or short phrases that could replace the word \"{}\"{} in this translation, with the same meaning in context or close synonyms, most likely first. Respond as JSON: {{\"alternatives\":[\"...\"]}}",
+            src, quelle, tgt, self.last_tr, tgt, wort, stelle
+        );
+        self.alt_menu = Some(AltMenu {
+            wort,
+            nr,
+            pos,
+            list: None,
+            fehler: false,
+        });
+        self.status = t(lang, "load_alts");
+        net::spawn_alts(self.cfg(), helper, prompt, self.tx.clone());
+    }
+
+    /// Menue unter dem angeklickten Wort: Ersatzwoerter, Ladehinweis oder Fehler.
+    fn alt_menu_window(&mut self, ctx: &egui::Context) {
+        let Some(menu) = self.alt_menu.clone() else {
+            return;
+        };
+        let pal = self.pal;
+        let lang = self.lang;
+        let anchor = egui::Rect::from_min_size(menu.pos, egui::vec2(1.0, 1.0));
+        let mut wahl: Option<String> = None;
+        let zu = pop_at(ctx, "alt_pop", anchor, 280.0, &pal, |ui| {
+            ui.set_width(268.0);
+            ui.spacing_mut().item_spacing.y = 0.0;
+            match &menu.list {
+                None => {
+                    ui.label(
+                        RichText::new(t(lang, "load_alts"))
+                            .size(12.0)
+                            .color(pal.muted),
+                    );
+                }
+                Some(list) if list.is_empty() => {
+                    let text = if menu.fehler {
+                        t(lang, "alt_err")
+                    } else {
+                        t(lang, "no_alts")
+                    };
+                    ui.label(RichText::new(text).size(12.0).color(pal.muted));
+                }
+                Some(list) => {
+                    for a in list {
+                        if row_zeile(ui, &pal, a, false, false) {
+                            wahl = Some(a.to_string());
+                        }
+                    }
+                }
+            }
+        });
+        let gewaehlt = wahl.is_some();
+        if let Some(a) = wahl {
+            self.reword(a);
+        }
+        if zu || gewaehlt {
+            self.alt_menu = None;
+        }
+    }
+
+    /// Ersetzt das Wort im Satz; das Hilfsmodell formuliert die Stelle um.
+    fn reword(&mut self, alt: String) {
+        let Some(menu) = self.alt_menu.clone() else {
+            return;
+        };
+        let lang = self.lang;
+        let Some(helper) = self.write_model() else {
+            self.status = t(lang, "need_helper");
+            return;
+        };
+        let tgt = eng_name(&self.set.tgt, &self.nllb_langs);
+        let stelle = if menu.nr > 1 {
+            format!(" (occurrence #{})", menu.nr)
+        } else {
+            String::new()
+        };
+        let prompt = format!(
+            "Here is a {} translation:\n<text>\n{}\n</text>\n\nReplace the word \"{}\"{} with \"{}\" and change only what grammar requires (articles, inflection, word order, punctuation) so the text stays fluent. Keep everything else unchanged. Output only the revised text.",
+            tgt, self.last_tr, menu.wort, stelle, alt
+        );
+        self.alt_menu = None;
+        self.reword_job = true;
+        self.busy = true;
+        self.status = t(lang, "adjusting");
+        net::spawn_chat(
+            self.cfg(),
+            helper,
+            vec![
+                json!({"role": "system", "content": self.set.sys}),
+                json!({"role": "user", "content": prompt}),
+            ],
+            None,
+            None,
+            false,
+            self.tx.clone(),
+            self.stop.clone(),
+        );
+    }
+
+    fn save_menu(&mut self, ctx: &egui::Context) {
+        if !self.show_save_menu {
+            return;
+        }
+        let Some(anchor) = self.save_anchor else {
+            self.show_save_menu = false;
+            return;
+        };
+        let pal = self.pal;
+        let lang = self.lang;
+        let breite = 240.0;
+        let mut in_ablage = false;
+        let mut art: Option<&str> = None;
+        let zu = pop_at(ctx, "save_pop", anchor, breite, &pal, |ui| {
+            ui.set_width(breite - 24.0);
+            ui.spacing_mut().item_spacing.y = 0.0;
+            if row_zeile(ui, &pal, &t(lang, "lib_save"), false, false) {
+                in_ablage = true;
+            }
+            ui.add_space(4.0);
+            let (linie, _) =
+                ui.allocate_exact_size(egui::vec2(breite - 24.0, 1.0), egui::Sense::hover());
+            ui.painter().rect_filled(linie, 0.0, pal.line);
+            ui.add_space(4.0);
+            for (kennung, name) in [
+                ("md", "Markdown (.md)".to_string()),
+                ("txt", t(lang, "save_txt")),
+                ("pdf", t(lang, "save_pdf")),
+            ] {
+                if row_zeile(ui, &pal, &name, false, false) {
+                    art = Some(kennung);
+                }
+            }
+        });
+        if in_ablage {
+            self.save_doc_to_tray(false);
+        }
+        if let Some(kennung) = art {
+            self.export_document_as(kennung);
+        }
+        if in_ablage || art.is_some() || zu {
+            self.show_save_menu = false;
+        }
+    }
+
+    /// Export als `md`, `txt` oder `pdf`; ein erfolgreicher Export landet wie in
+    /// der Vorlage zusaetzlich in der Ablage.
+    fn export_document_as(&mut self, art: &str) {
+        let lang = self.lang;
+        let name = library::doc_name(&self.doc, &t(lang, "doc_name"));
+        let (endung, inhalt): (&str, Vec<u8>) = match art {
+            "txt" => ("txt", editor::plain_text(&self.doc).into_bytes()),
+            "pdf" => ("pdf", crate::pdf::text_pdf(&editor::plain_text(&self.doc))),
+            _ => ("md", self.doc.clone().into_bytes()),
+        };
+        if let Some(path) = rfd::FileDialog::new()
+            .set_file_name(format!("{}.{}", name, endung))
+            .save_file()
+        {
+            let _ = std::fs::write(path, inhalt);
+            self.status = t(lang, "saved");
+            self.save_doc_to_tray(true);
+        }
+    }
+
     fn import_document(&mut self) {
         if let Some(path) = rfd::FileDialog::new()
             .add_filter("Dokument", &["txt", "md", "html"])
@@ -3818,17 +4247,6 @@ impl App {
                 self.saved = false;
                 self.sync_active_session();
             }
-        }
-    }
-
-    fn export_document(&mut self) {
-        let name = library::doc_name(&self.doc, &t(self.lang, "doc_name"));
-        if let Some(path) = rfd::FileDialog::new()
-            .set_file_name(format!("{}.md", name))
-            .save_file()
-        {
-            let _ = std::fs::write(path, &self.doc);
-            self.status = t(self.lang, "saved");
         }
     }
 

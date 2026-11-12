@@ -38,6 +38,8 @@ pub enum Msg {
     Url(String),
     /// Verbindungsfehler beim Abruf der Modellliste.
     ModelsError(String),
+    /// Ersatzwoerter fuer ein Wort der Ausgabe; der Text nennt den Fehler.
+    Alts(Vec<String>, String),
 }
 
 #[derive(Clone, Debug)]
@@ -344,6 +346,56 @@ pub fn spawn_model_action(cfg: Cfg, id: String, action: &'static str, tx: Sender
                 let _ = tx.send(Msg::ModelsMeta(arr));
             }
         }
+    });
+}
+
+/// Fragt bis zu sechs Ersatzwoerter fuer ein Wort der Ausgabe an.
+pub fn spawn_alts(cfg: Cfg, model: String, prompt: String, tx: Sender<Msg>) {
+    std::thread::spawn(move || {
+        let body = json!({
+            "model": model,
+            "messages": [
+                {"role": "system", "content": "You are a translation assistant. Answer only with valid JSON."},
+                {"role": "user", "content": prompt},
+            ],
+            "stream": false,
+            "format": "json",
+            "options": {"temperature": cfg.temp, "num_ctx": cfg.numctx},
+        });
+        let resp = match ureq::post(&format!("{}/api/chat", base(&cfg.url)))
+            .timeout(Duration::from_secs(90))
+            .send_json(body)
+        {
+            Ok(r) => r,
+            Err(e) => {
+                let _ = tx.send(Msg::Alts(Vec::new(), e.to_string()));
+                return;
+            }
+        };
+        let text = match resp.into_json::<Value>() {
+            Ok(v) => v
+                .get("message")
+                .and_then(|m| m.get("content"))
+                .and_then(|c| c.as_str())
+                .unwrap_or("")
+                .to_string(),
+            Err(e) => {
+                let _ = tx.send(Msg::Alts(Vec::new(), e.to_string()));
+                return;
+            }
+        };
+        let list = serde_json::from_str::<Value>(text.trim())
+            .ok()
+            .and_then(|v| v.get("alternatives").and_then(|a| a.as_array().cloned()))
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|x| x.as_str().map(|s| s.trim().to_string()))
+                    .filter(|s| !s.is_empty())
+                    .take(6)
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        let _ = tx.send(Msg::Alts(list, String::new()));
     });
 }
 
