@@ -11,8 +11,8 @@ mit Commit-Kurz-Hash.
   P23, P25, P26, P27, P28, P29, P30, P31, P33, P36, P39, P40 und P41 sind
   erledigt, P9 nachgesehen (Rest: Dokumentenablage, Fensterleiste).
   Nachgetragen: P32 bis P41 (fehlende Funktionen) und P42 bis P55 (Rückmeldung
-  des Nutzers zum Editor). P42 bis P50 sind erledigt. Offen bleiben P24, P32,
-  P34, P35, P37, P38 und P51 bis P55.
+  des Nutzers zum Editor). P42 bis P51 sind erledigt. Offen bleiben P24, P32,
+  P34, P35, P37, P38 und P52 bis P55.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
   (`1863576`). P15 und P4 sind damit ganz erledigt, P5/P6/P8/P10/P13 fuer diese
@@ -36,6 +36,16 @@ mit Commit-Kurz-Hash.
 5. **Akzentfarbe Babyblau**, keine dunkelblaue Schrift ohne Grund.
 6. **Lesbarkeit vor Zierde:** Text muss auf seinem Hintergrund lesbar sein,
    Karten brauchen einen sichtbaren Hintergrund.
+
+## Gemeldete Punkte prüfen
+
+Meldungen eines zweiten Agents (oder des Nutzers) werden **vor** dem Reparieren
+an beiden Fassungen nachgeprüft — Codevergleich und, wo möglich, ein Lauf.
+Bestaetigt sich eine Meldung, wandert sie als eigener Punkt in die Tabelle.
+Erweist sie sich als unzutreffend, bleibt sie als Eintrag stehen und bekommt
+einen Kommentar mit dem Beleg (Datei, Zeile, Lauf), damit der andere Agent
+nachvollziehen kann, wer daneben lag. Erst wenn beide dieselbe Stelle gleich
+lesen, wird der Punkt geschlossen.
 
 ## Offene Punkte
 
@@ -91,7 +101,7 @@ mit Commit-Kurz-Hash.
 | P48 | **Werkzeugleiste falsch bestückt:** Das Code-Symbol gehörte nicht hinein, die vier Ausrichtungen fehlten. | erledigt (`11b6866`): Code-Symbol entfernt, vier Ausrichtungen ergänzt; Schrift und Größe bleiben P24 |
 | P49 | **Ladeanzeige am falschen Ort:** Die Vorlage macht aus der Kontextleiste eine kleine Pille mit Ladekreis. | erledigt (`11b6866`): `ladekreis` in der Pille, auch in Synonym- und Kontext-Übersetzer-Menü; Übersetzen-Knopf bleibt sichtbar |
 | P50 | **„Alles verkürzen" wirkt nicht:** Der ganze Text ging in einem Stück ans Modell (Kontextgrenze), die Vorlage zerlegt lange Texte in Abschnitte (`chunkText`, `summarizeLong`). | erledigt (`cc4f4b3`): `chunk_text`, stückweise Anfragen mit Fortschritt „Teil 3 von 7“, Zusammenfassen in zwei Durchgängen; Abschnitte bekommen einen Anschluss (Stelle im Dokument, Schluss des vorigen Ergebnisses) — auch in der Electron-Fassung (`4b4264b`, `chunkInstr` in `editor.js`) |
-| P51 | **Probelesen falsch:** Ablauf und Fenster weichen ab; die Vorlage ersetzt den Text durch Markierungen (`.diff-ins`/`.diff-del`), zeigt unten eine Leiste mit „Alle annehmen / Alle ablehnen" und setzt erst am Ende den Inhalt. | offen |
+| P51 | **Probelesen falsch:** Ablauf und Fenster wichen ab; die Vorlage ersetzt den Text durch Markierungen und entscheidet je Änderung. | erledigt (`e5dfffe`): Liste mit alt→neu je Änderung, Haken/Kreuz, entschiedene Zeilen treten zurück, alles entschieden setzt den Text, Schließen lässt Offenes alt; Markierungs-Probelesen vergleicht den neuen Dokumenttext. Inline-Markierungen bleiben offen, weil der Editor auf Markdown-Text arbeitet |
 | P52 | **Stil-Option der Kontextleiste falsch:** Sie nutzt Textknöpfe; die Vorlage zeigt Symbolreihen (`.icg`) und eine Auswahl der Stilrichtungen mit Symbolen. | offen |
 | P53 | **Kontext-Übersetzer:** zu breit, der Übersetzen-Knopf unten zu klein (Vorlage: `#trpop` mit 280 px Mindestbreite und `.go`-Knopf rechts). | offen |
 | P54 | **Pin-Symbol unkenntlich und uneinheitlich:** Es sieht nicht wie eine Nadel aus und ist in Übersetzer und Editor verschieden. | offen |
