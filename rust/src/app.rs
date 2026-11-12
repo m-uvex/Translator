@@ -2798,8 +2798,14 @@ impl App {
         let pal = self.pal;
         let lang = self.lang;
         let mut open = true;
+        let hoehe = (ctx.screen_rect().height() * 0.72).max(320.0);
         dialog(ctx, "settings_win", &t(lang, "settings"), 560.0, &pal, &mut open, |ui| {
-                egui::ScrollArea::vertical().show(ui, |ui| {
+                // Feste Hoehe wie `max-height:86vh` der Vorlage; ohne sie zog
+                // sich das Fenster auf die ersten Zeilen zusammen.
+                egui::ScrollArea::vertical()
+                    .max_height(hoehe)
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
                     // Die Bildlaufleiste liegt am rechten Rand der Flaeche; ohne
                     // diesen Abstand stiessen die Auswahlfelder an sie.
                     let inhalt = (ui.available_width() - 12.0).max(200.0);

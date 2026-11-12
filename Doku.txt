@@ -526,3 +526,9 @@ Die Partikel-Animation über der KI-Bearbeitung lag als ein Rechteck über der A
 
 In den Einstellungen stoßen die Auswahlfelder nicht mehr an die Bildlaufleiste; der Inhalt der Bildlauffläche ist um 12 px schmaler als die Fläche.
 
+## 40. Einstellungen mit fester Höhe, Zahlen im Icon-Pfad
+
+Das Einstellungsfenster zog sich nach dem letzten Eingriff auf die ersten beiden Zeilen zusammen, weil die Bildlauffläche ohne Höhenangabe nur den Platz bekam, den das Fenster ihr gerade ließ. Sie hat jetzt eine feste Höhe von 72 % der Fensterhöhe (mindestens 320 px) und schrumpft nicht mehr auf ihren Inhalt (`auto_shrink([false, false])`); das entspricht `max-height:86vh` der Vorlage.
+
+Das Fragezeichen beim Geschlecht war falsch gezeichnet. Ursache war der Zahlenleser für SVG-Pfade: minifizierte Pfade schreiben Zahlen ohne Trenner hintereinander, beim Fragezeichen etwa `c-.7.4-1 1-1 1.7`. Der Leser hat beim zweiten Punkt in derselben Zahl nicht getrennt, sondern `-.7.4` als eine Zahl gelesen, sie als ungültig verworfen und damit dem Kurvenbefehl zwei Zahlen zu wenig gegeben — der Haken des Fragezeichens verkam zu einem geraden Strich. `lex` beginnt jetzt bei einem zweiten Punkt und bei jedem Vorzeichen eine neue Zahl. Der Fehler betraf alle Symbole mit solchen Pfaden, nicht nur das Fragezeichen.
+

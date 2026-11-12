@@ -11,7 +11,7 @@ mit Commit-Kurz-Hash.
   P23, P25, P26, P27, P28, P29, P30, P31, P33, P36, P39, P40 und P41 sind
   erledigt, P9 nachgesehen (Rest: Dokumentenablage, Fensterleiste).
   Nachgetragen: P32 bis P41 (fehlende Funktionen) und P42 bis P55 (Rückmeldung
-  des Nutzers zum Editor). P42 bis P51 sowie P53, P55 bis P61 sind erledigt.
+  des Nutzers zum Editor). P42 bis P51 sowie P53, P55 bis P63 sind erledigt.
   Offen bleiben P24, P32, P34, P35, P37, P38, P52 und P54.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
@@ -108,6 +108,8 @@ lesen, wird der Punkt geschlossen.
 | P59 | **Wörterbuchfenster weicht ab:** Aufbau nicht wie `#dictDlg`. | erledigt: 480 px, Export/Import oben, Eingabe mit Hauptknopf über der Liste, gerahmte Liste, „Schließen“ unten rechts, Bearbeiten per Klick |
 | P60 | **KI-Animation als Rechteck:** lag halb über dem Text, lief über die Ränder, ruckelte; eine Lage der Vorlage treibt nach unten. | erledigt: zeilenweise über dem umbrochenen Text, auf die Schreibfläche beschnitten, 60 fps, Raster/Tempo aus dem Keyframe (mittlere Lage nach unten) |
 | P61 | **Auswahlfelder in den Einstellungen zu nah an der Bildlaufleiste.** | erledigt: Inhalt der Bildlauffläche 12 px schmaler |
+| P62 | **Einstellungsfenster zu niedrig:** Es zeigte nur die ersten beiden Zeilen. | erledigt: Bildlauffläche mit fester Höhe (72 % der Fensterhöhe, mind. 320 px) wie `max-height:86vh` |
+| P63 | **Fragezeichen beim Geschlecht falsch gezeichnet:** Der Zahlenleser für Icon-Pfade hat `-.7.4` als eine ungültige Zahl gelesen und dem Kurvenbefehl Zahlen verschluckt. | erledigt: `lex` trennt bei zweitem Punkt und jedem Vorzeichen; Test `zusammengeschriebene_zahlen_werden_getrennt` |
 | P56 | **Sprachauswahl-Menü:** Punkt vor der eingestellten Sprache (die Vorlage markiert nur über die Farbe), Trennstrich zwischen angepinnten und übrigen Sprachen fehlte, Suchfeld zu klein. | erledigt: Markierung nur farbig, Reihenfolge „Sprache erkennen“, Angepinnte, Strich, Rest; Suchfeld 34 px/15 px |
 | P57 | **Erster Wechsel in den Editor dauert lange:** Die Rechtschreibprüfung lief im Zeichen-Thread und berechnete für jedes falsch geschriebene Wort Vorschläge (gemessen: 30 s für 20 von 1649 Wörtern in einem 206-KB-Text). | erledigt: `scan` ohne Vorschläge, `suggest` einzeln, Prüfung in `SpellWorker` (eigener Thread, Wörterbuch bleibt dort), Menü holt Vorschläge beim Öffnen |
 | P58 | **Zu wenig Abstand unter der Seite:** Unter der Schreibseite blieben 8 px bis zur Kante; `#pageWrap` hat 28 px. | erledigt: unteres Polster der Fläche 28 px wie oben |

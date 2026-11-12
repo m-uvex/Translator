@@ -80,7 +80,13 @@ fn lex(d: &str) -> Vec<Tok> {
             out.push(Tok::Cmd(c));
         } else if c == ',' || c.is_whitespace() {
             flush(&mut num, &mut out);
-        } else if (c == '-' || c == '+') && !num.is_empty() {
+        } else if c == '.' && num.contains('.') {
+            // Minifizierte Pfade schreiben Zahlen ohne Trenner hintereinander:
+            // `c-.7.4-1 1` heisst -.7, .4, -1, 1. Ein zweiter Punkt in derselben
+            // Zahl beginnt also eine neue.
+            flush(&mut num, &mut out);
+            num.push(c);
+        } else if c == '-' || c == '+' {
             flush(&mut num, &mut out);
             num.push(c);
         } else {
@@ -402,6 +408,18 @@ mod tests {
         assert_eq!(polys.len(), 1);
         let last = polys[0].last().unwrap();
         assert_eq!(*last, [11.0, 21.0]);
+    }
+
+    #[test]
+    fn zusammengeschriebene_zahlen_werden_getrennt() {
+        // Fragezeichen der Vorlage: nach dem Bogen folgt `c-.7.4-1 1-1 1.7`,
+        // also sechs Zahlen ohne Trenner zwischen den Dezimalstellen.
+        let polys = flatten("M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01");
+        assert_eq!(polys.len(), 2);
+        assert_eq!(polys[1][0], [12.0, 17.0]);
+        let last = polys[1].last().unwrap();
+        assert!((last[0] - 12.01).abs() < 0.001);
+        assert_eq!(last[1], 17.0);
     }
 
     #[test]
