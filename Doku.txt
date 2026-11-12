@@ -536,3 +536,7 @@ Das Fragezeichen beim Geschlecht war falsch gezeichnet. Ursache war der Zahlenle
 
 Die Hinweise in leeren Eingabefeldern („Text eingeben oder Datei hineinziehen …“, Kontext, Glossar, Sprachsuche, neues Wort im Wörterbuch, leere Seite) standen in voller Textfarbe und wirkten dadurch wie eingegebener Text. Ursache ist `override_text_color` in den egui-Stileinstellungen: es färbt auch den Hinweistext, den egui sonst über `weak_text_color` blasser zeichnet. Ein Browser stellt Platzhalter ebenfalls blasser dar. Alle `hint_text`-Aufrufe übergeben deshalb jetzt `RichText` mit `pal.muted`; eine ausdrücklich gesetzte Farbe hat Vorrang vor der Vorgabe.
 
+## 42. Lange Beschriftungen in den Einstellungen
+
+Bei „Modell für Ersatzwörter …“ lagen Beschriftung und Auswahlfeld übereinander: `set_row` zeichnete den Text links und gab der Auswahl rechts unbesehen den Platz, den sie brauchte. `.set.row-set` der Vorlage bricht stattdessen um (`flex-wrap`, `min-width:0` an der Beschriftung). `set_row` misst jetzt die Beschriftung und lässt sie bei Bedarf über die volle Breite umbrechen; die Auswahl steht dann rechts darunter. Als Platz für die Auswahl gelten 45 % der Zeile, mindestens 150 px.
+

@@ -6089,15 +6089,31 @@ fn tsel_combo(
 /// Zeile wie `.set.row-set`: Titel fett links, Auswahl rechts.
 fn set_row(ui: &mut egui::Ui, pal: &Palette, label: &str, add: impl FnOnce(&mut egui::Ui)) {
     let breite = ui.available_width();
-    ui.allocate_ui_with_layout(
-        egui::vec2(breite, 36.0),
-        egui::Layout::left_to_right(egui::Align::Center),
-        |ui| {
-            ui.label(RichText::new(label).size(14.0).strong().color(pal.text));
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| add(ui));
-        },
-    );
-    ui.add_space(2.0);
+    let text = RichText::new(label).size(14.0).strong().color(pal.text);
+    // Wie `.set.row-set` der Vorlage: Beschriftung links, Auswahl rechts; passt
+    // beides nicht nebeneinander, bricht die Zeile um, statt sich zu ueberdecken.
+    let text_w = ui
+        .painter()
+        .layout_no_wrap(label.to_string(), egui::FontId::proportional(14.0), pal.text)
+        .size()
+        .x;
+    let reserve = (breite * 0.45).max(150.0);
+    if text_w + reserve > breite {
+        ui.add(egui::Label::new(text).wrap(true));
+        ui.add_space(4.0);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| add(ui));
+        ui.add_space(4.0);
+    } else {
+        ui.allocate_ui_with_layout(
+            egui::vec2(breite, 36.0),
+            egui::Layout::left_to_right(egui::Align::Center),
+            |ui| {
+                ui.label(text);
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| add(ui));
+            },
+        );
+        ui.add_space(2.0);
+    }
 }
 
 /// Einstellung mit Auswahlliste, gesetzt ueber `value`.
