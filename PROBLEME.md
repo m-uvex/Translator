@@ -7,8 +7,8 @@ mit Commit-Kurz-Hash.
 
 ## Gerade in Arbeit
 
-- **Buffy:** P1, P2, P3, P12 und P14 sind erledigt. Im Augenblick
-  nichts in Arbeit — wartet auf die Auswahl des nächsten Punktes.
+- **Buffy:** P1, P2, P3, P12, P14 und der Anker-Teil von P11 sind erledigt. Im
+  Augenblick nichts in Arbeit — wartet auf die Auswahl des nächsten Punktes.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
   (`1863576`). P15 und P4 sind damit ganz erledigt, P5/P6/P8/P10/P13 fuer diese
@@ -47,7 +47,7 @@ mit Commit-Kurz-Hash.
 | P8 | **Hover-Animationen** der Knöpfe entfernen; stattdessen den Highlighter der Vorlage (siehe Regel 3). | in den bearbeiteten Ansichten erledigt (`1863576`); Rest prüfen |
 | P9 | **Unlesbarer Text, fehlende Symbole, fehlende Hintergrundkarten** in mehreren Ansichten; auch in der Fensterleiste (Minimieren/Maximieren/Schließen). | offen |
 | P10 | **Ränder und Abstände:** Elemente zu nah an Rändern, sinnlose Trennstriche, zu große Abstände zwischen Teilen einer Arbeitsfläche, untere Karte/Leiste zu groß. | Übersetzer, Seitenleiste und Ablage erledigt (`1863576`); Editor offen |
-| P11 | **Dialoge:** Schließen-Kreuz der Einstellungen verschwindet beim Überfahren; Mini-Übersetzer sieht falsch aus; Stil-Optionen im Kontext öffnen ein Übersetzer-Panel statt eines eigenen Popups; Synonyme-Fenster. | offen |
+| P11 | **Dialoge:** Stilfenster und Mini-Übersetzer hängen jetzt an der Kontextleiste (`ctx_bar_rect`), das Schließen-Kreuz ist ein eigener `icon_btn` und bleibt beim Überfahren sichtbar. | Anker und Kreuz erledigt; Aussehen von Mini-Übersetzer und Synonymen-Fenster offen |
 | P12 | **Installation:** Wizard (`rust/Installieren.bat`), Deinstallation (`rust/Uninstall.ps1`) und NLLB-200 samt Modellverwaltung. | erledigt, ohne Autostart des NLLB-Servers (`2e700b7`) |
 | P13 | **Squircles statt Kreisen** an einzelnen Stellen; Rundungen insgesamt gegen `style.css` abgleichen. | bearbeitete Ansichten erledigt (`1863576`); Dialoge offen |
 | P14 | **Alle Menüs prüfen:** freischwebende Fenster durch verankerte Menüs bzw. mittige, unverschiebbare Dialoge ersetzen (`pop_at`, `dialog`). | erledigt, Stilfenster und Mini-Übersetzer hängen noch nicht an der Kontextleiste |
@@ -61,6 +61,8 @@ mit Commit-Kurz-Hash.
 - **Editor-Werkzeugleiste:** Überschriften im Dropdown, drei KI-Knöpfe fürs
   ganze Dokument, Modellpille rechts, Neuladen rechts vom Modellknopf, runde
   Bögen in Symbolen — `ab212fc`.
+- **Kontextleiste als Anker:** Stilfenster und Mini-Übersetzer hängen unter
+  der Leiste (`ctx_bar_rect`); Schließen-Kreuz der Einstellungen bleibt sichtbar.
 - **Dialoge:** `pop_at` für verankerte Menüs, `dialog` für mittige,
   unverschiebbare Dialoge; Sprachmenü hängt an der Sprachpille.
 - **Einrichtung:** `rust/Installieren.bat`, `rust/install.ps1`,

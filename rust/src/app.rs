@@ -188,6 +188,7 @@ pub struct App {
     popup_lang: Option<&'static str>,
     lang_search: String,
     lang_anchor: Option<egui::Rect>,
+    ctx_bar_rect: Option<egui::Rect>,
     confirm: Option<(String, Confirm)>,
 }
 
@@ -290,6 +291,7 @@ impl App {
             popup_lang: None,
             lang_search: String::new(),
             lang_anchor: None,
+            ctx_bar_rect: None,
             confirm: None,
             set: set.clone(),
         };
@@ -3137,7 +3139,7 @@ impl App {
 
         let mut action: Option<&str> = None;
         let mut over_bar = false;
-        egui::Area::new(egui::Id::new("ctx_bar"))
+        let bar_resp = egui::Area::new(egui::Id::new("ctx_bar"))
             .order(egui::Order::Foreground)
             .fixed_pos(pos)
             .show(ctx, |ui| {
@@ -3167,6 +3169,7 @@ impl App {
                     });
             });
         self.bar_hover = over_bar;
+        self.ctx_bar_rect = Some(bar_resp.response.rect);
 
         if let Some(op) = action {
             match op {
@@ -3717,9 +3720,11 @@ impl App {
         }
         let pal = self.pal;
         let lang = self.lang;
-        let mut open = true;
         let mut rewrite = false;
-        dialog(ctx, "style_bar_win", &t(lang, "style"), 340.0, &pal, &mut open, |ui| {
+        let anchor = self
+            .ctx_bar_rect
+            .unwrap_or_else(|| egui::Rect::from_center_size(ctx.screen_rect().center(), egui::vec2(1.0, 1.0)));
+        let closed = pop_at(ctx, "style_bar_pop", anchor, 340.0, &pal, |ui| {
                 let groups: [(&str, &[(&str, &str)]); 4] = [
                     ("l_type", &[("natural", "o_natural"), ("literal", "o_literal")]),
                     (
@@ -3793,7 +3798,7 @@ impl App {
             self.show_style_bar = false;
             self.start_editor_style();
         }
-        if !open {
+        if closed {
             self.show_style_bar = false;
         }
     }
@@ -3806,12 +3811,14 @@ impl App {
         }
         let pal = self.pal;
         let lang = self.lang;
-        let mut open = true;
         let mut go = false;
         let mut insert = false;
         let mut copy = false;
         let target = lang_label(&self.set.tgt, &self.nllb_langs);
-        dialog(ctx, "mini_tr", &t(lang, "translate_sel"), 400.0, &pal, &mut open, |ui| {
+        let anchor = self
+            .ctx_bar_rect
+            .unwrap_or_else(|| egui::Rect::from_center_size(ctx.screen_rect().center(), egui::vec2(1.0, 1.0)));
+        let closed = pop_at(ctx, "mini_tr_pop", anchor, 400.0, &pal, |ui| {
                 ui.add(
                     egui::TextEdit::multiline(&mut self.mini_in)
                         .desired_rows(3)
@@ -3819,8 +3826,10 @@ impl App {
                         .hint_text(t(lang, "mini_hint")),
                 );
                 ui.horizontal(|ui| {
-                    if pill(ui, &pal, &format!("{} ▾", target), 120.0).clicked() {
+                    let lang_resp = pill(ui, &pal, &format!("{} ▾", target), 120.0);
+                    if lang_resp.clicked() {
                         self.popup_lang = Some("tgt");
+                        self.lang_anchor = Some(lang_resp.rect);
                     }
                     let btn = egui::Button::new(
                         RichText::new(t(lang, "translate"))
@@ -3888,7 +3897,7 @@ impl App {
             self.spell_scanned_doc.clear();
             self.sync_active_session();
         }
-        if !open {
+        if closed {
             self.show_mini = false;
         }
     }

@@ -343,3 +343,13 @@ Umgestellt sind damit: die Sprachauswahl (jetzt unter der Sprachpille statt an e
 **Weiter offen:** Stilfenster und Mini-Uebersetzer der Kontextleiste haengen in der Vorlage an der Kontextleiste (`stylePop`, `transPop`). Sie sind jetzt mittige Dialoge; der Anker an der Kontextleiste fehlt noch, weil deren Rect nicht gespeichert wird.
 
 Geprueft am Bildschirm: Einstellungen oeffnen sich mittig mit Titel links und Kreuz rechts, das Kreuz schliesst sie, das Sprachmenue haengt unter der Pille und schliesst bei einem Klick daneben. `cargo build` und `cargo test` (19 Tests) laufen durch. Die uebrigen Dialoge wurden umgebaut, aber nicht einzeln durchgeklickt.
+
+## 18. Kontextleiste als Anker
+
+Die Kontextleiste des Editors (Area `ctx_bar`, Lage aus dem Rect der Auswahl) merkt sich jetzt ihr Rect in `App::ctx_bar_rect`. Stilfenster und Mini-Uebersetzer haengen damit als verankerte Menues unter der Leiste, wie `stylePop` und `transPop` in `editor.js`; vorher waren es mittige Dialoge. Faellt das Rect weg, dient die Fenstermitte als Notanker. Die Sprachpille im Mini-Uebersetzer setzt beim Klick `lang_anchor`, damit die Sprachauswahl darunter aufgeht statt an einer festen Stelle.
+
+Das Kreuz der Einstellungen ist ein gewoehnlicher `icon_btn` mit dem Pfad `x`: im Ruhezustand zeigt es die gedaempfte Symbolfarbe, beim Ueberfahren die Textfarbe auf der Soft-Flaeche (`icon_btn_sized`). Es verschwindet damit nicht mehr beim Ueberfahren, wie es das eingebaute Schliesskreuz von `egui::Window` tat.
+
+Offen bleibt das Aussehen des Mini-Uebersetzers selbst (Aufbau der Zeilen, Karte um die Ausgabe) und das Fenster fuer Synonyme; beide sind erst verankert beziehungsweise als Dialog vereinheitlicht, aber noch nicht gegen die Vorlage fein gezeichnet.
+
+Geprueft: `cargo build` und `cargo test` (19 Tests) laufen durch. Der Anker an der Kontextleiste wurde nicht am Bildschirm nachgewiesen — das Auswaehlen von Text per simulierter Maus funktionierte in dieser Sitzung nicht, deshalb blieb die Leiste aus. Die Maschinerie selbst (`pop_at`) ist am Sprachmenue und an den Einstellungen geprueft.
