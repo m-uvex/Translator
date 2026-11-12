@@ -11,7 +11,7 @@ mit Commit-Kurz-Hash.
   P23, P25, P26, P27, P28, P29, P30, P31, P33, P36, P39, P40 und P41 sind
   erledigt, P9 nachgesehen (Rest: Dokumentenablage, Fensterleiste).
   Nachgetragen: P32 bis P41 (fehlende Funktionen) und P42 bis P55 (Rückmeldung
-  des Nutzers zum Editor). In Arbeit: P42 bis P49. Offen bleiben P24, P32,
+  des Nutzers zum Editor). P42 bis P49 sind erledigt. Offen bleiben P24, P32,
   P34, P35, P37, P38 und P50 bis P55.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
@@ -82,14 +82,14 @@ mit Commit-Kurz-Hash.
 | P39 | **Wörterbuch ohne Import und Export:** Die zwei Knöpfe im Kopf des Wörterbuchfensters (`dictExport`, `dictImport`) fehlten samt Übersetzungstexten. | erledigt (`54376b0`): zwei Kreise im Kopf, eine Wortliste je Zeile, Zusammenführen ohne Doppelte |
 | P40 | **Rechtschreibwellen animieren fehlt:** Einstellung `edSpellAnim` und die Bewegung der Wellenlinie sind nicht umgesetzt. | erledigt (`54376b0`): Schalter `ed_spell_anim`, Wellen wandern mit der Zeit |
 | P41 | **Sitzungskarten lassen sich nicht umsortieren:** Die Vorlage verschiebt Karten beim Ziehen (`dockDragStart/Move/End`); bei uns standen sie fest. | erledigt (`54376b0`): Ziehen setzt die Karte an die Stelle unter dem Zeiger, die aktive Karte rückt mit |
-| P42 | **Rechtschreibmenü viel zu groß:** Es spannt über fast die ganze Fensterbreite (Trennstrich dehnt die Fläche), Knöpfe statt Zeilen wie `.row`. | offen |
-| P43 | **Statusleiste des Editors:** Das `abc`-Symbol gehört dort nicht hin (die Rechtschreibung hängt am Globus-Menü), und die drei Knöpfe stehen in falscher Reihenfolge — die Vorlage hat Dokumente, Buch, Globus von links nach rechts. | offen |
-| P44 | **Seite erreicht die Kante der Karte nicht:** Unter der Schreibseite bleibt ein Streifen der Karte sichtbar; sie muss bis an die Kante reichen. | offen |
-| P45 | **Falscher Statustext:** Beim Verlängern, Kürzen, Zusammenfassen und Probelesen steht „Translating …" in der Leiste; die Vorlage schreibt dort gar nichts, sondern zeigt den Ladekreis. | offen |
-| P46 | **Prompt landet im Dokument:** Die Antwort des Modells wird samt Anweisung übernommen; außerdem streamt die Überarbeitung live, was die Vorlage bewusst nicht tut. | offen |
-| P47 | **Partikel-Animation über dem Text fehlt:** Die Vorlage legt `.ai-processing` über den bearbeiteten Text (Text unsichtbar, drei Schichten kleiner Punkte wandern nach oben), bis die Antwort da ist. | offen |
-| P48 | **Werkzeugleiste falsch bestückt:** Das Code-Symbol (`) gehört nicht hinein, die vier Ausrichtungen (links, zentriert, rechts, Blocksatz) fehlen; Reihenfolge gegen `TB` in `editor.js` prüfen. | offen |
-| P49 | **Ladeanzeige am falschen Ort:** Die Vorlage macht aus der Kontextleiste eine kleine Pille mit Ladekreis (`.ctxbar.working .spin`); in Rust erscheint der Kreis an der Kontext-Übersetzer-Oberfläche und mit falscher Form. | offen |
+| P42 | **Rechtschreibmenü viel zu groß:** Es spannte über fast die ganze Fensterbreite (Trennstrich dehnt die Fläche), Knöpfe statt Zeilen wie `.row`. | erledigt (`11b6866`): Karte von 240 px, Wort rot, Zeilen mit Hover, Strich in Kartenbreite |
+| P43 | **Statusleiste des Editors:** Das `abc`-Symbol gehört dort nicht hin, die Knöpfe standen in falscher Reihenfolge. | erledigt (`11b6866`): `abc` entfernt, Reihenfolge Dokumente, Buch, Globus; roter Zähler entfallen |
+| P44 | **Seite erreicht die Kante der Karte nicht:** Unter der Schreibseite blieb ein Streifen der Karte sichtbar. | erledigt (`11b6866`): Höhe aus der Fläche darunter, Seite endet an der Kante |
+| P45 | **Falscher Statustext:** Beim Verlängern, Kürzen, Zusammenfassen und Probelesen stand „Translating …“ in der Leiste. | erledigt (`11b6866`): Status bleibt leer, Rückmeldung ist die Animation und der Ladekreis |
+| P46 | **Prompt landet im Dokument:** Die Antwort wurde samt Anweisung übernommen, außerdem streamte die Überarbeitung live. | erledigt (`11b6866`): Anfrage ohne Stream, `clean_editor_output` schneidet Anweisungen, `<text>`-Reste, Zäune und Anführungszeichen weg |
+| P47 | **Partikel-Animation über dem Text fehlt:** Die Vorlage legt `.ai-processing` über den bearbeiteten Text. | erledigt (`11b6866`): Text wird verdeckt, drei Lagen Punkte wandern nach oben |
+| P48 | **Werkzeugleiste falsch bestückt:** Das Code-Symbol gehörte nicht hinein, die vier Ausrichtungen fehlten. | erledigt (`11b6866`): Code-Symbol entfernt, vier Ausrichtungen ergänzt; Schrift und Größe bleiben P24 |
+| P49 | **Ladeanzeige am falschen Ort:** Die Vorlage macht aus der Kontextleiste eine kleine Pille mit Ladekreis. | erledigt (`11b6866`): `ladekreis` in der Pille, auch in Synonym- und Kontext-Übersetzer-Menü; Übersetzen-Knopf bleibt sichtbar |
 | P50 | **„Alles verkürzen" wirkt nicht:** Der ganze Text geht in einem Stück ans Modell (Kontextgrenze), die Vorlage zerlegt lange Texte in Abschnitte (`chunkText`, `summarizeLong`) und zeigt dabei den Fortschritt. Gilt genauso für Verlängern und Zusammenfassen in Leiste und Kontextleiste. | offen |
 | P51 | **Probelesen falsch:** Ablauf und Fenster weichen ab; die Vorlage ersetzt den Text durch Markierungen (`.diff-ins`/`.diff-del`), zeigt unten eine Leiste mit „Alle annehmen / Alle ablehnen" und setzt erst am Ende den Inhalt. | offen |
 | P52 | **Stil-Option der Kontextleiste falsch:** Sie nutzt Textknöpfe; die Vorlage zeigt Symbolreihen (`.icg`) und eine Auswahl der Stilrichtungen mit Symbolen. | offen |
