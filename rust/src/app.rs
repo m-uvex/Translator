@@ -916,7 +916,16 @@ fn dialog(
                 },
             );
             ui.add_space(6.0);
-            add(ui);
+            // Wie der Innenabstand von `#settings` in `style.css`: der Inhalt
+            // steht nicht direkt an der Kante der Karte.
+            egui::Frame::none()
+                .inner_margin(egui::Margin {
+                    left: 14.0,
+                    right: 14.0,
+                    top: 2.0,
+                    bottom: 12.0,
+                })
+                .show(ui, |ui| add(ui));
         });
 }
 
@@ -2288,7 +2297,7 @@ impl App {
         dialog(ctx, "settings_win", &t(lang, "settings"), 560.0, &pal, &mut open, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     section(ui, &pal, t(lang, "s_group_general").as_str());
-                    combo(ui, "uilang", t(lang, "s_uilang").as_str(), &mut self.set.ui_lang, &[
+                    set_select(ui, &pal, "uilang", t(lang, "s_uilang").as_str(), &mut self.set.ui_lang, &[
                         ("auto", t(lang, "auto_sys")),
                         ("de", "Deutsch".into()),
                         ("en", "English".into()),
@@ -2297,29 +2306,42 @@ impl App {
                         ("tr", "Türkçe".into()),
                         ("ar", "العربية".into()),
                     ]);
-                    combo(ui, "theme", t(lang, "s_theme").as_str(), &mut self.set.theme, &[
+                    set_select(ui, &pal, "theme", t(lang, "s_theme").as_str(), &mut self.set.theme, &[
                         ("auto", t(lang, "auto_sys")),
                         ("light", t(lang, "light")),
                         ("dark", t(lang, "dark")),
                     ]);
-                    combo(ui, "start", t(lang, "s_start").as_str(), &mut self.set.start, &[
+                    set_select(ui, &pal, "start", t(lang, "s_start").as_str(), &mut self.set.start, &[
                         ("tr", t(lang, "start_tr")),
                         ("ed", t(lang, "start_ed")),
                         ("last", t(lang, "start_last")),
                     ]);
-                    combo(ui, "workspace", t(lang, "s_workspace").as_str(), &mut self.set.workspace, &[
+                    set_select(ui, &pal, "workspace", t(lang, "s_workspace").as_str(), &mut self.set.workspace, &[
                         ("both", t(lang, "ws_both")),
                         ("tr", t(lang, "ws_tr")),
                         ("ed", t(lang, "ws_ed")),
                     ]);
 
                     section(ui, &pal, t(lang, "s_group_extra").as_str());
-                    ui.checkbox(&mut self.set.boot_model, t(lang, "s_boot"));
-                    ui.checkbox(&mut self.set.profanity_filter, t(lang, "s_prof"));
-                    if ui
-                        .checkbox(&mut self.set.nllb_autostart, t(lang, "nllb_auto"))
-                        .changed()
-                    {
+                    set_bool(ui, &pal, "boot_model", lang, t(lang, "s_boot").as_str(), &mut self.set.boot_model);
+                    set_bool(
+                        ui,
+                        &pal,
+                        "profanity_filter",
+                        lang,
+                        t(lang, "s_prof").as_str(),
+                        &mut self.set.profanity_filter,
+                    );
+                    let nllb_vorher = self.set.nllb_autostart;
+                    set_bool(
+                        ui,
+                        &pal,
+                        "nllb_autostart",
+                        lang,
+                        t(lang, "nllb_auto").as_str(),
+                        &mut self.set.nllb_autostart,
+                    );
+                    if nllb_vorher != self.set.nllb_autostart {
                         self.save_set();
                         if self.set.nllb_autostart {
                             if self.nllb_child.is_none() {
@@ -2329,35 +2351,67 @@ impl App {
                             crate::nllb::stop(&mut self.nllb_child);
                         }
                     }
-                    combo(ui, "profstyle", t(lang, "s_profstyle").as_str(), &mut self.set.profanity_style, &[
+                    set_select(ui, &pal, "profstyle", t(lang, "s_profstyle").as_str(), &mut self.set.profanity_style, &[
                         ("stars", t(lang, "o_stars")),
                         ("symbols", t(lang, "o_symbols")),
                     ]);
-                    ui.checkbox(&mut self.set.ed_markdown, t(lang, "s_md"));
-                    ui.checkbox(&mut self.set.auto_copy, t(lang, "s_autocopy"));
-                    ui.checkbox(&mut self.set.auto_copy_typed, t(lang, "s_autocopy_t"));
+                    set_bool(ui, &pal, "ed_markdown", lang, t(lang, "s_md").as_str(), &mut self.set.ed_markdown);
+                    set_bool(ui, &pal, "auto_copy", lang, t(lang, "s_autocopy").as_str(), &mut self.set.auto_copy);
+                    set_bool(
+                        ui,
+                        &pal,
+                        "auto_copy_typed",
+                        lang,
+                        t(lang, "s_autocopy_t").as_str(),
+                        &mut self.set.auto_copy_typed,
+                    );
 
                     section(ui, &pal, t(lang, "s_group_conn").as_str());
-                    labeled(ui, t(lang, "s_url").as_str(), |ui| {
-                        ui.add(egui::TextEdit::singleline(&mut self.set.url).desired_width(f32::INFINITY));
+                    set_field(ui, &pal, t(lang, "s_url").as_str(), |ui| {
+                        ui.add(
+                            egui::TextEdit::singleline(&mut self.set.url)
+                                .frame(false)
+                                .desired_width(f32::INFINITY),
+                        );
                     });
-                    labeled(ui, t(lang, "s_nllb").as_str(), |ui| {
-                        ui.add(egui::TextEdit::singleline(&mut self.set.nllb).desired_width(f32::INFINITY));
+                    set_field(ui, &pal, t(lang, "s_nllb").as_str(), |ui| {
+                        ui.add(
+                            egui::TextEdit::singleline(&mut self.set.nllb)
+                                .frame(false)
+                                .desired_width(f32::INFINITY),
+                        );
                     });
 
                     section(ui, &pal, t(lang, "s_group_trans").as_str());
-                    labeled(ui, t(lang, "s_helper").as_str(), |ui| {
-                        ui.add(egui::TextEdit::singleline(&mut self.set.helper).desired_width(f32::INFINITY));
+                    set_field(ui, &pal, t(lang, "s_helper").as_str(), |ui| {
+                        ui.add(
+                            egui::TextEdit::singleline(&mut self.set.helper)
+                                .frame(false)
+                                .desired_width(f32::INFINITY),
+                        );
                     });
-                    labeled(ui, t(lang, "s_sys").as_str(), |ui| {
-                        ui.add(egui::TextEdit::multiline(&mut self.set.sys).desired_width(f32::INFINITY).desired_rows(5));
+                    set_field(ui, &pal, t(lang, "s_sys").as_str(), |ui| {
+                        ui.add(
+                            egui::TextEdit::multiline(&mut self.set.sys)
+                                .frame(false)
+                                .desired_width(f32::INFINITY)
+                                .desired_rows(5),
+                        );
                     });
-                    ui.horizontal(|ui| {
-                        ui.label(t(lang, "s_temp"));
-                        ui.add(egui::DragValue::new(&mut self.set.temp).speed(0.05));
-                        ui.add_space(12.0);
-                        ui.label(t(lang, "s_ctx"));
-                        ui.add(egui::DragValue::new(&mut self.set.numctx).speed(64.0));
+                    set_number(ui, &pal, t(lang, "s_temp").as_str(), |ui| {
+                        ui.add(
+                            egui::DragValue::new(&mut self.set.temp)
+                                .speed(0.05)
+                                .clamp_range(0.0..=2.0)
+                                .fixed_decimals(2),
+                        );
+                    });
+                    set_number(ui, &pal, t(lang, "s_ctx").as_str(), |ui| {
+                        ui.add(
+                            egui::DragValue::new(&mut self.set.numctx)
+                                .speed(64.0)
+                                .clamp_range(256..=32768),
+                        );
                     });
 
                     section(ui, &pal, t(lang, "nllb_h").as_str());
@@ -4652,14 +4706,138 @@ fn short_model(name: &str) -> String {
 }
 
 fn section(ui: &mut egui::Ui, pal: &Palette, label: &str) {
-    ui.add_space(10.0);
-    ui.label(RichText::new(label.to_uppercase()).size(11.0).color(pal.muted));
-    ui.add_space(2.0);
+    // `.sect` in `style.css`: 18 px oben, 6 px unten, 13 px, gesperrt.
+    ui.add_space(16.0);
+    ui.label(
+        RichText::new(label.to_uppercase())
+            .size(12.0)
+            .color(pal.muted),
+    );
+    ui.add_space(6.0);
 }
 
 fn labeled(ui: &mut egui::Ui, label: &str, add: impl FnOnce(&mut egui::Ui)) {
     ui.label(RichText::new(label).size(13.0));
     add(ui);
+    ui.add_space(4.0);
+}
+
+/// Stil von `.tsel` und `.set select` aus `style.css`: runde Pille auf weichem
+/// Grund, keine Umrandung, 13 px Schrift. Auch der gewaehlte Eintrag im
+/// aufgeklappten Menue bleibt dunkel und bekommt nur einen Akzentrahmen —
+/// sonst leuchtet die Auswahl im dunklen Modus zu hell.
+fn tsel_scope(ui: &mut egui::Ui, pal: &Palette, add: impl FnOnce(&mut egui::Ui)) {
+    ui.scope(|ui| {
+        let st = ui.style_mut();
+        st.spacing.button_padding = egui::vec2(10.0, 6.0);
+        for w in [
+            &mut st.visuals.widgets.inactive,
+            &mut st.visuals.widgets.hovered,
+            &mut st.visuals.widgets.active,
+            &mut st.visuals.widgets.open,
+        ] {
+            w.bg_fill = pal.soft;
+            w.weak_bg_fill = pal.soft;
+            w.bg_stroke = Stroke::NONE;
+            w.rounding = Rounding::same(999.0);
+        }
+        st.visuals.selection.bg_fill = pal.soft;
+        st.visuals.selection.stroke = Stroke::new(1.0_f32, pal.accent);
+        add(ui);
+    });
+}
+
+/// Auswahlfeld im Stil von `.tsel`.
+fn tsel_combo(
+    ui: &mut egui::Ui,
+    pal: &Palette,
+    id: &str,
+    text: &str,
+    add: impl FnOnce(&mut egui::Ui),
+) {
+    tsel_scope(ui, pal, |ui| {
+        egui::ComboBox::from_id_source(id)
+            .selected_text(RichText::new(text).size(13.0).color(pal.text))
+            .show_ui(ui, add);
+    });
+}
+
+/// Zeile wie `.set.row-set`: Titel fett links, Auswahl rechts.
+fn set_row(ui: &mut egui::Ui, pal: &Palette, label: &str, add: impl FnOnce(&mut egui::Ui)) {
+    let breite = ui.available_width();
+    ui.allocate_ui_with_layout(
+        egui::vec2(breite, 36.0),
+        egui::Layout::left_to_right(egui::Align::Center),
+        |ui| {
+            ui.label(RichText::new(label).size(14.0).strong().color(pal.text));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| add(ui));
+        },
+    );
+    ui.add_space(2.0);
+}
+
+/// Einstellung mit Auswahlliste, gesetzt ueber `value`.
+fn set_select(
+    ui: &mut egui::Ui,
+    pal: &Palette,
+    id: &str,
+    label: &str,
+    value: &mut String,
+    options: &[(&str, String)],
+) {
+    let current = options
+        .iter()
+        .find(|(v, _)| v == value)
+        .map(|(_, l)| l.clone())
+        .unwrap_or_default();
+    set_row(ui, pal, label, |ui| {
+        tsel_combo(ui, pal, id, &current, |ui| {
+            for (v, l) in options {
+                ui.selectable_value(value, (*v).to_string(), RichText::new(l).size(13.0));
+            }
+        });
+    });
+}
+
+/// Schalter wie in der Vorlage: kein Kaestchen, sondern „An“/„Aus“ als Liste.
+fn set_bool(
+    ui: &mut egui::Ui,
+    pal: &Palette,
+    id: &str,
+    lang: Lang,
+    label: &str,
+    value: &mut bool,
+) {
+    let mut current = if *value { "on".to_string() } else { "off".to_string() };
+    let options = [("on", t(lang, "on")), ("off", t(lang, "off"))];
+    set_select(ui, pal, id, label, &mut current, &options);
+    let neu = current == "on";
+    if neu != *value {
+        *value = neu;
+    }
+}
+
+/// Zahleneinstellung wie `<input type=number>`: Titel links, Feld rechts.
+fn set_number(ui: &mut egui::Ui, pal: &Palette, label: &str, add: impl FnOnce(&mut egui::Ui)) {
+    set_row(ui, pal, label, |ui| {
+        egui::Frame::none()
+            .fill(pal.soft)
+            .rounding(Rounding::same(12.0))
+            .inner_margin(egui::Margin::symmetric(10.0, 5.0))
+            .show(ui, |ui| add(ui));
+    });
+}
+
+/// Textfeld wie `.set input`: Titel fett darueber, Feld auf weichem Grund.
+fn set_field(ui: &mut egui::Ui, pal: &Palette, label: &str, add: impl FnOnce(&mut egui::Ui)) {
+    ui.add_space(8.0);
+    ui.label(RichText::new(label).size(14.0).strong().color(pal.text));
+    ui.add_space(4.0);
+    egui::Frame::none()
+        .fill(pal.soft)
+        .rounding(Rounding::same(12.0))
+        .inner_margin(egui::Margin::symmetric(10.0, 6.0))
+        .show(ui, |ui| add(ui));
     ui.add_space(4.0);
 }
 
