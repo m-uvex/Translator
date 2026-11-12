@@ -789,6 +789,53 @@ fn icon_btn(ui: &mut egui::Ui, p: &Palette, name: &str, on: bool) -> egui::Respo
     resp
 }
 
+/// Modellknopf wie `#modelBtn` der Vorlage: Name links, rechts die Symbole
+/// fuer Bild- und Denkfaehigkeit (`modelIcons` in `renderer.js`).
+fn model_pill(
+    ui: &mut egui::Ui,
+    p: &Palette,
+    name: &str,
+    vision: bool,
+    thinking: bool,
+    min_w: f32,
+) -> egui::Response {
+    let (rect, resp) = ui.allocate_exact_size(egui::vec2(min_w, 32.0), egui::Sense::click());
+    let fill = if resp.hovered() { p.accent_hover } else { p.card };
+    ui.painter()
+        .rect(rect, Rounding::same(999.0), fill, Stroke::new(1.0_f32, p.line));
+    let mut x = rect.right() - 14.0;
+    if thinking {
+        crate::icons::paint(
+            ui.painter(),
+            egui::Rect::from_center_size(egui::pos2(x, rect.center().y), egui::vec2(15.0, 15.0)),
+            "bulb",
+            p.muted,
+        );
+        x -= 18.0;
+    }
+    if vision {
+        crate::icons::paint(
+            ui.painter(),
+            egui::Rect::from_center_size(egui::pos2(x, rect.center().y), egui::vec2(15.0, 15.0)),
+            "eye",
+            p.muted,
+        );
+        x -= 18.0;
+    }
+    let text_rect = egui::Rect::from_min_max(
+        rect.left_top(),
+        egui::pos2(x - 4.0, rect.bottom()),
+    );
+    ui.painter().with_clip_rect(text_rect).text(
+        egui::pos2(rect.left() + 14.0, rect.center().y),
+        egui::Align2::LEFT_CENTER,
+        name,
+        egui::FontId::proportional(14.0),
+        p.text,
+    );
+    resp
+}
+
 /// Eine Zeile im Modellmenue: Name links, rechts Symbole fuer Bild- und
 /// Denkfaehigkeit sowie die MT-Kennzeichnung. Entspricht `.row` in `style.css`.
 fn menu_row(
@@ -1045,24 +1092,36 @@ impl App {
                 self.popup_lang = Some("tgt");
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if self
-                    .models
-                    .iter()
-                    .find(|m| m.name == self.set.model)
-                    .map(|m| m.vision || m.thinking)
-                    .unwrap_or(false)
-                {
-                    ui.label(RichText::new("◉").size(13.0).color(pal.accent_ink));
+                let rresp = icon_btn(ui, &pal, "refresh", false)
+                    .on_hover_text(t(lang, "reload"));
+                // Blauer Punkt am Neuladen-Knopf, solange die Modellliste geholt wird.
+                if self.models_loading {
+                    let r = rresp.rect;
+                    ui.painter().circle_filled(
+                        egui::pos2(r.right() - 5.0, r.top() + 5.0),
+                        3.5,
+                        pal.accent_ink,
+                    );
                 }
-                if icon_btn(ui, &pal, "refresh", false)
-                    .on_hover_text(t(lang, "reload"))
-                    .clicked()
-                {
+                if rresp.clicked() {
                     self.models_loading = true;
                     self.models_error = None;
                     net::spawn_models(self.cfg(), self.tx.clone(), Vec::new());
                 }
-                let mresp = pill(ui, &pal, &format!("▤  {}", short_model(&self.set.model)), 210.0);
+                let (vision, thinking) = self
+                    .models
+                    .iter()
+                    .find(|m| m.name == self.set.model)
+                    .map(|m| (m.vision, m.thinking))
+                    .unwrap_or((false, false));
+                let mresp = model_pill(
+                    ui,
+                    &pal,
+                    &format!("▤  {}", short_model(&self.set.model)),
+                    vision,
+                    thinking,
+                    210.0,
+                );
                 if mresp.clicked() {
                     self.models_anchor = mresp.rect;
                     self.models_for_editor = false;
