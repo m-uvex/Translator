@@ -7,9 +7,10 @@ mit Commit-Kurz-Hash.
 
 ## Gerade in Arbeit
 
-- **Buffy:** P1, P2, P3, P7, P11, P12, P14, P17, P18, P19, P20, P21, P22 und P23
-  sind erledigt, P9 nachgesehen (Rest: Dokumentenablage, Fensterleiste).
-  Im Augenblick nichts in Arbeit — wartet auf die Auswahl des nächsten Punktes.
+- **Buffy:** P1, P2, P3, P7, P11, P12, P14, P16, P17, P18, P19, P20, P21, P22 und
+  P23 sind erledigt, P9 nachgesehen (Rest: Dokumentenablage, Fensterleiste).
+  Neu offen: P24 (Schrift- und Größenauswahl fehlen). Im Augenblick nichts in
+  Arbeit — wartet auf die Auswahl des nächsten Punktes.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
   (`1863576`). P15 und P4 sind damit ganz erledigt, P5/P6/P8/P10/P13 fuer diese
@@ -53,7 +54,7 @@ mit Commit-Kurz-Hash.
 | P13 | **Squircles statt Kreisen** an einzelnen Stellen; Rundungen insgesamt gegen `style.css` abgleichen. | bearbeitete Ansichten erledigt (`1863576`); Dialoge offen |
 | P14 | **Alle Menüs prüfen:** freischwebende Fenster durch verankerte Menüs bzw. mittige, unverschiebbare Dialoge ersetzen (`pop_at`, `dialog`). | erledigt, Stilfenster und Mini-Übersetzer hängen noch nicht an der Kontextleiste |
 | P15 | **Übersetzer-Textfelder** sollen keinen Trennstrich zu ihren Knöpfen haben und sich fast bis zum Boden strecken. | erledigt (`1863576`) |
-| P16 | **Überschriften-Dropdown** im Editor: Verhalten und Aussehen gegen die Vorlage prüfen (gesetzt sind H1–H3 über `editor::set_heading`). | zu prüfen |
+| P16 | **Überschriften-Dropdown** im Editor: Verhalten und Aussehen gegen die Vorlage prüfen (gesetzt sind H1–H3 über `editor::set_heading`). | erledigt (`1dac5ba`): volle Namen „Absatz/Überschrift 1–3“, Pille wie `.tsel`, Stelle hinter Rückgängig/Wiederholen |
 | P17 | **NLLB-Server startet nicht mit der App:** Schalter in den Einstellungen fehlte, der Server musste von Hand gestartet werden. | erledigt (`b0ebe30`) |
 | P18 | **Modellbezogene Symbole zu nah am Modellnamen** im Übersetzer-Arbeitsplatz: Auge (Sehen) und Denk-Symbol kleben am Namen; Abstand wie in der Vorlage (`.mpill` in `style.css`) herstellen. | erledigt (`8273e8d`), 6 px Abstand wie `.mi` |
 | P19 | **Karte der Translation-Style-Optionen rutscht aus dem Fenster:** Die rechte Kante der Stil-Seitenleiste ist nicht mehr zu sehen; Breite und Abstände so setzen, dass die Karte vollständig im Fenster liegt. | erledigt (`8273e8d`), Leiste vollständig im Fenster |
@@ -61,6 +62,7 @@ mit Commit-Kurz-Hash.
 | P21 | **Schreibseite wird zu früh abgeschnitten:** In der Vorlage endet die Seite erst an der Kante der Fläche, auf der sie liegt; sie muss die Fläche immer ausfüllen. | erledigt (`bce4125`), Seite endet an der Kante der Fläche |
 | P22 | **Fensterecken sind eckig:** Die Vorlage läuft im normalen Windows-Fenster mit abgerundeten Ecken, die Rust-Fassung ohne Titelleiste hat eckige. | erledigt (`bce4125`), Ecken am Fenster gerundet |
 | P23 | **Modell-Auswahl-Menü lässt sich nicht öffnen:** Es blitzt kurz auf und schließt sich sofort wieder, im Übersetzer wie im Text-Arbeitsplatz. | erledigt (`8273e8d`), nicht angeklickt geprüft |
+| P24 | **Editor-Leiste: Schrift- und Größenauswahl fehlen** ganz, die Vorlage hat drei Auswahlfelder `.tsel` nebeneinander (Schrift, Größe, Überschrift). | offen |
 
 ## Erledigt
 
