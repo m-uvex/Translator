@@ -331,3 +331,15 @@ Der Ablauf ist derselbe wie bei Electron: Zielordner waehlen (Vorgabe `%LOCALAPP
 **Modellknopf und Aktivitaetspunkt.** Der Modellknopf im Uebersetzer zeigt jetzt rechts im Knopf die Faehigkeiten des gewaehlten Modells (`model_pill` zeichnet dieselben Symbole wie `modelIcons` in `renderer.js`: `eye` fuer Bild, `bulb` fuer Denk-Modelle). Der fruehere freie Punkt neben dem Neuladen-Knopf ist entfallen; stattdessen sitzt waehrend des Nachladens ein kleiner Punkt in der Akzentfarbe oben rechts am Neuladen-Knopf, solange `models_loading` gesetzt ist.
 
 Geprueft: `cargo build` und `cargo test` (19 Tests) laufen durch, beide PowerShell-Skripte bestehen die Syntaxpruefung, der Assistent oeffnet sein Fenster („Uebersetzer - Einrichtung“) ohne Fehler auf der Konsole. Die Dialoge selbst wurden nicht durchgeklickt, und eine Installation wurde nicht ausgefuehrt.
+
+## 17. Dialoge und Menues ohne schwebende Fenster
+
+Bis hierher zeichnete die Rust-Fassung fast alle Nebenfenster mit `egui::Window`, also mit Titelleiste und frei verschiebbar. Die Vorlage kennt solche Fenster nicht: Sie hat verankerte Menues (`#pop`, `#alt`, `#cm`, `#trPop`, `.pop` in `style.css`) und mittige Dialoge (`<dialog id="ask">`, `#styleDlg`, `#sumDlg`, `#dictDlg`, `#settings`).
+
+Zwei Helfer in `app.rs` bilden das jetzt ab. `pop_card` liefert die Karte aus `style.css`: Rundung 16, ein Pixel Kontur, sechs Pixel Innenstand und ein Schatten mit sechzehn Pixeln Weite. `pop_at` zeichnet ein Menue in einem `egui::Area` der Ebene `Foreground`, rechtsbuendig unter dem Ausloeser, sechs Pixel darunter, auf den Bildschirm begrenzt, mit hoechstens sechzig Prozent Fensterhoehe. Es kehrt zurueck, ob geschlossen werden soll: ein Klick ausserhalb der Karte, aber nicht auf dem Ausloeser (sonst wuerde der Klick, der das Menue oeffnet, es sofort wieder schliessen), oder Escape. `dialog` zeichnet einen Dialog mittig mit `fixed_pos(center)` und `pivot(CENTER_CENTER)`, ohne Titelleiste und ohne Groessenanfasser, also unverschiebbar; den Kopf bilden Titel links und ein Kreuz rechts, das den uebergebenen `open`-Wert auf `false` setzt. Das Kreuz ist ein normaler `icon_btn`, kein `egui`-Schliessen.
+
+Umgestellt sind damit: die Sprachauswahl (jetzt unter der Sprachpille statt an einer festen Stelle `[100, 90]`, Anker in `App::lang_anchor`), die Einstellungen, das persoenliche Woerterbuch, die Synonyme, die Rueckfrage (`confirm`), die Probelesen-Ansicht, das Stilfenster, das Sprachfenster der Rechtschreibung und das Rechtschreibfenster. Die Modellauswahl war bereits verankert.
+
+**Weiter offen:** Stilfenster und Mini-Uebersetzer der Kontextleiste haengen in der Vorlage an der Kontextleiste (`stylePop`, `transPop`). Sie sind jetzt mittige Dialoge; der Anker an der Kontextleiste fehlt noch, weil deren Rect nicht gespeichert wird.
+
+Geprueft am Bildschirm: Einstellungen oeffnen sich mittig mit Titel links und Kreuz rechts, das Kreuz schliesst sie, das Sprachmenue haengt unter der Pille und schliesst bei einem Klick daneben. `cargo build` und `cargo test` (19 Tests) laufen durch. Die uebrigen Dialoge wurden umgebaut, aber nicht einzeln durchgeklickt.

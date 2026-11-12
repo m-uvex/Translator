@@ -7,7 +7,7 @@ mit Commit-Kurz-Hash.
 
 ## Gerade in Arbeit
 
-- **Buffy:** P1, P2, P3 und P12 sind erledigt (bis `2e700b7`). Im Augenblick
+- **Buffy:** P1, P2, P3, P12 und P14 sind erledigt. Im Augenblick
   nichts in Arbeit — wartet auf die Auswahl des nächsten Punktes.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
@@ -50,7 +50,7 @@ mit Commit-Kurz-Hash.
 | P11 | **Dialoge:** Schließen-Kreuz der Einstellungen verschwindet beim Überfahren; Mini-Übersetzer sieht falsch aus; Stil-Optionen im Kontext öffnen ein Übersetzer-Panel statt eines eigenen Popups; Synonyme-Fenster. | offen |
 | P12 | **Installation:** Wizard (`rust/Installieren.bat`), Deinstallation (`rust/Uninstall.ps1`) und NLLB-200 samt Modellverwaltung. | erledigt, ohne Autostart des NLLB-Servers (`2e700b7`) |
 | P13 | **Squircles statt Kreisen** an einzelnen Stellen; Rundungen insgesamt gegen `style.css` abgleichen. | bearbeitete Ansichten erledigt (`1863576`); Dialoge offen |
-| P14 | **Alle bestehenden Menüs prüfen:** freischwebende Fenster durch verankerte Menüs ersetzen (Regel 2). | offen |
+| P14 | **Alle Menüs prüfen:** freischwebende Fenster durch verankerte Menüs bzw. mittige, unverschiebbare Dialoge ersetzen (`pop_at`, `dialog`). | erledigt, Stilfenster und Mini-Übersetzer hängen noch nicht an der Kontextleiste |
 | P15 | **Übersetzer-Textfelder** sollen keinen Trennstrich zu ihren Knöpfen haben und sich fast bis zum Boden strecken. | erledigt (`1863576`) |
 | P16 | **Überschriften-Dropdown** im Editor: Verhalten und Aussehen gegen die Vorlage prüfen (gesetzt sind H1–H3 über `editor::set_heading`). | zu prüfen |
 
@@ -61,6 +61,8 @@ mit Commit-Kurz-Hash.
 - **Editor-Werkzeugleiste:** Überschriften im Dropdown, drei KI-Knöpfe fürs
   ganze Dokument, Modellpille rechts, Neuladen rechts vom Modellknopf, runde
   Bögen in Symbolen — `ab212fc`.
+- **Dialoge:** `pop_at` für verankerte Menüs, `dialog` für mittige,
+  unverschiebbare Dialoge; Sprachmenü hängt an der Sprachpille.
 - **Einrichtung:** `rust/Installieren.bat`, `rust/install.ps1`,
   `rust/Uninstall.ps1`, NLLB-200 mit eigener Python-Umgebung und Modellwahl.
 - **Modelle:** Fähigkeits-Symbole im Modellknopf, Punkt am Neuladen-Knopf

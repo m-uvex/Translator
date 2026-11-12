@@ -187,6 +187,7 @@ pub struct App {
     show_syn: bool,
     popup_lang: Option<&'static str>,
     lang_search: String,
+    lang_anchor: Option<egui::Rect>,
     confirm: Option<(String, Confirm)>,
 }
 
@@ -288,6 +289,7 @@ impl App {
             show_syn: false,
             popup_lang: None,
             lang_search: String::new(),
+            lang_anchor: None,
             confirm: None,
             set: set.clone(),
         };
@@ -781,6 +783,107 @@ fn pill(ui: &mut egui::Ui, p: &Palette, text: &str, min_w: f32) -> egui::Respons
 
 /// Modellpille mit den Faehigkeits-Symbolen in der Pille, wie `updModelBtn`
 /// in `renderer.js` (Name, dahinter Auge und Gluehbirne, beide 15 px).
+/// Karte wie `.pop` in `style.css`: Rundung 16, Schatten, sechs Pixel
+/// Innenabstand, rechtsbuendig unter dem Ausloeser und auf den Bildschirm
+/// begrenzt.
+fn pop_card(p: &Palette) -> egui::Frame {
+    egui::Frame::none()
+        .fill(p.card)
+        .rounding(Rounding::same(16.0))
+        .stroke(Stroke::new(1.0_f32, p.line))
+        .inner_margin(egui::Margin::same(6.0))
+        .shadow(egui::epaint::Shadow {
+            offset: egui::vec2(0.0, 6.0),
+            blur: 24.0,
+            spread: 0.0,
+            color: egui::Color32::from_black_alpha(70),
+        })
+}
+
+/// Verankertes Menue unter einem Ausloeser; gibt `true` zurueck, wenn es
+/// geschlossen werden soll (Klick daneben oder Escape).
+fn pop_at(
+    ctx: &egui::Context,
+    id: &str,
+    anchor: egui::Rect,
+    width: f32,
+    p: &Palette,
+    add: impl FnOnce(&mut egui::Ui),
+) -> bool {
+    let screen = ctx.screen_rect();
+    let x = (anchor.right() - width).clamp(8.0, (screen.right() - width - 8.0).max(8.0));
+    let y = (anchor.bottom() + 6.0).min((screen.bottom() - 120.0).max(8.0));
+    let resp = egui::Area::new(egui::Id::new(id))
+        .order(egui::Order::Foreground)
+        .fixed_pos(egui::pos2(x, y))
+        .show(ctx, |ui| {
+            ui.set_width(width);
+            pop_card(p).show(ui, |ui| {
+                ui.set_width(width - 12.0);
+                egui::ScrollArea::vertical()
+                    .max_height(screen.height() * 0.6)
+                    .auto_shrink([false, true])
+                    .show(ui, |ui| {
+                        ui.set_width(width - 24.0);
+                        add(ui);
+                    });
+            });
+        });
+    let rect = resp.response.rect;
+    // Der Klick, der das Menue geoeffnet hat, liegt im Ausloeser und darf es
+    // nicht sofort wieder schliessen.
+    let clicked_out = ctx.input(|i| {
+        i.pointer.any_click()
+            && i.pointer
+                .interact_pos()
+                .map(|pos| !rect.contains(pos) && !anchor.contains(pos))
+                .unwrap_or(false)
+    });
+    clicked_out || ctx.input(|i| i.key_pressed(egui::Key::Escape))
+}
+
+/// Dialog wie `<dialog>` in `index.html`: mittig, feste Breite, nicht
+/// verschiebbar, ohne Titelleiste, mit eigenem Kopf aus Titel und Kreuz.
+fn dialog(
+    ctx: &egui::Context,
+    id: &str,
+    title: &str,
+    width: f32,
+    p: &Palette,
+    open: &mut bool,
+    add: impl FnOnce(&mut egui::Ui),
+) {
+    egui::Window::new(id)
+        .id(egui::Id::new(id))
+        .title_bar(false)
+        .collapsible(false)
+        .resizable(false)
+        .default_width(width)
+        .fixed_pos(ctx.screen_rect().center())
+        .pivot(egui::Align2::CENTER_CENTER)
+        .frame(pop_card(p))
+        .show(ctx, |ui| {
+            ui.set_width(width - 12.0);
+            ui.set_max_width(width - 12.0);
+            ui.allocate_ui_with_layout(
+                egui::vec2(width - 12.0, 30.0),
+                egui::Layout::left_to_right(egui::Align::Center),
+                |ui| {
+                    if !title.is_empty() {
+                        ui.label(RichText::new(title).size(15.0).strong().color(p.text));
+                    }
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if icon_btn(ui, p, "x", false).clicked() {
+                            *open = false;
+                        }
+                    });
+                },
+            );
+            ui.add_space(6.0);
+            add(ui);
+        });
+}
+
 fn model_pill(
     ui: &mut egui::Ui,
     p: &Palette,
@@ -1318,9 +1421,11 @@ impl App {
             } else {
                 lang_label(&self.set.src, &self.nllb_langs)
             };
-            if pill(ui, &pal, &src, 150.0).clicked() {
+            let src_resp = pill(ui, &pal, &src, 150.0);
+            if src_resp.clicked() {
                 self.lang_search.clear();
                 self.popup_lang = Some("src");
+                self.lang_anchor = Some(src_resp.rect);
             }
             if icon_btn_sized(ui, &pal, "swap", false, 36.0, 12.0, false)
                 .on_hover_text(t(lang, "swap"))
@@ -1334,9 +1439,11 @@ impl App {
                 }
                 self.save_set();
             }
-            if pill(ui, &pal, &lang_label(&self.set.tgt, &self.nllb_langs), 150.0).clicked() {
+            let tgt_resp = pill(ui, &pal, &lang_label(&self.set.tgt, &self.nllb_langs), 150.0);
+            if tgt_resp.clicked() {
                 self.lang_search.clear();
                 self.popup_lang = Some("tgt");
+                self.lang_anchor = Some(tgt_resp.rect);
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.spacing_mut().item_spacing.x = 6.0;
@@ -1829,21 +1936,18 @@ impl App {
         let Some(target) = self.popup_lang else { return };
         let pal = self.pal;
         let lang = self.lang;
-        let mut open = true;
+        
         let langs = self.active_langs();
         let is_src = target == "src";
         let current = if is_src { self.set.src.clone() } else { self.set.tgt.clone() };
         let pins_key = if is_mt(&self.set.model) { "nllb" } else { "ollama" };
         let search = self.lang_search.to_lowercase();
         let title = t(lang, if is_src { "auto" } else { "translate" });
-        egui::Window::new(title)
-            .id(egui::Id::new("lang_pop"))
-            .open(&mut open)
-            .collapsible(false)
-            .resizable(false)
-            .default_width(300.0)
-            .anchor(egui::Align2::LEFT_TOP, [100.0, 90.0])
-            .show(ctx, |ui| {
+        let anchor = self
+            .lang_anchor
+            .unwrap_or_else(|| egui::Rect::from_min_size(egui::pos2(100.0, 90.0), egui::vec2(150.0, 32.0)));
+        let _ = title;
+        let closed = pop_at(ctx, "lang_pop", anchor, 300.0, &pal, |ui| {
                 ui.add(
                     egui::TextEdit::singleline(&mut self.lang_search)
                         .hint_text(t(lang, "search_lang")),
@@ -1934,8 +2038,9 @@ impl App {
                     self.save_set();
                 }
             });
-        if !open {
+        if closed {
             self.popup_lang = None;
+            self.lang_anchor = None;
         }
     }
 
@@ -2089,13 +2194,7 @@ impl App {
         let pal = self.pal;
         let lang = self.lang;
         let mut open = true;
-        egui::Window::new(t(lang, "settings"))
-            .id(egui::Id::new("settings_win"))
-            .open(&mut open)
-            .collapsible(false)
-            .resizable(true)
-            .default_width(560.0)
-            .show(ctx, |ui| {
+        dialog(ctx, "settings_win", &t(lang, "settings"), 560.0, &pal, &mut open, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     section(ui, &pal, t(lang, "s_group_general").as_str());
                     combo(ui, "uilang", t(lang, "s_uilang").as_str(), &mut self.set.ui_lang, &[
@@ -2219,12 +2318,7 @@ impl App {
         let lang = self.lang;
         let mut open = true;
         let mut changed = false;
-        egui::Window::new(t(lang, "personal_dict"))
-            .id(egui::Id::new("dict_win"))
-            .open(&mut open)
-            .collapsible(false)
-            .default_width(420.0)
-            .show(ctx, |ui| {
+        dialog(ctx, "dict_win", &t(lang, "personal_dict"), 420.0, &pal, &mut open, |ui| {
                 ui.label(RichText::new(t(lang, "dict_words")).color(pal.muted));
                 if self.dict_words.is_empty() {
                     ui.label(RichText::new(t(lang, "no_dict_words")).color(pal.muted));
@@ -2292,12 +2386,12 @@ impl App {
         if !self.show_style {
             return;
         }
+        let pal = self.pal;
         let mut open = true;
-        egui::Window::new(t(self.lang, "style"))
-            .open(&mut open)
-            .show(ctx, |ui| {
-                ui.label(RichText::new(t(self.lang, "style")).color(self.pal.muted));
-            });
+        let title = t(self.lang, "style");
+        dialog(ctx, "style_win", &title, 320.0, &pal, &mut open, |ui| {
+            ui.label(RichText::new(title.clone()).color(pal.muted));
+        });
         if !open {
             self.show_style = false;
         }
@@ -2308,14 +2402,10 @@ impl App {
             return;
         }
         let lang = self.lang;
+        let pal = self.pal;
         let mut open = true;
         let mut ask = false;
-        egui::Window::new(t(lang, "synonyms"))
-            .id(egui::Id::new("syn_win"))
-            .open(&mut open)
-            .collapsible(false)
-            .default_width(380.0)
-            .show(ctx, |ui| {
+        dialog(ctx, "syn_win", &t(lang, "synonyms"), 380.0, &pal, &mut open, |ui| {
                 ui.horizontal(|ui| {
                     ui.add(
                         egui::TextEdit::singleline(&mut self.syn_word)
@@ -2374,13 +2464,7 @@ impl App {
         let lang = self.lang;
         let mut open = true;
         let mut yes = false;
-        egui::Window::new(t(lang, "settings"))
-            .id(egui::Id::new("confirm_win"))
-            .open(&mut open)
-            .collapsible(false)
-            .resizable(false)
-            .default_width(360.0)
-            .show(ctx, |ui| {
+        dialog(ctx, "confirm_win", "", 360.0, &pal, &mut open, |ui| {
                 ui.label(RichText::new(&text).color(pal.text));
                 ui.horizontal(|ui| {
                     if ui.button(t(lang, "cancel")).clicked() {
@@ -3404,12 +3488,7 @@ impl App {
         let mut discard_all = false;
         let mut toggle: Option<usize> = None;
         let mut apply = false;
-        egui::Window::new(t(lang, "diff_title"))
-            .id(egui::Id::new("diff_win"))
-            .open(&mut open)
-            .collapsible(false)
-            .default_width(620.0)
-            .show(ctx, |ui| {
+        dialog(ctx, "diff_win", &t(lang, "diff_title"), 620.0, &pal, &mut open, |ui| {
                 let hunks: Vec<(String, String)> = diff
                     .parts
                     .iter()
@@ -3640,12 +3719,7 @@ impl App {
         let lang = self.lang;
         let mut open = true;
         let mut rewrite = false;
-        egui::Window::new(t(lang, "style"))
-            .id(egui::Id::new("style_bar_win"))
-            .open(&mut open)
-            .collapsible(false)
-            .default_width(340.0)
-            .show(ctx, |ui| {
+        dialog(ctx, "style_bar_win", &t(lang, "style"), 340.0, &pal, &mut open, |ui| {
                 let groups: [(&str, &[(&str, &str)]); 4] = [
                     ("l_type", &[("natural", "o_natural"), ("literal", "o_literal")]),
                     (
@@ -3737,12 +3811,7 @@ impl App {
         let mut insert = false;
         let mut copy = false;
         let target = lang_label(&self.set.tgt, &self.nllb_langs);
-        egui::Window::new(t(lang, "translate_sel"))
-            .id(egui::Id::new("mini_tr"))
-            .open(&mut open)
-            .collapsible(false)
-            .default_width(400.0)
-            .show(ctx, |ui| {
+        dialog(ctx, "mini_tr", &t(lang, "translate_sel"), 400.0, &pal, &mut open, |ui| {
                 ui.add(
                     egui::TextEdit::multiline(&mut self.mini_in)
                         .desired_rows(3)
@@ -3838,15 +3907,8 @@ impl App {
         let hits = self.spell_hits.clone();
         let error = self.spell_error.clone();
         let enabled = self.set.ed_spell;
-        let mut win = egui::Window::new(t(lang, "spell_title"))
-            .id(egui::Id::new("spell_win"))
-            .open(&mut open)
-            .collapsible(false)
-            .default_width(520.0);
-        if let Some(p) = self.spell_pos.take() {
-            win = win.current_pos(p);
-        }
-        win.show(ctx, |ui| {
+        let title = t(lang, "spell_title");
+        dialog(ctx, "spell_win", &title, 520.0, &pal, &mut open, |ui| {
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut self.set.ed_spell, t(lang, "spell_on"));
                     ui.label(
@@ -3973,15 +4035,10 @@ impl App {
             return;
         }
         let lang = self.lang;
+        let pal = self.pal;
         let mut open = true;
         let mut pick: Option<String> = None;
-        egui::Window::new(t(lang, "dict"))
-            .id(egui::Id::new("spell_lang_win"))
-            .open(&mut open)
-            .collapsible(false)
-            .resizable(false)
-            .default_width(260.0)
-            .show(ctx, |ui| {
+        dialog(ctx, "spell_lang_win", &t(lang, "dict"), 260.0, &pal, &mut open, |ui| {
                 ui.checkbox(&mut self.set.ed_spell, t(lang, "spell_on"));
                 ui.separator();
                 for (code, name) in DICTS {
