@@ -175,10 +175,14 @@ pub struct App {
     show_mini: bool,
     mini_in: String,
     mini_out: String,
+    mini_sel: Option<(usize, usize)>,
     mini_job: bool,
 
     syn_word: String,
     syn_out: Vec<String>,
+    syn_job: bool,
+    syn_pending: String,
+    syn_sel: Option<(usize, usize)>,
 
     show_settings: bool,
     show_models: bool,
@@ -280,9 +284,13 @@ impl App {
             show_mini: false,
             mini_in: String::new(),
             mini_out: String::new(),
+            mini_sel: None,
             mini_job: false,
             syn_word: String::new(),
             syn_out: Vec::new(),
+            syn_job: false,
+            syn_pending: String::new(),
+            syn_sel: None,
             show_settings: false,
             show_models: false,
             show_dict: false,
@@ -454,6 +462,8 @@ impl App {
                 Msg::Token(text) => {
                     if self.editor_job {
                         self.doc = text;
+                    } else if self.syn_job {
+                        self.syn_pending = text;
                     } else if self.mini_job {
                         self.mini_out = text;
                     } else {
@@ -462,10 +472,29 @@ impl App {
                 }
                 Msg::Done(text) => {
                     self.busy = false;
-                    if self.mini_job {
+                    if self.syn_job {
+                        self.syn_job = false;
+                        self.syn_out = json_strings(&text)
+                            .into_iter()
+                            .map(|w| w.trim().to_string())
+                            .filter(|w| !w.is_empty())
+                            .take(6)
+                            .collect();
+                    } else if self.mini_job {
                         self.mini_job = false;
                         self.mini_out = text.trim_end().to_string();
                         self.status = String::new();
+                        if let Some((a, b)) = self.mini_sel.take() {
+                            let doc = self.doc.clone();
+                            let ba = byte_idx(&doc, a);
+                            let bb = byte_idx(&doc, b);
+                            if b > a {
+                                self.push_undo();
+                                self.doc = format!("{}{}{}", &doc[..ba], self.mini_out, &doc[bb..]);
+                                self.saved = false;
+                            }
+                        }
+                        self.show_mini = false;
                     } else if self.editor_job {
                         self.editor_job = false;
                         let clean = text.trim_end().to_string();
@@ -943,6 +972,39 @@ fn model_pill(
 /// im aktiven Zustand `--accent`. `size` und `rounding` bilden die
 /// Ausnahmen der Vorlage ab (28er Fensterknoepfe, 36er Leiste, 32er
 /// Symbolgruppen). Keine Hover-Animation, nur der Farbwechsel.
+/// Liest eine Liste von Zeichenketten aus einer JSON-Antwort, wie
+/// `edRunSynonyms` sie liefert: `["a","b"]` oder `{"synonyms":["a","b"]}`.
+fn json_strings(text: &str) -> Vec<String> {
+    let Some(start) = text.find('[') else {
+        return Vec::new();
+    };
+    let Some(end) = text[start..].find(']').map(|i| start + i) else {
+        return Vec::new();
+    };
+    let mut out: Vec<String> = Vec::new();
+    let mut cur = String::new();
+    let mut inside = false;
+    let mut esc = false;
+    for ch in text[start + 1..end].chars() {
+        if inside {
+            if esc {
+                cur.push(ch);
+                esc = false;
+            } else if ch == '\u{5c}' {
+                esc = true;
+            } else if ch == '"' {
+                out.push(std::mem::take(&mut cur));
+                inside = false;
+            } else {
+                cur.push(ch);
+            }
+        } else if ch == '"' {
+            inside = true;
+        }
+    }
+    out
+}
+
 fn icon_btn_sized(
     ui: &mut egui::Ui,
     p: &Palette,
@@ -2399,33 +2461,60 @@ impl App {
         }
     }
 
+    /// Synonyme zur Auswahl; entspricht dem `#alt`-Menue unter der
+    /// Kontextleiste in `editor.js` (Zeilen zum Anklicken, keine Eingabe).
     fn syn_window(&mut self, ctx: &egui::Context) {
         if !self.show_syn {
             return;
         }
         let lang = self.lang;
         let pal = self.pal;
-        let mut open = true;
-        let mut ask = false;
-        dialog(ctx, "syn_win", &t(lang, "synonyms"), 380.0, &pal, &mut open, |ui| {
+        let anchor = self
+            .ctx_bar_rect
+            .unwrap_or_else(|| egui::Rect::from_center_size(ctx.screen_rect().center(), egui::vec2(1.0, 1.0)));
+        let mut pick: Option<String> = None;
+        let closed = pop_at(ctx, "syn_pop", anchor, 280.0, &pal, |ui| {
+            if self.syn_job {
                 ui.horizontal(|ui| {
-                    ui.add(
-                        egui::TextEdit::singleline(&mut self.syn_word)
-                            .hint_text(t(lang, "synonyms"))
-                            .desired_width(240.0),
-                    );
-                    if ui.button(t(lang, "synonyms")).clicked() {
-                        ask = true;
-                    }
+                    ui.spinner();
+                    ui.label(RichText::new(t(lang, "synonyms")).size(12.5).color(pal.muted));
                 });
-                for s in &self.syn_out {
-                    ui.label(s);
+            } else if self.syn_out.is_empty() {
+                ui.label(
+                    RichText::new(t(lang, "no_alts"))
+                        .size(12.5)
+                        .color(pal.muted),
+                );
+            } else {
+                for word in self.syn_out.clone() {
+                    let row = egui::Button::new(RichText::new(&word).size(13.5).color(pal.text))
+                        .fill(egui::Color32::TRANSPARENT)
+                        .stroke(Stroke::NONE)
+                        .rounding(Rounding::same(10.0))
+                        .min_size(egui::vec2(ui.available_width(), 28.0));
+                    if ui.add(row).clicked() {
+                        pick = Some(word.clone());
+                    }
                 }
-            });
-        if ask {
-            self.request_synonyms();
+            }
+        });
+        if let Some(word) = pick {
+            if let Some((a, b)) = self.syn_sel.take() {
+                let doc = self.doc.clone();
+                if b > a {
+                    self.push_undo();
+                    let ba = byte_idx(&doc, a);
+                    let bb = byte_idx(&doc, b);
+                    self.doc = format!("{}{}{}", &doc[..ba], word, &doc[bb..]);
+                    self.saved = false;
+                    self.set.doc = self.doc.clone();
+                    self.save_set();
+                }
+            }
+            self.show_syn = false;
+            return;
         }
-        if !open {
+        if closed {
             self.show_syn = false;
         }
     }
@@ -2440,6 +2529,8 @@ impl App {
             return;
         }
         self.syn_out.clear();
+        self.syn_pending.clear();
+        self.syn_job = true;
         let prompt = format!(
             "Give up to 5 {} synonyms that could replace the word \"{}\" in a sentence. Same part of speech and grammatical form. No translations, no explanations, no duplicates. Output JSON: {{\"synonyms\":[\"...\"]}}",
             lang_label(&self.set.dict_lang, &self.nllb_langs),
@@ -3176,7 +3267,9 @@ impl App {
                 "synonyms" => {
                     self.syn_word = self.selected_text().trim().to_string();
                     self.syn_out.clear();
+                    self.syn_sel = Some(self.selection());
                     self.show_syn = true;
+                    self.request_synonyms();
                 }
                 "styleB" => self.show_style_bar = true,
                 "translateSel" => {
@@ -3185,6 +3278,7 @@ impl App {
                         self.mini_in = text;
                     }
                     self.mini_out.clear();
+                    self.mini_sel = Some(self.selection());
                     self.show_mini = true;
                 }
                 _ => self.start_editor_op(op),
@@ -3803,8 +3897,10 @@ impl App {
         }
     }
 
-    /// Kleiner Uebersetzer fuer die Auswahl; entspricht `transPop` in der
-    /// Electron-Fassung.
+    /// Kleiner Uebersetzer fuer die Auswahl; entspricht `transPop` in
+    /// `editor.js`: Sprachpille links und rechts, dazwischen ein Pfeil, darunter
+    /// je eine Reihe mit runden Symbolknoepfen fuer Formalitaet, Schreiber und
+    /// Adressat, unten rechts der Uebersetzen-Knopf.
     fn mini_window(&mut self, ctx: &egui::Context) {
         if !self.show_mini {
             return;
@@ -3812,90 +3908,100 @@ impl App {
         let pal = self.pal;
         let lang = self.lang;
         let mut go = false;
-        let mut insert = false;
-        let mut copy = false;
-        let target = lang_label(&self.set.tgt, &self.nllb_langs);
+        let llm = !is_mt(&self.set.model) && !is_tg(&self.set.model);
+        let src = if self.set.src == "auto" {
+            t(lang, "detect")
+        } else {
+            lang_label(&self.set.src, &self.nllb_langs)
+        };
+        let tgt = lang_label(&self.set.tgt, &self.nllb_langs);
         let anchor = self
             .ctx_bar_rect
             .unwrap_or_else(|| egui::Rect::from_center_size(ctx.screen_rect().center(), egui::vec2(1.0, 1.0)));
-        let closed = pop_at(ctx, "mini_tr_pop", anchor, 400.0, &pal, |ui| {
-                ui.add(
-                    egui::TextEdit::multiline(&mut self.mini_in)
-                        .desired_rows(3)
-                        .desired_width(f32::INFINITY)
-                        .hint_text(t(lang, "mini_hint")),
-                );
-                ui.horizontal(|ui| {
-                    let lang_resp = pill(ui, &pal, &format!("{} ▾", target), 120.0);
-                    if lang_resp.clicked() {
-                        self.popup_lang = Some("tgt");
-                        self.lang_anchor = Some(lang_resp.rect);
-                    }
+        let closed = pop_at(ctx, "mini_tr_pop", anchor, 320.0, &pal, |ui| {
+            ui.horizontal(|ui| {
+                let r = pill(ui, &pal, &src, 90.0);
+                if r.clicked() {
+                    self.lang_search.clear();
+                    self.popup_lang = Some("src");
+                    self.lang_anchor = Some(r.rect);
+                }
+                let (icon_rect, _) =
+                    ui.allocate_exact_size(egui::vec2(18.0, 18.0), egui::Sense::hover());
+                crate::icons::paint(ui.painter(), icon_rect, "arrowR", pal.muted);
+                let r = pill(ui, &pal, &tgt, 90.0);
+                if r.clicked() {
+                    self.lang_search.clear();
+                    self.popup_lang = Some("tgt");
+                    self.lang_anchor = Some(r.rect);
+                }
+            });
+            if llm {
+                for (label, opts, field) in [
+                    (
+                        "l_formal",
+                        [("formal", "hat"), ("standard", "dash"), ("informal", "smile")].as_slice(),
+                        1,
+                    ),
+                    (
+                        "l_writer",
+                        [("unknown", "qmark"), ("neutral", "nb"), ("male", "male"), ("female", "female")].as_slice(),
+                        2,
+                    ),
+                    (
+                        "l_gender",
+                        [("unknown", "qmark"), ("neutral", "nb"), ("male", "male"), ("female", "female")].as_slice(),
+                        3,
+                    ),
+                ] {
+                    ui.add_space(4.0);
+                    ui.horizontal(|ui| {
+                        ui.add_sized(
+                            egui::vec2(78.0, 24.0),
+                            egui::Label::new(RichText::new(t(lang, label)).size(12.0).color(pal.muted)),
+                        );
+                        for (value, icon) in opts.iter() {
+                            let current = match field {
+                                1 => &self.set.style.formal,
+                                2 => &self.set.style.writer,
+                                _ => &self.set.style.gender,
+                            };
+                            let on = current == value;
+                            if icon_btn_sized(ui, &pal, icon, on, 32.0, 999.0, true)
+                                .on_hover_text(t(lang, &format!("o_{}", value)))
+                                .clicked()
+                            {
+                                match field {
+                                    1 => self.set.style.formal = value.to_string(),
+                                    2 => self.set.style.writer = value.to_string(),
+                                    _ => self.set.style.gender = value.to_string(),
+                                }
+                                self.save_set();
+                            }
+                        }
+                    });
+                }
+            }
+            ui.add_space(8.0);
+            ui.horizontal(|ui| {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     let btn = egui::Button::new(
-                        RichText::new(t(lang, "translate"))
-                            .color(pal.on_accent)
-                            .size(13.0),
+                        RichText::new(t(lang, "translate")).color(pal.on_accent).size(13.0),
                     )
                     .fill(pal.accent)
                     .stroke(Stroke::NONE)
                     .rounding(Rounding::same(999.0))
                     .min_size(egui::vec2(120.0, 32.0));
-                    if ui.add(btn).clicked() {
-                        go = true;
-                    }
                     if self.busy {
                         ui.spinner();
+                    } else if ui.add(btn).clicked() {
+                        go = true;
                     }
                 });
-                ui.add_space(4.0);
-                egui::Frame::none()
-                    .fill(pal.soft)
-                    .rounding(Rounding::same(14.0))
-                    .inner_margin(egui::Margin::same(10.0))
-                    .show(ui, |ui| {
-                        if self.mini_out.is_empty() {
-                            ui.label(
-                                RichText::new(t(lang, "mini_hint"))
-                                    .size(12.0)
-                                    .color(pal.muted),
-                            );
-                        } else {
-                            ui.label(RichText::new(&self.mini_out).size(13.5));
-                        }
-                    });
-                if !self.mini_out.is_empty() {
-                    ui.horizontal(|ui| {
-                        if pill(ui, &pal, &t(lang, "insert"), 96.0).clicked() {
-                            insert = true;
-                        }
-                        if pill(ui, &pal, &t(lang, "copy"), 96.0).clicked() {
-                            copy = true;
-                        }
-                    });
-                }
             });
+        });
         if go {
             self.start_mini_translate();
-        }
-        if copy {
-            ctx.output_mut(|o| o.copied_text = self.mini_out.clone());
-        }
-        if insert {
-            let (a, b) = self.selection();
-            let text = self.mini_out.clone();
-            self.push_undo();
-            if b > a {
-                let ba = byte_idx(&self.doc, a);
-                let bb = byte_idx(&self.doc, b);
-                self.doc = format!("{}{}{}", &self.doc[..ba], text, &self.doc[bb..]);
-            } else {
-                self.doc.push_str(&text);
-            }
-            self.saved = false;
-            self.set.doc = self.doc.clone();
-            self.save_set();
-            self.spell_scanned_doc.clear();
-            self.sync_active_session();
         }
         if closed {
             self.show_mini = false;

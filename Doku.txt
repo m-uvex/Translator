@@ -353,3 +353,13 @@ Das Kreuz der Einstellungen ist ein gewoehnlicher `icon_btn` mit dem Pfad `x`: i
 Offen bleibt das Aussehen des Mini-Uebersetzers selbst (Aufbau der Zeilen, Karte um die Ausgabe) und das Fenster fuer Synonyme; beide sind erst verankert beziehungsweise als Dialog vereinheitlicht, aber noch nicht gegen die Vorlage fein gezeichnet.
 
 Geprueft: `cargo build` und `cargo test` (19 Tests) laufen durch. Der Anker an der Kontextleiste wurde nicht am Bildschirm nachgewiesen — das Auswaehlen von Text per simulierter Maus funktionierte in dieser Sitzung nicht, deshalb blieb die Leiste aus. Die Maschinerie selbst (`pop_at`) ist am Sprachmenue und an den Einstellungen geprueft.
+
+## 19. Mini-Uebersetzer und Synonyme
+
+Der Mini-Uebersetzer (`transPop` in `editor.js`) war ein Fenster mit Eingabefeld und Ergebniskarte. Die Vorlage zeigt stattdessen nur die Spracheinstellungen: links die Quellsprache, ein Pfeil, rechts die Zielsprache, darunter drei Reihen mit runden Symbolknoepfen — Formalitaet (`hat`, `dash`, `smile`), Geschlecht des Schreibers und des Adressaten (`qmark`, `nb`, `male`, `female`) —, unten rechts der Uebersetzen-Knopf. Diese Reihen erscheinen nur bei einem Sprachmodell, nicht bei TranslateGemma oder NLLB (dort uebersetzt das Modell ohne Stilangaben). Die Knoepfe laufen ueber `icon_btn_sized(..., accent_hover = true)`, was `.seg .ib:hover` aus `style.css` entspricht: gewaehlt in der Akzentfarbe, beim Ueberfahren in der helleren Akzentfarbe. Die Auswahl landet in `Settings::style` (Felder `formal`, `writer`, `gender`) und wird sofort gesichert.
+
+Uebersetzt wird die markierte Stelle: `mini_sel` merkt sich beim Oeffnen die Auswahl, und die Antwort schreibt `Msg::Done` direkt in den Text — mit `push_undo` wie bei `runTrans`. Das frueher noetige „Einfuegen“ entfaellt.
+
+Die Synonyme waren nicht nur falsch dargestellt, sie kamen auch nie an: `request_synonyms` schickte die Anfrage ohne eigenes Kennzeichen, die Antwort landete im Uebersetzer-Ausgabefeld, und `syn_out` blieb leer. Jetzt gibt es `syn_job`, `Msg::Token`/`Msg::Done` sammeln die Antwort, `json_strings` liest die Liste aus `["a","b"]` oder `{"synonyms":["a","b"]}` (bis zu sechs Eintraege), und `syn_window` zeichnet sie als anklickbare Zeilen in einem verankerten Menue unter der Kontextleiste — wie `#alt` in `editor.js`. Ein Klick ersetzt die markierte Stelle; fehlt eine Antwort, steht dort „Keine Ersatzwörter gefunden“ (`no_alts`).
+
+Geprueft: `cargo build` und `cargo test` (19 Tests) laufen durch. Das Mini-Menue wurde mit einem voruebergehenden Testanker am Bildschirm angesehen: Pillen, Pfeil, die drei Reihen mit Symbolen und der Knopf sitzen wie in der Vorlage. Der Aufruf aus der Kontextleiste und die Synonymliste mit einem echten Modell wurden nicht durchgespielt.

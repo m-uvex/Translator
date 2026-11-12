@@ -34,6 +34,7 @@ Markup, an den Skripten und am CSS wurde nichts geändert.
 | `screenshots/21-modellpille-mit-symbolen.png` | Modellknopf mit Bild-Symbol im Uebersetzer |
 | `screenshots/22-einstellungen-dialog.png` | Einstellungen als mittiger Dialog ohne Titelleiste |
 | `screenshots/23-sprachmenue.png` | Sprachmenue unter der Sprachpille |
+| `screenshots/24-mini-uebersetzer.png` | Mini-Übersetzer mit Sprachpillen, Stilreihen und Knopf |
 
 Hinweis: Die Bilder 01 bis 12 zeigen die Electron-Fassung, aufgenommen über
 den Harness. Bild 13 zeigt die Rust-Fassung selbst (echtes Fenster, 1600 x 950,

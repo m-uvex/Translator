@@ -107,6 +107,7 @@ fn strings(k: &str) -> Six {
         "lib_docs"     => ("Dokumente", "documents", "documenten", "documentos", "belge", "مستندات"),
         "settings"     => ("Einstellungen", "Settings", "Instellingen", "Configuración", "Ayarlar", "الإعدادات"),
         "close"        => ("Schließen", "Close", "Sluiten", "Cerrar", "Kapat", "إغلاق"),
+        "no_alts"      => ("Keine Ersatzwörter gefunden", "No alternatives found", "Geen alternatieven gevonden", "No se encontraron alternativas", "Alternatif bulunamadi", "لا توجد بدائل"),
         "ok"           => ("OK", "OK", "OK", "OK", "Tamam", "موافق"),
         "cancel"       => ("Abbrechen", "Cancel", "Annuleren", "Cancelar", "İptal", "إلغاء"),
         "save"         => ("Speichern", "Save", "Opslaan", "Guardar", "Kaydet", "حفظ"),
