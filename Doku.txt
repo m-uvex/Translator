@@ -532,3 +532,7 @@ Das Einstellungsfenster zog sich nach dem letzten Eingriff auf die ersten beiden
 
 Das Fragezeichen beim Geschlecht war falsch gezeichnet. Ursache war der Zahlenleser für SVG-Pfade: minifizierte Pfade schreiben Zahlen ohne Trenner hintereinander, beim Fragezeichen etwa `c-.7.4-1 1-1 1.7`. Der Leser hat beim zweiten Punkt in derselben Zahl nicht getrennt, sondern `-.7.4` als eine Zahl gelesen, sie als ungültig verworfen und damit dem Kurvenbefehl zwei Zahlen zu wenig gegeben — der Haken des Fragezeichens verkam zu einem geraden Strich. `lex` beginnt jetzt bei einem zweiten Punkt und bei jedem Vorzeichen eine neue Zahl. Der Fehler betraf alle Symbole mit solchen Pfaden, nicht nur das Fragezeichen.
 
+## 41. Platzhaltertexte blasser
+
+Die Hinweise in leeren Eingabefeldern („Text eingeben oder Datei hineinziehen …“, Kontext, Glossar, Sprachsuche, neues Wort im Wörterbuch, leere Seite) standen in voller Textfarbe und wirkten dadurch wie eingegebener Text. Ursache ist `override_text_color` in den egui-Stileinstellungen: es färbt auch den Hinweistext, den egui sonst über `weak_text_color` blasser zeichnet. Ein Browser stellt Platzhalter ebenfalls blasser dar. Alle `hint_text`-Aufrufe übergeben deshalb jetzt `RichText` mit `pal.muted`; eine ausdrücklich gesetzte Farbe hat Vorrang vor der Vorgabe.
+

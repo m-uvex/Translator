@@ -2027,7 +2027,7 @@ impl App {
                                         .frame(false)
                                         .font(egui::FontId::proportional(17.0))
                                         .desired_width(f32::INFINITY)
-                                        .hint_text(t(lang, "input_ph"))
+                                        .hint_text(RichText::new(t(lang, "input_ph")).color(pal.muted))
                                         .margin(egui::vec2(20.0, 18.0)),
                                 );
                             });
@@ -2345,7 +2345,7 @@ impl App {
                                         .frame(false)
                                         .font(egui::FontId::proportional(14.0))
                                         .margin(egui::vec2(0.0, 10.0))
-                                        .hint_text(t(lang, "ctx_ph")),
+                                        .hint_text(RichText::new(t(lang, "ctx_ph")).color(pal.muted)),
                                 );
                                 if ui.input(|i| i.pointer.any_released()) {
                                     self.save_set();
@@ -2391,7 +2391,7 @@ impl App {
                                                         .frame(false)
                                                         .font(egui::FontId::proportional(13.0))
                                                         .desired_width(field_w - 18.0)
-                                                        .hint_text(t(lang, "term")),
+                                                        .hint_text(RichText::new(t(lang, "term")).color(pal.muted)),
                                                 );
                                             });
                                         ui.label(RichText::new("→").size(13.0).color(pal.muted));
@@ -2406,7 +2406,7 @@ impl App {
                                                         .frame(false)
                                                         .font(egui::FontId::proportional(13.0))
                                                         .desired_width(field_w - 18.0)
-                                                        .hint_text(t(lang, "term_t")),
+                                                        .hint_text(RichText::new(t(lang, "term_t")).color(pal.muted)),
                                                 );
                                             });
                                         if icon_btn_sized(ui, &pal, "x", false, 36.0, 12.0, false)
@@ -2483,7 +2483,7 @@ impl App {
                         egui::vec2(ui.available_width(), 34.0),
                         egui::TextEdit::singleline(&mut self.lang_search)
                             .font(egui::FontId::proportional(15.0))
-                            .hint_text(t(lang, "search_lang"))
+                            .hint_text(RichText::new(t(lang, "search_lang")).color(pal.muted))
                             .margin(egui::vec2(10.0, 8.0)),
                     );
                 });
@@ -3063,7 +3063,7 @@ impl App {
                     ui.add_sized(
                         egui::vec2(breite, 32.0),
                         egui::TextEdit::singleline(&mut self.dict_new)
-                            .hint_text(t(lang, "word_ph"))
+                            .hint_text(RichText::new(t(lang, "word_ph")).color(pal.muted))
                             .margin(egui::vec2(10.0, 7.0)),
                     );
                     let knopf = egui::Button::new(
@@ -3644,7 +3644,7 @@ impl App {
                             .frame(false)
                             .desired_width(f32::INFINITY)
                             .desired_rows(24)
-                            .hint_text("…")
+                            .hint_text(RichText::new("…").color(pal.muted))
                             .show(ui);
                         if let Some(range) = out.cursor_range {
                             let a = range.primary.ccursor.index;
