@@ -2425,13 +2425,31 @@ impl App {
                     });
 
                     section(ui, &pal, t(lang, "s_group_trans").as_str());
-                    set_field(ui, &pal, t(lang, "s_helper").as_str(), |ui| {
-                        ui.add(
-                            egui::TextEdit::singleline(&mut self.set.helper)
-                                .frame(false)
-                                .desired_width(f32::INFINITY),
-                        );
-                    });
+                    // Wie `helper` in `renderer.js`: eine Auswahlliste aus den
+                    // allgemeinen Modellen, dazu „Automatisch“.
+                    let helper_namen: Vec<String> = self
+                        .models
+                        .iter()
+                        .filter(|m| !m.mt && !is_tg(&m.name))
+                        .map(|m| m.name.clone())
+                        .collect();
+                    let mut helper_opts: Vec<(String, String)> =
+                        vec![(String::new(), t(lang, "auto_model"))];
+                    for name in helper_namen {
+                        helper_opts.push((name.clone(), name));
+                    }
+                    let helper_vorher = self.set.helper.clone();
+                    set_select(
+                        ui,
+                        &pal,
+                        "helper",
+                        t(lang, "s_helper").as_str(),
+                        &mut self.set.helper,
+                        &helper_opts,
+                    );
+                    if helper_vorher != self.set.helper {
+                        self.save_set();
+                    }
                     set_field(ui, &pal, t(lang, "s_sys").as_str(), |ui| {
                         ui.add(
                             egui::TextEdit::multiline(&mut self.set.sys)
@@ -4813,23 +4831,23 @@ fn set_row(ui: &mut egui::Ui, pal: &Palette, label: &str, add: impl FnOnce(&mut 
 }
 
 /// Einstellung mit Auswahlliste, gesetzt ueber `value`.
-fn set_select(
+fn set_select<K: AsRef<str>>(
     ui: &mut egui::Ui,
     pal: &Palette,
     id: &str,
     label: &str,
     value: &mut String,
-    options: &[(&str, String)],
+    options: &[(K, String)],
 ) {
     let current = options
         .iter()
-        .find(|(v, _)| v == value)
+        .find(|(v, _)| v.as_ref() == value.as_str())
         .map(|(_, l)| l.clone())
         .unwrap_or_default();
     set_row(ui, pal, label, |ui| {
         tsel_combo(ui, pal, id, &current, |ui| {
             for (v, l) in options {
-                ui.selectable_value(value, (*v).to_string(), RichText::new(l).size(13.0));
+                ui.selectable_value(value, v.as_ref().to_string(), RichText::new(l).size(13.0));
             }
         });
     });

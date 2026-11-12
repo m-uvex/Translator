@@ -425,3 +425,9 @@ Dazu die Schriften: `setup_fonts` in `rust/src/main.rs` laedt neben Segoe UI und
 ## 28. Kennzeichnung reiner Uebersetzungsmodelle
 
 Im Modellmenue stand neben TranslateGemma die Kennzeichnung „MT“. Die Abkuerzung stammt aus `isMt` in `renderer.js` („machine translation“), erklaerte sich aber niemandem, und die Vorlage zeigt dort ohnehin nur Bild- und Denk-Symbol. `menu_row` in `rust/src/app.rs` zeichnet an dieser Stelle jetzt das Symbol `swap` aus `icons_data.rs` — zwei Pfeile fuer den Weg von einer Sprache zur anderen, ohne Buchstaben im Bild. Beim Ueberfahren erklaert der Hinweis `mt_tip` in allen sechs Sprachen, was das Symbol bedeutet („Reines Uebersetzungsmodell — uebersetzt direkt, ohne Anweisungen“).
+
+## 29. Ersatzwort-Modell als Auswahl
+
+Die Einstellung „Modell fuer Ersatzwoerter (bei TranslateGemma/NLLB)“ war ein freies Textfeld und blieb deshalb leer. In der Vorlage ist `helper` eine Auswahlliste (`lists('helper')` in `renderer.js`): erst „Automatisch“, dann alle Ollama-Modelle, die keine reinen Uebersetzungsmodelle sind — TranslateGemma und die MT-Modelle fallen heraus.
+
+`App::settings_window` baut die Liste jetzt aus `self.models` (alles ausser `mt` und TranslateGemma) und stellt sie mit `set_select` dar; `set_select` nimmt dafuer beliebige Schluesseltypen (`K: AsRef<str>`), weil die Modellnamen zur Laufzeit entstehen. Gewaehlt wird weiterhin `Settings::helper`; ist der Eintrag leer, waehlt das Programm selbst (`write_model` in `rust/src/app.rs`). Eine Aenderung wird sofort gespeichert.
