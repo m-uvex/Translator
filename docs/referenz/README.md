@@ -27,6 +27,7 @@ Markup, an den Skripten und am CSS wurde nichts geändert.
 | `screenshots/14-kontextleiste.png` | Kontextleiste der Rust-Fassung über einer Textauswahl |
 | `screenshots/15-wellenlinien.png` | Wellenlinien unter falsch geschriebenen Wörtern |
 | `screenshots/16-kontextleiste-stil.png` | Stil-Auswahl der Kontextleiste |
+| `screenshots/17-wellenlinien.png` | Geschlängelte Wellenlinie und Rechtsklick-Menü der Rust-Fassung |
 
 Hinweis: Die Bilder 01 bis 12 zeigen die Electron-Fassung, aufgenommen über
 den Harness. Bild 13 zeigt die Rust-Fassung selbst (echtes Fenster, 1600 x 950,
@@ -172,7 +173,7 @@ dieselben Prompt-Regeln und dieselben Ablagedateien.
 | Schimpfwortfilter, Sternchen-Ersetzung, geschützte Zeichenketten | umgesetzt |
 | Bilder, PDF-/DOCX-Import, Wortalternativen, Ersatzwort-Anpassung | offen |
 | Editor: Markdown-Formatierung mit Umschaltern, Undo/Redo, Sitzungsliste, Diff-Probelesen, KI-Operationen, Ablage, Export | umgesetzt (ohne Rich-Text-Seite) |
-| Rechtschreibprüfung mit Hunspell (spellbook, Wellenlinien im Text, Prüffenster mit Vorschlägen, persönliches Wörterbuch) | umgesetzt |
+| Rechtschreibprüfung mit Hunspell (spellbook, Wellenlinien im Text, Rechtsklick-Menü mit Vorschlägen, Prüffenster, persönliches Wörterbuch) | umgesetzt |
 | Schwebende Kontextleiste (Verkürzen, Verlängern, Zusammenfassen, Probelesen, Synonyme, Stil umschreiben, Mini-Übersetzer) | umgesetzt |
 | Visuelle Angleichung an die Electron-Fassung | teilweise: Symbole als Vektoren, Segoe UI als Schrift; Farben, Maße und Reihenfolge offen (Doku.txt Abschnitt 15) |
 | Seitenumbruch, PDF-Export | offen |

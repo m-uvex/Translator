@@ -81,6 +81,13 @@ enum Confirm {
 /// Ein Dokument der Sitzungsliste (nur im Speicher, wie in der
 /// Electron-Fassung). `saved_text` ist der zuletzt gespeicherte Stand und
 /// dient der Erkennung ungespeicherter Aenderungen.
+/// Offenes Rechtsklick-Menue zu einem falsch geschriebenen Wort.
+#[derive(Clone)]
+pub struct SpellMenu {
+    pub word: String,
+    pub pos: egui::Pos2,
+}
+
 pub struct SessionDoc {
     pub key: u64,
     pub name: String,
@@ -153,6 +160,11 @@ pub struct App {
     spell_anchor: Option<egui::Pos2>,
     /// Einmalige Startposition fuer das Rechtschreibfenster.
     spell_pos: Option<egui::Pos2>,
+    /// Rechtecke der unterstrichenen Woerter aus dem letzten Frame; Grundlage
+    /// fuer das Rechtsklick-Menue.
+    spell_mark_rects: Vec<(String, egui::Rect)>,
+    /// Offenes Rechtsklick-Menue auf einem falsch geschriebenen Wort.
+    spell_menu: Option<SpellMenu>,
     /// Stil-Auswahl der Kontextleiste (`styleB` der Vorlage).
     show_style_bar: bool,
     /// Mini-Uebersetzer der Kontextleiste (`translateSel` der Vorlage).
@@ -254,6 +266,8 @@ impl App {
             bar_hover: false,
             spell_anchor: None,
             spell_pos: None,
+            spell_mark_rects: Vec::new(),
+            spell_menu: None,
             show_style_bar: false,
             show_mini: false,
             mini_in: String::new(),
@@ -904,6 +918,7 @@ impl eframe::App for App {
         self.spell_lang_window(ctx);
         self.style_bar_window(ctx);
         self.mini_window(ctx);
+        self.spell_menu_window(ctx);
     }
 }
 
@@ -1985,8 +2000,23 @@ impl App {
                         }
                         if self.set.ed_spell && !self.spell_hits.is_empty() {
                             self.paint_spell_marks(ui, &out);
+                            if ui
+                                .input(|i| i.pointer.button_clicked(egui::PointerButton::Secondary))
+                            {
+                                if let Some(pos) = ui.input(|i| i.pointer.interact_pos()) {
+                                    let hit = self
+                                        .spell_mark_rects
+                                        .iter()
+                                        .find(|(_, r)| r.contains(pos))
+                                        .map(|(w, _)| w.clone());
+                                    if let Some(word) = hit {
+                                        self.spell_menu = Some(SpellMenu { word, pos });
+                                    }
+                                }
+                            }
                         } else {
                             self.spell_anchor = None;
+                            self.spell_mark_rects.clear();
                         }
                         if out.response.changed() {
                             let now = ui.input(|i| i.time);
@@ -2475,6 +2505,7 @@ impl App {
         let offset = out.galley_pos.to_vec2();
         let color = Color32::from_rgb(0xd0, 0x3a, 0x3a);
         let mut anchor: Option<egui::Pos2> = None;
+        self.spell_mark_rects.clear();
         for (a, b) in marks {
             let p1 = out.galley.pos_from_ccursor(egui::text::CCursor::new(a));
             let p2 = out.galley.pos_from_ccursor(egui::text::CCursor::new(b));
@@ -2488,25 +2519,116 @@ impl App {
             if x1 <= x0 + 1.0 {
                 continue;
             }
-            let y = p1.bottom() + offset.y - 1.5;
+            let top = p1.top() + offset.y;
+            let bottom = p1.bottom() + offset.y;
+            let y = bottom - 1.0;
+            let word: String = chars[a..b].iter().collect();
+            self.spell_mark_rects.push((
+                word,
+                egui::Rect::from_min_max(egui::pos2(x0, top), egui::pos2(x1, bottom)),
+            ));
             if anchor.is_none() {
-                anchor = Some(egui::pos2(x0, p1.top() + offset.y));
+                anchor = Some(egui::pos2(x0, top));
             }
-            let step = 3.0;
-            let mut x = x0;
-            let mut up = true;
-            while x < x1 {
-                let nx = (x + step).min(x1);
-                let (ya, yb) = if up { (y, y + 2.0) } else { (y + 2.0, y) };
-                painter.line_segment(
-                    [egui::pos2(x, ya), egui::pos2(nx, yb)],
-                    Stroke::new(1.3_f32, color),
-                );
-                x = nx;
-                up = !up;
+            // Geschlaengelte Linie: Sinus mit sechs Pixeln Wellenlaenge,
+            // abgetastet alle 1,5 Pixel.
+            let steps = (((x1 - x0) / 1.5).ceil() as usize).max(4);
+            let mut pts = Vec::with_capacity(steps + 1);
+            for i in 0..=steps {
+                let t = i as f32 / steps as f32;
+                let x = x0 + (x1 - x0) * t;
+                let dy = 1.4 * ((x - x0) * std::f32::consts::TAU / 6.0).sin();
+                pts.push(egui::pos2(x, y + dy));
             }
+            painter.add(egui::Shape::line(pts, Stroke::new(1.4_f32, color)));
         }
         self.spell_anchor = anchor;
+    }
+
+    /// Rechtsklick-Menue auf einem falsch geschriebenen Wort: Vorschlaege aus
+    /// dem Woerterbuch, Ignorieren und Ins-Woerterbuch. Entspricht dem
+    /// Kontextmenue der Electron-Fassung.
+    fn spell_menu_window(&mut self, ctx: &egui::Context) {
+        let Some(menu) = self.spell_menu.clone() else {
+            return;
+        };
+        let pal = self.pal;
+        let lang = self.lang;
+        let sug: Vec<String> = self
+            .spell_hits
+            .iter()
+            .find(|h| h.word == menu.word)
+            .map(|h| h.suggestions.clone())
+            .unwrap_or_default();
+        let red = Color32::from_rgb(0xd0, 0x3a, 0x3a);
+        let mut close = false;
+        let mut pick: Option<String> = None;
+        let mut ignore = false;
+        let mut add = false;
+        let screen = ctx.screen_rect();
+        let pos = egui::pos2(
+            menu.pos.x.clamp(8.0, (screen.right() - 220.0).max(8.0)),
+            menu.pos.y.clamp(8.0, (screen.bottom() - 200.0).max(8.0)),
+        );
+        let area = egui::Area::new(egui::Id::new("spell_menu"))
+            .order(egui::Order::Foreground)
+            .fixed_pos(pos)
+            .show(ctx, |ui| {
+                egui::Frame::popup(&ctx.style()).show(ui, |ui| {
+                    ui.set_min_width(190.0);
+                    ui.label(RichText::new(&menu.word).size(13.0).color(red));
+                    if sug.is_empty() {
+                        ui.label(
+                            RichText::new(t(lang, "suggestions"))
+                                .size(12.0)
+                                .color(pal.muted),
+                        );
+                    }
+                    for s in &sug {
+                        if ui.button(s).clicked() {
+                            pick = Some(s.clone());
+                        }
+                    }
+                    ui.separator();
+                    if ui.button(t(lang, "ignore")).clicked() {
+                        ignore = true;
+                    }
+                    if ui.button(t(lang, "add_to_dict")).clicked() {
+                        add = true;
+                    }
+                });
+            });
+        if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            close = true;
+        }
+        if ctx.input(|i| i.pointer.button_clicked(egui::PointerButton::Primary))
+            && !area.response.hovered()
+        {
+            close = true;
+        }
+        if let Some(s) = pick {
+            self.replace_word_all(&menu.word, &s);
+            self.rescan_spell();
+            close = true;
+        }
+        if ignore {
+            self.spell.ignore(&menu.word);
+            self.rescan_spell();
+            close = true;
+        }
+        if add {
+            let word = menu.word.clone();
+            if !self.dict_words.iter().any(|w| w.eq_ignore_ascii_case(&word)) {
+                self.dict_words.push(word);
+                self.dict_words.sort();
+                self.save_personal_dict();
+            }
+            self.rescan_spell();
+            close = true;
+        }
+        if close {
+            self.spell_menu = None;
+        }
     }
 
     fn format_link(&mut self) {
