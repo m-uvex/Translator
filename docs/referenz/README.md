@@ -170,4 +170,5 @@ dieselben Prompt-Regeln und dieselben Ablagedateien.
 | Bilder, PDF-/DOCX-Import, Wortalternativen, Ersatzwort-Anpassung | offen |
 | Editor: Markdown-Formatierung mit Umschaltern, Undo/Redo, Sitzungsliste, Diff-Probelesen, KI-Operationen, Ablage, Export | umgesetzt (ohne Rich-Text-Seite) |
 | Rechtschreibprüfung mit Hunspell (spellbook, Prüffenster mit Vorschlägen, persönliches Wörterbuch) | umgesetzt (ohne Wellenlinien im Text) |
+| Visuelle Angleichung an die Electron-Fassung (SVG-Icons, Farben, Maße) | offen, siehe Doku.txt Abschnitt 15 |
 | Seitenumbruch, PDF-Export | offen |
