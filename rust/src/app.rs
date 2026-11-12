@@ -2793,18 +2793,47 @@ impl App {
         });
         ui.add_space(6.0);
 
+        // Schreibflaeche wie `#pageWrap` und `#page` in `style.css`: weiche
+        // Flaeche mit 20er Rundung, darin eine mittige Seite von 794 px Breite,
+        // mindestens 1040 px hoch, mit 64/72 px Innenstand.
         let reserved = if self.show_sessions { 150.0 } else { 74.0 };
-        let h = (ui.available_height() - reserved).max(120.0);
+        let h = (ui.available_height() - reserved).max(160.0);
         egui::Frame::none()
-            .fill(pal.card)
-            .stroke(Stroke::new(1.0_f32, pal.line))
-            .rounding(Rounding::same(22.0))
-            .inner_margin(egui::Margin::same(18.0))
+            .fill(pal.soft)
+            .rounding(Rounding::same(20.0))
+            .inner_margin(egui::Margin {
+                left: 16.0,
+                right: 16.0,
+                top: 28.0,
+                bottom: 28.0,
+            })
             .show(ui, |ui| {
+                ui.set_width(ui.available_width());
+                ui.set_height((h - 56.0).max(80.0));
                 egui::ScrollArea::vertical()
-                    .id_source("doc_scroll")
-                    .max_height(h)
+                    .id_source("page_scroll")
+                    .auto_shrink([false, false])
                     .show(ui, |ui| {
+                        let page_w = 794.0_f32.min(ui.available_width());
+                        ui.vertical_centered(|ui| {
+                            egui::Frame::none()
+                                .fill(pal.card)
+                                .rounding(Rounding::same(22.0))
+                                .shadow(egui::epaint::Shadow {
+                                    offset: egui::vec2(0.0, 2.0),
+                                    blur: 14.0,
+                                    spread: 0.0,
+                                    color: egui::Color32::from_black_alpha(28),
+                                })
+                                .inner_margin(egui::Margin {
+                                    left: 72.0,
+                                    right: 72.0,
+                                    top: 64.0,
+                                    bottom: 64.0,
+                                })
+                                .show(ui, |ui| {
+                        ui.set_width((page_w - 144.0).max(200.0));
+                        ui.set_min_height(1040.0 - 128.0);
                         let before = self.doc.clone();
                         let out = egui::TextEdit::multiline(&mut self.doc)
                             .frame(false)
@@ -2866,12 +2895,26 @@ impl App {
                             self.save_set();
                             self.sync_active_session();
                         }
+                                });
+                        });
                     });
             });
         self.context_bar(ui.ctx());
 
         ui.add_space(6.0);
 
+        egui::Frame::none()
+            .fill(pal.card)
+            .stroke(Stroke::new(1.0_f32, pal.line))
+            .rounding(Rounding::same(20.0))
+            .inner_margin(egui::Margin {
+                left: 14.0,
+                right: 14.0,
+                top: 4.0,
+                bottom: 4.0,
+            })
+            .show(ui, |ui| {
+        ui.set_width(ui.available_width());
         ui.horizontal(|ui| {
             let words = self.doc.split_whitespace().count();
             ui.label(
@@ -2930,6 +2973,8 @@ impl App {
                 }
             });
         });
+        });
+        ui.add_space(12.0);
 
         self.schedule_spell(ui.ctx());
 
