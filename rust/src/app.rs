@@ -2800,6 +2800,11 @@ impl App {
         let mut open = true;
         dialog(ctx, "settings_win", &t(lang, "settings"), 560.0, &pal, &mut open, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
+                    // Die Bildlaufleiste liegt am rechten Rand der Flaeche; ohne
+                    // diesen Abstand stiessen die Auswahlfelder an sie.
+                    let inhalt = (ui.available_width() - 12.0).max(200.0);
+                    ui.set_width(inhalt);
+                    ui.set_max_width(inhalt);
                     section(ui, &pal, t(lang, "s_group_general").as_str());
                     set_select(ui, &pal, "uilang", t(lang, "s_uilang").as_str(), &mut self.set.ui_lang, &[
                         ("auto", t(lang, "auto_sys")),
@@ -2998,6 +3003,9 @@ impl App {
     }
 
     // ---- Persoenliches Woerterbuch ---------------------------------------
+    /// Persoenliches Woerterbuch wie `#dictDlg` in `editor.js`: Kopf mit Export
+    /// und Import, darueber die Eingabe mit dem Hauptknopf, dann die Liste in
+    /// einem gerahmten Kasten und unten rechts „Schliessen“.
     fn dict_window(&mut self, ctx: &egui::Context) {
         if !self.show_dict {
             return;
@@ -3008,10 +3016,25 @@ impl App {
         let mut changed = false;
         let mut export = false;
         let mut import = false;
-        dialog(ctx, "dict_win", &t(lang, "personal_dict"), 420.0, &pal, &mut open, |ui| {
-                // Kopf wie im Vorbild: Titel links, rechts Export und Import.
+        let mut entfernen: Option<usize> = None;
+        let mut neues: Option<String> = None;
+        let mut schliessen = false;
+        let mut woerter = std::mem::take(&mut self.dict_words);
+        let mut bearbeiten = self.rename;
+        dialog(
+            ctx,
+            "dict_win",
+            &t(lang, "personal_dict"),
+            480.0,
+            &pal,
+            &mut open,
+            |ui| {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new(t(lang, "dict_words")).color(pal.muted));
+                    ui.label(
+                        RichText::new(t(lang, "dict_words"))
+                            .size(12.0)
+                            .color(pal.muted),
+                    );
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if icon_btn(ui, &pal, "upload", false)
                             .on_hover_text(t(lang, "dict_export"))
@@ -3027,64 +3050,148 @@ impl App {
                         }
                     });
                 });
-                if self.dict_words.is_empty() {
-                    ui.label(RichText::new(t(lang, "no_dict_words")).color(pal.muted));
-                }
-                let mut remove: Option<usize> = None;
-                egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
-                    for (i, w) in self.dict_words.iter_mut().enumerate() {
-                        ui.horizontal(|ui| {
-                            if self.rename == Some(i) {
-                                if ui.add(egui::TextEdit::singleline(w)).lost_focus() {
-                                    self.rename = None;
-                                    changed = true;
-                                }
-                            } else {
-                                ui.label(&*w);
-                            }
-                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                if icon_btn(ui, &pal, "x", false).clicked() {
-                                    remove = Some(i);
-                                }
-                                if icon_btn(ui, &pal, "pencil", false).clicked() {
-                                    self.rename = Some(i);
-                                }
-                            });
-                        });
-                    }
-                });
-                if let Some(i) = remove {
-                    self.dict_words.remove(i);
-                    self.spell_scanned_doc.clear();
-                    changed = true;
-                }
-                ui.separator();
+                ui.add_space(6.0);
+                // `.dict-add`: Eingabe links, Hauptknopf rechts, ueber der Liste.
                 ui.horizontal(|ui| {
-                    ui.add(
+                    let breite = (ui.available_width() - 150.0).max(140.0);
+                    ui.add_sized(
+                        egui::vec2(breite, 32.0),
                         egui::TextEdit::singleline(&mut self.dict_new)
                             .hint_text(t(lang, "word_ph"))
-                            .desired_width(240.0),
+                            .margin(egui::vec2(10.0, 7.0)),
                     );
-                    if ui.button(t(lang, "add_word")).clicked() && !self.dict_new.trim().is_empty() {
-                        let word = self.dict_new.trim().to_string();
-                        if self.dict_words.iter().any(|w| w.to_lowercase() == word.to_lowercase()) {
-                            self.status = t(lang, "word_exists");
-                        } else {
-                            self.dict_words.push(word);
-                            self.dict_new.clear();
-                            self.spell_scanned_doc.clear();
-                            changed = true;
-                        }
+                    let knopf = egui::Button::new(
+                        RichText::new(t(lang, "add_word"))
+                            .size(13.0)
+                            .color(pal.on_accent),
+                    )
+                    .fill(pal.accent)
+                    .stroke(Stroke::NONE)
+                    .rounding(Rounding::same(999.0))
+                    .min_size(egui::vec2(0.0, 32.0));
+                    if ui.add(knopf).clicked() && !self.dict_new.trim().is_empty() {
+                        neues = Some(self.dict_new.trim().to_string());
                     }
                 });
-            });
+                ui.add_space(8.0);
+                // `.dict-list`: gerahmter Kasten mit den Woertern.
+                egui::Frame::none()
+                    .stroke(Stroke::new(1.0_f32, pal.line))
+                    .rounding(Rounding::same(12.0))
+                    .inner_margin(egui::Margin::same(4.0))
+                    .show(ui, |ui| {
+                        ui.set_width(ui.available_width());
+                        if woerter.is_empty() {
+                            ui.add_space(10.0);
+                            ui.vertical_centered(|ui| {
+                                ui.label(
+                                    RichText::new(t(lang, "no_dict_words"))
+                                        .size(12.0)
+                                        .color(pal.muted),
+                                );
+                            });
+                            ui.add_space(10.0);
+                        } else {
+                            egui::ScrollArea::vertical()
+                                .id_source("dict_list")
+                                .max_height(280.0)
+                                .show(ui, |ui| {
+                                    for (i, w) in woerter.iter_mut().enumerate() {
+                                        ui.horizontal(|ui| {
+                                            if bearbeiten == Some(i) {
+                                                let breite =
+                                                    (ui.available_width() - 34.0).max(80.0);
+                                                ui.add_sized(
+                                                    egui::vec2(breite, 26.0),
+                                                    egui::TextEdit::singleline(w)
+                                                        .margin(egui::vec2(8.0, 4.0)),
+                                                );
+                                                if icon_btn(ui, &pal, "check", false)
+                                                    .on_hover_text(t(lang, "save"))
+                                                    .clicked()
+                                                {
+                                                    bearbeiten = None;
+                                                    changed = true;
+                                                }
+                                            } else {
+                                                let zeile = ui.add(
+                                                    egui::Label::new(
+                                                        RichText::new(w.clone()).size(14.0),
+                                                    )
+                                                    .sense(egui::Sense::click()),
+                                                );
+                                                if zeile.clicked() {
+                                                    bearbeiten = Some(i);
+                                                }
+                                                ui.with_layout(
+                                                    egui::Layout::right_to_left(
+                                                        egui::Align::Center,
+                                                    ),
+                                                    |ui| {
+                                                        if icon_btn(ui, &pal, "x", false)
+                                                            .on_hover_text(t(lang, "del"))
+                                                            .clicked()
+                                                        {
+                                                            entfernen = Some(i);
+                                                        }
+                                                    },
+                                                );
+                                            }
+                                        });
+                                    }
+                                });
+                        }
+                    });
+                ui.add_space(10.0);
+                // Fuss wie im Vorbild: der Schliessen-Knopf rechts.
+                ui.horizontal(|ui| {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        let knopf = egui::Button::new(
+                            RichText::new(t(lang, "close")).size(13.0),
+                        )
+                        .fill(pal.soft)
+                        .stroke(Stroke::NONE)
+                        .rounding(Rounding::same(999.0))
+                        .min_size(egui::vec2(0.0, 30.0));
+                        if ui.add(knopf).clicked() {
+                            schliessen = true;
+                        }
+                    });
+                });
+            },
+        );
+        self.dict_words = woerter;
+        self.rename = bearbeiten;
+        if schliessen {
+            open = false;
+        }
+        if let Some(i) = entfernen {
+            if i < self.dict_words.len() {
+                self.dict_words.remove(i);
+                self.spell_scanned_doc.clear();
+                changed = true;
+            }
+        }
+        if let Some(word) = neues {
+            if self
+                .dict_words
+                .iter()
+                .any(|w| w.to_lowercase() == word.to_lowercase())
+            {
+                self.status = t(lang, "word_exists");
+            } else {
+                self.dict_words.push(word);
+                self.dict_new.clear();
+                self.spell_scanned_doc.clear();
+                changed = true;
+            }
+        }
         if export {
             if let Some(path) = rfd::FileDialog::new()
                 .set_file_name("woerterbuch.txt")
                 .save_file()
             {
-                let _ = std::fs::write(path, self.dict_words.join("
-"));
+                let _ = std::fs::write(path, self.dict_words.join("\n"));
                 self.status = t(lang, "saved");
             }
         }
@@ -3686,106 +3793,165 @@ impl App {
         self.sync_active_session();
         let mut switch: Option<usize> = None;
         let mut close: Option<usize> = None;
+
+        // Wie `#docDock` in `style.css`: eine breite Flaeche unten (150 px),
+        // davor ein Streifen mit den Karten, die oben darueber hinausragen.
+        let breite = ui.available_width();
+        let (outer, _) = ui.allocate_exact_size(egui::vec2(breite, 150.0), egui::Sense::hover());
+        let strip_w = (breite - 64.0).min(1500.0).max(320.0);
+        let panel = egui::Rect::from_center_size(
+            egui::pos2(outer.center().x, outer.bottom()),
+            egui::vec2(strip_w, 150.0),
+        );
+        let maler = ui.painter();
+        maler.rect_filled(
+            panel.translate(egui::vec2(0.0, 6.0)).expand(2.0),
+            24.0,
+            egui::Color32::from_black_alpha(14),
+        );
+        maler.rect(panel, 24.0, pal.soft, Stroke::new(1.0_f32, pal.line));
+        let strip = egui::Rect::from_min_max(
+            egui::pos2(panel.left() + 60.0, panel.bottom() - 18.0 - 262.0),
+            egui::pos2(panel.right() - 60.0, panel.bottom() - 18.0),
+        );
+
+        let ctx = ui.ctx().clone();
         let mut rects: Vec<egui::Rect> = Vec::new();
-        egui::Frame::none()
-            .fill(pal.soft)
-            .stroke(Stroke::new(1.0_f32, pal.line))
-            .rounding(Rounding::same(18.0))
-            .inner_margin(egui::Margin::same(10.0))
-            .show(ui, |ui| {
+        let mut hover_close: Option<usize> = None;
+        egui::Area::new(egui::Id::new("session_dock"))
+            .order(egui::Order::Foreground)
+            .fixed_pos(strip.min)
+            .show(&ctx, |ui| {
+                ui.set_width(strip.width());
                 egui::ScrollArea::horizontal()
-                    .id_source("session_dock")
-                    .max_height(120.0)
+                    .id_source("session_dock_scroll")
+                    .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden)
+                    .max_height(strip.height())
                     .show(ui, |ui| {
                         ui.horizontal(|ui| {
+                            ui.spacing_mut().item_spacing.x = 14.0;
                             for i in 0..self.sessions.len() {
-                                let active = i == self.active_session;
+                                let aktiv = i == self.active_session;
                                 let name = self.sessions[i].name.clone();
-                                let dirty = self.sessions[i].text != self.sessions[i].saved_text;
-                                let fill = if active { pal.accent } else { pal.card };
-                                let ink = if active { pal.on_accent } else { pal.text };
-                                let karte = egui::Frame::none()
-                                    .fill(fill)
-                                    .stroke(Stroke::new(1.0_f32, pal.line))
-                                    .rounding(Rounding::same(12.0))
-                                    .inner_margin(egui::Margin::same(8.0))
-                                    .show(ui, |ui| {
-                                        ui.allocate_ui(egui::vec2(132.0, 74.0), |ui| {
-                                            ui.vertical(|ui| {
-                                                ui.horizontal(|ui| {
-                                                    let text = RichText::new(name.chars().take(20).collect::<String>())
-                                                        .size(12.0)
-                                                        .color(ink);
-                                                    if ui
-                                                        .add(egui::Button::new(text).fill(Color32::TRANSPARENT))
-                                                        .clicked()
-                                                    {
-                                                        switch = Some(i);
-                                                    }
-                                                    if icon_btn(ui, &pal, "x", false)
-                                                        .on_hover_text(t(lang, "close_session"))
-                                                        .clicked()
-                                                    {
-                                                        close = Some(i);
-                                                    }
-                                                });
-                                                ui.label(
-                                                    RichText::new(if dirty { "•" } else { " " })
-                                                        .size(11.0)
-                                                        .color(ink),
-                                                );
-                                            });
-                                        });
-                                    });
-                                rects.push(karte.response.rect);
-                                ui.add_space(4.0);
-                            }
-
-                            // Karten ziehen wie `dockDragStart/Move/End` in der
-                            // Vorlage: die Karte unter dem Zeiger nimmt den Platz,
-                            // die gezogene rueckt nach.
-                            let ctx = ui.ctx();
-                            let zeiger = ctx.input(|i| i.pointer.interact_pos());
-                            let gedrueckt = ctx.input(|i| i.pointer.primary_pressed());
-                            let losgelassen = ctx.input(|i| i.pointer.primary_released());
-                            if gedrueckt {
-                                self.dock_drag =
-                                    zeiger.and_then(|pos| rects.iter().position(|r| r.contains(pos)));
-                            }
-                            if losgelassen {
-                                if let (Some(von), Some(pos)) = (self.dock_drag.take(), zeiger) {
-                                    if let Some(nach) =
-                                        rects.iter().position(|r| r.contains(pos))
-                                    {
-                                        if nach != von
-                                            && nach < self.sessions.len()
-                                            && von < self.sessions.len()
-                                        {
-                                            let karte = self.sessions.remove(von);
-                                            self.sessions.insert(nach, karte);
-                                            self.active_session = verschieben(
-                                                self.active_session,
-                                                von,
-                                                nach,
-                                            );
-                                        }
+                                let text = editor::plain_text(&self.sessions[i].text);
+                                // Karte: 118 x 136, aktiv 154 x 186.
+                                let (karte_w, karte_h) =
+                                    if aktiv { (154.0, 186.0) } else { (118.0, 136.0) };
+                                let (zelle, resp) = ui.allocate_exact_size(
+                                    egui::vec2(karte_w, strip.height()),
+                                    egui::Sense::click_and_drag(),
+                                );
+                                let karte = egui::Rect::from_min_max(
+                                    egui::pos2(zelle.left(), zelle.bottom() - karte_h),
+                                    egui::pos2(zelle.left() + karte_w, zelle.bottom()),
+                                );
+                                rects.push(karte);
+                                let mp = ui.painter();
+                                for schritt in 0..3 {
+                                    mp.rect_filled(
+                                        karte.translate(egui::vec2(0.0, 2.0 + schritt as f32 * 3.0))
+                                            .expand(schritt as f32 * 2.0),
+                                        16.0,
+                                        egui::Color32::from_black_alpha(10),
+                                    );
+                                }
+                                let rand = if aktiv || resp.hovered() {
+                                    pal.accent
+                                } else {
+                                    pal.line
+                                };
+                                mp.rect(karte, 16.0, pal.card, Stroke::new(1.0_f32, rand));
+                                // Vorschau wie `.dockprev`: eigenes Feld mit feiner
+                                // Linie, darin der Dokumenttext klein.
+                                let rand_ab = if aktiv { 10.0 } else { 8.0 };
+                                let name_h = if aktiv { 30.0 } else { 27.0 };
+                                let vor = egui::Rect::from_min_max(
+                                    egui::pos2(karte.left() + rand_ab, karte.top() + rand_ab),
+                                    egui::pos2(karte.right() - rand_ab, karte.bottom() - name_h),
+                                );
+                                mp.rect(vor, 10.0, pal.card, Stroke::new(1.0_f32, pal.line));
+                                preview_text_at(
+                                    mp,
+                                    vor.shrink(if aktiv { 10.0 } else { 8.0 }),
+                                    &text,
+                                    &pal,
+                                    if aktiv { 8.5 } else { 6.5 },
+                                );
+                                // Name unten, mittig.
+                                let name_rect = egui::Rect::from_min_max(
+                                    egui::pos2(karte.left() + 8.0, karte.bottom() - name_h),
+                                    egui::pos2(karte.right() - 8.0, karte.bottom() - 4.0),
+                                );
+                                let farbe = if aktiv { pal.text } else { pal.muted };
+                                let galley = mp.layout(
+                                    name.clone(),
+                                    egui::FontId::proportional(if aktiv { 11.0 } else { 10.0 }),
+                                    farbe,
+                                    name_rect.width(),
+                                );
+                                mp.galley(
+                                    egui::pos2(
+                                        name_rect.center().x - galley.size().x / 2.0,
+                                        name_rect.center().y - galley.size().y / 2.0,
+                                    ),
+                                    galley,
+                                    farbe,
+                                );
+                                // Kreuz nur beim Ueberfahren, wie `.dockcard .rm`.
+                                if resp.hovered() {
+                                    let rm = egui::Rect::from_center_size(
+                                        egui::pos2(karte.right() - 16.0, karte.top() + 16.0),
+                                        egui::vec2(20.0, 20.0),
+                                    );
+                                    let rresp = ui.interact(
+                                        rm,
+                                        egui::Id::new(("dock_close", i)),
+                                        egui::Sense::click(),
+                                    );
+                                    ui.painter().circle_filled(rm.center(), 10.0, pal.text);
+                                    crate::icons::paint(ui.painter(), rm.shrink(6.0), "x", pal.bg);
+                                    if rresp.clicked() {
+                                        hover_close = Some(i);
                                     }
                                 }
-                            }
-                            if let (Some(von), Some(pos)) = (self.dock_drag, zeiger) {
-                                if let Some(nach) = rects.iter().position(|r| r.contains(pos)) {
-                                    if nach != von {
-                                        ui.painter().rect_stroke(
-                                            rects[nach],
-                                            Rounding::same(12.0),
-                                            Stroke::new(1.5_f32, pal.accent),
-                                        );
-                                    }
+                                if resp.clicked() && hover_close != Some(i) {
+                                    switch = Some(i);
                                 }
                             }
                         });
                     });
             });
+
+        // Karten ziehen wie `dockDragStart/Move/End` der Vorlage.
+        let zeiger = ui.ctx().input(|i| i.pointer.interact_pos());
+        let gedrueckt = ui.ctx().input(|i| i.pointer.primary_pressed());
+        let losgelassen = ui.ctx().input(|i| i.pointer.primary_released());
+        if gedrueckt {
+            self.dock_drag = zeiger.and_then(|pos| rects.iter().position(|r| r.contains(pos)));
+        }
+        if losgelassen {
+            if let (Some(von), Some(pos)) = (self.dock_drag.take(), zeiger) {
+                if let Some(nach) = rects.iter().position(|r| r.contains(pos)) {
+                    if nach != von && nach < self.sessions.len() && von < self.sessions.len() {
+                        let karte = self.sessions.remove(von);
+                        self.sessions.insert(nach, karte);
+                        self.active_session = verschieben(self.active_session, von, nach);
+                    }
+                }
+            }
+        }
+        if let (Some(von), Some(pos)) = (self.dock_drag, zeiger) {
+            if let Some(nach) = rects.iter().position(|r| r.contains(pos)) {
+                if nach != von {
+                    ui.painter()
+                        .rect_stroke(rects[nach], 16.0, Stroke::new(1.5_f32, pal.accent));
+                }
+            }
+        }
+
+        if let Some(i) = hover_close {
+            close = Some(i);
+        }
         if let Some(i) = switch {
             self.switch_session(i);
         }
@@ -3795,9 +3961,7 @@ impl App {
                 .get(i)
                 .map(|s| s.text != s.saved_text)
                 .unwrap_or(false);
-            if dirty && Some(i) != Some(self.active_session) {
-                self.ask_confirm(t(lang, "discard_q"), Confirm::SessionClose(i));
-            } else if dirty && i == self.active_session {
+            if dirty {
                 self.ask_confirm(t(lang, "discard_q"), Confirm::SessionClose(i));
             } else {
                 self.close_session(i);
@@ -4216,49 +4380,88 @@ impl App {
         if b <= a {
             return;
         }
-        let p1 = out.galley.pos_from_ccursor(egui::text::CCursor::new(a));
-        let p2 = out.galley.pos_from_ccursor(egui::text::CCursor::new(b));
-        let bereich = egui::Rect::from_min_max(
-            egui::pos2(p1.left(), p1.top()),
-            egui::pos2(p2.right(), p2.bottom()),
-        )
-        .translate(out.galley_pos.to_vec2())
-        .expand2(egui::vec2(1.0, 2.0));
-        let painter = ui.painter().with_clip_rect(bereich);
-        painter.rect_filled(bereich, 4.0, self.pal.card);
         let zeit = ui.input(|i| i.time) as f32;
+        // Nur innerhalb der Schreibflaeche malen: so wandert die Animation beim
+        // Scrollen mit dem Text und laeuft nicht ueber Leiste oder Karten.
+        let clip = ui.clip_rect();
         let dunkel = self.pal.dark;
-        for (lage, (raster, tempo, deckkraft)) in
-            [(59.0f32, 26.0f32, 0.62f32), (43.0, 18.0, 0.44), (31.0, 12.0, 0.32)]
-                .iter()
-                .enumerate()
-        {
-            let farbe = if dunkel {
-                egui::Color32::from_rgba_unmultiplied(255, 255, 255, (deckkraft * 255.0) as u8)
-            } else {
-                egui::Color32::from_rgba_unmultiplied(20, 20, 26, (deckkraft * 240.0) as u8)
-            };
-            let versatz = (zeit * tempo) % raster;
-            let spalten = (bereich.width() / raster).ceil() as i32 + 1;
-            let reihen = (bereich.height() / raster).ceil() as i32 + 2;
-            for cx in 0..spalten {
-                for cy in 0..reihen {
-                    let h = (cx * 73856093) ^ (cy * 19349663) ^ ((lage as i32 + 1) * 83492791);
-                    let hx = ((h.unsigned_abs() % 977) as f32) / 977.0;
-                    let hy = ((h.unsigned_abs() / 977 % 991) as f32) / 991.0;
-                    let x = bereich.left() + (cx as f32 + hx) * raster;
-                    let roh = bereich.top() + (cy as f32 + hy) * raster - versatz;
-                    let y = bereich.top() + (roh - bereich.top()).rem_euclid(bereich.height());
-                    painter.rect_filled(
-                        egui::Rect::from_center_size(egui::pos2(x, y), egui::vec2(1.4, 1.4)),
-                        0.0,
-                        farbe,
-                    );
+        // Drei Lagen wie die drei Punktmuster in `.ai-processing`. Die mittlere
+        // wandert in der Vorlage nach unten (`0 43px` im Keyframe), die beiden
+        // anderen nach oben; Tempo jeweils eine Kachel in vier Sekunden.
+        let lagen = [
+            (17.6f32, -14.75f32, if dunkel { 0.62f32 } else { 0.60f32 }),
+            (14.3, 10.75, if dunkel { 0.45 } else { 0.42 }),
+            (11.0, -7.75, if dunkel { 0.55 } else { 0.32 }),
+        ];
+        // Zeilenweise statt als ein Rechteck: die Vorlage legt den Schleier auf
+        // den umbrochenen Text (`box-decoration-break:clone`), nicht auf den
+        // Kasten der Auswahl.
+        let mut idx = 0usize;
+        for row in &out.galley.rows {
+            let start = idx;
+            idx += row.glyphs.len() + usize::from(row.ends_with_newline);
+            let end = idx;
+            if end <= a || start >= b {
+                continue;
+            }
+            let cs = start.max(a);
+            let ce = end.min(b);
+            if ce <= cs {
+                continue;
+            }
+            let p1 = out
+                .galley
+                .pos_from_ccursor(egui::text::CCursor::new(cs))
+                .translate(out.galley_pos.to_vec2());
+            let p2 = out
+                .galley
+                .pos_from_ccursor(egui::text::CCursor::new(ce))
+                .translate(out.galley_pos.to_vec2());
+            let zeile = egui::Rect::from_min_max(
+                egui::pos2(p1.left(), row.rect.top() + out.galley_pos.y),
+                egui::pos2(p2.left().max(p1.left() + 4.0), row.rect.bottom() + out.galley_pos.y),
+            )
+            .expand2(egui::vec2(2.0, 0.0));
+            if !clip.intersects(zeile) {
+                continue;
+            }
+            let maler = ui.painter().with_clip_rect(clip.intersect(zeile));
+            maler.rect_filled(zeile, 0.0, self.pal.card);
+            let hoehe = zeile.height();
+            if hoehe <= 0.0 {
+                continue;
+            }
+            for (raster, tempo, deckkraft) in lagen {
+                let farbe = if dunkel {
+                    egui::Color32::from_rgba_unmultiplied(255, 255, 255, (deckkraft * 255.0) as u8)
+                } else {
+                    egui::Color32::from_rgba_unmultiplied(20, 20, 26, (deckkraft * 240.0) as u8)
+                };
+                // `tempo` ist Pixel je Sekunde; der Versatz laeuft innerhalb
+                // einer Kachel um, damit die Punkte gleichmaessig treiben.
+                let versatz = (zeit * tempo).rem_euclid(raster);
+                let spalten = (zeile.width() / raster).ceil() as i32 + 1;
+                let reihen = (hoehe / raster).ceil() as i32 + 2;
+                for cx in 0..spalten {
+                    for cy in -1..reihen {
+                        let h = (cx * 73856093) ^ (cy * 19349663) ^ (raster as i32 * 83492791);
+                        let hx = ((h.unsigned_abs() % 977) as f32) / 977.0;
+                        let hy = ((h.unsigned_abs() / 977 % 991) as f32) / 991.0;
+                        let x = zeile.left() + (cx as f32 + hx) * raster;
+                        let roh = zeile.top() + (cy as f32 + hy) * raster + versatz;
+                        let y = zeile.top() + (roh - zeile.top()).rem_euclid(hoehe);
+                        maler.rect_filled(
+                            egui::Rect::from_center_size(egui::pos2(x, y), egui::vec2(1.2, 1.2)),
+                            0.0,
+                            farbe,
+                        );
+                    }
                 }
             }
         }
+        // 60 Bilder je Sekunde statt 25: die Punkte sollen ruhig laufen.
         ui.ctx()
-            .request_repaint_after(std::time::Duration::from_millis(40));
+            .request_repaint_after(std::time::Duration::from_millis(16));
     }
 
     /// Rechtsklick-Menue auf einem falsch geschriebenen Wort: Vorschlaege,
@@ -5734,6 +5937,47 @@ impl App {
 /// Ueberschriften werden wie in `.libprev .doc` groesser gesetzt; alles
 /// andere bleibt bei 11 px. Der Bereich wird beschnitten, damit nichts
 /// ueber die weisse Seite laeuft.
+/// Vorschau des Dokumenttexts in einer Groesse relativ zu `basis` (11 px ist
+/// die Groesse in der Dateiablage).
+fn preview_text_at(
+    painter: &egui::Painter,
+    rect: egui::Rect,
+    text: &str,
+    p: &Palette,
+    basis: f32,
+) {
+    let clip = painter.with_clip_rect(rect);
+    let faktor = basis / 11.0;
+    let mut y = rect.top();
+    for line in text.lines() {
+        if y >= rect.bottom() {
+            break;
+        }
+        let trimmed = line.trim_end();
+        if trimmed.trim().is_empty() {
+            y += 5.0 * faktor;
+            continue;
+        }
+        let (size, body, heading) = if let Some(r) = trimmed.strip_prefix("### ") {
+            (12.0 * faktor, r, true)
+        } else if let Some(r) = trimmed.strip_prefix("## ") {
+            (13.0 * faktor, r, true)
+        } else if let Some(r) = trimmed.strip_prefix("# ") {
+            (15.0 * faktor, r, true)
+        } else {
+            (basis, trimmed, false)
+        };
+        let galley = clip.layout(
+            body.to_string(),
+            egui::FontId::proportional(size),
+            p.text,
+            rect.width(),
+        );
+        clip.galley(egui::pos2(rect.left(), y), galley.clone(), p.text);
+        y += galley.size().y + if heading { 4.0 * faktor } else { 2.0 * faktor };
+    }
+}
+
 fn preview_text(painter: &egui::Painter, rect: egui::Rect, text: &str, p: &Palette) {
     let clip = painter.with_clip_rect(rect);
     let mut y = rect.top();

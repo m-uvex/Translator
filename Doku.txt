@@ -516,3 +516,13 @@ Der Wechsel vom Übersetzer in den Editor blieb beim ersten Mal lange stehen. Ur
 
 Unter der Schreibseite blieben nur 8 px bis zur Kante der Fläche. `#pageWrap` in `style.css` hat rundum 28 px Polster (seitlich 16); der untere Abstand ist jetzt ebenfalls 28 px, sodass die Seite oben und unten gleich viel Luft hat.
 
+## 39. Sitzungsliste, Wörterbuchfenster und KI-Animation
+
+Die Sitzungsliste war eine schmale Leiste mit Namensknöpfen. `session_dock` zeichnet jetzt das Dock der Vorlage (`#docDock`): eine breite, abgerundete Fläche von 150 px Höhe am unteren Rand, davor ein Streifen, dessen Karten oben 112 px darüber hinausragen. Die Karten sind 118 × 136 px groß, die aktive 154 × 186 px; jede zeigt oben eine Vorschau des Dokumenttexts in eigener Fläche (6,5 px, aktiv 8,5 px) und darunter mittig den Namen. Der Rahmen ist bei der aktiven Karte und beim Überfahren akzentfarben, das Schließen-Kreuz erscheint nur beim Überfahren, Umsortieren durch Ziehen bleibt erhalten. Die Vorschau zeichnet `preview_text_at`, eine skalierte Fassung von `preview_text` aus der Dateiablage.
+
+Das persönliche Wörterbuch folgt jetzt `#dictDlg`: 480 px breit, oben eine Zeile mit Export und Import, darunter die Eingabe mit dem Hauptknopf „Wort hinzufügen“ noch vor der Liste, dann die Liste in einem gerahmten Kasten (leer: mittig „Noch keine Wörter“), unten rechts der Knopf „Schließen“. Ein Klick auf ein Wort macht es bearbeitbar, der Haken erscheint dann statt des Kreuzes.
+
+Die Partikel-Animation über der KI-Bearbeitung lag als ein Rechteck über der Auswahl und lief über die Ränder hinaus. Sie wird jetzt Zeile für Zeile des umbrochenen Textes gezeichnet (wie `box-decoration-break:clone` in `style.css`) und auf die Schreibfläche beschnitten, sodass sie beim Scrollen mit dem Text wandert. Die Rasterweiten und Geschwindigkeiten stammen aus dem Keyframe der Vorlage: 59, 43 und 31 px je vier Sekunden, also 14,75, 10,75 und 7,75 px/s — die mittlere Lage treibt dabei nach unten (`0 43px`), die beiden anderen nach oben. Neu gezeichnet wird mit 60 statt 25 Bildern je Sekunde.
+
+In den Einstellungen stoßen die Auswahlfelder nicht mehr an die Bildlaufleiste; der Inhalt der Bildlauffläche ist um 12 px schmaler als die Fläche.
+
