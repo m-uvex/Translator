@@ -24,6 +24,7 @@ Markup, an den Skripten und am CSS wurde nichts geändert.
 | `screenshots/11-arabisch-rtl.png` | Arabische Oberfläche, rechts-nach-links |
 | `screenshots/12-helles-theme.png` | Helles Theme |
 | `screenshots/13-rechtschreibung.png` | Rechtschreibprüfung der Rust-Fassung, deutsches Wort mit Vorschlägen |
+| `screenshots/14-kontextleiste.png` | Kontextleiste der Rust-Fassung über einer Textauswahl |
 
 Hinweis: Die Bilder 01 bis 12 zeigen die Electron-Fassung, aufgenommen über
 den Harness. Bild 13 zeigt die Rust-Fassung selbst (echtes Fenster, 1600 x 950,
@@ -170,5 +171,6 @@ dieselben Prompt-Regeln und dieselben Ablagedateien.
 | Bilder, PDF-/DOCX-Import, Wortalternativen, Ersatzwort-Anpassung | offen |
 | Editor: Markdown-Formatierung mit Umschaltern, Undo/Redo, Sitzungsliste, Diff-Probelesen, KI-Operationen, Ablage, Export | umgesetzt (ohne Rich-Text-Seite) |
 | Rechtschreibprüfung mit Hunspell (spellbook, Prüffenster mit Vorschlägen, persönliches Wörterbuch) | umgesetzt (ohne Wellenlinien im Text) |
+| Schwebende Kontextleiste (Verkürzen, Verlängern, Zusammenfassen, Probelesen, Synonyme) | umgesetzt (ohne Stil- und Mini-Übersetzer-Knopf) |
 | Visuelle Angleichung an die Electron-Fassung | teilweise: Symbole als Vektoren, Segoe UI als Schrift; Farben, Maße, Reihenfolge und KI-Knöpfe offen (Doku.txt Abschnitt 15) |
 | Seitenumbruch, PDF-Export | offen |

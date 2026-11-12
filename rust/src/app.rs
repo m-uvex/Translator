@@ -140,6 +140,12 @@ pub struct App {
     spell_scan_at: f64,
     show_spell: bool,
     show_spell_lang: bool,
+    /// Bildschirmrechteck der aktuellen Textauswahl; steuert die schwebende
+    /// Kontextleiste (`context_bar`).
+    bar_rect: Option<egui::Rect>,
+    /// Zeigt der Zeiger auf die Kontextleiste? Sie bleibt dann stehen, auch
+    /// wenn der Editor beim Klick den Fokus verliert.
+    bar_hover: bool,
 
     syn_word: String,
     syn_out: Vec<String>,
@@ -229,6 +235,8 @@ impl App {
             spell_scan_at: 0.0,
             show_spell: false,
             show_spell_lang: false,
+            bar_rect: None,
+            bar_hover: false,
             syn_word: String::new(),
             syn_out: Vec::new(),
             show_settings: false,
@@ -1827,6 +1835,16 @@ impl App {
                             let a = range.primary.ccursor.index;
                             let b = range.secondary.ccursor.index;
                             self.sel = Some((a.min(b), a.max(b)));
+                            if a != b {
+                                let r1 = out.galley.pos_from_cursor(&range.primary);
+                                let r2 = out.galley.pos_from_cursor(&range.secondary);
+                                self.bar_rect =
+                                    Some(r1.union(r2).translate(out.galley_pos.to_vec2()));
+                            } else if !self.bar_hover {
+                                self.bar_rect = None;
+                            }
+                        } else if !self.bar_hover {
+                            self.bar_rect = None;
                         }
                         if out.response.changed() {
                             let now = ui.input(|i| i.time);
@@ -1849,6 +1867,8 @@ impl App {
                         }
                     });
             });
+        self.context_bar(ui.ctx());
+
         ui.add_space(6.0);
 
         ui.horizontal(|ui| {
@@ -2101,6 +2121,82 @@ impl App {
         self.saved = false;
         self.set.doc = self.doc.clone();
         self.save_set();
+    }
+
+    /// Schwebende Leiste über der Textauswahl, wie `#bar` in der
+    /// Electron-Fassung: dieselben fünf Aktionen in derselben Reihenfolge.
+    fn context_bar(&mut self, ctx: &egui::Context) {
+        let Some(sel_rect) = self.bar_rect else { return };
+        if self.busy {
+            return;
+        }
+        let pal = self.pal;
+        let lang = self.lang;
+        let ops: [(&str, &str); 5] = [
+            ("shorten", "shorten"),
+            ("lengthen", "lengthen"),
+            ("summarize", "summarize"),
+            ("proofread", "proofread"),
+            ("synonyms", "synonyms"),
+        ];
+        let width = ops.len() as f32 * 32.0 + (ops.len() as f32 - 1.0) * 6.0 + 16.0;
+        let height = 40.0;
+        let screen = ctx.screen_rect();
+        let mut pos = egui::pos2(sel_rect.center().x - width / 2.0, sel_rect.top() - height - 10.0);
+        if pos.y < 60.0 {
+            pos.y = sel_rect.bottom() + 10.0;
+        }
+        pos.x = pos.x.clamp(8.0, (screen.right() - width - 8.0).max(8.0));
+
+        let mut action: Option<&str> = None;
+        let mut over_bar = false;
+        egui::Area::new(egui::Id::new("ctx_bar"))
+            .order(egui::Order::Foreground)
+            .fixed_pos(pos)
+            .show(ctx, |ui| {
+                egui::Frame::none()
+                    .fill(pal.card)
+                    .stroke(Stroke::new(1.0_f32, pal.line))
+                    .rounding(Rounding::same(999.0))
+                    .inner_margin(egui::Margin::symmetric(6.0, 4.0))
+                    .shadow(egui::epaint::Shadow {
+                        offset: egui::vec2(0.0, 2.0),
+                        blur: 10.0,
+                        spread: 0.0,
+                        color: egui::Color32::from_black_alpha(60),
+                    })
+                    .show(ui, |ui| {
+                        over_bar = ui.rect_contains_pointer(ui.max_rect());
+                        ui.horizontal(|ui| {
+                            for (op, icon) in ops {
+                                if icon_btn(ui, &pal, icon, false)
+                                    .on_hover_text(t(lang, op))
+                                    .clicked()
+                                {
+                                    action = Some(op);
+                                }
+                            }
+                        });
+                    });
+            });
+        self.bar_hover = over_bar;
+
+        if let Some(op) = action {
+            if op == "synonyms" {
+                let (a, b) = self.selection();
+                let src = &self.doc;
+                let text: String = src
+                    .chars()
+                    .skip(a)
+                    .take(b.saturating_sub(a))
+                    .collect();
+                self.syn_word = text.trim().to_string();
+                self.syn_out.clear();
+                self.show_syn = true;
+            } else {
+                self.start_editor_op(op);
+            }
+        }
     }
 
     fn format_link(&mut self) {
