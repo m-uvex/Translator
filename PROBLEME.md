@@ -7,11 +7,9 @@ mit Commit-Kurz-Hash.
 
 ## Gerade in Arbeit
 
-- **Buffy:** Rechtschreibung und Editor-Leiste sind abgeschlossen (Commits
-  `e921a63`, `ab212fc`, `6bd2990`). Als Nächstes: **P1 Modellauswahl im Editor**
-  (CPU-Symbol mit verankertem Untermenü, getrennt nach Übersetzungs- und
-  Schreibmodell). Wer parallel arbeitet, sollte `rust/src/app.rs` in
-  `fn editor` / `fn models_window` vorerst meiden.
+- **Buffy:** P1 und P2 sind erledigt (Commit `e3339ea`). Im Augenblick nichts in
+  Arbeit — wartet auf die Auswahl des nächsten Punktes und ist damit frei für
+  den zweiten Agent.
 - **Zweiter Agent:** *hier eintragen.*
 
 ## Regeln (aus den Hinweisen des Nutzers)
@@ -36,8 +34,8 @@ mit Commit-Kurz-Hash.
 
 | Nr. | Problem | Stand |
 | --- | --- | --- |
-| P1 | **Modellauswahl im Editor:** In der Vorlage ein Knopf mit CPU-Symbol, der direkt darunter ein Untermenü öffnet — getrennt nach Modell für Übersetzung im Editor und Modell fürs Schreiben im Editor. In der Rust-Fassung ist es eine einzelne Pille, die ein freischwebendes Fenster öffnet. | offen, als Nächstes |
-| P2 | **Modellauswahl im Übersetzer** ist ein freischwebendes Fenster statt eines an der Pille verankerten Dropdowns. Darin fehlen außerdem die Symbole (Fähigkeiten wie Bild/Denken, MT-Kennzeichnung). | offen |
+| P1 | **Modellauswahl im Editor:** CPU-Knopf mit verankertem Untermenü, getrennt nach Schreib- und Übersetzungsmodell. | erledigt (`e3339ea`) |
+| P2 | **Modellauswahl im Übersetzer:** freischwebendes Fenster ohne Symbole. | erledigt (`e3339ea`) |
 | P3 | **Kein blauer Aktivitäts-Punkt** neben dem Neuladen-Knopf im Übersetzer; die Vorlage zeigt dort an, dass Modelle geladen bzw. aktiv sind. | offen |
 | P4 | **Document tray** („Aktuell geöffnete Seiten“) sieht komplett falsch aus: Form der Seiten, Darstellung der Seiten selbst und Positionierung der Elemente weichen ab. | offen |
 | P5 | **Dunkelblaue Schrift ohne Grund** (Übersetzer, Document tray, weitere Stellen) — Kontrast und Farbe gegen `style.css` prüfen. | offen |
@@ -60,6 +58,8 @@ mit Commit-Kurz-Hash.
 - **Editor-Werkzeugleiste:** Überschriften im Dropdown, drei KI-Knöpfe fürs
   ganze Dokument, Modellpille rechts, Neuladen rechts vom Modellknopf, runde
   Bögen in Symbolen — `ab212fc`.
+- **Modellauswahl:** verankertes Menü im Editor (Schreib-/Übersetzungsmodell)
+  und im Übersetzer, mit Symbolen für Bild, Denken und MT — `e3339ea`.
 - **Rechtschreibung:** geschlängelte Wellenlinie (Sinus), Rechtsklick-Menü mit
   Wörterbuch-Vorschlägen, Ignorieren, Ins-Wörterbuch; Prüffenster am ersten
   Fund — `e921a63`.

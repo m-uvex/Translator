@@ -29,6 +29,8 @@ Markup, an den Skripten und am CSS wurde nichts geändert.
 | `screenshots/16-kontextleiste-stil.png` | Stil-Auswahl der Kontextleiste |
 | `screenshots/17-wellenlinien.png` | Geschlängelte Wellenlinie und Rechtsklick-Menü der Rust-Fassung |
 | `screenshots/18-rechtsklick-vorschlaege.png` | Rechtsklick-Menü mit Wörterbuch-Vorschlägen |
+| `screenshots/19-modellmenue-editor.png` | Modellmenü des Editors mit Schreib- und Übersetzungsmodell |
+| `screenshots/20-modellmenue-uebersetzer.png` | Modellmenü unter der Pille im Übersetzer |
 
 Hinweis: Die Bilder 01 bis 12 zeigen die Electron-Fassung, aufgenommen über
 den Harness. Bild 13 zeigt die Rust-Fassung selbst (echtes Fenster, 1600 x 950,
