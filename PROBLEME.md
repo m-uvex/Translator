@@ -7,9 +7,8 @@ mit Commit-Kurz-Hash.
 
 ## Gerade in Arbeit
 
-- **Buffy:** P1 und P2 sind erledigt (Commit `e3339ea`). Im Augenblick nichts in
-  Arbeit — wartet auf die Auswahl des nächsten Punktes und ist damit frei für
-  den zweiten Agent.
+- **Buffy:** P1, P2, P3 und P12 sind erledigt (bis `2e700b7`). Im Augenblick
+  nichts in Arbeit — wartet auf die Auswahl des nächsten Punktes.
 - **Zweiter Agent (`rust-oberflaeche`):** arbeitet in einem eigenen Worktree
   (`../Translator-rustview`), damit die offenen Aenderungen von Buffy nicht
   ueberschrieben werden. Als Erstes: **P15 Uebersetzer-Textfelder** und
@@ -42,7 +41,7 @@ mit Commit-Kurz-Hash.
 | --- | --- | --- |
 | P1 | **Modellauswahl im Editor:** CPU-Knopf mit verankertem Untermenü, getrennt nach Schreib- und Übersetzungsmodell. | erledigt (`e3339ea`) |
 | P2 | **Modellauswahl im Übersetzer:** freischwebendes Fenster ohne Symbole. | erledigt (`e3339ea`) |
-| P3 | **Kein blauer Aktivitäts-Punkt** neben dem Neuladen-Knopf im Übersetzer; die Vorlage zeigt dort an, dass Modelle geladen bzw. aktiv sind. | offen |
+| P3 | **Blauer Aktivitäts-Punkt** am Neuladen-Knopf, solange Modelle geladen werden; die Fähigkeiten des Modells stehen als Symbole im Modellknopf. | erledigt (`2e700b7`) |
 | P4 | **Document tray** („Aktuell geöffnete Seiten“) sieht komplett falsch aus: Form der Seiten, Darstellung der Seiten selbst und Positionierung der Elemente weichen ab. | offen |
 | P5 | **Dunkelblaue Schrift ohne Grund** (Übersetzer, Document tray, weitere Stellen) — Kontrast und Farbe gegen `style.css` prüfen. | offen |
 | P6 | **Icon-Knopf-Grundsätze** sind bei fast allen Knöpfen verletzt (graue Kreise ohne Grund, Squircles, falsche Größen). Im Editor größtenteils behoben, anderswo nicht. | offen |
@@ -51,7 +50,7 @@ mit Commit-Kurz-Hash.
 | P9 | **Unlesbarer Text, fehlende Symbole, fehlende Hintergrundkarten** in mehreren Ansichten; auch in der Fensterleiste (Minimieren/Maximieren/Schließen). | offen |
 | P10 | **Ränder und Abstände:** Elemente zu nah an Rändern, sinnlose Trennstriche, zu große Abstände zwischen Teilen einer Arbeitsfläche, untere Karte/Leiste zu groß. | offen |
 | P11 | **Dialoge:** Schließen-Kreuz der Einstellungen verschwindet beim Überfahren; Mini-Übersetzer sieht falsch aus; Stil-Optionen im Kontext öffnen ein Übersetzer-Panel statt eines eigenen Popups; Synonyme-Fenster. | offen |
-| P12 | **Installation:** Installations-Wizard, Installations- und Deinstallationsfunktion, NLLB-200-Unterstützung (Server und Modellverwaltung). | offen |
+| P12 | **Installation:** Wizard (`rust/Installieren.bat`), Deinstallation (`rust/Uninstall.ps1`) und NLLB-200 samt Modellverwaltung. | erledigt, ohne Autostart des NLLB-Servers (`2e700b7`) |
 | P13 | **Squircles statt Kreisen** an einzelnen Stellen; Rundungen insgesamt gegen `style.css` abgleichen. | offen |
 | P14 | **Alle bestehenden Menüs prüfen:** freischwebende Fenster durch verankerte Menüs ersetzen (Regel 2). | offen |
 | P15 | **Übersetzer-Textfelder** sollen keinen Trennstrich zu ihren Knöpfen haben und sich fast bis zum Boden strecken. | offen |
@@ -64,6 +63,10 @@ mit Commit-Kurz-Hash.
 - **Editor-Werkzeugleiste:** Überschriften im Dropdown, drei KI-Knöpfe fürs
   ganze Dokument, Modellpille rechts, Neuladen rechts vom Modellknopf, runde
   Bögen in Symbolen — `ab212fc`.
+- **Einrichtung:** `rust/Installieren.bat`, `rust/install.ps1`,
+  `rust/Uninstall.ps1`, NLLB-200 mit eigener Python-Umgebung und Modellwahl.
+- **Modelle:** Fähigkeits-Symbole im Modellknopf, Punkt am Neuladen-Knopf
+  während des Ladens.
 - **Modellauswahl:** verankertes Menü im Editor (Schreib-/Übersetzungsmodell)
   und im Übersetzer, mit Symbolen für Bild, Denken und MT — `e3339ea`.
 - **Rechtschreibung:** geschlängelte Wellenlinie (Sinus), Rechtsklick-Menü mit
