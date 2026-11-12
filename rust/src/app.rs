@@ -2848,25 +2848,34 @@ impl App {
                 left: 16.0,
                 right: 16.0,
                 top: 28.0,
-                // Unten ohne Rand: Wie in der Vorlage wird die Seite an der
-                // Kante der Flaeche abgeschnitten, nicht 28 px davor.
-                bottom: 0.0,
+                // Unten ein kleiner Rand, damit die Seite nicht ueber die
+                // gerundete Kante der Flaeche haengt.
+                bottom: 8.0,
             })
             .show(ui, |ui| {
                 ui.set_width(ui.available_width());
-                ui.set_height((h - 28.0).max(80.0));
+                ui.set_height((h - 36.0).max(80.0));
                 egui::ScrollArea::vertical()
                     .id_source("page_scroll")
                     .auto_shrink([false, false])
                     .show(ui, |ui| {
-                        let page_w = 794.0_f32.min(ui.available_width());
+                        let flaeche = ui.available_rect_before_wrap();
+                        let page_w = 794.0_f32.min(flaeche.width());
                         // Die Seite ist immer mindestens so hoch wie die Flaeche
                         // selbst, damit sie erst an deren Kante abgeschnitten wird
                         // und nicht schon vorher aufhoert.
-                        let page_h = (h - 56.0).max(1040.0);
-                        let (page_rect, _) = ui.allocate_exact_size(
-                            egui::vec2(page_w, page_h),
+                        let page_h = (h - 64.0).max(1040.0);
+                        let (zeile, _) = ui.allocate_exact_size(
+                            egui::vec2(flaeche.width(), page_h),
                             egui::Sense::hover(),
+                        );
+                        // Mittig auf der Flaeche, nicht am linken Rand.
+                        let page_rect = egui::Rect::from_min_size(
+                            egui::pos2(
+                                zeile.left() + (zeile.width() - page_w) / 2.0,
+                                zeile.top(),
+                            ),
+                            egui::vec2(page_w, page_h),
                         );
                         let painter = ui.painter();
                         painter.rect_filled(
