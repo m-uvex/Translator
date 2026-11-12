@@ -153,6 +153,7 @@ pub struct App {
     spell_scan_at: f64,
     show_spell: bool,
     show_spell_lang: bool,
+    dict_anchor: Option<egui::Rect>,
     /// Bildschirmrechteck der aktuellen Textauswahl; steuert die schwebende
     /// Kontextleiste (`context_bar`).
     bar_rect: Option<egui::Rect>,
@@ -275,6 +276,7 @@ impl App {
             spell_scan_at: 0.0,
             show_spell: false,
             show_spell_lang: false,
+            dict_anchor: None,
             bar_rect: None,
             bar_hover: false,
             spell_anchor: None,
@@ -1169,6 +1171,40 @@ fn side_label(
     ui.painter().galley(pos, galley, color);
 }
 
+/// Zeile in einem ankergebundenen Menue wie `.row` in `style.css`: 32 px hoch,
+/// Hintergrund nur beim Ueberfahren, Name links, optional ein Haken rechts.
+fn row_zeile(ui: &mut egui::Ui, p: &Palette, label: &str, sel: bool, haken: bool) -> bool {
+    let breite = ui.available_width();
+    let (rect, resp) = ui.allocate_exact_size(egui::vec2(breite, 32.0), egui::Sense::click());
+    if resp.hovered() {
+        ui.painter().rect_filled(rect, Rounding::same(10.0), p.soft);
+    }
+    let text = if sel {
+        format!("• {}", label)
+    } else {
+        label.to_string()
+    };
+    ui.painter().text(
+        egui::pos2(rect.left() + 12.0, rect.center().y),
+        egui::Align2::LEFT_CENTER,
+        text,
+        egui::FontId::proportional(14.0),
+        if sel { p.accent_ink } else { p.text },
+    );
+    if haken {
+        crate::icons::paint(
+            ui.painter(),
+            egui::Rect::from_center_size(
+                egui::pos2(rect.right() - 18.0, rect.center().y),
+                egui::vec2(15.0, 15.0),
+            ),
+            "check",
+            p.accent_ink,
+        );
+    }
+    resp.clicked()
+}
+
 /// Eine Zeile im Modellmenue: Name links, rechts Symbole fuer Bild- und
 /// Denkfaehigkeit sowie die MT-Kennzeichnung. Entspricht `.row` in `style.css`.
 fn menu_row(
@@ -1468,7 +1504,7 @@ impl eframe::App for App {
         self.confirm_window(ctx);
         self.diff_window(ctx);
         self.spell_window(ctx);
-        self.spell_lang_window(ctx);
+        self.dict_menu(ctx);
         self.style_bar_window(ctx);
         self.mini_window(ctx);
         self.spell_menu_window(ctx);
@@ -3120,7 +3156,7 @@ impl App {
                         self.open_spell(ui.ctx().screen_rect());
                     }
                 }
-                if ui
+                let dict_resp = ui
                     .add(
                         egui::Button::new(
                             RichText::new(format!(
@@ -3132,10 +3168,10 @@ impl App {
                         )
                         .fill(Color32::TRANSPARENT),
                     )
-                    .on_hover_text(t(lang, "dict"))
-                    .clicked()
-                {
-                    self.show_spell_lang = true;
+                    .on_hover_text(t(lang, "dict"));
+                if dict_resp.clicked() {
+                    self.dict_anchor = Some(dict_resp.rect);
+                    self.show_spell_lang = !self.show_spell_lang;
                 }
                 if self.set.ed_spell && !self.spell_hits.is_empty() {
                     ui.label(
@@ -4387,61 +4423,67 @@ impl App {
         }
     }
 
-    fn spell_lang_window(&mut self, ctx: &egui::Context) {
+    /// Wörterbuch-Menü der Statusleiste: wie `#pop` in `editor.js` oberhalb
+    /// des Knopfes, mit den Wörterbüchern und dem Schalter für die Prüfung.
+    fn dict_menu(&mut self, ctx: &egui::Context) {
         if !self.show_spell_lang {
             return;
         }
-        let lang = self.lang;
         let pal = self.pal;
-        let mut open = true;
+        let lang = self.lang;
+        let anchor = self.dict_anchor.unwrap_or_else(|| {
+            egui::Rect::from_min_size(egui::pos2(200.0, 700.0), egui::vec2(120.0, 24.0))
+        });
+        let breite = 240.0;
         let mut pick: Option<String> = None;
-        dialog(ctx, "spell_lang_win", &t(lang, "dict"), 260.0, &pal, &mut open, |ui| {
-                ui.checkbox(&mut self.set.ed_spell, t(lang, "spell_on"));
-                ui.separator();
-                for (code, name) in DICTS {
-                    let on = self.set.dict_lang == code;
-                    if ui
-                        .add(
-                            egui::Button::new(
-                                RichText::new(if on {
-                                    format!("• {}", name)
-                                } else {
-                                    name.to_string()
-                                })
-                                .color(if on { self.pal.accent_ink } else { self.pal.text }),
-                            )
-                            .fill(Color32::TRANSPARENT),
-                        )
-                        .clicked()
-                    {
-                        pick = Some(code.to_string());
+        let mut umschalten = false;
+        let antwort = egui::Area::new(egui::Id::new("dict_pop"))
+            .order(egui::Order::Foreground)
+            .fixed_pos(egui::pos2(anchor.right(), anchor.top() - 8.0))
+            .pivot(egui::Align2::RIGHT_BOTTOM)
+            .show(ctx, |ui| {
+                ui.set_width(breite);
+                pop_card(&pal).show(ui, |ui| {
+                    ui.set_width(breite - 12.0);
+                    ui.spacing_mut().item_spacing.y = 0.0;
+                    for (code, name) in DICTS {
+                        if row_zeile(ui, &pal, name, self.set.dict_lang == code, false) {
+                            pick = Some(code.to_string());
+                        }
                     }
-                }
-                ui.separator();
-                let missing: Vec<&str> = DICTS
-                    .iter()
-                    .filter(|(c, _)| !self.spell.has_dict(c))
-                    .map(|(c, _)| *c)
-                    .collect();
-                if !missing.is_empty() {
-                    ui.label(
-                        RichText::new(format!(
-                            "{}: {}",
-                            t(lang, "spell_missing"),
-                            missing.join(", ")
-                        ))
-                        .size(11.0)
-                        .color(self.pal.muted),
+                    ui.add_space(4.0);
+                    let (linie, _) = ui.allocate_exact_size(
+                        egui::vec2(breite - 12.0, 1.0),
+                        egui::Sense::hover(),
                     );
-                }
+                    ui.painter().rect_filled(linie, 0.0, pal.line);
+                    ui.add_space(4.0);
+                    if row_zeile(ui, &pal, &t(lang, "spell_on"), false, self.set.ed_spell) {
+                        umschalten = true;
+                    }
+                });
             });
+        let rect = antwort.response.rect;
+        let ausserhalb = ctx.input(|i| {
+            i.pointer.button_clicked(egui::PointerButton::Primary)
+                && i.pointer
+                    .interact_pos()
+                    .map(|pos| !rect.contains(pos) && !anchor.contains(pos))
+                    .unwrap_or(false)
+        });
+        if ausserhalb || ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            self.show_spell_lang = false;
+        }
         if let Some(code) = pick {
             self.set.dict_lang = code;
             self.spell_scanned_doc.clear();
             self.save_set();
+            self.show_spell_lang = false;
         }
-        self.save_set();
-        if !open {
+        if umschalten {
+            self.set.ed_spell = !self.set.ed_spell;
+            self.spell_scanned_doc.clear();
+            self.save_set();
             self.show_spell_lang = false;
         }
     }

@@ -437,3 +437,9 @@ Die Einstellung „Modell fuer Ersatzwoerter (bei TranslateGemma/NLLB)“ war ei
 Die Oberflaechensprache stand nur beim Start fest: `App::new` bestimmte `self.lang` einmal aus `Settings::ui_lang`, und die Einstellung schrieb den Wert zwar in die Datei, aber nicht in die laufende Ansicht — erst ein Neustart brachte die neue Sprache. In der Vorlage besorgt das `renderAll()` nach jeder Aenderung (`renderer.js`).
 
 `App::update` bestimmt die Sprache jetzt in jedem Bild neu (`Lang::resolve(&self.set.ui_lang)`), bevor Fensterleiste, Ansichten und Dialoge beschriftet werden. Damit gilt jede Sprache sofort, auch Arabisch — die Umstellung kostet nur einen Vergleich zweier Zeichenketten.
+
+## 31. Woerterbuchmenue der Statusleiste
+
+Das Menue am Globus-Knopf war ein mittiger Dialog mit Kaestchen, zwei Trennstrichen und Sprachknoepfen, die ihren eigenen Rahmen mitbrachten. Die Vorlage oeffnet dort ein Popup **oberhalb** des Knopfes (`#pop` in `editor.js`): je eine Zeile `.row` pro Woerterbuch, ein Trennstrich, dann eine Zeile „Rechtschreibung pruefen“ mit Haken auf der rechten Seite.
+
+`App::dict_menu` ersetzt `spell_lang_window`: das Menue haengt an `dict_anchor` (der Knopf merkt sich sein Rechteck beim Klick), steht mit `pivot(RIGHT_BOTTOM)` acht Pixel ueber dem Knopf, hat 240 px Breite und nutzt `pop_card()` als Karte. Die Zeilen zeichnet der neue Helfer `row_zeile` — 32 px hoch, 10er Rundung, Hintergrund nur beim Ueberfahren, Name links, gewaehlter Eintrag mit Punkt und Akzentfarbe, optional ein Haken rechts. Ein Klick daneben oder Escape schliesst, ein Klick auf ein Woerterbuch uebernimmt es und prueft neu.
