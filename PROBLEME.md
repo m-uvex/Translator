@@ -9,13 +9,11 @@ mit Commit-Kurz-Hash.
 
 - **Buffy:** P1, P2, P3 und P12 sind erledigt (bis `2e700b7`). Im Augenblick
   nichts in Arbeit — wartet auf die Auswahl des nächsten Punktes.
-- **Zweiter Agent (`rust-oberflaeche`):** arbeitet in einem eigenen Worktree
-  (`../Translator-rustview`), damit die offenen Aenderungen von Buffy nicht
-  ueberschrieben werden. Als Erstes: **P15 Uebersetzer-Textfelder** und
-  **P6/P8 Icon-Knoepfe und Hover** in Fensterleiste, Navigationsleiste und
-  Uebersetzer (app.rs: `update`, `translator`, `side_panel`, `icon_btn`).
-  Danach **P5/P10 Farben und Abstaende** im Uebersetzer sowie **P4
-  Dokumentenablage**. `fn editor` und `fn models_menu` bleiben unberuehrt.
+- **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
+  Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
+  (`1863576`). P15 und P4 sind damit ganz erledigt, P5/P6/P8/P10/P13 fuer diese
+  Ansichten. Als Naechstes: Rest von P5/P6/P10/P13 in Editor und Dialogen,
+  danach P9/P11/P14. `fn editor` und `fn models_menu` bleiben unberuehrt.
 
 ## Regeln (aus den Hinweisen des Nutzers)
 
@@ -42,18 +40,18 @@ mit Commit-Kurz-Hash.
 | P1 | **Modellauswahl im Editor:** CPU-Knopf mit verankertem Untermenü, getrennt nach Schreib- und Übersetzungsmodell. | erledigt (`e3339ea`) |
 | P2 | **Modellauswahl im Übersetzer:** freischwebendes Fenster ohne Symbole. | erledigt (`e3339ea`) |
 | P3 | **Blauer Aktivitäts-Punkt** am Neuladen-Knopf, solange Modelle geladen werden; die Fähigkeiten des Modells stehen als Symbole im Modellknopf. | erledigt (`2e700b7`) |
-| P4 | **Document tray** („Aktuell geöffnete Seiten“) sieht komplett falsch aus: Form der Seiten, Darstellung der Seiten selbst und Positionierung der Elemente weichen ab. | offen |
-| P5 | **Dunkelblaue Schrift ohne Grund** (Übersetzer, Document tray, weitere Stellen) — Kontrast und Farbe gegen `style.css` prüfen. | offen |
-| P6 | **Icon-Knopf-Grundsätze** sind bei fast allen Knöpfen verletzt (graue Kreise ohne Grund, Squircles, falsche Größen). Im Editor größtenteils behoben, anderswo nicht. | offen |
+| P4 | **Document tray** („Aktuell geöffnete Seiten“) sieht komplett falsch aus: Form der Seiten, Darstellung der Seiten selbst und Positionierung der Elemente weichen ab. | erledigt (`1863576`) |
+| P5 | **Dunkelblaue Schrift ohne Grund** (Übersetzer, Document tray, weitere Stellen) — Kontrast und Farbe gegen `style.css` prüfen. | Übersetzer und Seitenleiste erledigt (`1863576`); übrige Ansichten offen |
+| P6 | **Icon-Knopf-Grundsätze** sind bei fast allen Knöpfen verletzt (graue Kreise ohne Grund, Squircles, falsche Größen). Im Editor größtenteils behoben, anderswo nicht. | Fensterleiste, Navigationsleiste, Übersetzer, Seitenleiste und Ablage erledigt (`1863576`); Dialoge offen |
 | P7 | **Editor: größere Probleme** jenseits der Leiste (Seitenmaß zu breit und zu kurz, Statusleiste am Boden, Darstellung der Fläche). | offen |
-| P8 | **Hover-Animationen** der Knöpfe entfernen; stattdessen den Highlighter der Vorlage (siehe Regel 3). | offen |
+| P8 | **Hover-Animationen** der Knöpfe entfernen; stattdessen den Highlighter der Vorlage (siehe Regel 3). | in den bearbeiteten Ansichten erledigt (`1863576`); Rest prüfen |
 | P9 | **Unlesbarer Text, fehlende Symbole, fehlende Hintergrundkarten** in mehreren Ansichten; auch in der Fensterleiste (Minimieren/Maximieren/Schließen). | offen |
-| P10 | **Ränder und Abstände:** Elemente zu nah an Rändern, sinnlose Trennstriche, zu große Abstände zwischen Teilen einer Arbeitsfläche, untere Karte/Leiste zu groß. | offen |
+| P10 | **Ränder und Abstände:** Elemente zu nah an Rändern, sinnlose Trennstriche, zu große Abstände zwischen Teilen einer Arbeitsfläche, untere Karte/Leiste zu groß. | Übersetzer, Seitenleiste und Ablage erledigt (`1863576`); Editor offen |
 | P11 | **Dialoge:** Schließen-Kreuz der Einstellungen verschwindet beim Überfahren; Mini-Übersetzer sieht falsch aus; Stil-Optionen im Kontext öffnen ein Übersetzer-Panel statt eines eigenen Popups; Synonyme-Fenster. | offen |
 | P12 | **Installation:** Wizard (`rust/Installieren.bat`), Deinstallation (`rust/Uninstall.ps1`) und NLLB-200 samt Modellverwaltung. | erledigt, ohne Autostart des NLLB-Servers (`2e700b7`) |
-| P13 | **Squircles statt Kreisen** an einzelnen Stellen; Rundungen insgesamt gegen `style.css` abgleichen. | offen |
+| P13 | **Squircles statt Kreisen** an einzelnen Stellen; Rundungen insgesamt gegen `style.css` abgleichen. | bearbeitete Ansichten erledigt (`1863576`); Dialoge offen |
 | P14 | **Alle bestehenden Menüs prüfen:** freischwebende Fenster durch verankerte Menüs ersetzen (Regel 2). | offen |
-| P15 | **Übersetzer-Textfelder** sollen keinen Trennstrich zu ihren Knöpfen haben und sich fast bis zum Boden strecken. | offen |
+| P15 | **Übersetzer-Textfelder** sollen keinen Trennstrich zu ihren Knöpfen haben und sich fast bis zum Boden strecken. | erledigt (`1863576`) |
 | P16 | **Überschriften-Dropdown** im Editor: Verhalten und Aussehen gegen die Vorlage prüfen (gesetzt sind H1–H3 über `editor::set_heading`). | zu prüfen |
 
 ## Erledigt
@@ -74,3 +72,10 @@ mit Commit-Kurz-Hash.
   Fund — `e921a63`.
 - **Kontextleiste:** sieben Aktionen in der Reihenfolge der Vorlage, Stil- und
   Mini-Übersetzer-Knopf ergänzt — `c69c0aa`, `87ffeea`.
+- **Übersetzer:** Textfelder ohne Trennstrich bis fast zum Boden, Kopfzeile
+  mit 36er Knöpfen, Modellpille ohne `▤`, Stil-Seitenleiste mit Karten,
+  Symbolgruppen sowie aufklappbarem Kontext und Glossar — `1863576`.
+- **Fensterleiste und Navigationsleiste:** 36er-Kreise, Symbole nur mit
+  Hover-/Aktiv-Hintergrund, kein grauer Grund — `1863576`.
+- **Dokumentenablage:** Raster mit 210-px-Spalten, 168-px-Vorschau,
+  Datum/Uhrzeit, Hover-Rahmen und Löschkreuz — `1863576`.
