@@ -919,6 +919,15 @@ impl App {
     }
 
     /// Setzt die Ueberschriftenebene der markierten Zeilen.
+    /// Schriftfamilie des Papiers: die gewaehlte, sofern sie geladen ist.
+    fn schrift_familie(&self) -> egui::FontFamily {
+        if crate::schrift_familien().iter().any(|f| *f == self.set.ed_font) {
+            egui::FontFamily::Name(self.set.ed_font.clone().into())
+        } else {
+            egui::FontFamily::Proportional
+        }
+    }
+
     fn set_heading(&mut self, prefix: &str) {
         self.push_undo();
         let (text, sel) = editor::set_heading(&self.doc, self.selection(), prefix);
@@ -1388,6 +1397,52 @@ fn icon_btn_sized(
 /// Standardknopf der Werkzeugleisten: 32 px, runder Kreis.
 fn icon_btn(ui: &mut egui::Ui, p: &Palette, name: &str, on: bool) -> egui::Response {
     icon_btn_sized(ui, p, name, on, 32.0, 999.0, false)
+}
+
+/// Auswahlfeld der Editor-Leiste (`.tsel` in der Vorlage): eine runde Pille
+/// auf weichem Grund mit dem vollen Namen der Wahl. Gibt die neue Wahl zurueck,
+/// wenn eine Zeile angeklickt wurde.
+fn tsel_pill(
+    ui: &mut egui::Ui,
+    pal: &Palette,
+    id: &str,
+    selected: &str,
+    labels: &[(String, String)],
+    width: f32,
+) -> Option<String> {
+    let mut pick = None;
+    ui.scope(|ui| {
+        let st = ui.style_mut();
+        st.spacing.button_padding = egui::vec2(10.0, 6.0);
+        for w in [
+            &mut st.visuals.widgets.inactive,
+            &mut st.visuals.widgets.hovered,
+            &mut st.visuals.widgets.active,
+            &mut st.visuals.widgets.open,
+        ] {
+            w.bg_fill = pal.soft;
+            w.weak_bg_fill = pal.soft;
+            w.bg_stroke = Stroke::NONE;
+            w.rounding = Rounding::same(999.0);
+        }
+        egui::ComboBox::from_id_source(id)
+            .selected_text(RichText::new(selected).size(13.0).color(pal.text))
+            .width(width)
+            .show_ui(ui, |ui| {
+                for (value, label) in labels {
+                    if ui
+                        .selectable_label(
+                            label.as_str() == selected,
+                            RichText::new(label).size(13.0),
+                        )
+                        .clicked()
+                    {
+                        pick = Some(value.clone());
+                    }
+                }
+            });
+    });
+    pick
 }
 
 /// Symbolknopf der Stilgruppen (`.seg .ib`): 32 px, rund, Hover in der
@@ -3468,58 +3523,55 @@ impl App {
                 self.redo();
             }
             ui.separator();
+            // Schrift und Groesse des Papiers. Die Vorlage setzt beides auf
+            // die Auswahl (HTML-Spans); der Rust-Editor haelt Markdown als
+            // Text, dort gibt es keine Auszeichnung fuer Schrift und Groesse.
+            // Deshalb gilt die Wahl hier fuer die ganze Seite — sichtbar an
+            // derselben Stelle der Leiste wie in der Vorlage.
+            let schriften: Vec<(String, String)> = crate::schrift_familien()
+                .iter()
+                .map(|f| (f.clone(), f.clone()))
+                .collect();
+            if !schriften.is_empty() {
+                let gewaehlt = schriften
+                    .iter()
+                    .find(|(v, _)| *v == self.set.ed_font)
+                    .map(|(_, l)| l.clone())
+                    .unwrap_or_else(|| schriften[0].1.clone());
+                if let Some(v) = tsel_pill(ui, &pal, "ed_font", &gewaehlt, &schriften, 150.0) {
+                    self.set.ed_font = v;
+                    self.save_set();
+                }
+            }
+            const GROESSEN: [u32; 11] = [10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 40];
+            let groessen: Vec<(String, String)> = GROESSEN
+                .iter()
+                .map(|g| (g.to_string(), g.to_string()))
+                .collect();
+            let aktuelle_groesse = self.set.ed_size.clamp(8, 96).to_string();
+            if let Some(v) = tsel_pill(ui, &pal, "ed_size", &aktuelle_groesse, &groessen, 80.0) {
+                if let Ok(n) = v.parse::<u32>() {
+                    self.set.ed_size = n;
+                    self.save_set();
+                }
+            }
             // Ueberschrift wie die Auswahl `.tsel` in der Vorlage: eine runde
             // Pille auf weichem Grund, mit den vollen Namen statt „H1“.
             let level = editor::heading_of(&self.doc, self.selection().0);
-            let mut new_level: Option<&str> = None;
             let head_label = match level {
                 1 => t(lang, "h1"),
                 2 => t(lang, "h2"),
                 3 => t(lang, "h3"),
                 _ => t(lang, "heading"),
             };
-            ui.scope(|ui| {
-                let st = ui.style_mut();
-                st.spacing.button_padding = egui::vec2(10.0, 6.0);
-                for w in [
-                    &mut st.visuals.widgets.inactive,
-                    &mut st.visuals.widgets.hovered,
-                    &mut st.visuals.widgets.active,
-                    &mut st.visuals.widgets.open,
-                ] {
-                    w.bg_fill = pal.soft;
-                    w.weak_bg_fill = pal.soft;
-                    w.bg_stroke = Stroke::NONE;
-                    w.rounding = Rounding::same(999.0);
-                }
-                egui::ComboBox::from_id_source("ed_head")
-                    .selected_text(RichText::new(&head_label).size(13.0).color(pal.text))
-                    .width(150.0)
-                    .show_ui(ui, |ui| {
-                        if ui
-                            .selectable_label(
-                                level == 0,
-                                RichText::new(t(lang, "heading")).size(13.0),
-                            )
-                            .clicked()
-                        {
-                            new_level = Some("");
-                        }
-                        for (lvl, key, prefix) in
-                            [(1usize, "h1", "# "), (2, "h2", "## "), (3, "h3", "### ")]
-                        {
-                            if ui
-                                .selectable_label(level == lvl, RichText::new(t(lang, key)).size(13.0))
-                                .clicked()
-                            {
-                                new_level = Some(prefix);
-                            }
-                        }
-                    });
-            });
-            if let Some(prefix) = new_level {
-                self.set_heading(prefix);
+            let mut wahl: Vec<(String, String)> = vec![(String::new(), t(lang, "heading"))];
+            for (key, prefix) in [("h1", "# "), ("h2", "## "), ("h3", "### ")] {
+                wahl.push((prefix.to_string(), t(lang, key)));
             }
+            if let Some(prefix) = tsel_pill(ui, &pal, "ed_head", &head_label, &wahl, 150.0) {
+                self.set_heading(&prefix);
+            }
+
             ui.separator();
             if icon_btn(ui, &pal, "bold", self.selection_wrapped("**", "**"))
                 .on_hover_text(t(lang, "bold"))
@@ -3689,7 +3741,12 @@ impl App {
                         let inner = page_rect.shrink2(egui::vec2(72.0, 64.0));
                         ui.allocate_ui_at_rect(inner, |ui| {
                         let before = self.doc.clone();
+                        let seiten_schrift = egui::FontId::new(
+                            self.set.ed_size.clamp(8, 96) as f32,
+                            self.schrift_familie(),
+                        );
                         let out = egui::TextEdit::multiline(&mut self.doc)
+                            .font(seiten_schrift)
                             .frame(false)
                             .desired_width(f32::INFINITY)
                             .desired_rows(24)

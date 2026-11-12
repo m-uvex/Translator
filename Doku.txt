@@ -558,11 +558,25 @@ Jede LLM-gestützte Bearbeitung im Editor beendete das Programm. Im Protokoll st
 
 Für die Fehlersuche wichtig: Das Programm schreibt panics auf die Standardfehlerausgabe; beim Start mit `> /tmp/app.log 2>&1` steht die Ursache dort im Klartext.
 
+
+
+## 47. „Dynamisches Markdown“ in der Rust-Fassung entfernt
+
+
+
+Die Einstellung `ed_markdown` („Dynamisches Markdown“, `s_md`) stand im Einstellungsfenster, ohne dass irgendwo etwas sie gelesen hätte. Sie kann in der Rust-Fassung auch nichts bewirken: Der Editor hält den Text als Markdown (`doc`), `# ` und `- ` sind dort bereits die Auszeichnung. Die Electron-Fassung arbeitet dagegen mit HTML-Blöcken und wandelt die Zeichen beim Tippen um (`handleMarkdownTrigger` in `editor.js`). Der Schalter ist deshalb aus `settings_window` in `app.rs` entfernt; das Feld `ed_markdown` bleibt in `settings.rs`, damit gespeicherte Einstellungen unverändert gelesen werden können.
+
+
+
+## 48. Angepinnte Sprachen mit gefülltem Stern
+
+
+
+Die Vorlage füllt den Stern einer angepinnten Sprache (`style.css`: `.star.on svg{fill:currentColor}`). `icons::paint` zeichnet jedoch nur Umrisse, sodass angepinnt und nicht angepinnt fast gleich aussahen. Neu ist `icons::paint_filled` in `icons.rs`: Es füllt geschlossene Pfade als Fächer vom Schwerpunkt — das ist für sternförmige Umrisse wie den Stern richtig und für die übrigen Symbole unerheblich, weil nur der Stern gefüllt aufgerufen wird. `lang_popup` in `app.rs` benutzt es für `pinned` mit `pal.accent_ink`, sonst weiterhin `paint` mit `pal.muted`.
+
 
-## 47. „Dynamisches Markdown“ in der Rust-Fassung entfernt
+## 49. Schrift, Größe und Überschrift in der Editor-Leiste
 
-Die Einstellung `ed_markdown` („Dynamisches Markdown“, `s_md`) stand im Einstellungsfenster, ohne dass irgendwo etwas sie gelesen hätte. Sie kann in der Rust-Fassung auch nichts bewirken: Der Editor hält den Text als Markdown (`doc`), `# ` und `- ` sind dort bereits die Auszeichnung. Die Electron-Fassung arbeitet dagegen mit HTML-Blöcken und wandelt die Zeichen beim Tippen um (`handleMarkdownTrigger` in `editor.js`). Der Schalter ist deshalb aus `settings_window` in `app.rs` entfernt; das Feld `ed_markdown` bleibt in `settings.rs`, damit gespeicherte Einstellungen unverändert gelesen werden können.
+Die Leiste hatte nur die Überschriftauswahl; die Vorlage zeigt drei Felder `.tsel` nebeneinander (Schrift, Größe, Überschrift). Neu ist `tsel_pill` in `app.rs` — eine runde Pille auf weichem Grund, die für alle drei Felder dient — sowie `SCHRIFTEN` und `schrift_familien()` in `main.rs`: Für jede wählbare Schrift (Segoe UI, Arial, Georgia, Times New Roman, Verdana, Consolas) wird beim Start eine eigene egui-Familie angelegt, mit den übrigen geladenen Schriften als Rückfall für fremde Zeichen. Die Größen sind dieselben elf Stufen wie `SIZES` in `editor.js` (10 bis 40). Gespeichert wird in `ed_font` und `ed_size` (`settings.rs`).
 
-## 48. Angepinnte Sprachen mit gefülltem Stern
-
-Die Vorlage füllt den Stern einer angepinnten Sprache (`style.css`: `.star.on svg{fill:currentColor}`). `icons::paint` zeichnet jedoch nur Umrisse, sodass angepinnt und nicht angepinnt fast gleich aussahen. Neu ist `icons::paint_filled` in `icons.rs`: Es füllt geschlossene Pfade als Fächer vom Schwerpunkt — das ist für sternförmige Umrisse wie den Stern richtig und für die übrigen Symbole unerheblich, weil nur der Stern gefüllt aufgerufen wird. `lang_popup` in `app.rs` benutzt es für `pinned` mit `pal.accent_ink`, sonst weiterhin `paint` mit `pal.muted`.
+Abweichung: Die Vorlage setzt Schriftart und Größe mit `execCommand('fontName')` und `applySize` auf die *markierte Stelle* und schreibt dafür HTML-Spans in die Seite. Der Rust-Editor führt den Text als Markdown (`doc`), dort gibt es keine Auszeichnung für Schrift und Größe — ein `<span>`-Tag im Markdown wäre sichtbarer Text. Deshalb gilt die Wahl hier für das ganze Papier; die Felder stehen an derselben Stelle der Leiste und wirken sofort (`TextEdit::font` in `fn editor`).

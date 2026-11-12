@@ -12,7 +12,8 @@ mit Commit-Kurz-Hash.
   erledigt, P9 nachgesehen (Rest: Dokumentenablage, Fensterleiste).
   Nachgetragen: P32 bis P41 (fehlende Funktionen) und P42 bis P55 (Rückmeldung
   des Nutzers zum Editor). P42 bis P51 sowie P53, P55 bis P69 sind erledigt.
-  P38, P52 und P54 sind ebenfalls erledigt. Offen bleiben P24, P32, P34 und P37.
+  P38, P52 und P54 sind ebenfalls erledigt, P24 mit einer Abweichung (Schrift und Größe gelten für die
+  ganze Seite). Offen bleiben P32, P34 und P37.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
   (`1863576`). P15 und P4 sind damit ganz erledigt, P5/P6/P8/P10/P13 fuer diese
@@ -74,7 +75,7 @@ lesen, wird der Punkt geschlossen.
 | P21 | **Schreibseite wird zu früh abgeschnitten:** In der Vorlage endet die Seite erst an der Kante der Fläche, auf der sie liegt; sie muss die Fläche immer ausfüllen. | erledigt (`bce4125`), Seite endet an der Kante der Fläche |
 | P22 | **Fensterecken sind eckig:** Die Vorlage läuft im normalen Windows-Fenster mit abgerundeten Ecken, die Rust-Fassung ohne Titelleiste hat eckige. | erledigt (`bce4125`), Ecken am Fenster gerundet |
 | P23 | **Modell-Auswahl-Menü lässt sich nicht öffnen:** Es blitzt kurz auf und schließt sich sofort wieder, im Übersetzer wie im Text-Arbeitsplatz. | erledigt (`8273e8d`), nicht angeklickt geprüft |
-| P24 | **Editor-Leiste: Schrift- und Größenauswahl fehlen** ganz, die Vorlage hat drei Auswahlfelder `.tsel` nebeneinander (Schrift, Größe, Überschrift). | offen |
+| P24 | **Editor-Leiste: Schrift- und Größenauswahl fehlen** ganz, die Vorlage hat drei Auswahlfelder `.tsel` nebeneinander (Schrift, Größe, Überschrift). | erledigt mit Abweichung: Die drei Felder stehen in der Leiste (`tsel_pill` in `app.rs`, Schrift aus `SCHRIFTEN` in `main.rs`, Größen 10–40, Überschrift wie bisher über `editor::set_heading`). Die Vorlage setzt Schrift und Größe auf die *Auswahl* (HTML-Spans); der Rust-Editor hält Markdown als Text und kennt keine solche Auszeichnung, deshalb gilt beides für die ganze Seite. Begründung in `Doku.txt` 49. |
 | P25 | **Schreibseite hängt über die Kante ihrer Fläche und klebt links** statt mittig: Sie lief genau auf die gerundete Kante zu und `allocate_exact_size` setzte sie an den linken Rand. | erledigt (`f3bb7f6`), mittig und 8 px über der Kante; Sichtprüfung stand noch aus, weil das Fenster beim Aufnehmen verdeckt war |
 | P26 | **Einstellungen wirken fremd gegenüber der Vorlage:** Texte und Auswahlfelder zu nah an den Innenkanten, Knöpfe im dunklen Modus zu hell unterlegt, hässliche Häkchen-Kästchen, schlecht greifbare Zahlenfelder („Slider“ unter dem System-Prompt), insgesamt egui-Standardoptik. | erledigt (`48bf9bd`): Zeilen mit fettem Titel und Pille rechts, Schalter als „An/Aus“-Liste, Zahlen und Textfelder auf weichem Grund, 14 px Innenabstand, Auswahl im Menü nicht mehr grell |
 | P27 | **Sprachauswahlmenü falsch dargestellt:** Namen und Sterne standen in eigenen Rahmen, die Scrollleiste überdeckte die Stern-Knöpfe, und für Koreanisch, Japanisch und Chinesisch fehlten die Schriften (leere Kästchen). | erledigt (`66919e5`): Zeilen wie `.row` mit Hover statt Rahmen, Stern als reines Symbol mit Platz vor der Leiste, Malgun/Yu Gothic/YaHei nachgeladen |
