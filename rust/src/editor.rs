@@ -23,6 +23,9 @@ pub enum Part {
 pub struct DiffState {
     pub parts: Vec<Part>,
     pub accepted: Vec<bool>,
+    /// Je Aenderung: schon entschieden? Wie `data-done` an den Zeilen der
+    /// Vorlage — offene Aenderungen fallen beim Schliessen weg.
+    pub decided: Vec<bool>,
     pub before: String,
     pub after: String,
 }
@@ -34,6 +37,7 @@ impl DiffState {
         Self {
             parts,
             accepted: vec![true; hunks],
+            decided: vec![false; hunks],
             before: before.to_string(),
             after: after.to_string(),
         }
@@ -67,6 +71,42 @@ impl DiffState {
     pub fn set_all(&mut self, value: bool) {
         for a in &mut self.accepted {
             *a = value;
+        }
+    }
+
+    /// Eine Aenderung annehmen oder verwerfen und als entschieden merken.
+    pub fn decide(&mut self, i: usize, accept: bool) {
+        if let Some(a) = self.accepted.get_mut(i) {
+            *a = accept;
+        }
+        if let Some(d) = self.decided.get_mut(i) {
+            *d = true;
+        }
+    }
+
+    pub fn is_decided(&self, i: usize) -> bool {
+        self.decided.get(i).copied().unwrap_or(false)
+    }
+
+    pub fn all_decided(&self) -> bool {
+        !self.decided.is_empty() && self.decided.iter().all(|d| *d)
+    }
+
+    /// Alle Aenderungen entscheiden (Kopf-Knopf „Alle uebernehmen“).
+    pub fn decide_all(&mut self, accept: bool) {
+        let n = self.accepted.len();
+        for i in 0..n {
+            self.decide(i, accept);
+        }
+    }
+
+    /// Schliesst das Fenster: was offen blieb, bleibt beim alten Text.
+    pub fn settle(&mut self) {
+        let n = self.accepted.len();
+        for i in 0..n {
+            if !self.is_decided(i) {
+                self.accepted[i] = false;
+            }
         }
     }
 }
@@ -324,6 +364,35 @@ pub fn make_link(text: &str, sel: (usize, usize)) -> (String, (usize, usize)) {
     let mut chars_out: Vec<char> = out.chars().collect();
     chars_out.insert(url_end, ')');
     (chars_out.into_iter().collect(), (url_pos, url_end))
+}
+
+#[cfg(test)]
+mod proof_tests {
+    use super::DiffState;
+
+    #[test]
+    fn entschiedene_aenderung_wird_gesetzt() {
+        let mut d = DiffState::new("a b c", "a X c");
+        assert!(!d.all_decided());
+        d.decide(0, true);
+        assert!(d.all_decided());
+        assert_eq!(d.result(), "a X c");
+    }
+
+    #[test]
+    fn offene_aenderungen_bleiben_beim_schliessen_alt() {
+        let mut d = DiffState::new("a b c", "a X c");
+        d.settle();
+        assert_eq!(d.result(), "a b c");
+    }
+
+    #[test]
+    fn alle_uebernehmen_setzt_alles() {
+        let mut d = DiffState::new("eins zwei drei", "1 2 3");
+        d.decide_all(true);
+        assert!(d.all_decided());
+        assert_eq!(d.result(), "1 2 3");
+    }
 }
 
 #[cfg(test)]

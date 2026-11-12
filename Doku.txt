@@ -491,3 +491,14 @@ Probelesen bleibt ein einzelner Aufruf ueber das ganze Dokument, weil die Vorlag
 Ein Abschnitt allein weiss nichts von den anderen: gleiche Woerter, gleicher Ton, kein doppelter Satz an der Naht. Beide Fassungen haengen deshalb einen Hinweis an die Anweisung — in der Electron-Fassung `chunkInstr` in `editor.js`, in Rust derselbe Text in `spawn_chunk`. Er nennt die Stelle im Dokument („part 3 of 7“), verlangt gleiche Fachbegriffe, Zeitform und Ton, verbietet doppelte Saetze und eigene Einleitungen oder Schlusssaetze und gibt den Schluss des vorigen Ergebnisses (letzte 400 Zeichen) als Anschluss mit. Beim Zusammenfassen gilt die kuerzere Form: nur diesen Abschnitt zusammenfassen, weil die Teilzusammenfassungen danach verschmolzen werden.
 
 Die Electron-Fassung hatte `chunkText` schon vorher (3500 Zeichen, Absatzgrenzen) und nutzte es in `allOp` und `summarizeLong`; der Anschluss-Hinweis fehlte dort ebenfalls und ist jetzt in beiden Fassungen gleich.
+
+## 36. Probelesen wie in der Vorlage
+
+Bisher war das Probelesen ein mittiger Dialog mit Knopfpaaren, einem Schalter zum Umschalten je Aenderung, einem Vorschaufeld und den Schaltflaechen „Anwenden“ und „Abbrechen“ — Ablauf und Aufbau wichen von `#diffPanel` ab.
+
+`diff_window` folgt jetzt der Vorlage: oben die Anzahl der Aenderungen und rechts der Kreis `checkAll` fuer „Alle uebernehmen“, darunter je Aenderung eine Zeile auf weichem Grund mit dem alten Wortlaut (rot, durchgestrichen), einem Pfeil und dem neuen (gruen) sowie zwei Kreisen — Haken und Kreuz. Eine Entscheidung merkt sich `DiffState::decide` (`decided` je Aenderung, wie `data-done` an den Zeilen der Vorlage); entschiedene Zeilen treten ueber gedaempfte Farben zurueck und verlieren ihre Knoepfe. Ist alles entschieden, setzt `apply_diff` den Text in einem Undo-Schritt. Das Kreuz oder Escape schliesst und laesst offene Aenderungen beim alten Text (`settle`).
+
+Ein Unterschied bleibt: Die Vorlage faerbt die Stellen direkt im Dokument (`diff-ins`/`diff-del`), weil ihre Seite HTML ist. Der Rust-Editor arbeitet auf Markdown-Text ohne Auszeichnung in der Flaeche; die Aenderungen stehen deshalb nur in der Liste des Fensters, das Dokument selbst zeigt sie erst nach dem Setzen.
+
+Beim Probelesen einer Markierung verglich der alte Ablauf den ganzen Dokumenttext mit dem korrigierten Ausschnitt; jetzt wird zuerst der neue Dokumenttext gebaut und dann alt gegen neu verglichen, sodass nur die Aenderungen an dieser Stelle erscheinen.
+

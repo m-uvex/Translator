@@ -573,7 +573,19 @@ impl App {
                         let clean = clean_editor_output(&text);
                         if self.pending_diff {
                             self.pending_diff = false;
-                            self.diff = Some(DiffState::new(&self.doc, &clean));
+                            // Bei einer Markierung erst den neuen Dokumenttext
+                            // bauen, dann alt gegen neu vergleichen: so zeigt das
+                            // Fenster nur die Aenderungen an dieser Stelle.
+                            let neu = match self.pending_sel {
+                                Some((a, b)) if b > a => {
+                                    let doc = self.doc.clone();
+                                    let ba = editor::char_to_byte(&doc, a);
+                                    let bb = editor::char_to_byte(&doc, b);
+                                    format!("{}{}{}", &doc[..ba], clean, &doc[bb..])
+                                }
+                                _ => clean.clone(),
+                            };
+                            self.diff = Some(DiffState::new(&self.doc, &neu));
                         } else if let Some((a, b)) = self.pending_sel {
                             if b > a {
                                 let doc = self.doc.clone();
@@ -4656,141 +4668,166 @@ impl App {
     }
 
     // ---- Probelesen (Diff) ------------------------------------------------
+    /// Fenster zum Probelesen wie `#diffPanel` in der Vorlage: Titel und
+    /// „Alle uebernehmen“ oben, darunter je Aenderung eine Zeile mit dem alten
+    /// und dem neuen Wortlaut und zwei Knoepfen (uebernehmen, verwerfen).
+    /// Entschiedene Zeilen treten zurueck; ist alles entschieden, wird gesetzt.
+    /// Das Kreuz schliesst und laesst offene Aenderungen beim alten Text.
     fn diff_window(&mut self, ctx: &egui::Context) {
         let Some(diff) = self.diff.clone() else { return };
         let pal = self.pal;
         let lang = self.lang;
         let mut open = true;
         let mut accept_all = false;
-        let mut discard_all = false;
-        let mut toggle: Option<usize> = None;
-        let mut apply = false;
-        dialog(ctx, "diff_win", &t(lang, "diff_title"), 620.0, &pal, &mut open, |ui| {
-                let hunks: Vec<(String, String)> = diff
-                    .parts
-                    .iter()
-                    .filter_map(|p| match p {
-                        Part::Hunk { old, new } => Some((old.clone(), new.clone())),
-                        _ => None,
-                    })
-                    .collect();
+        let mut entscheidung: Option<(usize, bool)> = None;
+        let mut schliessen = false;
+        let hunks: Vec<(String, String)> = diff
+            .parts
+            .iter()
+            .filter_map(|p| match p {
+                Part::Hunk { old, new } => Some((old.clone(), new.clone())),
+                _ => None,
+            })
+            .collect();
+        dialog(ctx, "diff_win", &t(lang, "diff_title"), 560.0, &pal, &mut open, |ui| {
+            ui.horizontal(|ui| {
                 ui.label(
-                    RichText::new(format!(
-                        "{} {} · {} / {}",
-                        hunks.len(),
-                        t(lang, "diff_hunks"),
-                        diff.accepted_count(),
-                        hunks.len()
-                    ))
-                    .size(12.0)
-                    .color(pal.muted),
+                    RichText::new(format!("{} {}", hunks.len(), t(lang, "diff_hunks")))
+                        .size(12.0)
+                        .color(pal.muted),
                 );
-                ui.horizontal(|ui| {
-                    if ui.button(t(lang, "accept_all")).clicked() {
-                        accept_all = true;
-                    }
-                    if ui.button(t(lang, "discard_all")).clicked() {
-                        discard_all = true;
-                    }
-                });
-                ui.separator();
-                if hunks.is_empty() {
-                    ui.label(RichText::new(t(lang, "diff_empty")).color(pal.muted));
-                }
-                egui::ScrollArea::vertical()
-                    .id_source("diff_list")
-                    .max_height(300.0)
-                    .show(ui, |ui| {
-                        let green = Color32::from_rgb(0x1f, 0x7a, 0x3a);
-                        let red = Color32::from_rgb(0xb9, 0x1c, 0x1c);
-                        for (i, (old, new)) in hunks.iter().enumerate() {
-                            let on = diff.accepted.get(i).copied().unwrap_or(true);
-                            egui::Frame::none()
-                                .fill(pal.soft)
-                                .rounding(Rounding::same(10.0))
-                                .inner_margin(egui::Margin::same(8.0))
-                                .show(ui, |ui| {
-                                    ui.horizontal_wrapped(|ui| {
-                                        ui.label(
-                                            RichText::new(old.trim())
-                                                .size(13.0)
-                                                .color(red)
-                                                .strikethrough(),
-                                        );
-                                        ui.label(RichText::new("→").size(12.0).color(pal.muted));
-                                        ui.label(RichText::new(new.trim()).size(13.0).color(green));
-                                    });
-                                    ui.horizontal(|ui| {
-                                        let label = if on { t(lang, "discard") } else { t(lang, "accept") };
-                                        if ui.button(label).clicked() {
-                                            toggle = Some(i);
-                                        }
-                                        ui.label(
-                                            RichText::new(if on {
-                                                t(lang, "accept")
-                                            } else {
-                                                t(lang, "discard")
-                                            })
-                                            .size(11.0)
-                                            .color(pal.muted),
-                                        );
-                                    });
-                                });
-                            ui.add_space(4.0);
-                        }
-                    });
-                ui.separator();
-                egui::ScrollArea::vertical()
-                    .id_source("diff_preview")
-                    .max_height(150.0)
-                    .show(ui, |ui| {
-                        ui.label(RichText::new(diff.result()).size(13.0).color(pal.text));
-                    });
-                ui.horizontal(|ui| {
-                    if ui
-                        .add(
-                            egui::Button::new(
-                                RichText::new(t(lang, "apply")).color(pal.on_accent),
-                            )
-                            .fill(pal.accent)
-                            .rounding(Rounding::same(999.0)),
-                        )
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if icon_btn(ui, &pal, "checkAll", false)
+                        .on_hover_text(t(lang, "accept_all"))
                         .clicked()
                     {
-                        apply = true;
-                    }
-                    if ui.button(t(lang, "cancel")).clicked() {
-                        self.diff = None;
+                        accept_all = true;
                     }
                 });
             });
+            ui.add_space(4.0);
+            if hunks.is_empty() {
+                ui.label(RichText::new(t(lang, "diff_empty")).color(pal.muted));
+            }
+            egui::ScrollArea::vertical()
+                .id_source("diff_list")
+                .max_height(360.0)
+                .auto_shrink([false, true])
+                .show(ui, |ui| {
+                    let green = Color32::from_rgb(0x1f, 0x7a, 0x3a);
+                    let red = Color32::from_rgb(0xb9, 0x1c, 0x1c);
+                    for (i, (old, new)) in hunks.iter().enumerate() {
+                        let erledigt = diff.is_decided(i);
+                        // Entschiedene Zeilen treten zurueck (in der Vorlage
+                        // `opacity: 0.45`); hier ueber gedaempfte Farben.
+                        let farbe_alt = if erledigt { pal.muted } else { red };
+                        let farbe_neu = if erledigt { pal.muted } else { green };
+                        {
+                            egui::Frame::none()
+                                .fill(pal.soft)
+                                .rounding(Rounding::same(10.0))
+                                .inner_margin(egui::Margin {
+                                    left: 10.0,
+                                    right: 8.0,
+                                    top: 8.0,
+                                    bottom: 8.0,
+                                })
+                                .show(ui, |ui| {
+                                    ui.horizontal_top(|ui| {
+                                        ui.vertical(|ui| {
+                                            ui.set_width((ui.available_width() - 76.0).max(120.0));
+                                            ui.horizontal_wrapped(|ui| {
+                                                if !old.trim().is_empty() {
+                                                    ui.label(
+                                                        RichText::new(old.trim())
+                                                            .size(13.0)
+                                                            .color(farbe_alt)
+                                                            .strikethrough(),
+                                                    );
+                                                    if !new.trim().is_empty() {
+                                                        ui.label(
+                                                            RichText::new("→")
+                                                                .size(12.0)
+                                                                .color(pal.muted),
+                                                        );
+                                                    }
+                                                }
+                                                if !new.trim().is_empty() {
+                                                    ui.label(
+                                                        RichText::new(new.trim())
+                                                            .size(13.0)
+                                                            .color(farbe_neu),
+                                                    );
+                                                }
+                                            });
+                                        });
+                                        if !erledigt {
+                                            ui.with_layout(
+                                                egui::Layout::right_to_left(egui::Align::Min),
+                                                |ui| {
+                                                    if icon_btn(ui, &pal, "x", false)
+                                                        .on_hover_text(t(lang, "discard"))
+                                                        .clicked()
+                                                    {
+                                                        entscheidung = Some((i, false));
+                                                    }
+                                                    if icon_btn(ui, &pal, "check", false)
+                                                    .on_hover_text(t(lang, "accept"))
+                                                    .clicked()
+                                                    {
+                                                        entscheidung = Some((i, true));
+                                                    }
+                                                },
+                                            );
+                                        }
+                                    });
+                                });
+                        }
+                        ui.add_space(4.0);
+                    }
+                });
+        });
 
-        if let Some(d) = self.diff.as_mut() {
-            if accept_all {
-                d.set_all(true);
-            }
-            if discard_all {
-                d.set_all(false);
-            }
-            if let Some(i) = toggle {
-                if let Some(a) = d.accepted.get_mut(i) {
-                    *a = !*a;
-                }
+        if let Some((i, annehmen)) = entscheidung {
+            if let Some(d) = self.diff.as_mut() {
+                d.decide(i, annehmen);
             }
         }
-        if apply {
-            let result = self.diff.as_ref().map(|d| d.result()).unwrap_or_default();
-            self.push_undo();
-            self.doc = result;
-            self.diff = None;
-            self.saved = false;
-            self.set.doc = self.doc.clone();
-            self.save_set();
-            self.sync_active_session();
+        if accept_all {
+            if let Some(d) = self.diff.as_mut() {
+                d.decide_all(true);
+            }
         }
         if !open {
-            self.diff = None;
+            schliessen = true;
         }
+        let fertig = self.diff.as_ref().map(|d| d.all_decided()).unwrap_or(false);
+        if schliessen {
+            if let Some(d) = self.diff.as_mut() {
+                d.settle();
+            }
+        }
+        if schliessen || fertig {
+            self.apply_diff();
+        }
+    }
+
+    /// Setzt den Text aus den Entscheidungen des Probelesens und schliesst.
+    fn apply_diff(&mut self) {
+        let Some(diff) = self.diff.take() else { return };
+        let result = diff.result();
+        if result == self.doc {
+            return;
+        }
+        self.push_undo();
+        self.doc = result;
+        self.sel = None;
+        self.saved = false;
+        self.set.doc = self.doc.clone();
+        self.save_set();
+        self.sync_active_session();
+        self.spell_scanned_doc.clear();
+        self.status = String::new();
     }
 
     // ---- Rechtschreibung ---------------------------------------------------
