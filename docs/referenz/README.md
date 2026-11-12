@@ -85,7 +85,10 @@ Sitzungsliste, persönlichem Wörterbuch und Wörterbuchsprache.
 - **Rechtschreibung**: Wörterbücher aus `node_modules/dictionary-<lang>` oder
   `dict/<lang>`, Wellen als Canvas-Sinuslinie (`#spellOverlay`), Komma-
   Heuristik für Deutsch, persönliches Wörterbuch in
-  `%APPDATA%\Uebersetzer\personal-dictionary.json`.
+  `%APPDATA%\Uebersetzer\personal-dictionary.json`. Seit dem 12. November
+  2026 liegen alle sechs Wörterbücher im Projekt unter `dict/<lang>` (Herkunft
+  und Lizenzen in `dict/README.md`), sodass beide Fassungen ohne
+  `node_modules` prüfen können.
 - **Sitzungsliste** (`#docDock`): Karten der seit dem Start geöffneten
   Dokumente, ziehbar, mit Schließen-Kreuz; nur im Speicher.
 - **Export**: Markdown, Text, PDF (über `printToPDF`).

@@ -12,7 +12,7 @@
 //! unter `dict/<lang>` und unter `%APPDATA%\Uebersetzer\dict\<lang>`.
 
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Ein falsch geschriebenes Wort mit Haeufigkeit und Vorschlaegen.
 #[derive(Clone, Debug)]
@@ -120,22 +120,32 @@ impl Spell {
 fn search_dirs() -> Vec<PathBuf> {
     let mut dirs: Vec<PathBuf> = Vec::new();
     if let Ok(exe) = std::env::current_exe() {
-        let mut p = exe.parent().map(|d| d.to_path_buf());
-        for _ in 0..4 {
-            match p {
-                Some(dir) => {
-                    dirs.push(dir.clone());
-                    p = dir.parent().map(|x| x.to_path_buf());
-                }
-                None => break,
-            }
+        if let Some(parent) = exe.parent() {
+            push_ancestors(&mut dirs, parent, 5);
         }
     }
     if let Ok(cwd) = std::env::current_dir() {
-        dirs.push(cwd);
+        push_ancestors(&mut dirs, &cwd, 4);
     }
     dirs.push(crate::settings::data_dir().join("dict"));
     dirs
+}
+
+/// Haengt einen Ordner und seine Elternordner an, hoechstens `depth` Stueck.
+/// Damit finden sowohl das Testbinary unter `target/debug/deps` als auch ein
+/// Aufruf per `cargo run` aus `rust/` heraus das Woerterbuch im
+/// Projektwurzelverzeichnis.
+fn push_ancestors(dirs: &mut Vec<PathBuf>, start: &Path, depth: usize) {
+    let mut next: Option<PathBuf> = Some(start.to_path_buf());
+    for _ in 0..depth {
+        match next {
+            Some(dir) => {
+                dirs.push(dir.clone());
+                next = dir.parent().map(|x| x.to_path_buf());
+            }
+            None => break,
+        }
+    }
 }
 
 fn find_pair(lang: &str, dirs: &[PathBuf]) -> Option<(PathBuf, PathBuf)> {
@@ -198,6 +208,37 @@ mod tests {
         if let Ok(list) = hits {
             assert!(list.iter().all(|h| h.word.chars().count() >= 2));
         }
+    }
+
+    #[test]
+    fn gebuendelte_woerterbuecher_laden() {
+        let faelle: [(&str, &[&str]); 6] = [
+            ("de", &["Haus", "haus"]),
+            ("en", &["house"]),
+            ("nl", &["huis"]),
+            ("es", &["casa"]),
+            ("tr", &["ev", "kitap"]),
+            ("ar", &["بيت", "كتاب"]),
+        ];
+        let mut geprueft = 0;
+        for (code, probe) in faelle {
+            let dir = PathBuf::from("../dict").join(code);
+            let (aff, dic) = (dir.join("index.aff"), dir.join("index.dic"));
+            if !aff.is_file() || !dic.is_file() {
+                continue;
+            }
+            let aff = std::fs::read_to_string(aff).unwrap();
+            let dic = std::fs::read_to_string(dic).unwrap();
+            let dict = spellbook::Dictionary::new(&aff, &dic)
+                .unwrap_or_else(|e| panic!("{}: {:?}", code, e));
+            assert!(
+                probe.iter().any(|w| dict.check(w)),
+                "{}: kein bekanntes Wort gefunden",
+                code
+            );
+            geprueft += 1;
+        }
+        assert!(geprueft >= 6, "nur {} Woerterbuecher gefunden", geprueft);
     }
 
     #[test]
