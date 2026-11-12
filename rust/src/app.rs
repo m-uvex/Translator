@@ -1264,6 +1264,10 @@ impl eframe::App for App {
         self.apply_theme(ctx);
         self.poll(ctx);
 
+        // Die Oberflaechensprache folgt der Einstellung sofort, ohne Neustart —
+        // das Gegenstueck zu `renderAll()` in `renderer.js`, das nach jeder
+        // Aenderung neu beschriftet.
+        self.lang = Lang::resolve(&self.set.ui_lang);
         let pal = self.pal;
         let rtl = self.rtl();
         let lang = self.lang;
