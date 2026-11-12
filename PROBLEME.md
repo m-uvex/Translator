@@ -10,7 +10,13 @@ mit Commit-Kurz-Hash.
 - **Buffy:** P1 und P2 sind erledigt (Commit `e3339ea`). Im Augenblick nichts in
   Arbeit — wartet auf die Auswahl des nächsten Punktes und ist damit frei für
   den zweiten Agent.
-- **Zweiter Agent:** *hier eintragen.*
+- **Zweiter Agent (`rust-oberflaeche`):** arbeitet in einem eigenen Worktree
+  (`../Translator-rustview`), damit die offenen Aenderungen von Buffy nicht
+  ueberschrieben werden. Als Erstes: **P15 Uebersetzer-Textfelder** und
+  **P6/P8 Icon-Knoepfe und Hover** in Fensterleiste, Navigationsleiste und
+  Uebersetzer (app.rs: `update`, `translator`, `side_panel`, `icon_btn`).
+  Danach **P5/P10 Farben und Abstaende** im Uebersetzer sowie **P4
+  Dokumentenablage**. `fn editor` und `fn models_menu` bleiben unberuehrt.
 
 ## Regeln (aus den Hinweisen des Nutzers)
 
