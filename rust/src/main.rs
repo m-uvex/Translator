@@ -12,12 +12,18 @@ use eframe::egui;
 /// Laedt Windows-Schriften nach, damit Umlaute, Kana und arabische Zeichen
 /// sicher dargestellt werden. Fehlt die Datei, bleibt egui bei seinen
 /// eingebauten Schriften.
+///
+/// `seguisym` ist wichtig fuer die Oberflaeche selbst: Die Knopfsymbole
+/// (✕, ✎, ▤, ⚙) sind Zeichen, die weder Segoe UI noch Arial noch die
+/// eingebaute egui-Schrift enthalten. Ohne diese Schrift erscheinen sie als
+/// leere Kaestchen.
 fn setup_fonts(ctx: &egui::Context) {
     let mut fonts = egui::FontDefinitions::default();
     let mut loaded = false;
     for (name, path) in [
         ("segoe", "C:/Windows/Fonts/segoeui.ttf"),
         ("arial", "C:/Windows/Fonts/arial.ttf"),
+        ("seguisym", "C:/Windows/Fonts/seguisym.ttf"),
     ] {
         if let Ok(bytes) = std::fs::read(path) {
             fonts.font_data.insert(name.to_string(), egui::FontData::from_owned(bytes));
