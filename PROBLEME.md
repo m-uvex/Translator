@@ -7,8 +7,9 @@ mit Commit-Kurz-Hash.
 
 ## Gerade in Arbeit
 
-- **Buffy:** P1, P2, P3, P11, P12, P14 und P17 sind erledigt. Im Augenblick
-  nichts in Arbeit — wartet auf die Auswahl des nächsten Punktes.
+- **Buffy:** P1, P2, P3, P7, P11, P12, P14 und P17 sind erledigt. Im Augenblick
+  nichts in Arbeit — wartet auf die Auswahl des nächsten Punktes. P18 und P19
+  sind neu aufgenommen und noch nicht angefasst.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
   (`1863576`). P15 und P4 sind damit ganz erledigt, P5/P6/P8/P10/P13 fuer diese
@@ -43,17 +44,19 @@ mit Commit-Kurz-Hash.
 | P4 | **Document tray** („Aktuell geöffnete Seiten“) sieht komplett falsch aus: Form der Seiten, Darstellung der Seiten selbst und Positionierung der Elemente weichen ab. | erledigt (`1863576`) |
 | P5 | **Dunkelblaue Schrift ohne Grund** (Übersetzer, Document tray, weitere Stellen) — Kontrast und Farbe gegen `style.css` prüfen. | Übersetzer und Seitenleiste erledigt (`1863576`); übrige Ansichten offen |
 | P6 | **Icon-Knopf-Grundsätze** sind bei fast allen Knöpfen verletzt (graue Kreise ohne Grund, Squircles, falsche Größen). Im Editor größtenteils behoben, anderswo nicht. | Fensterleiste, Navigationsleiste, Übersetzer, Seitenleiste und Ablage erledigt (`1863576`); Dialoge offen |
-| P7 | **Editor: größere Probleme** jenseits der Leiste (Seitenmaß zu breit und zu kurz, Statusleiste am Boden, Darstellung der Fläche). | offen |
+| P7 | **Editor: größere Probleme** jenseits der Leiste (Seitenmaß zu breit und zu kurz, Statusleiste am Boden, Darstellung der Fläche). | erledigt (`aecc093`), am laufenden Fenster geprüft |
 | P8 | **Hover-Animationen** der Knöpfe entfernen; stattdessen den Highlighter der Vorlage (siehe Regel 3). | in den bearbeiteten Ansichten erledigt (`1863576`); Rest prüfen |
 | P9 | **Unlesbarer Text, fehlende Symbole, fehlende Hintergrundkarten** in mehreren Ansichten; auch in der Fensterleiste (Minimieren/Maximieren/Schließen). | offen |
 | P10 | **Ränder und Abstände:** Elemente zu nah an Rändern, sinnlose Trennstriche, zu große Abstände zwischen Teilen einer Arbeitsfläche, untere Karte/Leiste zu groß. | Übersetzer, Seitenleiste und Ablage erledigt (`1863576`); Editor offen |
 | P11 | **Dialoge:** Stilfenster und Mini-Übersetzer hängen an der Kontextleiste; Mini-Übersetzer und Synonyme sind nach der Vorlage gebaut, Schließen-Kreuz bleibt sichtbar. | erledigt, echter Aufruf aus der Leiste nicht durchgespielt |
-| P12 | **Installation:** Wizard (`rust/Installieren.bat`), Deinstallation (`rust/Uninstall.ps1`) und NLLB-200 samt Modellverwaltung. | erledigt, ohne Autostart des NLLB-Servers (`2e700b7`) |
+| P12 | **Installation:** Wizard (`rust/Installieren.bat`), Deinstallation (`rust/Uninstall.ps1`) und NLLB-200 samt Modellverwaltung. | erledigt (`2e700b7`); Autostart siehe P17 |
 | P13 | **Squircles statt Kreisen** an einzelnen Stellen; Rundungen insgesamt gegen `style.css` abgleichen. | bearbeitete Ansichten erledigt (`1863576`); Dialoge offen |
 | P14 | **Alle Menüs prüfen:** freischwebende Fenster durch verankerte Menüs bzw. mittige, unverschiebbare Dialoge ersetzen (`pop_at`, `dialog`). | erledigt, Stilfenster und Mini-Übersetzer hängen noch nicht an der Kontextleiste |
 | P15 | **Übersetzer-Textfelder** sollen keinen Trennstrich zu ihren Knöpfen haben und sich fast bis zum Boden strecken. | erledigt (`1863576`) |
 | P16 | **Überschriften-Dropdown** im Editor: Verhalten und Aussehen gegen die Vorlage prüfen (gesetzt sind H1–H3 über `editor::set_heading`). | zu prüfen |
 | P17 | **NLLB-Server startet nicht mit der App:** Schalter in den Einstellungen fehlte, der Server musste von Hand gestartet werden. | erledigt (`b0ebe30`) |
+| P18 | **Modellbezogene Symbole zu nah am Modellnamen** im Übersetzer-Arbeitsplatz: Auge (Sehen) und Denk-Symbol kleben am Namen; Abstand wie in der Vorlage (`.mpill` in `style.css`) herstellen. | offen |
+| P19 | **Karte der Translation-Style-Optionen rutscht aus dem Fenster:** Die rechte Kante der Stil-Seitenleiste ist nicht mehr zu sehen; Breite und Abstände so setzen, dass die Karte vollständig im Fenster liegt. | offen |
 
 ## Erledigt
 
