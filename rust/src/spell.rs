@@ -242,6 +242,15 @@ mod tests {
     }
 
     #[test]
+    fn suchpfade_finden_projektwoerterbuch() {
+        // Prueft dieselbe Pfadsuche, die das Programm nutzt: vom Testbinary
+        // unter `target/debug/deps` aus muss der Projektordner mit `dict/`
+        // in Reichweite liegen.
+        let mut spell = Spell::new();
+        assert!(spell.has_dict("de"), "dict/de nicht ueber die Programmpfade gefunden");
+    }
+
+    #[test]
     fn ignorierte_woerter_tauchen_nicht_auf() {
         let mut spell = Spell::new();
         spell.ignore("Qxzzzz");
