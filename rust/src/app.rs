@@ -752,88 +752,236 @@ fn obj(label: &str, text: &str) -> serde_json::Value {
     json!({ "role": label, "content": text })
 }
 
+/// Pille wie `.pill` in `style.css`: Karte mit Kontur, 36 px hoch, 15 px
+/// Schrift, mindestens 150 px breit. Die Kontur wird beim Ueberfahren
+/// babyblau, ohne Skalierung oder Einblendung.
 fn pill(ui: &mut egui::Ui, p: &Palette, text: &str, min_w: f32) -> egui::Response {
-    ui.add(
-        egui::Button::new(RichText::new(text).color(p.text).size(14.0))
-            .fill(p.card)
-            .stroke(Stroke::new(1.0_f32, p.line))
-            .rounding(Rounding::same(999.0))
-            .min_size(egui::vec2(min_w, 32.0)),
-    )
-}
-
-/// Knopf mit Vektorsymbol aus `icons_data.rs`. Ist kein Symbol vorhanden,
-/// wird die Beschriftung als Text gezeichnet (etwa „H1“ oder „abc“).
-fn icon_btn(ui: &mut egui::Ui, p: &Palette, name: &str, on: bool) -> egui::Response {
-    let fill = if on { p.accent } else { p.soft };
-    let ink = if on { p.on_accent } else { p.muted };
-    if crate::icons::icon(name).is_none() {
-        // Kein Symbol vorhanden (etwa „H1“): als Textknopf mit echter Breite.
-        return ui.add(
-            egui::Button::new(RichText::new(name).size(13.0).color(ink))
-                .fill(fill)
-                .stroke(Stroke::NONE)
-                .rounding(Rounding::same(12.0))
-                .min_size(egui::vec2(32.0, 32.0)),
-        );
-    }
-    // Runde Knoepfe: bei quadratischer Groesse ergibt 999 einen Kreis.
-    let resp = ui.add(
-        egui::Button::new("")
-            .fill(fill)
-            .stroke(Stroke::NONE)
-            .rounding(Rounding::same(999.0))
-            .min_size(egui::vec2(32.0, 32.0)),
+    let galley = ui
+        .painter()
+        .layout_no_wrap(text.to_string(), egui::FontId::proportional(15.0), p.text);
+    let w = (galley.size().x + 36.0).max(min_w);
+    let (rect, resp) = ui.allocate_exact_size(egui::vec2(w, 36.0), egui::Sense::click());
+    let stroke = if resp.hovered() {
+        Stroke::new(1.0_f32, p.accent)
+    } else {
+        Stroke::new(1.0_f32, p.line)
+    };
+    let painter = ui.painter();
+    painter.rect(rect, Rounding::same(999.0), p.card, stroke);
+    painter.galley(
+        egui::pos2(
+            rect.center().x - galley.size().x / 2.0,
+            rect.center().y - galley.size().y / 2.0,
+        ),
+        galley,
+        p.text,
     );
-    crate::icons::paint(ui.painter(), resp.rect.shrink(8.0), name, ink);
-    resp
+    resp.on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
-/// Modellknopf wie `#modelBtn` der Vorlage: Name links, rechts die Symbole
-/// fuer Bild- und Denkfaehigkeit (`modelIcons` in `renderer.js`).
+/// Modellpille mit den Faehigkeits-Symbolen in der Pille, wie `updModelBtn`
+/// in `renderer.js` (Name, dahinter Auge und Gluehbirne, beide 15 px).
 fn model_pill(
     ui: &mut egui::Ui,
     p: &Palette,
-    name: &str,
+    label: &str,
     vision: bool,
     thinking: bool,
     min_w: f32,
 ) -> egui::Response {
-    let (rect, resp) = ui.allocate_exact_size(egui::vec2(min_w, 32.0), egui::Sense::click());
-    let fill = if resp.hovered() { p.accent_hover } else { p.card };
-    ui.painter()
-        .rect(rect, Rounding::same(999.0), fill, Stroke::new(1.0_f32, p.line));
-    let mut x = rect.right() - 14.0;
-    if thinking {
-        crate::icons::paint(
-            ui.painter(),
-            egui::Rect::from_center_size(egui::pos2(x, rect.center().y), egui::vec2(15.0, 15.0)),
-            "bulb",
-            p.muted,
-        );
-        x -= 18.0;
-    }
-    if vision {
-        crate::icons::paint(
-            ui.painter(),
-            egui::Rect::from_center_size(egui::pos2(x, rect.center().y), egui::vec2(15.0, 15.0)),
-            "eye",
-            p.muted,
-        );
-        x -= 18.0;
-    }
-    let text_rect = egui::Rect::from_min_max(
-        rect.left_top(),
-        egui::pos2(x - 4.0, rect.bottom()),
-    );
-    ui.painter().with_clip_rect(text_rect).text(
-        egui::pos2(rect.left() + 14.0, rect.center().y),
-        egui::Align2::LEFT_CENTER,
-        name,
-        egui::FontId::proportional(14.0),
+    let galley = ui.painter().layout_no_wrap(
+        label.to_string(),
+        egui::FontId::proportional(15.0),
         p.text,
     );
-    resp
+    let icons = (vision as i32 + thinking as i32) as f32;
+    let extra = if icons > 0.0 { icons * 19.0 } else { 0.0 };
+    let w = (galley.size().x + extra + 36.0).max(min_w);
+    let (rect, resp) = ui.allocate_exact_size(egui::vec2(w, 36.0), egui::Sense::click());
+    let stroke = if resp.hovered() {
+        Stroke::new(1.0_f32, p.accent)
+    } else {
+        Stroke::new(1.0_f32, p.line)
+    };
+    let painter = ui.painter();
+    painter.rect(rect, Rounding::same(999.0), p.card, stroke);
+    let total = galley.size().x + extra;
+    let mut x = rect.center().x - total / 2.0;
+    painter.galley(
+        egui::pos2(x, rect.center().y - galley.size().y / 2.0),
+        galley.clone(),
+        p.text,
+    );
+    x += galley.size().x;
+    for icon in [vision.then_some("eye"), thinking.then_some("bulb")]
+        .into_iter()
+        .flatten()
+    {
+        crate::icons::paint(
+            painter,
+            egui::Rect::from_center_size(
+                egui::pos2(x + 7.5, rect.center().y),
+                egui::vec2(15.0, 15.0),
+            ),
+            icon,
+            p.muted,
+        );
+        x += 19.0;
+    }
+    resp.on_hover_cursor(egui::CursorIcon::PointingHand)
+}
+
+/// Knopf mit Vektorsymbol aus `icons_data.rs`. Ist kein Symbol vorhanden,
+/// wird die Beschriftung als Text gezeichnet (etwa „H1“ oder „abc“).
+///
+/// Wie `.ib` in `style.css`: ohne Hintergrund, beim Ueberfahren `--soft`,
+/// im aktiven Zustand `--accent`. `size` und `rounding` bilden die
+/// Ausnahmen der Vorlage ab (28er Fensterknoepfe, 36er Leiste, 32er
+/// Symbolgruppen). Keine Hover-Animation, nur der Farbwechsel.
+fn icon_btn_sized(
+    ui: &mut egui::Ui,
+    p: &Palette,
+    name: &str,
+    on: bool,
+    size: f32,
+    rounding: f32,
+    accent_hover: bool,
+) -> egui::Response {
+    if crate::icons::icon(name).is_none() {
+        // Kein Symbol vorhanden (etwa „H1“): als Textknopf mit echter Breite.
+        let galley = ui
+            .painter()
+            .layout_no_wrap(name.to_string(), egui::FontId::proportional(13.0), p.text);
+        let w = (galley.size().x + 14.0).max(size);
+        let (rect, resp) = ui.allocate_exact_size(egui::vec2(w, size), egui::Sense::click());
+        let hovered = resp.hovered();
+        let fill = if on {
+            p.accent
+        } else if hovered {
+            p.soft
+        } else {
+            Color32::TRANSPARENT
+        };
+        let ink = if on {
+            p.on_accent
+        } else if hovered {
+            p.text
+        } else {
+            p.muted
+        };
+        if fill != Color32::TRANSPARENT {
+            ui.painter().rect_filled(rect, Rounding::same(rounding), fill);
+        }
+        ui.painter().galley(
+            egui::pos2(
+                rect.center().x - galley.size().x / 2.0,
+                rect.center().y - galley.size().y / 2.0,
+            ),
+            galley,
+            ink,
+        );
+        return resp.on_hover_cursor(egui::CursorIcon::PointingHand);
+    }
+    let (rect, resp) = ui.allocate_exact_size(egui::vec2(size, size), egui::Sense::click());
+    let hovered = resp.hovered();
+    let (fill, ink) = if accent_hover {
+        if hovered {
+            (p.accent_hover, p.on_accent)
+        } else if on {
+            (p.accent, p.on_accent)
+        } else {
+            (Color32::TRANSPARENT, p.muted)
+        }
+    } else if on {
+        (p.accent, p.on_accent)
+    } else if hovered {
+        (p.soft, p.text)
+    } else {
+        (Color32::TRANSPARENT, p.muted)
+    };
+    if fill != Color32::TRANSPARENT {
+        ui.painter().rect_filled(rect, Rounding::same(rounding), fill);
+    }
+    let icon_size = if size <= 28.0 { 16.0 } else { 18.0 };
+    crate::icons::paint(
+        ui.painter(),
+        egui::Rect::from_center_size(rect.center(), egui::vec2(icon_size, icon_size)),
+        name,
+        ink,
+    );
+    resp.on_hover_cursor(egui::CursorIcon::PointingHand)
+}
+
+/// Standardknopf der Werkzeugleisten: 32 px, runder Kreis.
+fn icon_btn(ui: &mut egui::Ui, p: &Palette, name: &str, on: bool) -> egui::Response {
+    icon_btn_sized(ui, p, name, on, 32.0, 999.0, false)
+}
+
+/// Symbolknopf der Stilgruppen (`.seg .ib`): 32 px, rund, Hover in der
+/// Akzentfarbe statt im Grau der uebrigen Knoepfe.
+fn seg_btn(ui: &mut egui::Ui, p: &Palette, name: &str, on: bool) -> egui::Response {
+    icon_btn_sized(ui, p, name, on, 32.0, 999.0, true)
+}
+
+/// Kopfzeile einer aufklappbaren Karte (`.ctx summary`): Dreieck, 8 px
+/// Abstand, danach die Beschriftung. Das Dreieck zeigt geschlossen nach
+/// rechts und offen nach unten. Die halbfette Schrift der Vorlage wird durch
+/// einen zweiten, leicht versetzten Durchgang angedeutet.
+fn bar_header(ui: &mut egui::Ui, p: &Palette, text: &str, open: bool) -> egui::Response {
+    let w = ui.available_width();
+    let (rect, resp) = ui.allocate_exact_size(egui::vec2(w, 22.5), egui::Sense::click());
+    let cy = rect.center().y;
+    let x = rect.left() + 12.0;
+    let pts = if open {
+        vec![
+            egui::pos2(x, cy - 5.0),
+            egui::pos2(x + 5.0, cy),
+            egui::pos2(x - 5.0, cy),
+        ]
+    } else {
+        vec![
+            egui::pos2(x, cy - 5.0),
+            egui::pos2(x, cy + 5.0),
+            egui::pos2(x + 7.0, cy),
+        ]
+    };
+    let painter = ui.painter();
+    painter.add(egui::Shape::convex_polygon(
+        pts,
+        p.muted,
+        Stroke::NONE,
+    ));
+    let galley = painter.layout_no_wrap(text.to_string(), egui::FontId::proportional(15.0), p.text);
+    let pos = egui::pos2(x + 15.0, cy - galley.size().y / 2.0);
+    painter.galley(pos + egui::vec2(0.6, 0.0), galley.clone(), p.text);
+    painter.galley(pos, galley, p.text);
+    resp.on_hover_cursor(egui::CursorIcon::PointingHand)
+}
+
+/// Beschriftung der Seitenleiste mit fester Zeilenhoehe. `egui::Ui::label`
+/// in einer waagerechten Zeile reserviert mehr Hoehe als die Schrift braucht;
+/// die Karte wuerde dadurch rund 18 px je Gruppe zu hoch. Hier wird die
+/// Zeilenhoehe deshalb vorgegeben.
+fn side_label(
+    ui: &mut egui::Ui,
+    text: &str,
+    size: f32,
+    height: f32,
+    indent: f32,
+    color: egui::Color32,
+    bold: bool,
+) {
+    let w = ui.available_width();
+    let (rect, _) = ui.allocate_exact_size(egui::vec2(w, height), egui::Sense::hover());
+    let galley =
+        ui.painter()
+            .layout_no_wrap(text.to_string(), egui::FontId::proportional(size), color);
+    let pos = egui::pos2(rect.left() + indent, rect.top());
+    if bold {
+        ui.painter()
+            .galley(pos + egui::vec2(0.6, 0.0), galley.clone(), color);
+    }
+    ui.painter().galley(pos, galley, color);
 }
 
 /// Eine Zeile im Modellmenue: Name links, rechts Symbole fuer Bild- und
@@ -931,7 +1079,14 @@ impl eframe::App for App {
         // ---- Fensterleiste -------------------------------------------------
         egui::TopBottomPanel::top("titlebar")
             .exact_height(32.0)
-            .frame(egui::Frame::none().fill(pal.bg).inner_margin(egui::Margin::symmetric(10.0, 0.0)))
+            .frame(
+                egui::Frame::none().fill(pal.bg).inner_margin(egui::Margin {
+                    left: 12.0,
+                    right: 6.0,
+                    top: 0.0,
+                    bottom: 0.0,
+                }),
+            )
             .show(ctx, |ui| {
                 ui.horizontal_centered(|ui| {
                     ui.label(RichText::new(t(lang, "app")).size(12.5).color(pal.muted));
@@ -949,20 +1104,23 @@ impl eframe::App for App {
                     ui.with_layout(
                         egui::Layout::right_to_left(egui::Align::Center),
                         |ui| {
-                            if icon_btn(ui, &pal, "x", false)
+                            ui.spacing_mut().item_spacing.x = 2.0;
+                            if icon_btn_sized(ui, &pal, "x", false, 36.0, 999.0, false)
                                 .on_hover_text(t(lang, "win_close"))
                                 .clicked()
                             {
                                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                             }
-                            if icon_btn(ui, &pal, "winMax", false)
+                            let maximized =
+                                ctx.input(|i| i.viewport().maximized.unwrap_or(false));
+                            let max_icon = if maximized { "winRestore" } else { "winMax" };
+                            if icon_btn_sized(ui, &pal, max_icon, false, 36.0, 999.0, false)
                                 .on_hover_text(t(lang, "win_max"))
                                 .clicked()
                             {
-                                let maximized = ctx.input(|i| i.viewport().maximized.unwrap_or(false));
                                 ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(!maximized));
                             }
-                            if icon_btn(ui, &pal, "winMin", false)
+                            if icon_btn_sized(ui, &pal, "winMin", false, 36.0, 999.0, false)
                                 .on_hover_text(t(lang, "win_min"))
                                 .clicked()
                             {
@@ -980,36 +1138,69 @@ impl eframe::App for App {
             egui::SidePanel::left("rail")
         };
         rail
-            .exact_width(56.0)
+            .exact_width(36.0)
             .resizable(false)
-            .frame(egui::Frame::none().fill(pal.bg).inner_margin(egui::Margin::symmetric(10.0, 10.0)))
+            .show_separator_line(false)
+            .frame(
+                egui::Frame::none().fill(pal.bg).inner_margin(egui::Margin {
+                    left: 10.0,
+                    right: 10.0,
+                    top: 12.0,
+                    bottom: 12.0,
+                }),
+            )
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
+                    ui.spacing_mut().item_spacing.y = 6.0;
                     let both = self.set.workspace == "both";
                     if both || self.set.workspace == "tr" {
-                        if icon_btn(ui, &pal, "swap", self.view == View::Translator)
-                            .on_hover_text(t(lang, "nav_tr"))
-                            .clicked()
+                        if icon_btn_sized(
+                            ui,
+                            &pal,
+                            "languages",
+                            self.view == View::Translator,
+                            36.0,
+                            999.0,
+                            false,
+                        )
+                        .on_hover_text(t(lang, "nav_tr"))
+                        .clicked()
                         {
                             self.set_view(View::Translator);
                         }
                     }
                     if both || self.set.workspace == "ed" {
-                        if icon_btn(ui, &pal, "pencil", self.view == View::Editor)
-                            .on_hover_text(t(lang, "nav_ed"))
-                            .clicked()
+                        if icon_btn_sized(
+                            ui,
+                            &pal,
+                            "doc",
+                            self.view == View::Editor,
+                            36.0,
+                            999.0,
+                            false,
+                        )
+                        .on_hover_text(t(lang, "nav_ed"))
+                        .clicked()
                         {
                             self.set_view(View::Editor);
                         }
-                        if icon_btn(ui, &pal, "library", self.view == View::Library)
-                            .on_hover_text(t(lang, "nav_lib"))
-                            .clicked()
+                        if icon_btn_sized(
+                            ui,
+                            &pal,
+                            "library",
+                            self.view == View::Library,
+                            36.0,
+                            999.0,
+                            false,
+                        )
+                        .on_hover_text(t(lang, "nav_lib"))
+                        .clicked()
                         {
                             self.set_view(View::Library);
                         }
                     }
-                    ui.add_space(ui.available_height() - 40.0);
-                    if icon_btn(ui, &pal, "sliders", false)
+                    ui.add_space((ui.available_height() - 36.0).max(0.0));
+                    if icon_btn_sized(ui, &pal, "sliders", false, 36.0, 999.0, false)
                         .on_hover_text(t(lang, "settings"))
                         .clicked()
                     {
@@ -1023,11 +1214,53 @@ impl eframe::App for App {
         }
 
         egui::CentralPanel::default()
-            .frame(egui::Frame::none().fill(pal.bg).inner_margin(egui::Margin::symmetric(10.0, 8.0)))
+            .frame(egui::Frame::none().fill(pal.bg))
             .show(ctx, |ui| match self.view {
-                View::Translator => self.translator(ui),
-                View::Editor => self.editor(ui),
-                View::Library => self.library(ui),
+                View::Translator => {
+                    let margin = if rtl {
+                        egui::Margin {
+                            left: 8.0,
+                            right: 0.0,
+                            top: 16.0,
+                            bottom: 16.0,
+                        }
+                    } else {
+                        egui::Margin {
+                            left: 0.0,
+                            right: 8.0,
+                            top: 16.0,
+                            bottom: 16.0,
+                        }
+                    };
+                    egui::Frame::none()
+                        .inner_margin(margin)
+                        .show(ui, |ui| self.translator(ui));
+                }
+                View::Editor => {
+                    egui::Frame::none()
+                        .inner_margin(egui::Margin::symmetric(10.0, 8.0))
+                        .show(ui, |ui| self.editor(ui));
+                }
+                View::Library => {
+                    let margin = if rtl {
+                        egui::Margin {
+                            left: 12.0,
+                            right: 0.0,
+                            top: 12.0,
+                            bottom: 12.0,
+                        }
+                    } else {
+                        egui::Margin {
+                            left: 0.0,
+                            right: 12.0,
+                            top: 12.0,
+                            bottom: 12.0,
+                        }
+                    };
+                    egui::Frame::none()
+                        .inner_margin(margin)
+                        .show(ui, |ui| self.library(ui));
+                }
             });
 
         self.lang_popup(ctx);
@@ -1065,7 +1298,21 @@ impl App {
     fn translator(&mut self, ui: &mut egui::Ui) {
         let pal = self.pal;
         let lang = self.lang;
+        let (vision, thinking) = self
+            .models
+            .iter()
+            .find(|m| m.name == self.set.model)
+            .map(|m| (m.vision, m.thinking))
+            .unwrap_or((false, false));
+
+        // Feste Abstaende wie in `style.css` (12 px zwischen Kopf und Karten).
+        ui.spacing_mut().item_spacing.y = 0.0;
+
+        // Kopfzeile: Sprachen links, Modell rechts, dazwischen die
+        // Tausch- und Neuladen-Knoepfe. Entspricht `.langs`/`.model` und
+        // `header` in `style.css`.
         ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 6.0;
             let src = if self.set.src == "auto" {
                 t(lang, "detect")
             } else {
@@ -1075,7 +1322,7 @@ impl App {
                 self.lang_search.clear();
                 self.popup_lang = Some("src");
             }
-            if icon_btn(ui, &pal, "swap", false)
+            if icon_btn_sized(ui, &pal, "swap", false, 36.0, 12.0, false)
                 .on_hover_text(t(lang, "swap"))
                 .clicked()
                 && self.set.src != "auto"
@@ -1092,7 +1339,8 @@ impl App {
                 self.popup_lang = Some("tgt");
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let rresp = icon_btn(ui, &pal, "refresh", false)
+                ui.spacing_mut().item_spacing.x = 6.0;
+                let rresp = icon_btn_sized(ui, &pal, "refresh", false, 36.0, 12.0, false)
                     .on_hover_text(t(lang, "reload"));
                 // Blauer Punkt am Neuladen-Knopf, solange die Modellliste geholt wird.
                 if self.models_loading {
@@ -1108,19 +1356,13 @@ impl App {
                     self.models_error = None;
                     net::spawn_models(self.cfg(), self.tx.clone(), Vec::new());
                 }
-                let (vision, thinking) = self
-                    .models
-                    .iter()
-                    .find(|m| m.name == self.set.model)
-                    .map(|m| (m.vision, m.thinking))
-                    .unwrap_or((false, false));
                 let mresp = model_pill(
                     ui,
                     &pal,
-                    &format!("▤  {}", short_model(&self.set.model)),
+                    &short_model(&self.set.model),
                     vision,
                     thinking,
-                    210.0,
+                    150.0,
                 );
                 if mresp.clicked() {
                     self.models_anchor = mresp.rect;
@@ -1129,142 +1371,202 @@ impl App {
                 }
             });
         });
-        ui.add_space(10.0);
+        ui.add_space(12.0);
 
         let gap = 12.0;
         let col_w = ((ui.available_width() - gap) / 2.0).max(160.0);
-        let h = ui.available_height();
+        let full_h = ui.available_height();
         let lim = is_mt(&self.set.model) || is_tg(&self.set.model);
+        let mut card_h = full_h;
         if lim {
-            ui.label(RichText::new(t(lang, if is_mt(&self.set.model) { "note_nllb" } else { "note_tg" })).size(12.0).color(pal.muted));
+            ui.label(
+                RichText::new(t(
+                    lang,
+                    if is_mt(&self.set.model) {
+                        "note_nllb"
+                    } else {
+                        "note_tg"
+                    },
+                ))
+                .size(12.0)
+                .color(pal.muted),
+            );
+            card_h = (full_h - 22.0).max(120.0);
         }
 
+        let footer_h = 52.0;
+        let body_h = (card_h - footer_h).max(80.0);
+
         ui.horizontal_top(|ui| {
-            ui.allocate_ui(egui::vec2(col_w, h), |ui| {
+            ui.spacing_mut().item_spacing.x = 0.0;
+            ui.allocate_ui(egui::vec2(col_w, card_h), |ui| {
                 card_ui(ui, &pal, |ui| {
+                    ui.set_min_size(egui::vec2(col_w, card_h));
                     ui.vertical(|ui| {
+                        ui.spacing_mut().item_spacing.y = 0.0;
                         egui::ScrollArea::vertical()
                             .id_source("in_scroll")
-                            .max_height((h - 60.0).max(80.0))
+                            .max_height(body_h)
+                            .auto_shrink([false, false])
                             .show(ui, |ui| {
                                 ui.add(
                                     egui::TextEdit::multiline(&mut self.input)
                                         .frame(false)
+                                        .font(egui::FontId::proportional(17.0))
                                         .desired_width(f32::INFINITY)
                                         .hint_text(t(lang, "input_ph"))
-                                        .margin(egui::vec2(16.0, 14.0)),
+                                        .margin(egui::vec2(20.0, 18.0)),
                                 );
                             });
-                        ui.separator();
-                        ui.horizontal(|ui| {
-                            ui.add_space(8.0);
-                            let attach = ui.add(
-                                egui::Button::new(RichText::new("📎").color(pal.text))
-                                    .fill(pal.soft)
-                                    .rounding(Rounding::same(999.0)),
-                            );
-                            if attach.on_hover_text(t(lang, "attach")).clicked() {
-                                if let Some(path) = rfd::FileDialog::new()
-                                    .add_filter("Text", &["txt", "md", "csv", "srt", "json", "html"])
-                                    .pick_file()
-                                {
-                                    if let Ok(text) = std::fs::read_to_string(&path) {
-                                        if !self.input.is_empty() {
-                                            self.input.push_str("\n\n");
+                        egui::Frame::none()
+                            .inner_margin(egui::Margin {
+                                left: 12.0,
+                                right: 12.0,
+                                top: 8.0,
+                                bottom: 8.0,
+                            })
+                            .show(ui, |ui| {
+                                ui.horizontal(|ui| {
+                                    ui.spacing_mut().item_spacing.x = 8.0;
+                                    if icon_btn_sized(ui, &pal, "clip", false, 36.0, 12.0, false)
+                                        .on_hover_text(t(lang, "attach"))
+                                        .clicked()
+                                    {
+                                        if let Some(path) = rfd::FileDialog::new()
+                                            .add_filter(
+                                                "Text",
+                                                &["txt", "md", "csv", "srt", "json", "html"],
+                                            )
+                                            .pick_file()
+                                        {
+                                            if let Ok(text) = std::fs::read_to_string(&path) {
+                                                if !self.input.is_empty() {
+                                                    self.input.push_str("\n\n");
+                                                }
+                                                self.input.push_str(&text);
+                                            }
                                         }
-                                        self.input.push_str(&text);
                                     }
-                                }
-                            }
-                            ui.label(
-                                RichText::new(format!(
-                                    "{} {}",
-                                    self.input.chars().count(),
-                                    t(lang, "chars")
-                                ))
-                                .size(12.0)
-                                .color(pal.muted),
-                            );
-                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                ui.add_space(8.0);
-                                if ui
-                                    .add_enabled(
-                                        !self.busy,
-                                        egui::Button::new(
-                                            RichText::new(t(lang, "translate"))
-                                                .color(pal.on_accent)
-                                                .strong(),
-                                        )
-                                        .fill(pal.accent)
-                                        .rounding(Rounding::same(999.0))
-                                        .min_size(egui::vec2(110.0, 30.0)),
-                                    )
-                                    .clicked()
-                                {
-                                    self.start_translate();
-                                }
+                                    ui.label(
+                                        RichText::new(format!(
+                                            "{} {}",
+                                            self.input.chars().count(),
+                                            t(lang, "chars")
+                                        ))
+                                        .size(13.0)
+                                        .color(pal.muted),
+                                    );
+                                    ui.with_layout(
+                                        egui::Layout::right_to_left(egui::Align::Center),
+                                        |ui| {
+                                            if ui
+                                                .add_enabled(
+                                                    !self.busy,
+                                                    egui::Button::new(
+                                                        RichText::new(t(lang, "translate"))
+                                                            .color(pal.on_accent)
+                                                            .size(15.0)
+                                                            .strong(),
+                                                    )
+                                                    .fill(pal.accent)
+                                                    .stroke(Stroke::NONE)
+                                                    .rounding(Rounding::same(999.0))
+                                                    .min_size(egui::vec2(110.0, 36.0)),
+                                                )
+                                                .clicked()
+                                            {
+                                                self.start_translate();
+                                            }
+                                        },
+                                    );
+                                });
                             });
-                        });
                     });
                 });
             });
             ui.add_space(gap);
-            ui.allocate_ui(egui::vec2(col_w, h), |ui| {
+            ui.allocate_ui(egui::vec2(col_w, card_h), |ui| {
                 card_ui(ui, &pal, |ui| {
+                    ui.set_min_size(egui::vec2(col_w, card_h));
                     ui.vertical(|ui| {
+                        ui.spacing_mut().item_spacing.y = 0.0;
                         egui::ScrollArea::vertical()
                             .id_source("out_scroll")
-                            .max_height((h - 60.0).max(80.0))
+                            .max_height(body_h)
+                            .auto_shrink([false, false])
                             .show(ui, |ui| {
-                                ui.add_space(10.0);
-                                ui.horizontal_wrapped(|ui| {
-                                    ui.add_space(6.0);
-                                    ui.add(
-                                        egui::Label::new(
-                                            RichText::new(if self.output.is_empty() {
-                                                " ".to_string()
-                                            } else {
-                                                filter_profanity(
-                                                    &self.output,
-                                                    &self.set.tgt,
-                                                    &self.set.src,
-                                                    &self.set.profanity_style,
+                                egui::Frame::none()
+                                    .inner_margin(egui::Margin {
+                                        left: 20.0,
+                                        right: 20.0,
+                                        top: 18.0,
+                                        bottom: 0.0,
+                                    })
+                                    .show(ui, |ui| {
+                                        ui.set_width(ui.available_width());
+                                        ui.add(
+                                            egui::Label::new(
+                                                RichText::new(if self.output.is_empty() {
+                                                    " ".to_string()
+                                                } else {
+                                                    filter_profanity(
+                                                        &self.output,
+                                                        &self.set.tgt,
+                                                        &self.set.src,
+                                                        &self.set.profanity_style,
+                                                    )
+                                                })
+                                                .size(17.0)
+                                                .color(pal.text),
+                                            )
+                                            .wrap(true),
+                                        );
+                                    });
+                            });
+                        egui::Frame::none()
+                            .inner_margin(egui::Margin {
+                                left: 12.0,
+                                right: 12.0,
+                                top: 8.0,
+                                bottom: 8.0,
+                            })
+                            .show(ui, |ui| {
+                                ui.horizontal(|ui| {
+                                    ui.spacing_mut().item_spacing.x = 8.0;
+                                    ui.label(
+                                        RichText::new(&self.status).size(13.0).color(pal.muted),
+                                    );
+                                    ui.with_layout(
+                                        egui::Layout::right_to_left(egui::Align::Center),
+                                        |ui| {
+                                            if icon_btn_sized(
+                                                ui, &pal, "copy", false, 36.0, 12.0, false,
+                                            )
+                                            .on_hover_text(t(lang, "copy"))
+                                            .clicked()
+                                            {
+                                                ui.output_mut(|o| {
+                                                    o.copied_text = if self.last_tr.is_empty() {
+                                                        self.output.clone()
+                                                    } else {
+                                                        self.last_tr.clone()
+                                                    }
+                                                });
+                                                self.status = t(lang, "copied");
+                                            }
+                                            if self.busy
+                                                && icon_btn_sized(
+                                                    ui, &pal, "stop", false, 36.0, 12.0, false,
                                                 )
-                                            })
-                                            .size(16.0)
-                                            .color(pal.text),
-                                        )
-                                        .wrap(true),
+                                                .on_hover_text(t(lang, "stop"))
+                                                .clicked()
+                                            {
+                                                self.stop_translation();
+                                            }
+                                        },
                                     );
                                 });
                             });
-                        ui.separator();
-                        ui.horizontal(|ui| {
-                            ui.add_space(8.0);
-                            ui.label(RichText::new(&self.status).size(12.0).color(pal.muted));
-                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                ui.add_space(8.0);
-                                if icon_btn(ui, &pal, "copy", false)
-                                    .on_hover_text(t(lang, "copy"))
-                                    .clicked()
-                                {
-                                    ui.output_mut(|o| {
-                                        o.copied_text = if self.last_tr.is_empty() {
-                                            self.output.clone()
-                                        } else {
-                                            self.last_tr.clone()
-                                        }
-                                    });
-                                    self.status = t(lang, "copied");
-                                }
-                                if self.busy && icon_btn(ui, &pal, "stop", false)
-                                    .on_hover_text(t(lang, "stop"))
-                                    .clicked()
-                                {
-                                    self.stop_translation();
-                                }
-                            });
-                        });
                     });
                 });
             });
@@ -1278,126 +1580,246 @@ impl App {
         egui::SidePanel::right("style_side")
             .exact_width(300.0)
             .resizable(false)
-            .frame(egui::Frame::none().fill(pal.bg).inner_margin(egui::Margin::symmetric(12.0, 14.0)))
+            .show_separator_line(false)
+            .frame(egui::Frame::none().fill(pal.bg).inner_margin(egui::Margin {
+                left: 14.0,
+                right: 14.0,
+                // Wie `alignSideTop` in renderer.js: Die Karte beginnt auf
+                // derselben Hoehe wie die beiden Textkarten (Kopfzeile 36 px
+                // plus 12 px Abstand plus 16 px Rand der Mittelebene).
+                top: 64.0,
+                bottom: 14.0,
+            }))
             .show(ctx, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    ui.label(RichText::new(t(lang, "style")).size(15.0).strong());
-                    ui.add_space(4.0);
-                    let groups: [(&str, &[(&str, &str)]); 4] = [
-                        ("l_type", &[("natural", "o_natural"), ("literal", "o_literal")]),
-                        (
-                            "l_formal",
-                            &[("standard", "o_standard"), ("formal", "o_formal"), ("informal", "o_informal")],
-                        ),
-                        (
-                            "l_gender",
-                            &[("unknown", "o_unknown"), ("neutral", "o_neutral"), ("male", "o_male"), ("female", "o_female")],
-                        ),
-                        (
-                            "l_writer",
-                            &[("unknown", "o_unknown"), ("neutral", "o_neutral"), ("male", "o_male"), ("female", "o_female")],
-                        ),
-                    ];
-                    for (label, opts) in groups {
-                        ui.label(RichText::new(t(lang, label)).size(12.5).color(pal.muted));
-                        ui.horizontal_wrapped(|ui| {
-                            for (value, text) in opts {
-                                let current = match label {
-                                    "l_type" => &self.set.style.kind,
-                                    "l_formal" => &self.set.style.formal,
-                                    "l_gender" => &self.set.style.gender,
-                                    _ => &self.set.style.writer,
-                                };
-                                let on = current == value;
-                                let option = t(lang, text);
-                                let btn = if on {
-                                    egui::Button::new(RichText::new(&option).color(pal.on_accent).size(13.0))
-                                        .fill(pal.accent)
-                                        .stroke(Stroke::NONE)
-                                        .rounding(Rounding::same(999.0))
-                                        .min_size(egui::vec2(32.0, 30.0))
-                                } else {
-                                    egui::Button::new(RichText::new(&option).color(pal.text).size(13.0))
-                                        .fill(pal.card)
-                                        .stroke(Stroke::new(1.0_f32, pal.line))
-                                        .rounding(Rounding::same(999.0))
-                                        .min_size(egui::vec2(32.0, 30.0))
-                                };
-                                if ui.add(btn).clicked() {
-                                    match label {
-                                        "l_type" => self.set.style.kind = value.to_string(),
-                                        "l_formal" => self.set.style.formal = value.to_string(),
-                                        "l_gender" => self.set.style.gender = value.to_string(),
-                                        _ => self.set.style.writer = value.to_string(),
+                    // Die Vorlage rechnet mit festen Abstaenden (8 px). egui
+                    // wuerde zwischen jedem Element zusaetzlich 8 px setzen;
+                    // hier wird deshalb nur mit `add_space` gearbeitet.
+                    ui.spacing_mut().item_spacing.y = 0.0;
+                    // ---- Karte mit den Stilgruppen -------------------------
+                    egui::Frame::none()
+                        .fill(pal.card)
+                        .stroke(Stroke::new(1.0_f32, pal.line))
+                        .rounding(Rounding::same(18.0))
+                        .inner_margin(egui::Margin {
+                            left: 12.0,
+                            right: 12.0,
+                            top: 12.0,
+                            bottom: 16.0,
+                        })
+                        .show(ui, |ui| {
+                            ui.set_width(ui.available_width());
+                            side_label(ui, &t(lang, "style"), 15.0, 22.5, 4.0, pal.text, true);
+                            ui.add_space(16.0);
+                            let groups: [(&str, &[(&str, &str)]); 4] = [
+                                ("l_type", &[("natural", "natural"), ("literal", "literal")]),
+                                (
+                                    "l_formal",
+                                    &[
+                                        ("standard", "dash"),
+                                        ("formal", "hat"),
+                                        ("informal", "smile"),
+                                    ],
+                                ),
+                                (
+                                    "l_gender",
+                                    &[
+                                        ("unknown", "qmark"),
+                                        ("neutral", "nb"),
+                                        ("male", "male"),
+                                        ("female", "female"),
+                                    ],
+                                ),
+                                (
+                                    "l_writer",
+                                    &[
+                                        ("unknown", "qmark"),
+                                        ("neutral", "nb"),
+                                        ("male", "male"),
+                                        ("female", "female"),
+                                    ],
+                                ),
+                            ];
+                            for (i, (label, opts)) in groups.iter().enumerate() {
+                                if i > 0 {
+                                    ui.add_space(16.0);
+                                }
+                                side_label(
+                                    ui,
+                                    &t(lang, label),
+                                    12.5,
+                                    25.6,
+                                    2.0,
+                                    pal.muted,
+                                    false,
+                                );
+                                ui.horizontal_wrapped(|ui| {
+                                    ui.spacing_mut().item_spacing = egui::vec2(2.0, 2.0);
+                                    for (value, icon) in opts.iter() {
+                                        let current = match *label {
+                                            "l_type" => &self.set.style.kind,
+                                            "l_formal" => &self.set.style.formal,
+                                            "l_gender" => &self.set.style.gender,
+                                            _ => &self.set.style.writer,
+                                        };
+                                        let on = current == value;
+                                        let tip = t(lang, &format!("o_{}", value));
+                                        if seg_btn(ui, &pal, icon, on)
+                                            .on_hover_text(tip)
+                                            .clicked()
+                                        {
+                                            match *label {
+                                                "l_type" => self.set.style.kind = value.to_string(),
+                                                "l_formal" => {
+                                                    self.set.style.formal = value.to_string()
+                                                }
+                                                "l_gender" => {
+                                                    self.set.style.gender = value.to_string()
+                                                }
+                                                _ => self.set.style.writer = value.to_string(),
+                                            }
+                                            self.save_set();
+                                        }
                                     }
+                                });
+                            }
+                        });
+                    ui.add_space(8.0);
+
+                    // ---- Zusammenhang (aufklappbar) ------------------------
+                    let ctx_id = egui::Id::new("side_ctx_open");
+                    let mut ctx_open = ui.data(|d| d.get_temp::<bool>(ctx_id).unwrap_or(false));
+                    egui::Frame::none()
+                        .fill(pal.soft)
+                        .rounding(Rounding::same(18.0))
+                        .inner_margin(egui::Margin {
+                            left: 12.0,
+                            right: 12.0,
+                            top: 10.0,
+                            bottom: 10.0,
+                        })
+                        .show(ui, |ui| {
+                            ui.set_width(ui.available_width());
+                            if bar_header(ui, &pal, &t(lang, "context"), ctx_open).clicked() {
+                                ctx_open = !ctx_open;
+                            }
+                            if ctx_open {
+                                ui.add_sized(
+                                    egui::vec2(ui.available_width(), 110.0),
+                                    egui::TextEdit::multiline(&mut self.set.ctxt)
+                                        .frame(false)
+                                        .font(egui::FontId::proportional(14.0))
+                                        .margin(egui::vec2(0.0, 10.0))
+                                        .hint_text(t(lang, "ctx_ph")),
+                                );
+                                if ui.input(|i| i.pointer.any_released()) {
                                     self.save_set();
                                 }
                             }
                         });
-                        ui.add_space(6.0);
-                    }
-
-                    ui.add_space(6.0);
-                    egui::Frame::none()
-                        .fill(pal.soft)
-                        .rounding(Rounding::same(18.0))
-                        .inner_margin(egui::Margin::same(10.0))
-                        .show(ui, |ui| {
-                            ui.label(RichText::new(t(lang, "context")).strong());
-                            ui.add(
-                                egui::TextEdit::multiline(&mut self.set.ctxt)
-                                    .frame(false)
-                                    .desired_width(f32::INFINITY)
-                                    .desired_rows(3)
-                                    .hint_text(t(lang, "ctx_ph")),
-                            );
-                            if ui.input(|i| i.pointer.any_released()) {
-                                self.save_set();
-                            }
-                        });
+                    ui.data_mut(|d| d.insert_temp(ctx_id, ctx_open));
                     ui.add_space(8.0);
+
+                    // ---- Glossar (aufklappbar) ------------------------------
+                    let gl_id = egui::Id::new("side_gloss_open");
+                    let mut gl_open = ui.data(|d| d.get_temp::<bool>(gl_id).unwrap_or(false));
                     egui::Frame::none()
                         .fill(pal.soft)
                         .rounding(Rounding::same(18.0))
-                        .inner_margin(egui::Margin::same(10.0))
+                        .inner_margin(egui::Margin {
+                            left: 12.0,
+                            right: 12.0,
+                            top: 10.0,
+                            bottom: 10.0,
+                        })
                         .show(ui, |ui| {
-                            ui.label(RichText::new(t(lang, "glossary")).strong());
-                            let mut remove: Option<usize> = None;
-                            for (i, g) in self.set.gloss.iter_mut().enumerate() {
-                                ui.horizontal(|ui| {
-                                    ui.add(
-                                        egui::TextEdit::singleline(&mut g.s)
-                                            .frame(false)
-                                            .desired_width(100.0)
-                                            .hint_text(t(lang, "term")),
-                                    );
-                                    ui.label("→");
-                                    ui.add(
-                                        egui::TextEdit::singleline(&mut g.t)
-                                            .frame(false)
-                                            .desired_width(100.0)
-                                            .hint_text(t(lang, "term_t")),
-                                    );
-                                    if icon_btn(ui, &pal, "x", false).clicked() {
-                                        remove = Some(i);
-                                    }
-                                });
+                            ui.set_width(ui.available_width());
+                            if bar_header(ui, &pal, &t(lang, "glossary"), gl_open).clicked() {
+                                gl_open = !gl_open;
                             }
-                            if let Some(i) = remove {
-                                self.set.gloss.remove(i);
-                                self.save_set();
-                            }
-                            if ui
-                                .add(egui::Button::new(RichText::new(t(lang, "add_entry")).size(12.5)).fill(pal.card))
-                                .clicked()
-                            {
-                                self.set.gloss.push(crate::settings::GlossEntry {
-                                    s: String::new(),
-                                    t: String::new(),
-                                });
-                                self.save_set();
+                            if gl_open {
+                                let mut remove: Option<usize> = None;
+                                for (i, g) in self.set.gloss.iter_mut().enumerate() {
+                                    ui.add_space(6.0);
+                                    let w = ui.available_width();
+                                    let field_w = ((w - 36.0 - 18.0 - 9.0) / 2.0).max(40.0);
+                                    ui.horizontal(|ui| {
+                                        ui.spacing_mut().item_spacing.x = 6.0;
+                                        egui::Frame::none()
+                                            .fill(pal.card)
+                                            .stroke(Stroke::new(1.0_f32, pal.line))
+                                            .rounding(Rounding::same(10.0))
+                                            .inner_margin(egui::Margin::symmetric(8.0, 6.0))
+                                            .show(ui, |ui| {
+                                                ui.add(
+                                                    egui::TextEdit::singleline(&mut g.s)
+                                                        .frame(false)
+                                                        .font(egui::FontId::proportional(13.0))
+                                                        .desired_width(field_w - 18.0)
+                                                        .hint_text(t(lang, "term")),
+                                                );
+                                            });
+                                        ui.label(RichText::new("→").size(13.0).color(pal.muted));
+                                        egui::Frame::none()
+                                            .fill(pal.card)
+                                            .stroke(Stroke::new(1.0_f32, pal.line))
+                                            .rounding(Rounding::same(10.0))
+                                            .inner_margin(egui::Margin::symmetric(8.0, 6.0))
+                                            .show(ui, |ui| {
+                                                ui.add(
+                                                    egui::TextEdit::singleline(&mut g.t)
+                                                        .frame(false)
+                                                        .font(egui::FontId::proportional(13.0))
+                                                        .desired_width(field_w - 18.0)
+                                                        .hint_text(t(lang, "term_t")),
+                                                );
+                                            });
+                                        if icon_btn_sized(ui, &pal, "x", false, 36.0, 12.0, false)
+                                            .on_hover_text(t(lang, "remove"))
+                                            .clicked()
+                                        {
+                                            remove = Some(i);
+                                        }
+                                    });
+                                }
+                                if let Some(i) = remove {
+                                    self.set.gloss.remove(i);
+                                    self.save_set();
+                                }
+                                ui.add_space(6.0);
+                                let add = t(lang, "add_entry");
+                                let galley = ui.painter().layout_no_wrap(
+                                    add.clone(),
+                                    egui::FontId::proportional(13.0),
+                                    pal.text,
+                                );
+                                let (rect, resp) = ui.allocate_exact_size(
+                                    egui::vec2(galley.size().x + 28.0, 30.0),
+                                    egui::Sense::click(),
+                                );
+                                let fill = if resp.hovered() { pal.card } else { pal.soft };
+                                ui.painter().rect(rect, Rounding::same(999.0), fill, Stroke::NONE);
+                                ui.painter().galley(
+                                    egui::pos2(
+                                        rect.center().x - galley.size().x / 2.0,
+                                        rect.center().y - galley.size().y / 2.0,
+                                    ),
+                                    galley,
+                                    pal.text,
+                                );
+                                if resp
+                                    .on_hover_cursor(egui::CursorIcon::PointingHand)
+                                    .clicked()
+                                {
+                                    self.set.gloss.push(crate::settings::GlossEntry {
+                                        s: String::new(),
+                                        t: String::new(),
+                                    });
+                                    self.save_set();
+                                }
                             }
                         });
+                    ui.data_mut(|d| d.insert_temp(gl_id, gl_open));
                 });
             });
     }
@@ -3614,57 +4036,253 @@ impl App {
     fn library(&mut self, ui: &mut egui::Ui) {
         let pal = self.pal;
         let lang = self.lang;
-        ui.horizontal(|ui| {
-            ui.label(RichText::new(t(lang, "nav_lib")).size(20.0).strong());
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(RichText::new(format!("{}", self.lib.len())).size(12.0).color(pal.muted));
-            });
-        });
-        ui.add_space(6.0);
+        ui.spacing_mut().item_spacing.y = 0.0;
+
+        // Kopfzeile `.libhead`: 20 px Titel, rechts die Anzahl. Feste
+        // Zeilenhoehe 30 px (20 px Schrift, Zeilenhoehe 1.5).
+        ui.add_space(4.0);
+        let (head, _) = ui.allocate_exact_size(
+            egui::vec2(ui.available_width(), 30.0),
+            egui::Sense::hover(),
+        );
+        let title = t(lang, "nav_lib");
+        let tg = ui.painter().layout_no_wrap(
+            title,
+            egui::FontId::proportional(20.0),
+            pal.text,
+        );
+        let tpos = egui::pos2(
+            head.left() + 6.0,
+            head.center().y - tg.size().y / 2.0,
+        );
+        ui.painter()
+            .galley(tpos + egui::vec2(0.6, 0.0), tg.clone(), pal.text);
+        ui.painter().galley(tpos, tg, pal.text);
+        if !self.lib.is_empty() {
+            let count = format!("{} {}", self.lib.len(), t(lang, "lib_docs"));
+            let cg = ui.painter().layout_no_wrap(
+                count,
+                egui::FontId::proportional(12.5),
+                pal.muted,
+            );
+            ui.painter().galley(
+                egui::pos2(
+                    head.right() - 6.0 - cg.size().x,
+                    head.center().y - cg.size().y / 2.0,
+                ),
+                cg,
+                pal.muted,
+            );
+        }
+        ui.add_space(4.0);
+        ui.add_space(8.0);
+
         if self.lib.is_empty() {
             ui.vertical_centered(|ui| {
-                ui.add_space(60.0);
-                ui.label(RichText::new(t(lang, "lib_empty")).color(pal.muted));
-                ui.label(RichText::new(t(lang, "lib_empty_hint")).size(12.0).color(pal.muted));
+                ui.add_space(80.0);
+                ui.label(
+                    RichText::new(t(lang, "lib_empty"))
+                        .size(15.0)
+                        .color(pal.muted),
+                );
+                ui.add_space(6.0);
+                ui.label(
+                    RichText::new(t(lang, "lib_empty_hint"))
+                        .size(13.0)
+                        .color(pal.muted),
+                );
             });
             return;
         }
+
+        let items = self.lib.clone();
         let mut open_doc: Option<String> = None;
         let mut del: Option<(String, String)> = None;
-        egui::ScrollArea::vertical().show(ui, |ui| {
-            ui.horizontal_wrapped(|ui| {
-                for meta in &self.lib {
-                    egui::Frame::none()
-                        .fill(pal.card)
-                        .stroke(Stroke::new(1.0_f32, pal.line))
-                        .rounding(Rounding::same(18.0))
-                        .inner_margin(egui::Margin::same(12.0))
-                        .show(ui, |ui| {
-                            ui.allocate_ui(egui::vec2(200.0, 120.0), |ui| {
-                                ui.vertical(|ui| {
-                                    ui.label(RichText::new(&meta.name).strong().size(14.0));
-                                    ui.label(
-                                        RichText::new(format_date(meta.updated))
-                                            .size(11.0)
-                                            .color(pal.muted),
-                                    );
-                                    ui.with_layout(
-                                        egui::Layout::right_to_left(egui::Align::Center),
-                                        |ui| {
-                                            if ui.button(t(lang, "open")).clicked() {
-                                                open_doc = Some(meta.id.clone());
-                                            }
-                                            if ui.button(t(lang, "delete")).clicked() {
-                                                del = Some((meta.id.clone(), meta.name.clone()));
-                                            }
-                                        },
-                                    );
-                                });
-                            });
-                        });
+
+        // Raster wie `.libgrid`: Spalten mit mindestens 210 px, 16 px
+        // Abstand, 6 px Rand an den Seiten.
+        let avail = (ui.available_width() - 12.0).max(210.0);
+        let cols = (((avail + 16.0) / 226.0).floor() as usize).max(1);
+        let card_w = (avail - (cols.saturating_sub(1)) as f32 * 16.0) / cols as f32;
+
+        egui::ScrollArea::vertical()
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                ui.add_space(4.0);
+                let mut idx = 0usize;
+                while idx < items.len() {
+                    let row_end = (idx + cols).min(items.len());
+                    let row = &items[idx..row_end];
+                    // Hoehe der Namenszeile je Karte (hoechstens zwei
+                    // Zeilen), damit alle Karten einer Reihe gleich hoch
+                    // sind wie im Raster der Vorlage.
+                    let mut metas = Vec::new();
+                    for meta in row {
+                        let name = ui.painter().layout(
+                            meta.name.clone(),
+                            egui::FontId::proportional(15.0),
+                            pal.text,
+                            card_w - 28.0,
+                        );
+                        let rows = name.rows.len().min(2);
+                        let h = 10.0 + rows as f32 * 19.5 + 2.0 + 18.0 + 12.0;
+                        metas.push((name, h));
+                    }
+                    let meta_h = metas
+                        .iter()
+                        .map(|(_, h)| *h)
+                        .fold(0.0_f32, f32::max);
+                    let card_h = 1.0 + 168.0 + meta_h + 1.0;
+                    let mut row_open: Option<String> = None;
+                    let mut row_del: Option<String> = None;
+                    ui.horizontal_top(|ui| {
+                        ui.spacing_mut().item_spacing.x = 0.0;
+                        ui.add_space(6.0);
+                        for (k, meta) in row.iter().enumerate() {
+                            if k > 0 {
+                                ui.add_space(16.0);
+                            }
+                            let (rect, resp) = ui.allocate_exact_size(
+                                egui::vec2(card_w, card_h),
+                                egui::Sense::click(),
+                            );
+                            let hovered = resp.hovered();
+                            let painter = ui.painter().clone();
+                            let stroke = if hovered {
+                                Stroke::new(1.0_f32, pal.accent)
+                            } else {
+                                Stroke::new(1.0_f32, pal.line)
+                            };
+                            painter.rect_filled(rect, Rounding::same(18.0), pal.card);
+                            painter.rect_stroke(rect, Rounding::same(18.0), stroke);
+                            let prev = egui::Rect::from_min_size(
+                                rect.min + egui::vec2(1.0, 1.0),
+                                egui::vec2(rect.width() - 2.0, 168.0),
+                            );
+                            painter.rect_filled(
+                                prev,
+                                Rounding {
+                                    nw: 17.0,
+                                    ne: 17.0,
+                                    sw: 0.0,
+                                    se: 0.0,
+                                },
+                                pal.soft,
+                            );
+                            // Weisse Vorschauseite wie `.libprev .doc`.
+                            let page = egui::Rect::from_min_size(
+                                prev.min + egui::vec2(14.0, 14.0),
+                                egui::vec2(prev.width() - 28.0, prev.height() - 28.0),
+                            );
+                            painter.rect_filled(page, Rounding::same(8.0), pal.card);
+                            let body = meta.text.clone().unwrap_or_default();
+                            preview_text(
+                                &painter,
+                                page.shrink2(egui::vec2(16.0, 14.0)),
+                                &body,
+                                &pal,
+                            );
+                            // Weicher Abschluss unten (`.libprev::after`).
+                            let fade_top = prev.bottom() - 44.0;
+                            for band in 0..8 {
+                                let a = band as f32 / 7.0;
+                                let y = fade_top + band as f32 * 5.5;
+                                painter.rect_filled(
+                                    egui::Rect::from_min_size(
+                                        egui::pos2(prev.left(), y),
+                                        egui::vec2(prev.width(), 5.5),
+                                    ),
+                                    Rounding::ZERO,
+                                    pal.soft.gamma_multiply(a * 0.85),
+                                );
+                            }
+                            // Trennlinie und Metadaten.
+                            let meta_top = prev.bottom();
+                            painter.line_segment(
+                                [
+                                    egui::pos2(rect.left() + 1.0, meta_top),
+                                    egui::pos2(rect.right() - 1.0, meta_top),
+                                ],
+                                Stroke::new(1.0_f32, pal.line),
+                            );
+                            let (name, _) = &metas[k];
+                            let tx = rect.left() + 14.0;
+                            let name_pos =
+                                egui::pos2(tx, meta_top + 10.0);
+                            let clip = egui::Rect::from_min_max(
+                                egui::pos2(tx, meta_top + 10.0),
+                                egui::pos2(
+                                    rect.right() - 14.0,
+                                    meta_top + 10.0 + 39.0,
+                                ),
+                            );
+                            painter
+                                .with_clip_rect(clip)
+                                .galley(name_pos + egui::vec2(0.4, 0.0), name.clone(), pal.text);
+                            painter
+                                .with_clip_rect(clip)
+                                .galley(name_pos, name.clone(), pal.text);
+                            let date_pos = egui::pos2(
+                                tx,
+                                meta_top + 10.0 + name.rows.len().min(2) as f32 * 19.5 + 2.0,
+                            );
+                            painter.text(
+                                date_pos,
+                                egui::Align2::LEFT_TOP,
+                                format_datetime(meta.updated),
+                                egui::FontId::proportional(12.0),
+                                pal.muted,
+                            );
+
+                            // Entfernen-Kreuz erscheint beim Ueberfahren.
+                            if hovered {
+                                let rm = egui::Rect::from_min_size(
+                                    egui::pos2(rect.right() - 30.0, rect.top() + 8.0),
+                                    egui::vec2(22.0, 22.0),
+                                );
+                                painter.rect_filled(rm, Rounding::same(11.0), pal.text);
+                                crate::icons::paint(
+                                    &painter,
+                                    egui::Rect::from_center_size(
+                                        rm.center(),
+                                        egui::vec2(11.0, 11.0),
+                                    ),
+                                    "x",
+                                    pal.bg,
+                                );
+                                let rm_resp = ui.interact(
+                                    rm,
+                                    egui::Id::new(("lib_rm", &meta.id)),
+                                    egui::Sense::click(),
+                                );
+                                if rm_resp
+                                    .on_hover_cursor(egui::CursorIcon::PointingHand)
+                                    .clicked()
+                                {
+                                    row_del = Some(meta.id.clone());
+                                }
+                            }
+                            if resp
+                                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                                .clicked()
+                                && row_del.is_none()
+                            {
+                                row_open = Some(meta.id.clone());
+                            }
+                            idx += 1;
+                        }
+                    });
+                    if let Some(id) = row_del {
+                        del = Some((id, String::new()));
+                    }
+                    if let Some(id) = row_open {
+                        open_doc = Some(id);
+                    }
+                    ui.add_space(16.0);
                 }
+                ui.add_space(4.0);
             });
-        });
+
         if let Some(id) = open_doc {
             if let Some((_meta, text)) = library::read(&id) {
                 self.doc = text;
@@ -3674,9 +4292,58 @@ impl App {
             }
         }
         if let Some((id, name)) = del {
+            let name = if name.is_empty() {
+                self.lib
+                    .iter()
+                    .find(|m| m.id == id)
+                    .map(|m| m.name.clone())
+                    .unwrap_or_default()
+            } else {
+                name
+            };
             let text = format!("{} – {}", t(lang, "lib_delete_q"), name);
             self.ask_confirm(text, Confirm::LibDelete(id));
         }
+    }
+}
+
+/// Zeichnet den Anfang eines Dokuments in die Vorschauseite der Ablage.
+/// Ueberschriften werden wie in `.libprev .doc` groesser gesetzt; alles
+/// andere bleibt bei 11 px. Der Bereich wird beschnitten, damit nichts
+/// ueber die weisse Seite laeuft.
+fn preview_text(painter: &egui::Painter, rect: egui::Rect, text: &str, p: &Palette) {
+    let clip = painter.with_clip_rect(rect);
+    let mut y = rect.top();
+    for line in text.lines() {
+        if y >= rect.bottom() {
+            break;
+        }
+        let trimmed = line.trim_end();
+        if trimmed.trim().is_empty() {
+            y += 5.0;
+            continue;
+        }
+        let (size, body, heading) = if let Some(r) = trimmed.strip_prefix("### ") {
+            (12.0, r, true)
+        } else if let Some(r) = trimmed.strip_prefix("## ") {
+            (13.0, r, true)
+        } else if let Some(r) = trimmed.strip_prefix("# ") {
+            (15.0, r, true)
+        } else {
+            (11.0, trimmed, false)
+        };
+        let galley = clip.layout(
+            body.to_string(),
+            egui::FontId::proportional(size),
+            p.text,
+            rect.width(),
+        );
+        let pos = egui::pos2(rect.left(), y);
+        if heading {
+            clip.galley(pos + egui::vec2(0.4, 0.0), galley.clone(), p.text);
+        }
+        clip.galley(pos, galley.clone(), p.text);
+        y += galley.size().y + if heading { 4.0 } else { 2.0 };
     }
 }
 
@@ -3720,9 +4387,23 @@ fn combo(ui: &mut egui::Ui, id: &str, label: &str, value: &mut String, options: 
     });
 }
 
-fn format_date(secs: u64) -> String {
-    // Umrechnung Tage seit Epoche in ein Datum (ohne externe Datumsbibliothek).
-    let days = (secs / 86_400) as i64;
+/// Wie `libDate` in `editor.js`: Datum und Uhrzeit in der Ortszeit.
+fn format_datetime(secs: u64) -> String {
+    let local = secs as i64 + local_offset_secs();
+    let days = local.div_euclid(86_400);
+    let sod = local.rem_euclid(86_400);
+    let (d, m, y) = civil_from_days(days);
+    format!(
+        "{:02}.{:02}.{}, {:02}:{:02}",
+        d,
+        m,
+        y,
+        sod / 3600,
+        (sod % 3600) / 60
+    )
+}
+
+fn civil_from_days(days: i64) -> (i64, i64, i64) {
     let z = days + 719_468;
     let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
     let doe = z - era * 146_097;
@@ -3733,5 +4414,62 @@ fn format_date(secs: u64) -> String {
     let d = doy - (153 * mp + 2) / 5 + 1;
     let m = if mp < 10 { mp + 3 } else { mp - 9 };
     let y = if m <= 2 { y + 1 } else { y };
-    format!("{:02}.{:02}.{}", d, m, y)
+    (d, m, y)
+}
+
+fn days_from_civil(y: i64, m: i64, d: i64) -> i64 {
+    let y = if m <= 2 { y - 1 } else { y };
+    let era = if y >= 0 { y } else { y - 399 } / 400;
+    let yoe = y - era * 400;
+    let mp = if m > 2 { m - 3 } else { m + 9 };
+    let doy = (153 * mp + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    era * 146_097 + doe - 719_468
+}
+
+/// Abstand der Ortszeit zu UTC in Sekunden. Unter Windows ueber
+/// `GetLocalTime`, sonst 0 (UTC). Sommerzeit wird fuer das aktuelle Datum
+/// bestimmt; alte Ablagedokumente koennen dadurch eine Stunde abweichen.
+#[cfg(windows)]
+fn local_offset_secs() -> i64 {
+    #[repr(C)]
+    struct SystemTime {
+        year: u16,
+        month: u16,
+        _day_of_week: u16,
+        day: u16,
+        hour: u16,
+        minute: u16,
+        second: u16,
+        _millis: u16,
+    }
+    extern "system" {
+        fn GetLocalTime(t: *mut SystemTime);
+    }
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+    let mut st = SystemTime {
+        year: 0,
+        month: 0,
+        _day_of_week: 0,
+        day: 0,
+        hour: 0,
+        minute: 0,
+        second: 0,
+        _millis: 0,
+    };
+    unsafe { GetLocalTime(&mut st) };
+    let days = days_from_civil(st.year as i64, st.month as i64, st.day as i64);
+    let local = days * 86_400
+        + st.hour as i64 * 3600
+        + st.minute as i64 * 60
+        + st.second as i64;
+    local - now
+}
+
+#[cfg(not(windows))]
+fn local_offset_secs() -> i64 {
+    0
 }

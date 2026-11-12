@@ -104,6 +104,7 @@ fn strings(k: &str) -> Six {
         "nav_tr"       => ("Übersetzer", "Translator", "Vertaler", "Traductor", "Çevirmen", "المترجم"),
         "nav_ed"       => ("Textbearbeitung", "Text editor", "Tekstbewerking", "Editor de texto", "Metin düzenleyici", "محرر النصوص"),
         "nav_lib"      => ("Dokumentenablage", "Document tray", "Documentenlade", "Bandeja de documentos", "Belge tepsisi", "درج المستندات"),
+        "lib_docs"     => ("Dokumente", "documents", "documenten", "documentos", "belge", "مستندات"),
         "settings"     => ("Einstellungen", "Settings", "Instellingen", "Configuración", "Ayarlar", "الإعدادات"),
         "close"        => ("Schließen", "Close", "Sluiten", "Cerrar", "Kapat", "إغلاق"),
         "ok"           => ("OK", "OK", "OK", "OK", "Tamam", "موافق"),
