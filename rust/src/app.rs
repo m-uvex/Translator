@@ -3837,13 +3837,20 @@ impl App {
                                 // Karte: 118 x 136, aktiv 154 x 186.
                                 let (karte_w, karte_h) =
                                     if aktiv { (154.0, 186.0) } else { (118.0, 136.0) };
-                                let (zelle, resp) = ui.allocate_exact_size(
+                                let (zelle, _) = ui.allocate_exact_size(
                                     egui::vec2(karte_w, strip.height()),
-                                    egui::Sense::click_and_drag(),
+                                    egui::Sense::hover(),
                                 );
                                 let karte = egui::Rect::from_min_max(
                                     egui::pos2(zelle.left(), zelle.bottom() - karte_h),
                                     egui::pos2(zelle.left() + karte_w, zelle.bottom()),
+                                );
+                                // Nur die Karte selbst ist anklickbar, nicht der
+                                // leere Platz darueber.
+                                let resp = ui.interact(
+                                    karte,
+                                    egui::Id::new(("dock_card", i)),
+                                    egui::Sense::click_and_drag(),
                                 );
                                 rects.push(karte);
                                 let mp = ui.painter();
