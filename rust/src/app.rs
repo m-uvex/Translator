@@ -553,7 +553,7 @@ impl App {
                         self.show_mini = false;
                     } else if self.editor_job {
                         self.editor_job = false;
-                        let clean = text.trim_end().to_string();
+                        let clean = clean_editor_output(&text);
                         if self.pending_diff {
                             self.pending_diff = false;
                             self.diff = Some(DiffState::new(&self.doc, &clean));
@@ -757,7 +757,10 @@ impl App {
             _ => None,
         };
         self.stop.store(false, Ordering::SeqCst);
-        self.status = t(self.lang, "translating");
+        // Wie `withBusy` in der Vorlage: kein Statustext, die Animation ueber
+        // dem Text ist die Rueckmeldung. Und kein Live-Stream: das Modell
+        // schreibt erst fertig, dann wird der Text ersetzt.
+        self.status = String::new();
         let sys = EDITOR_SYS.to_string();
         net::spawn_chat(
             self.cfg(),
@@ -768,7 +771,7 @@ impl App {
             ],
             None,
             None,
-            true,
+            false,
             self.tx.clone(),
             self.stop.clone(),
         );
@@ -1220,6 +1223,71 @@ fn side_label(
             .galley(pos + egui::vec2(0.6, 0.0), galley.clone(), color);
     }
     ui.painter().galley(pos, galley, color);
+}
+
+/// Entfernt, was das Modell ausser dem Text mitliefert: wiederholte
+/// Anweisungen, `<text>`-Reste, Code-Zaeune und umschliessende Anfuehrungszeichen.
+fn clean_editor_output(text: &str) -> String {
+    let mut out = text.trim().to_string();
+    if let Some(pos) = out.rfind("</text>") {
+        out = out[pos + 7..].trim_start().to_string();
+    } else if let Some(pos) = out.rfind("<text>") {
+        out = out[pos + 6..].trim_start().to_string();
+    }
+    let mut zeilen: Vec<String> = out.lines().map(|l| l.to_string()).collect();
+    // Eine oder mehrere Anweisungszeilen am Anfang ("Shorten the ... :") fallen weg.
+    while zeilen.len() > 1 {
+        let erste = zeilen[0].trim().to_string();
+        let anweisung = erste.ends_with(':')
+            && erste.split_whitespace().count() <= 26
+            && !erste.starts_with('"')
+            && !erste.starts_with('„');
+        if !anweisung {
+            break;
+        }
+        zeilen.remove(0);
+        while zeilen.first().map(|l| l.trim().is_empty()).unwrap_or(false) {
+            zeilen.remove(0);
+        }
+    }
+    out = zeilen.join("\n").trim().to_string();
+    if out.starts_with("```") {
+        out = out.trim_start_matches("```").trim_start().to_string();
+        if let Some(ende) = out.rfind("```") {
+            out.truncate(ende);
+        }
+        out = out.trim().to_string();
+    }
+    for paar in [('"', '"'), ('\u{201e}', '\u{201c}'), ('\u{201c}', '\u{201d}'), ('\'', '\'')] {
+        if out.starts_with(paar.0) && out.ends_with(paar.1) && out.chars().count() > 2 {
+            out = out
+                .trim_start_matches(paar.0)
+                .trim_end_matches(paar.1)
+                .trim()
+                .to_string();
+        }
+    }
+    out
+}
+
+/// Ladekreis wie `.spin` in der Vorlage: 18 px, grauer Ring, heller Bogen,
+/// dreht sich mit der Zeit.
+fn ladekreis(ui: &mut egui::Ui, p: &Palette) {
+    let (rect, _) = ui.allocate_exact_size(egui::vec2(18.0, 18.0), egui::Sense::hover());
+    let mitte = rect.center();
+    let radius = 8.0;
+    ui.painter()
+        .circle_stroke(mitte, radius, Stroke::new(2.0_f32, p.line));
+    let start = (ui.input(|i| i.time) as f32 * 300.0).rem_euclid(360.0);
+    let mut pts = Vec::new();
+    for i in 0..=24 {
+        let winkel = (start + i as f32 * 3.6).to_radians();
+        pts.push(mitte + egui::vec2(winkel.cos(), winkel.sin()) * radius);
+    }
+    ui.painter()
+        .add(egui::Shape::line(pts, Stroke::new(2.0_f32, p.accent_ink)));
+    ui.ctx()
+        .request_repaint_after(std::time::Duration::from_millis(40));
 }
 
 /// Zeile in einem ankergebundenen Menue wie `.row` in `style.css`: 32 px hoch,
@@ -2810,7 +2878,7 @@ impl App {
         let closed = pop_at(ctx, "syn_pop", anchor, 280.0, &pal, |ui| {
             if self.syn_job {
                 ui.horizontal(|ui| {
-                    ui.spinner();
+                    ladekreis(ui, &pal);
                     ui.label(RichText::new(t(lang, "synonyms")).size(12.5).color(pal.muted));
                 });
             } else if self.syn_out.is_empty() {
@@ -3046,12 +3114,6 @@ impl App {
             {
                 self.format_wrap("~~", "~~");
             }
-            if icon_btn(ui, &pal, "`", self.selection_wrapped("`", "`"))
-                .on_hover_text("Code")
-                .clicked()
-            {
-                self.format_wrap("`", "`");
-            }
             if icon_btn(ui, &pal, "ul", false)
                 .on_hover_text(t(lang, "list"))
                 .clicked()
@@ -3070,6 +3132,25 @@ impl App {
             {
                 self.format_line("> ");
             }
+            ui.separator();
+            // Ausrichtungen wie `alignL` bis `alignJ` in der Vorlage.
+            for (symbol, ausrichtung, hinweis) in [
+                ("alignL", "left", "align_l"),
+                ("alignC", "center", "align_c"),
+                ("alignR", "right", "align_r"),
+                ("alignJ", "justify", "align_j"),
+            ] {
+                if icon_btn(ui, &pal, symbol, false)
+                    .on_hover_text(t(lang, hinweis))
+                    .clicked()
+                {
+                    self.format_wrap(
+                        &format!("<div align=\"{}\">", ausrichtung),
+                        "</div>",
+                    );
+                }
+            }
+            ui.separator();
             if icon_btn(ui, &pal, "link", false)
                 .on_hover_text(t(lang, "link"))
                 .clicked()
@@ -3136,8 +3217,6 @@ impl App {
                 left: 16.0,
                 right: 16.0,
                 top: 28.0,
-                // Unten ein kleiner Rand, damit die Seite nicht ueber die
-                // gerundete Kante der Flaeche haengt.
                 bottom: 8.0,
             })
             .show(ui, |ui| {
@@ -3152,7 +3231,8 @@ impl App {
                         // Die Seite ist immer mindestens so hoch wie die Flaeche
                         // selbst, damit sie erst an deren Kante abgeschnitten wird
                         // und nicht schon vorher aufhoert.
-                        let page_h = (h - 64.0).max(1040.0);
+                        // Die Seite reicht bis an die Kante der Karte unter ihr.
+                        let page_h = flaeche.height().max(1040.0);
                         let (zeile, _) = ui.allocate_exact_size(
                             egui::vec2(flaeche.width(), page_h),
                             egui::Sense::hover(),
@@ -3216,6 +3296,9 @@ impl App {
                             self.spell_anchor = None;
                             self.spell_mark_rects.clear();
                         }
+                        if self.editor_job {
+                            self.paint_processing(ui, &out);
+                        }
                         if out.response.changed() {
                             let now = ui.input(|i| i.time);
                             if now - self.last_undo > 1.0 {
@@ -3270,26 +3353,9 @@ impl App {
             if !self.saved {
                 ui.label(RichText::new("•").size(12.0).color(pal.accent_ink));
             }
+            // Reihenfolge wie in der Vorlage (`#sbDocs`, `#sbDictWords`, `#sbDict`):
+            // rechts haengt die Sprachpille, davor Buch und Dokumente.
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if icon_btn(ui, &pal, "docs", self.show_sessions)
-                    .on_hover_text(t(lang, "session_docs"))
-                    .clicked()
-                {
-                    self.show_sessions = !self.show_sessions;
-                }
-                if icon_btn(ui, &pal, "book", false).on_hover_text(t(lang, "personal_dict")).clicked() {
-                    self.show_dict = true;
-                }
-                if icon_btn(ui, &pal, "abc", self.show_spell && self.set.ed_spell)
-                    .on_hover_text(t(lang, "spell_title"))
-                    .clicked()
-                {
-                    self.show_spell = !self.show_spell;
-                    self.spell_scanned_doc.clear();
-                    if self.show_spell {
-                        self.open_spell(ui.ctx().screen_rect());
-                    }
-                }
                 let dict_resp = ui
                     .add(
                         egui::Button::new(
@@ -3307,13 +3373,17 @@ impl App {
                     self.dict_anchor = Some(dict_resp.rect);
                     self.show_spell_lang = !self.show_spell_lang;
                 }
-                if self.set.ed_spell && !self.spell_hits.is_empty() {
-                    ui.label(
-                        RichText::new(format!("{}", self.spell_hits.len()))
-                            .size(12.0)
-                            .color(Color32::from_rgb(0xb9, 0x1c, 0x1c)),
-                    )
-                    .on_hover_text(t(lang, "spell_title"));
+                if icon_btn(ui, &pal, "book", false)
+                    .on_hover_text(t(lang, "personal_dict"))
+                    .clicked()
+                {
+                    self.show_dict = true;
+                }
+                if icon_btn(ui, &pal, "docs", self.show_sessions)
+                    .on_hover_text(t(lang, "session_docs"))
+                    .clicked()
+                {
+                    self.show_sessions = !self.show_sessions;
                 }
             });
         });
@@ -3662,11 +3732,34 @@ impl App {
 
     fn context_bar(&mut self, ctx: &egui::Context) {
         let Some(sel_rect) = self.bar_rect else { return };
-        if self.busy {
-            return;
-        }
         let pal = self.pal;
         let lang = self.lang;
+        if self.busy {
+            // Wie `.ctxbar.working` in der Vorlage: die Leiste bleibt stehen,
+            // die Knoepfe weichen einem Ladekreis in einer kleinen Pille.
+            let breite = 48.0;
+            let pos = egui::pos2(sel_rect.center().x - breite / 2.0, sel_rect.top() - 50.0);
+            egui::Area::new(egui::Id::new("ctx_bar_work"))
+                .order(egui::Order::Foreground)
+                .fixed_pos(pos)
+                .show(ctx, |ui| {
+                    egui::Frame::none()
+                        .fill(pal.card)
+                        .stroke(Stroke::new(1.0_f32, pal.line))
+                        .rounding(Rounding::same(999.0))
+                        .inner_margin(egui::Margin::symmetric(10.0, 6.0))
+                        .shadow(egui::epaint::Shadow {
+                            offset: egui::vec2(0.0, 2.0),
+                            blur: 10.0,
+                            spread: 0.0,
+                            color: egui::Color32::from_black_alpha(60),
+                        })
+                        .show(ui, |ui| {
+                            ladekreis(ui, &pal);
+                        });
+                });
+            return;
+        }
         let ops: [(&str, &str, &str); 7] = [
             ("shorten", "shorten", "shorten"),
             ("lengthen", "lengthen", "lengthen"),
@@ -3826,6 +3919,69 @@ impl App {
     /// Rechtsklick-Menue auf einem falsch geschriebenen Wort: Vorschlaege aus
     /// dem Woerterbuch, Ignorieren und Ins-Woerterbuch. Entspricht dem
     /// Kontextmenue der Electron-Fassung.
+    /// Legt die Partikel-Animation ueber den bearbeiteten Text (`.ai-processing`
+    /// in `style.css`): der Text verschwindet, drei Lagen kleiner Punkte wandern
+    /// nach oben, bis die Antwort da ist.
+    fn paint_processing(&mut self, ui: &egui::Ui, out: &egui::text_edit::TextEditOutput) {
+        if !self.editor_job {
+            return;
+        }
+        let chars = self.doc.chars().count();
+        let (a, b) = match self.pending_sel {
+            Some((a, b)) if b > a => (a.min(chars), b.min(chars)),
+            _ => (0, chars),
+        };
+        if b <= a {
+            return;
+        }
+        let p1 = out.galley.pos_from_ccursor(egui::text::CCursor::new(a));
+        let p2 = out.galley.pos_from_ccursor(egui::text::CCursor::new(b));
+        let bereich = egui::Rect::from_min_max(
+            egui::pos2(p1.left(), p1.top()),
+            egui::pos2(p2.right(), p2.bottom()),
+        )
+        .translate(out.galley_pos.to_vec2())
+        .expand2(egui::vec2(1.0, 2.0));
+        let painter = ui.painter().with_clip_rect(bereich);
+        painter.rect_filled(bereich, 4.0, self.pal.card);
+        let zeit = ui.input(|i| i.time) as f32;
+        let dunkel = self.pal.dark;
+        for (lage, (raster, tempo, deckkraft)) in
+            [(59.0f32, 26.0f32, 0.62f32), (43.0, 18.0, 0.44), (31.0, 12.0, 0.32)]
+                .iter()
+                .enumerate()
+        {
+            let farbe = if dunkel {
+                egui::Color32::from_rgba_unmultiplied(255, 255, 255, (deckkraft * 255.0) as u8)
+            } else {
+                egui::Color32::from_rgba_unmultiplied(20, 20, 26, (deckkraft * 240.0) as u8)
+            };
+            let versatz = (zeit * tempo) % raster;
+            let spalten = (bereich.width() / raster).ceil() as i32 + 1;
+            let reihen = (bereich.height() / raster).ceil() as i32 + 2;
+            for cx in 0..spalten {
+                for cy in 0..reihen {
+                    let h = (cx * 73856093) ^ (cy * 19349663) ^ ((lage as i32 + 1) * 83492791);
+                    let hx = ((h.unsigned_abs() % 977) as f32) / 977.0;
+                    let hy = ((h.unsigned_abs() / 977 % 991) as f32) / 991.0;
+                    let x = bereich.left() + (cx as f32 + hx) * raster;
+                    let roh = bereich.top() + (cy as f32 + hy) * raster - versatz;
+                    let y = bereich.top() + (roh - bereich.top()).rem_euclid(bereich.height());
+                    painter.rect_filled(
+                        egui::Rect::from_center_size(egui::pos2(x, y), egui::vec2(1.4, 1.4)),
+                        0.0,
+                        farbe,
+                    );
+                }
+            }
+        }
+        ui.ctx()
+            .request_repaint_after(std::time::Duration::from_millis(40));
+    }
+
+    /// Rechtsklick-Menue auf einem falsch geschriebenen Wort: Vorschlaege,
+    /// Ignorieren, Ins-Woerterbuch — als schmale Karte mit Zeilen wie `.row`
+    /// (ein Trennstrich in der Breite der Karte, kein `ui.separator()`).
     fn spell_menu_window(&mut self, ctx: &egui::Context) {
         let Some(menu) = self.spell_menu.clone() else {
             return;
@@ -3839,43 +3995,68 @@ impl App {
             .map(|h| h.suggestions.clone())
             .unwrap_or_default();
         let red = Color32::from_rgb(0xd0, 0x3a, 0x3a);
-        let mut close = false;
         let mut pick: Option<String> = None;
         let mut ignore = false;
         let mut add = false;
         let screen = ctx.screen_rect();
+        let breite = 240.0;
         let pos = egui::pos2(
-            menu.pos.x.clamp(8.0, (screen.right() - 220.0).max(8.0)),
-            menu.pos.y.clamp(8.0, (screen.bottom() - 200.0).max(8.0)),
+            menu.pos.x.clamp(8.0, (screen.right() - breite - 8.0).max(8.0)),
+            menu.pos.y.clamp(8.0, (screen.bottom() - 220.0).max(8.0)),
         );
         let area = egui::Area::new(egui::Id::new("spell_menu"))
             .order(egui::Order::Foreground)
             .fixed_pos(pos)
             .show(ctx, |ui| {
-                egui::Frame::popup(&ctx.style()).show(ui, |ui| {
-                    ui.set_min_width(190.0);
-                    ui.label(RichText::new(&menu.word).size(13.0).color(red));
+                ui.set_width(breite);
+                pop_card(&pal).show(ui, |ui| {
+                    ui.set_width(breite - 12.0);
+                    ui.spacing_mut().item_spacing.y = 0.0;
+                    let (kopf, _) = ui.allocate_exact_size(
+                        egui::vec2(breite - 12.0, 26.0),
+                        egui::Sense::hover(),
+                    );
+                    ui.painter().text(
+                        egui::pos2(kopf.left() + 12.0, kopf.center().y),
+                        egui::Align2::LEFT_CENTER,
+                        &menu.word,
+                        egui::FontId::proportional(13.0),
+                        red,
+                    );
                     if sug.is_empty() {
-                        ui.label(
-                            RichText::new(t(lang, "suggestions"))
-                                .size(12.0)
-                                .color(pal.muted),
+                        let (zeile, _) = ui.allocate_exact_size(
+                            egui::vec2(breite - 12.0, 22.0),
+                            egui::Sense::hover(),
+                        );
+                        ui.painter().text(
+                            egui::pos2(zeile.left() + 12.0, zeile.center().y),
+                            egui::Align2::LEFT_CENTER,
+                            t(lang, "no_alts"),
+                            egui::FontId::proportional(12.0),
+                            pal.muted,
                         );
                     }
-                    for s in &sug {
-                        if ui.button(s).clicked() {
-                            pick = Some(s.clone());
+                    for vorschlag in &sug {
+                        if row_zeile(ui, &pal, vorschlag, false, false) {
+                            pick = Some(vorschlag.clone());
                         }
                     }
-                    ui.separator();
-                    if ui.button(t(lang, "ignore")).clicked() {
+                    ui.add_space(4.0);
+                    let (linie, _) = ui.allocate_exact_size(
+                        egui::vec2(breite - 12.0, 1.0),
+                        egui::Sense::hover(),
+                    );
+                    ui.painter().rect_filled(linie, 0.0, pal.line);
+                    ui.add_space(4.0);
+                    if row_zeile(ui, &pal, &t(lang, "ignore"), false, false) {
                         ignore = true;
                     }
-                    if ui.button(t(lang, "add_to_dict")).clicked() {
+                    if row_zeile(ui, &pal, &t(lang, "add_to_dict"), false, false) {
                         add = true;
                     }
                 });
             });
+        let mut close = false;
         if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
             close = true;
         }
@@ -3884,8 +4065,8 @@ impl App {
         {
             close = true;
         }
-        if let Some(s) = pick {
-            self.replace_word_all(&menu.word, &s);
+        if let Some(vorschlag) = pick {
+            self.replace_word_all(&menu.word, &vorschlag);
             self.rescan_spell();
             close = true;
         }
@@ -4688,8 +4869,11 @@ impl App {
                     .stroke(Stroke::NONE)
                     .rounding(Rounding::same(999.0))
                     .min_size(egui::vec2(120.0, 32.0));
+                    // Waehrend der Uebersetzung bleibt der Knopf stehen, nur
+                    // blass; den Ladekreis zeigt die kleine Pille an der
+                    // Kontextleiste wie `.ctxbar.working` in der Vorlage.
                     if self.busy {
-                        ui.spinner();
+                        ui.add_enabled(false, btn);
                     } else if ui.add(btn).clicked() {
                         go = true;
                     }

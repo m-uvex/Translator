@@ -461,3 +461,19 @@ Die Karten der Sitzungsleiste lassen sich ziehen: `session_dock` merkt sich beim
 Die Ausgabe war ein festes Etikett. Jetzt legt der Uebersetzer den Text als `LayoutJob` selbst aus, fuellt ihn ueber `ui.painter().galley` und fragt bei einem Klick ueber `galley.cursor_from_pos` nach dem Zeichen. `App::open_alternatives` bestimmt daraus das Wort (nur Buchstaben und Ziffern), zaehlt die wievielte Stelle im Satz gemeint ist und schickt eine Anfrage ueber `net::spawn_alts` an das Schreibmodell; die Antwort kommt als `Msg::Alts` und landet im Menue `alt_menu_window` (verankert unter dem Zeiger, Zeilen wie `.row`).
 
 Ein Klick auf eine Alternative ruft `App::reword`: das Modell formuliert nur die Stelle um, `Msg::Done` schreibt das Ergebnis in die Ausgabe und kopiert es bei Bedarf. Ist das Uebersetzungsmodell ein MT-Modell oder fehlt das Schreibmodell, sagt die Statusleiste das statt zu fragen.
+
+## 34. Rueckmeldungen des Nutzers am Editor
+
+Das Rechtsklick-Menue der Rechtschreibung war ein `egui::Frame::popup` mit Knoepfen und `ui.separator()` — der Trennstrich dehnt sich in einer senkrechten Flaeche auf die verfuegbare Breite, deshalb lief das Menue fast ueber das ganze Fenster. `spell_menu_window` zeichnet jetzt eine Karte (`pop_card`) von 240 px mit dem Wort in Rot, Vorschlaegen, einem Strich in Kartenbreite und den beiden Zeilen „Ignorieren“ und „Ins Woerterbuch“ ueber `row_zeile`.
+
+Die Statusleiste des Editors hatte ein `abc`-Symbol; die Vorlage kennt dort nur Dokumente, Buch und Globus (`#sbDocs`, `#sbDictWords`, `#sbDict`). Das Symbol ist weg, die Reihenfolge stimmt jetzt, der rote Zaehler ebenfalls — die Rechtschreibung haengt am Globus-Menue.
+
+Die Schreibseite rechnet ihre Hoehe jetzt aus der Flaeche darunter (`flaeche.height()`), nicht mehr aus einem festen Abzug; sie endet damit an der Kante der Karte.
+
+Editor-Auftraege (Kuerzen, Verlaengern, Zusammenfassen, Probelesen, Stil, Synonyme) schicken ihre Anfrage ohne Stream (`stream: false`) — wie `withBusy` in der Vorlage, das erst nach der fertigen Antwort den Text ersetzt. Der Statustext bleibt leer statt „Translating …“; `clean_editor_output` schneidet wiederholte Anweisungen, `<text>`-Reste, Code-Zaeune und Anfuehrungszeichen aus der Antwort, damit nichts davon im Dokument landet.
+
+Waehrend eines Auftrags legt `paint_processing` die Partikel-Animation ueber den bearbeiteten Text: der Bereich wird mit der Seitenfarbe gefuellt, drei Lagen kleiner Punkte wandern mit verschiedenem Tempo nach oben (Vorbild `.ai-processing` mit `aiSpoiler`). Bei einer Markierung deckt sie deren Bereich, bei ganzen Dokument-Auftraegen den ganzen Text.
+
+Die Kontextleiste bleibt waehrend eines Auftrags stehen und zeigt statt der sieben Knoepfe einen Ladekreis in einer kleinen Pille (`ladekreis`, `.ctxbar.working`); dasselbe Symbol ersetzt in den Menues fuer Synonyme und Kontext-Uebersetzer die Standard-Anzeige `ui.spinner()`, der Uebersetzen-Knopf bleibt sichtbar und wird nur blass.
+
+In der Werkzeugleiste ist das Code-Symbol entfallen; die vier Ausrichtungen (`alignL`, `alignC`, `alignR`, `alignJ`) sind dazugekommen und schliessen die Auswahl in `<div align="...">`.
