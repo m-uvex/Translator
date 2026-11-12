@@ -59,6 +59,9 @@ pub const EDITOR_SYS: &str = "You are a text editing engine inside a word proces
 pub struct Settings {
     pub url: String,
     pub nllb: String,
+    /// NLLB-Server beim Start mitstarten (Feld aus der Einrichtung).
+    #[serde(default)]
+    pub nllb_autostart: bool,
     pub model: String,
     pub pref: String,
     pub theme: String,     // auto | light | dark
@@ -98,6 +101,7 @@ impl Default for Settings {
         Self {
             url: "http://127.0.0.1:11434".into(),
             nllb: "http://127.0.0.1:8765".into(),
+            nllb_autostart: false,
             model: String::new(),
             pref: String::new(),
             theme: "auto".into(),

@@ -193,6 +193,7 @@ pub struct App {
     lang_search: String,
     lang_anchor: Option<egui::Rect>,
     ctx_bar_rect: Option<egui::Rect>,
+    nllb_child: Option<std::process::Child>,
     confirm: Option<(String, Confirm)>,
 }
 
@@ -300,10 +301,14 @@ impl App {
             lang_search: String::new(),
             lang_anchor: None,
             ctx_bar_rect: None,
+            nllb_child: None,
             confirm: None,
             set: set.clone(),
         };
         app.set = set;
+        if app.set.nllb_autostart {
+            app.nllb_child = crate::nllb::start();
+        }
         let cfg = app.cfg();
         net::spawn_models(cfg.clone(), tx.clone(), Vec::new());
         net::spawn_nllb_meta(cfg.clone(), tx.clone());
@@ -1229,6 +1234,11 @@ fn card_ui<R>(
 }
 
 impl eframe::App for App {
+    /// Beendet den mitgestarteten NLLB-Server, wie `will-quit` in `main.js`.
+    fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
+        crate::nllb::stop(&mut self.nllb_child);
+    }
+
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let dark = match self.set.theme.as_str() {
             "dark" => true,
@@ -2289,6 +2299,19 @@ impl App {
                     section(ui, &pal, t(lang, "s_group_extra").as_str());
                     ui.checkbox(&mut self.set.boot_model, t(lang, "s_boot"));
                     ui.checkbox(&mut self.set.profanity_filter, t(lang, "s_prof"));
+                    if ui
+                        .checkbox(&mut self.set.nllb_autostart, t(lang, "nllb_auto"))
+                        .changed()
+                    {
+                        self.save_set();
+                        if self.set.nllb_autostart {
+                            if self.nllb_child.is_none() {
+                                self.nllb_child = crate::nllb::start();
+                            }
+                        } else {
+                            crate::nllb::stop(&mut self.nllb_child);
+                        }
+                    }
                     combo(ui, "profstyle", t(lang, "s_profstyle").as_str(), &mut self.set.profanity_style, &[
                         ("stars", t(lang, "o_stars")),
                         ("symbols", t(lang, "o_symbols")),

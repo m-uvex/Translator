@@ -6,6 +6,7 @@ mod icons_data;
 mod i18n;
 mod library;
 mod net;
+mod nllb;
 mod settings;
 mod spell;
 

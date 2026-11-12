@@ -107,6 +107,7 @@ fn strings(k: &str) -> Six {
         "lib_docs"     => ("Dokumente", "documents", "documenten", "documentos", "belge", "مستندات"),
         "settings"     => ("Einstellungen", "Settings", "Instellingen", "Configuración", "Ayarlar", "الإعدادات"),
         "close"        => ("Schließen", "Close", "Sluiten", "Cerrar", "Kapat", "إغلاق"),
+        "nllb_auto"    => ("NLLB-Server mit der App starten", "Start the NLLB server with the app", "NLLB-server met de app starten", "Iniciar el servidor NLLB con la app", "NLLB sunucusunu uygulamayla baslat", "تشغيل خادم NLLB مع التطبيق"),
         "no_alts"      => ("Keine Ersatzwörter gefunden", "No alternatives found", "Geen alternatieven gevonden", "No se encontraron alternativas", "Alternatif bulunamadi", "لا توجد بدائل"),
         "ok"           => ("OK", "OK", "OK", "OK", "Tamam", "موافق"),
         "cancel"       => ("Abbrechen", "Cancel", "Annuleren", "Cancelar", "İptal", "إلغاء"),
