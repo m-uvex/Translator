@@ -540,3 +540,7 @@ Die Hinweise in leeren Eingabefeldern („Text eingeben oder Datei hineinziehen 
 
 Bei „Modell für Ersatzwörter …“ lagen Beschriftung und Auswahlfeld übereinander: `set_row` zeichnete den Text links und gab der Auswahl rechts unbesehen den Platz, den sie brauchte. `.set.row-set` der Vorlage bricht stattdessen um (`flex-wrap`, `min-width:0` an der Beschriftung). `set_row` misst jetzt die Beschriftung und lässt sie bei Bedarf über die volle Breite umbrechen; die Auswahl steht dann rechts darunter. Als Platz für die Auswahl gelten 45 % der Zeile, mindestens 150 px.
 
+## 43. Textmarkierung kräftiger
+
+Die Markierung mit der Maus war auf der weißen Schreibseite kaum zu erkennen. Sie bestand aus dem Akzent bei 55 % Deckkraft — derselbe Wert wie `::selection` in `style.css`, der auf dem Papierweiß aber fast verschwindet. `apply_theme` setzt sie jetzt deckend aus 70 % Akzent und 30 % Akzenttinte (`mix_color`), sodass sie in beiden Farbmodi klar sichtbar bleibt, ohne die Schrift zu überdecken; die Schrift selbst behält ihre Farbe (`stroke: Stroke::NONE`, wie `color:inherit` in der Vorlage).
+

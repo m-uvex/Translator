@@ -997,8 +997,11 @@ impl App {
         v.override_text_color = Some(p.text);
         v.window_rounding = Rounding::same(22.0);
         v.menu_rounding = Rounding::same(16.0);
+        // Markierung: 70 % Akzent und 30 % Akzenttinte, deckend. Der Akzent
+        // allein bei 55 % Deckkraft (wie `::selection` der Vorlage) war auf der
+        // weissen Seite kaum zu sehen.
         v.selection = egui::style::Selection {
-            bg_fill: p.accent.gamma_multiply(0.55),
+            bg_fill: mix_color(p.accent, p.accent_ink, 0.3),
             stroke: Stroke::NONE,
         };
         v.widgets.noninteractive.bg_stroke = Stroke::new(1.0_f32, p.line);
@@ -1082,6 +1085,17 @@ fn pill(ui: &mut egui::Ui, p: &Palette, text: &str, min_w: f32) -> egui::Respons
 /// Karte wie `.pop` in `style.css`: Rundung 16, Schatten, sechs Pixel
 /// Innenabstand, rechtsbuendig unter dem Ausloeser und auf den Bildschirm
 /// begrenzt.
+/// Mischt zwei Farben deckend: `t` ist der Anteil von `b`.
+fn mix_color(a: Color32, b: Color32, t: f32) -> Color32 {
+    let t = t.clamp(0.0, 1.0);
+    let m = |x: u8, y: u8| (x as f32 * (1.0 - t) + y as f32 * t).round() as u8;
+    Color32::from_rgb(
+        m(a.r(), b.r()),
+        m(a.g(), b.g()),
+        m(a.b(), b.b()),
+    )
+}
+
 fn pop_card(p: &Palette) -> egui::Frame {
     egui::Frame::none()
         .fill(p.card)
