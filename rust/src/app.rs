@@ -779,7 +779,41 @@ impl App {
         let Some(teil) = job.parts.get(idx).cloned() else {
             return;
         };
-        let instr = job.instr.clone();
+        // Ein Abschnitt allein weiss nichts von den anderen: der Zusatz nennt
+        // die Stelle im Dokument und den Schluss des vorigen Ergebnisses.
+        let (stelle, gesamt, vorher) = {
+            let job = self.chunk_job.as_ref().unwrap();
+            (
+                idx + 1,
+                job.parts.len(),
+                job.out.last().cloned().unwrap_or_default(),
+            )
+        };
+        let mut instr = job.instr.clone();
+        if gesamt > 1 {
+            if job.zusammenfassen {
+                instr.push_str(&format!(
+                    "\n\nThis is part {} of {} of one longer document; summarize only this part. The single summaries are merged afterwards, so do not add an introduction, a heading or a closing sentence.",
+                    stelle, gesamt
+                ));
+            } else {
+                instr.push_str(&format!(
+                    "\n\nThis is part {} of {} of one longer document. Keep terminology, tone and tense consistent with the other parts, do not repeat whole sentences from the previous part, and do not add an introduction, a heading or a closing sentence of your own.",
+                    stelle, gesamt
+                ));
+                if !vorher.trim().is_empty() {
+                    let schwanz: String = {
+                        let zeichen: Vec<char> = vorher.chars().collect();
+                        let ab = zeichen.len().saturating_sub(400);
+                        zeichen[ab..].iter().collect()
+                    };
+                    instr.push_str(&format!(
+                        "\n\nThe previous part ended with this text — continue seamlessly in the same voice and keep the same terms, but do not repeat it:\n…{}",
+                        schwanz
+                    ));
+                }
+            }
+        }
         let sys = EDITOR_SYS.to_string();
         self.stop.store(false, Ordering::SeqCst);
         net::spawn_chat(

@@ -485,3 +485,9 @@ In der Werkzeugleiste ist das Code-Symbol entfallen; die vier Ausrichtungen (`al
 Den Fortschritt zeigt die Statusleiste als „Teil 3 von 7“. `chunk_fertig` sammelt die Antworten und setzt sie am Ende als neuen Dokumentinhalt (ein Undo-Schritt, Sitzung und Einstellungsdatei werden mitgeschrieben). Beim Zusammenfassen folgt ein zweiter Durchgang wie bei `summarizeLong`: erst jeder Abschnitt, dann die Zusammenfassungen zu einer.
 
 Probelesen bleibt ein einzelner Aufruf ueber das ganze Dokument, weil die Vorlage dort ebenfalls nicht teilt.
+
+### Anschluss zwischen den Abschnitten
+
+Ein Abschnitt allein weiss nichts von den anderen: gleiche Woerter, gleicher Ton, kein doppelter Satz an der Naht. Beide Fassungen haengen deshalb einen Hinweis an die Anweisung — in der Electron-Fassung `chunkInstr` in `editor.js`, in Rust derselbe Text in `spawn_chunk`. Er nennt die Stelle im Dokument („part 3 of 7“), verlangt gleiche Fachbegriffe, Zeitform und Ton, verbietet doppelte Saetze und eigene Einleitungen oder Schlusssaetze und gibt den Schluss des vorigen Ergebnisses (letzte 400 Zeichen) als Anschluss mit. Beim Zusammenfassen gilt die kuerzere Form: nur diesen Abschnitt zusammenfassen, weil die Teilzusammenfassungen danach verschmolzen werden.
+
+Die Electron-Fassung hatte `chunkText` schon vorher (3500 Zeichen, Absatzgrenzen) und nutzte es in `allOp` und `summarizeLong`; der Anschluss-Hinweis fehlte dort ebenfalls und ist jetzt in beiden Fassungen gleich.

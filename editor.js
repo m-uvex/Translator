@@ -476,8 +476,31 @@ async function styleOp(instr) {
 }
 
 const blocks = (root) => [...(root || page).querySelectorAll('p,li,blockquote,div')].filter(el => el !== (root || page) && !el.querySelector('p,li,blockquote,div,ul,ol') && el.textContent.trim());
+// Ein Abschnitt weiss sonst nichts von den anderen: gleiche Woerter, gleicher
+// Ton, kein doppelter Satz an der Naht. Der Anschluss-Hinweis nennt die Stelle
+// im Dokument und den Schluss des vorigen Ergebnisses.
+function chunkInstr(base, i, n, prev, summary) {
+  if (n < 2) return base;
+  if (summary) {
+    return `${base}\n\nThis is part ${i + 1} of ${n} of one longer document; summarize only this part. The single summaries are merged afterwards, so do not add an introduction, a heading or a closing sentence.`;
+  }
+  const anschluss = prev ? `\n\nThe previous part ended with this text — continue seamlessly in the same voice and keep the same terms, but do not repeat it:\n…${prev.slice(-400)}` : '';
+  return `${base}\n\nThis is part ${i + 1} of ${n} of one longer document. Keep terminology, tone and tense consistent with the other parts, do not repeat whole sentences from the previous part, and do not add an introduction, a heading or a closing sentence of your own.${anschluss}`;
+}
+
 const chunkText = (txt, n = 3500) => { const out = []; let cur = ''; for (const p of txt.split(/\n+/)) { if ((cur + p).length > n && cur) { out.push(cur); cur = ''; } cur += p + '\n'; } if (cur.trim()) out.push(cur); return out; };
-async function summarizeLong(txt) { const parts = chunkText(txt); if (parts.length < 2) return edRun(OPS.summarize, txt); const s = []; for (const p of parts) { if (ED.cancelled) return ''; s.push(await edRun(OPS.summarizeShort, p)); } return edRun(OPS.summarize, s.join('\n')); }
+async function summarizeLong(txt) {
+  const parts = chunkText(txt);
+  if (parts.length < 2) return edRun(OPS.summarize, txt);
+  const s = [];
+  for (let i = 0; i < parts.length; i++) {
+    if (ED.cancelled) return '';
+    edStatus(t('prog', i + 1, parts.length));
+    s.push(await edRun(chunkInstr(OPS.summarizeShort, i, parts.length, '', true), parts[i]));
+  }
+  edStatus('');
+  return edRun(OPS.summarize, s.join('\n'));
+}
 async function allOp(kind) {
   const wholeText = page.innerText.trim();
   if (!wholeText) return;
@@ -504,7 +527,7 @@ async function allOp(kind) {
           for (let i = 0; i < parts.length; i++) {
             if (ED.cancelled) return;
             edStatus(t('prog', i + 1, parts.length));
-            resParts.push(await edRun(OPS[kind], parts[i]));
+            resParts.push(await edRun(chunkInstr(OPS[kind], i, parts.length, resParts[resParts.length - 1] || ''), parts[i]));
           }
           result = resParts.join('\n\n');
         }
