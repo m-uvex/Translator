@@ -8,8 +8,8 @@ mit Commit-Kurz-Hash.
 ## Gerade in Arbeit
 
 - **Buffy:** P1, P2, P3, P7, P11, P12, P14, P17, P18, P19, P20, P21, P22 und P23
-  sind erledigt. Im Augenblick nichts in Arbeit — wartet auf die Auswahl des
-  nächsten Punktes.
+  sind erledigt, P9 nachgesehen (Rest: Dokumentenablage, Fensterleiste).
+  Im Augenblick nichts in Arbeit — wartet auf die Auswahl des nächsten Punktes.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
   (`1863576`). P15 und P4 sind damit ganz erledigt, P5/P6/P8/P10/P13 fuer diese
@@ -46,7 +46,7 @@ mit Commit-Kurz-Hash.
 | P6 | **Icon-Knopf-Grundsätze** sind bei fast allen Knöpfen verletzt (graue Kreise ohne Grund, Squircles, falsche Größen). Im Editor größtenteils behoben, anderswo nicht. | Fensterleiste, Navigationsleiste, Übersetzer, Seitenleiste und Ablage erledigt (`1863576`); Dialoge offen |
 | P7 | **Editor: größere Probleme** jenseits der Leiste (Seitenmaß zu breit und zu kurz, Statusleiste am Boden, Darstellung der Fläche). | erledigt (`aecc093`), am laufenden Fenster geprüft |
 | P8 | **Hover-Animationen** der Knöpfe entfernen; stattdessen den Highlighter der Vorlage (siehe Regel 3). | in den bearbeiteten Ansichten erledigt (`1863576`); Rest prüfen |
-| P9 | **Unlesbarer Text, fehlende Symbole, fehlende Hintergrundkarten** in mehreren Ansichten; auch in der Fensterleiste (Minimieren/Maximieren/Schließen). | offen |
+| P9 | **Unlesbarer Text, fehlende Symbole, fehlende Hintergrundkarten** in mehreren Ansichten; auch in der Fensterleiste (Minimieren/Maximieren/Schließen). | nachgesehen: Übersetzer, Stil-Leiste, Einstellungen, Wörterbuch und Rechtschreibfenster lesbar und mit Karten; alle 93 Symbolnamen vorhanden. Offen bleiben Dokumentenablage und Fensterleiste (nicht nachgesehen) |
 | P10 | **Ränder und Abstände:** Elemente zu nah an Rändern, sinnlose Trennstriche, zu große Abstände zwischen Teilen einer Arbeitsfläche, untere Karte/Leiste zu groß. | Übersetzer, Seitenleiste und Ablage erledigt (`1863576`); Editor offen |
 | P11 | **Dialoge:** Stilfenster und Mini-Übersetzer hängen an der Kontextleiste; Mini-Übersetzer und Synonyme sind nach der Vorlage gebaut, Schließen-Kreuz bleibt sichtbar. | erledigt, echter Aufruf aus der Leiste nicht durchgespielt |
 | P12 | **Installation:** Wizard (`rust/Installieren.bat`), Deinstallation (`rust/Uninstall.ps1`) und NLLB-200 samt Modellverwaltung. | erledigt (`2e700b7`); Autostart siehe P17 |
