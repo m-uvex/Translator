@@ -7,10 +7,10 @@ mit Commit-Kurz-Hash.
 
 ## Gerade in Arbeit
 
-- **Buffy:** P1, P2, P3, P7, P11, P12, P14, P16, P17, P18, P19, P20, P21, P22 und
-  P23 sind erledigt, P9 nachgesehen (Rest: Dokumentenablage, Fensterleiste).
-  Neu offen: P24 (Schrift- und Größenauswahl fehlen). Im Augenblick nichts in
-  Arbeit — wartet auf die Auswahl des nächsten Punktes.
+- **Buffy:** P1, P2, P3, P7, P11, P12, P14, P16, P17, P18, P19, P20, P21, P22,
+  P23 und P25 sind erledigt, P9 nachgesehen (Rest: Dokumentenablage,
+  Fensterleiste). Offen: P24 (Schrift- und Größenauswahl fehlen). Im Augenblick
+  nichts in Arbeit — wartet auf die Auswahl des nächsten Punktes.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
   (`1863576`). P15 und P4 sind damit ganz erledigt, P5/P6/P8/P10/P13 fuer diese
@@ -63,6 +63,7 @@ mit Commit-Kurz-Hash.
 | P22 | **Fensterecken sind eckig:** Die Vorlage läuft im normalen Windows-Fenster mit abgerundeten Ecken, die Rust-Fassung ohne Titelleiste hat eckige. | erledigt (`bce4125`), Ecken am Fenster gerundet |
 | P23 | **Modell-Auswahl-Menü lässt sich nicht öffnen:** Es blitzt kurz auf und schließt sich sofort wieder, im Übersetzer wie im Text-Arbeitsplatz. | erledigt (`8273e8d`), nicht angeklickt geprüft |
 | P24 | **Editor-Leiste: Schrift- und Größenauswahl fehlen** ganz, die Vorlage hat drei Auswahlfelder `.tsel` nebeneinander (Schrift, Größe, Überschrift). | offen |
+| P25 | **Schreibseite hängt über die Kante ihrer Fläche und klebt links** statt mittig: Sie lief genau auf die gerundete Kante zu und `allocate_exact_size` setzte sie an den linken Rand. | erledigt (`f3bb7f6`), mittig und 8 px über der Kante; Sichtprüfung stand noch aus, weil das Fenster beim Aufnehmen verdeckt war |
 
 ## Erledigt
 
