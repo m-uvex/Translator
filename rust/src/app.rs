@@ -117,6 +117,10 @@ pub struct App {
     models_loading: bool,
     /// Verbindungsfehler beim Abruf der Modellliste (Text der Fehlermeldung).
     models_error: Option<String>,
+    /// Ausloeser des verankerten Modellmenues.
+    models_anchor: egui::Rect,
+    /// Zeigt das Menue die Editor-Auswahl (Schreib-/Uebersetzungsmodell)?
+    models_for_editor: bool,
 
     input: String,
     output: String,
@@ -228,6 +232,8 @@ impl App {
             warmed: false,
             models_loading: false,
             models_error: None,
+            models_anchor: egui::Rect::NOTHING,
+            models_for_editor: false,
             input: String::new(),
             output: String::new(),
             last_src: String::new(),
@@ -378,6 +384,14 @@ impl App {
     }
 
     fn write_model(&self) -> Option<String> {
+        if !self.set.ed_write.is_empty()
+            && self
+                .models
+                .iter()
+                .any(|m| !m.mt && m.name == self.set.ed_write)
+        {
+            return Some(self.set.ed_write.clone());
+        }
         if !self.set.helper.is_empty() && self.models.iter().any(|m| m.name == self.set.helper) {
             return Some(self.set.helper.clone());
         }
@@ -775,6 +789,69 @@ fn icon_btn(ui: &mut egui::Ui, p: &Palette, name: &str, on: bool) -> egui::Respo
     resp
 }
 
+/// Eine Zeile im Modellmenue: Name links, rechts Symbole fuer Bild- und
+/// Denkfaehigkeit sowie die MT-Kennzeichnung. Entspricht `.row` in `style.css`.
+fn menu_row(
+    ui: &mut egui::Ui,
+    p: &Palette,
+    name: &str,
+    sel: bool,
+    vision: bool,
+    thinking: bool,
+    mt: bool,
+) -> bool {
+    let (rect, resp) =
+        ui.allocate_exact_size(egui::vec2(ui.available_width(), 28.0), egui::Sense::click());
+    if resp.hovered() {
+        ui.painter().rect_filled(rect, Rounding::same(10.0), p.soft);
+    }
+    let color = if sel { p.accent_ink } else { p.text };
+    let reserved = 14.0
+        + if thinking { 18.0 } else { 0.0 }
+        + if vision { 18.0 } else { 0.0 }
+        + if mt { 24.0 } else { 0.0 };
+    let mut x = rect.right() - 12.0;
+    if thinking {
+        crate::icons::paint(
+            ui.painter(),
+            egui::Rect::from_center_size(egui::pos2(x, rect.center().y), egui::vec2(15.0, 15.0)),
+            "bulb",
+            p.muted,
+        );
+        x -= 18.0;
+    }
+    if vision {
+        crate::icons::paint(
+            ui.painter(),
+            egui::Rect::from_center_size(egui::pos2(x, rect.center().y), egui::vec2(15.0, 15.0)),
+            "eye",
+            p.muted,
+        );
+        x -= 18.0;
+    }
+    if mt {
+        ui.painter().text(
+            egui::pos2(x, rect.center().y),
+            egui::Align2::RIGHT_CENTER,
+            "MT",
+            egui::FontId::proportional(11.0),
+            p.muted,
+        );
+    }
+    let text_rect = egui::Rect::from_min_max(
+        rect.left_top(),
+        egui::pos2(rect.right() - reserved, rect.bottom()),
+    );
+    ui.painter().with_clip_rect(text_rect).text(
+        egui::pos2(rect.left() + 10.0, rect.center().y),
+        egui::Align2::LEFT_CENTER,
+        name,
+        egui::FontId::proportional(13.0),
+        color,
+    );
+    resp.clicked()
+}
+
 fn card_ui<R>(
     ui: &mut egui::Ui,
     p: &Palette,
@@ -908,7 +985,7 @@ impl eframe::App for App {
 
         self.lang_popup(ctx);
         self.settings_window(ctx);
-        self.models_window(ctx);
+        self.models_menu(ctx);
         self.dict_window(ctx);
         self.style_window(ctx);
         self.syn_window(ctx);
@@ -985,8 +1062,11 @@ impl App {
                     self.models_error = None;
                     net::spawn_models(self.cfg(), self.tx.clone(), Vec::new());
                 }
-                if pill(ui, &pal, &format!("▤  {}", short_model(&self.set.model)), 210.0).clicked() {
-                    self.show_models = true;
+                let mresp = pill(ui, &pal, &format!("▤  {}", short_model(&self.set.model)), 210.0);
+                if mresp.clicked() {
+                    self.models_anchor = mresp.rect;
+                    self.models_for_editor = false;
+                    self.show_models = !self.show_models;
                 }
             });
         });
@@ -1379,79 +1459,143 @@ impl App {
     }
 
     // ---- Modellauswahl ----------------------------------------------------
-    fn models_window(&mut self, ctx: &egui::Context) {
+    /// Modellauswahl als verankertes Menue unter dem Ausloeser; entspricht
+    /// `#pop` sowie `modelPop`/`modelMenu` der Electron-Fassung. Im Editor
+    /// stehen Schreib- und Uebersetzungsmodell getrennt.
+    fn models_menu(&mut self, ctx: &egui::Context) {
         if !self.show_models {
             return;
         }
         let pal = self.pal;
         let lang = self.lang;
-        let mut open = true;
-        let mut pick: Option<String> = None;
+        let width = 300.0;
+        let screen = ctx.screen_rect();
+        let mut pos = egui::pos2(
+            self.models_anchor.right() - width,
+            self.models_anchor.bottom() + 6.0,
+        );
+        pos.x = pos.x.clamp(8.0, (screen.right() - width - 8.0).max(8.0));
+        pos.y = pos.y.min((screen.bottom() - 180.0).max(8.0));
+        let rows: Vec<(String, bool, bool, bool)> = self
+            .models
+            .iter()
+            .map(|m| (m.name.clone(), m.vision, m.thinking, m.mt))
+            .collect();
+        let mut pick_model: Option<String> = None;
+        let mut pick_write: Option<String> = None;
+        let mut pick_trans: Option<String> = None;
         let mut retry = false;
-        egui::Window::new(t(lang, "nav_tr"))
-            .id(egui::Id::new("models_win"))
-            .open(&mut open)
-            .collapsible(false)
-            .resizable(false)
-            .default_width(420.0)
+        let area = egui::Area::new(egui::Id::new("models_menu"))
+            .order(egui::Order::Foreground)
+            .fixed_pos(pos)
             .show(ctx, |ui| {
-                if self.models.is_empty() {
-                    if let Some(err) = &self.models_error {
-                        ui.label(
-                            RichText::new(t(lang, "ollama_down"))
-                                .strong()
-                                .color(Color32::from_rgb(0xb9, 0x1c, 0x1c)),
-                        );
-                        ui.label(RichText::new(err).size(12.0).color(pal.muted));
-                        ui.label(
-                            RichText::new(t(lang, "ollama_hint").replace("<url>", &self.set.url))
-                                .size(12.0)
-                                .color(pal.muted),
-                        );
-                        if ui.button(t(lang, "reload")).clicked() {
-                            retry = true;
+                egui::Frame::none()
+                    .fill(pal.card)
+                    .stroke(Stroke::new(1.0_f32, pal.line))
+                    .rounding(Rounding::same(16.0))
+                    .inner_margin(egui::Margin::same(6.0))
+                    .shadow(egui::epaint::Shadow {
+                        offset: egui::vec2(0.0, 8.0),
+                        blur: 30.0,
+                        spread: 0.0,
+                        color: Color32::from_black_alpha(70),
+                    })
+                    .show(ui, |ui| {
+                        ui.set_width(width - 12.0);
+                        if rows.is_empty() {
+                            ui.label(
+                                RichText::new(t(lang, "ollama_down"))
+                                    .strong()
+                                    .color(Color32::from_rgb(0xb9, 0x1c, 0x1c)),
+                            );
+                            if let Some(err) = &self.models_error {
+                                ui.label(RichText::new(err).size(11.0).color(pal.muted));
+                            }
+                            ui.label(
+                                RichText::new(t(lang, "ollama_hint").replace("<url>", &self.set.url))
+                                    .size(11.0)
+                                    .color(pal.muted),
+                            );
+                            if ui.button(t(lang, "reload")).clicked() {
+                                retry = true;
+                            }
+                            return;
                         }
-                    } else {
-                        ui.label(RichText::new(t(lang, "wait_ollama")).color(pal.muted));
-                    }
-                }
-                egui::ScrollArea::vertical().max_height(420.0).show(ui, |ui| {
-                    for m in &self.models {
-                        let on = m.name == self.set.model;
-                        let text = if on {
-                            RichText::new(&m.name).color(pal.accent_ink)
-                        } else {
-                            RichText::new(&m.name).color(pal.text)
-                        };
-                        ui.horizontal(|ui| {
-                            if ui.add(egui::Button::new(text).fill(Color32::TRANSPARENT)).clicked() {
-                                pick = Some(m.name.clone());
-                            }
-                            if m.vision {
-                                ui.label(RichText::new("◉").color(pal.muted));
-                            }
-                            if m.thinking {
-                                ui.label(RichText::new("☀").color(pal.muted));
-                            }
-                            if m.mt {
-                                ui.label(RichText::new("MT").size(11.0).color(pal.muted));
-                            }
-                        });
-                    }
-                });
+                        egui::ScrollArea::vertical()
+                            .id_source("models_menu_scroll")
+                            .max_height(340.0)
+                            .auto_shrink([false, false])
+                            .show(ui, |ui| {
+                                // Lange Modellnamen duerfen das Menue nicht breiter machen.
+                                ui.set_width(width - 24.0);
+                                if self.models_for_editor {
+                                    ui.label(
+                                        RichText::new(t(lang, "write_model"))
+                                            .size(12.0)
+                                            .color(pal.muted),
+                                    );
+                                    for (name, vision, thinking, mt) in &rows {
+                                        if *mt || is_tg(name) {
+                                            continue;
+                                        }
+                                        let sel = if self.set.ed_write.is_empty() {
+                                            self.write_model().as_deref() == Some(name.as_str())
+                                        } else {
+                                            self.set.ed_write == *name
+                                        };
+                                        if menu_row(ui, &pal, name, sel, *vision, *thinking, false) {
+                                            pick_write = Some(name.clone());
+                                        }
+                                    }
+                                    ui.separator();
+                                    ui.label(
+                                        RichText::new(t(lang, "trans_model"))
+                                            .size(12.0)
+                                            .color(pal.muted),
+                                    );
+                                    for (name, vision, thinking, mt) in &rows {
+                                        let sel = self.set.ed_trans == *name;
+                                        if menu_row(ui, &pal, name, sel, *vision, *thinking, *mt) {
+                                            pick_trans = Some(name.clone());
+                                        }
+                                    }
+                                } else {
+                                    for (name, vision, thinking, mt) in &rows {
+                                        let sel = self.set.model == *name;
+                                        if menu_row(ui, &pal, name, sel, *vision, *thinking, *mt) {
+                                            pick_model = Some(name.clone());
+                                        }
+                                    }
+                                }
+                            });
+                    });
             });
+        let mut close = ctx.input(|i| i.key_pressed(egui::Key::Escape));
+        if ctx.input(|i| i.pointer.button_clicked(egui::PointerButton::Primary))
+            && !area.response.hovered()
+        {
+            close = true;
+        }
         if retry {
             self.models_error = None;
             net::spawn_models(self.cfg(), self.tx.clone(), Vec::new());
         }
-        if let Some(name) = pick {
+        if let Some(name) = pick_write {
+            self.set.ed_write = name;
+            self.save_set();
+        }
+        if let Some(name) = pick_trans {
+            self.set.ed_trans = name;
+            self.save_set();
+        }
+        if let Some(name) = pick_model {
             self.set.pref = name.clone();
             self.set.model = name;
             self.fix_langs();
             self.save_set();
-            self.show_models = false;
+            close = true;
         }
-        if !open {
+        if close {
             self.show_models = false;
         }
     }
@@ -1948,17 +2092,21 @@ impl App {
                 self.start_editor_all("summarize");
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let name = match self.write_model() {
-                    Some(m) => short_model(&m),
-                    None => t(lang, "no_model"),
-                };
-                if pill(ui, &pal, &format!("▤  {}", name), 190.0)
-                    .on_hover_text(t(lang, "model"))
-                    .clicked()
-                {
-                    self.models_error = None;
-                    net::spawn_models(self.cfg(), self.tx.clone(), Vec::new());
-                    self.show_models = true;
+                let resp = icon_btn(
+                    ui,
+                    &pal,
+                    "cpu",
+                    self.show_models && self.models_for_editor && !self.models.is_empty(),
+                )
+                .on_hover_text(t(lang, "model_menu"));
+                if resp.clicked() {
+                    self.models_anchor = resp.rect;
+                    self.models_for_editor = true;
+                    self.show_models = !self.show_models;
+                    if self.models.is_empty() {
+                        self.models_error = None;
+                        net::spawn_models(self.cfg(), self.tx.clone(), Vec::new());
+                    }
                 }
             });
         });

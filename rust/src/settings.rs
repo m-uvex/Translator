@@ -87,6 +87,10 @@ pub struct Settings {
     pub doc_name: String,
     pub doc_id: Option<String>,
     pub last_view: String,
+    #[serde(default)]
+    pub ed_write: String,
+    #[serde(default)]
+    pub ed_trans: String,
 }
 
 impl Default for Settings {
@@ -122,6 +126,8 @@ impl Default for Settings {
             doc_name: String::new(),
             doc_id: None,
             last_view: "tr".into(),
+            ed_write: String::new(),
+            ed_trans: String::new(),
         }
     }
 }
