@@ -508,3 +508,11 @@ Das Menue am Kontext-Übersetzer (`mini_window`) wich in zwei Punkten von `#trpo
 
 In der Sprachauswahl (`lang_popup`) stand vor der eingestellten Sprache ein Punkt. Die Vorlage markiert die Auswahl allein über die Farbe (`--accent-ink`), der Punkt ist entfallen. Außerdem fehlte der Trennstrich zwischen den angepinnten Sprachen und dem Rest der Liste (`hr` in `.pop`): die Reihenfolge ist jetzt „Sprache erkennen“, angepinnte Sprachen, Strich, alle übrigen. Das Suchfeld ist 34 px hoch und schreibt in 15 px, wie `.psearch`.
 
+## 38. Rechtschreibung im Hintergrund und Abstand unter der Seite
+
+Der Wechsel vom Übersetzer in den Editor blieb beim ersten Mal lange stehen. Ursache war die Rechtschreibprüfung: `schedule_spell` lief im Zeichen-Thread und `Spell::scan` berechnete für jedes falsch geschriebene Wort Vorschläge. Gemessen an einem 206-KB-Text mit 5481 Fehlstellen und 1649 verschiedenen Wörtern: Wörterbuch laden 0,98 s, reines Nachschlagen 3,5 s, Vorschläge für 20 der Wörter 30,5 s — ein Durchlauf hätte also rund 40 Minuten gedauert. Die Vorlage holt Vorschläge ebenfalls nur für das eine angeklickte Wort (`spellSuggest` in `editor.js`) und prüft den Text asynchron.
+
+`Spell::scan` liefert deshalb nur noch Wort und Häufigkeit; `Spell::suggest` berechnet die Vorschläge für ein einzelnes Wort. Geprüft wird in `SpellWorker`, einem eigenen Thread, der das Wörterbuch einmalig lädt und dort behält (Türkisch braucht 6 s zum Laden); `schedule_spell` schickt den Text dorthin und `poll_spell` holt die Ergebnisse jeden Frame ab. Ältere Durchläufe werden über eine laufende Nummer verworfen, solange eine Prüfung läuft, wird keine zweite angestoßen. Das Rechtsklick-Menü auf einem Wort fragt seine Vorschläge beim Öffnen an und zeigt bis dahin „lädt Alternativen“ statt „keine Alternativen“.
+
+Unter der Schreibseite blieben nur 8 px bis zur Kante der Fläche. `#pageWrap` in `style.css` hat rundum 28 px Polster (seitlich 16); der untere Abstand ist jetzt ebenfalls 28 px, sodass die Seite oben und unten gleich viel Luft hat.
+

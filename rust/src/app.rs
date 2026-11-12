@@ -168,7 +168,23 @@ pub struct App {
     dict_words: Vec<String>,
     dict_new: String,
     rename: Option<usize>,
-    spell: crate::spell::Spell,
+    /// Rechtschreibung laeuft in einem eigenen Thread (`SpellWorker`); hier
+    /// steht nur der Zugang dorthin. Im UI-Thread dauerte ein Durchlauf bei
+    /// einem langen Dokument Minuten, weil fuer jedes Wort Vorschlaege
+    /// berechnet wurden.
+    spell_worker: Option<crate::spell::SpellWorker>,
+    /// Laufende Nummer der Pruefungen; aeltere Ergebnisse werden verworfen.
+    spell_gen: u64,
+    spell_done_gen: u64,
+    /// Wartet gerade eine Pruefung? Dann keine neue anstossen.
+    spell_waiting: bool,
+    /// Vom Nutzer ignorierte Woerter; sie gehen als persoenliches Woerterbuch
+    /// mit an den Thread.
+    spell_ignored: Vec<String>,
+    /// Vorschlaege fuer das offene Rechtsklick-Menue.
+    spell_menu_sug: Vec<String>,
+    /// Warten die Vorschlaege noch? Bis dahin zeigt das Menue einen Hinweis.
+    spell_menu_wait: bool,
     spell_hits: Vec<crate::spell::Misspelled>,
     spell_error: Option<String>,
     spell_scanned_doc: String,
@@ -297,7 +313,13 @@ impl App {
             dict_words,
             dict_new: String::new(),
             rename: None,
-            spell: crate::spell::Spell::new(),
+            spell_worker: None,
+            spell_gen: 0,
+            spell_done_gen: 0,
+            spell_waiting: false,
+            spell_ignored: Vec::new(),
+            spell_menu_sug: Vec::new(),
+            spell_menu_wait: false,
             spell_hits: Vec::new(),
             spell_error: None,
             spell_scanned_doc: String::new(),
@@ -1842,6 +1864,11 @@ impl eframe::App for App {
                         .show(ui, |ui| self.library(ui));
                 }
             });
+
+        self.poll_spell();
+        if self.spell_waiting {
+            ctx.request_repaint_after(std::time::Duration::from_millis(100));
+        }
 
         self.lang_popup(ctx);
         self.settings_window(ctx);
@@ -3452,6 +3479,9 @@ impl App {
         // mindestens 1040 px hoch, mit 64/72 px Innenstand.
         let reserved = if self.show_sessions { 150.0 } else { 74.0 };
         let h = (ui.available_height() - reserved).max(160.0);
+        // `#pageWrap` in `style.css` hat rundum 28 px Polster (seitlich 16):
+        // unter der Seite bleibt derselbe Abstand bis zur Kante der Flaeche,
+        // wie oben ueber ihr.
         egui::Frame::none()
             .fill(pal.soft)
             .rounding(Rounding::same(20.0))
@@ -3459,7 +3489,7 @@ impl App {
                 left: 16.0,
                 right: 16.0,
                 top: 28.0,
-                bottom: 8.0,
+                bottom: 28.0,
             })
             .show(ui, |ui| {
                 ui.set_width(ui.available_width());
@@ -3530,6 +3560,16 @@ impl App {
                                         .find(|(_, r)| r.contains(pos))
                                         .map(|(w, _)| w.clone());
                                     if let Some(word) = hit {
+                                        // Vorschlaege im Hintergrund holen;
+                                        // fuer alle Woerter eines Textes
+                                        // waeren sie viel zu teuer.
+                                        self.spell_menu_sug.clear();
+                                        self.spell_menu_wait = true;
+                                        let lang_code = self.set.dict_lang.clone();
+                                        let worker = self.spell_worker.get_or_insert_with(
+                                            crate::spell::SpellWorker::new,
+                                        );
+                                        worker.suggest(&lang_code, &word);
                                         self.spell_menu = Some(SpellMenu { word, pos });
                                     }
                                 }
@@ -4230,12 +4270,8 @@ impl App {
         };
         let pal = self.pal;
         let lang = self.lang;
-        let sug: Vec<String> = self
-            .spell_hits
-            .iter()
-            .find(|h| h.word == menu.word)
-            .map(|h| h.suggestions.clone())
-            .unwrap_or_default();
+        let sug: Vec<String> = self.spell_menu_sug.clone();
+        let wartet = self.spell_menu_wait;
         let red = Color32::from_rgb(0xd0, 0x3a, 0x3a);
         let mut pick: Option<String> = None;
         let mut ignore = false;
@@ -4273,7 +4309,11 @@ impl App {
                         ui.painter().text(
                             egui::pos2(zeile.left() + 12.0, zeile.center().y),
                             egui::Align2::LEFT_CENTER,
-                            t(lang, "no_alts"),
+                            if wartet {
+                                t(lang, "load_alts")
+                            } else {
+                                t(lang, "no_alts")
+                            },
                             egui::FontId::proportional(12.0),
                             pal.muted,
                         );
@@ -4313,7 +4353,7 @@ impl App {
             close = true;
         }
         if ignore {
-            self.spell.ignore(&menu.word);
+            self.spell_ignored.push(menu.word.to_lowercase());
             self.rescan_spell();
             close = true;
         }
@@ -4329,6 +4369,8 @@ impl App {
         }
         if close {
             self.spell_menu = None;
+            self.spell_menu_sug.clear();
+            self.spell_menu_wait = false;
         }
     }
 
@@ -4872,6 +4914,10 @@ impl App {
         if self.spell_scanned_doc == self.doc {
             return;
         }
+        if self.spell_waiting {
+            ctx.request_repaint_after(std::time::Duration::from_millis(100));
+            return;
+        }
         let now = ctx.input(|i| i.time);
         if now - self.spell_scan_at < 0.5 {
             ctx.request_repaint_after(std::time::Duration::from_millis(250));
@@ -4881,19 +4927,61 @@ impl App {
         self.rescan_spell();
     }
 
+    /// Schickt den Text an den Rechtschreib-Thread; das Ergebnis kommt
+    /// asynchron ueber `poll_spell` zurueck.
     fn rescan_spell(&mut self) {
         let lang = self.set.dict_lang.clone();
-        match self.spell.scan(&lang, &self.doc, &self.dict_words) {
-            Ok(hits) => {
-                self.spell_hits = hits;
-                self.spell_error = None;
-            }
-            Err(code) => {
-                self.spell_hits.clear();
-                self.spell_error = Some(code);
+        let mut personal = self.dict_words.clone();
+        personal.extend(self.spell_ignored.iter().cloned());
+        self.spell_gen += 1;
+        let gen = self.spell_gen;
+        let doc = self.doc.clone();
+        let worker = self
+            .spell_worker
+            .get_or_insert_with(crate::spell::SpellWorker::new);
+        worker.scan(gen, &lang, &doc, &personal);
+        self.spell_waiting = true;
+    }
+
+    /// Holt fertige Pruefungen und Vorschlaege aus dem Thread ab.
+    fn poll_spell(&mut self) {
+        let Some(worker) = &self.spell_worker else {
+            return;
+        };
+        while let Some(erg) = worker.try_recv() {
+            match erg {
+                crate::spell::Ergebnis::Scan {
+                    gen,
+                    doc,
+                    hits,
+                    error,
+                } => {
+                    if gen >= self.spell_done_gen {
+                        self.spell_done_gen = gen;
+                        self.spell_hits = hits;
+                        self.spell_error = error;
+                        self.spell_scanned_doc = doc;
+                    }
+                    self.spell_waiting = false;
+                }
+                crate::spell::Ergebnis::Suggest { word, list } => {
+                    if self
+                        .spell_menu
+                        .as_ref()
+                        .map(|m| m.word == word)
+                        .unwrap_or(false)
+                    {
+                        self.spell_menu_sug = list.clone();
+                        self.spell_menu_wait = false;
+                    }
+                    for hit in self.spell_hits.iter_mut() {
+                        if hit.word == word {
+                            hit.suggestions = list.clone();
+                        }
+                    }
+                }
             }
         }
-        self.spell_scanned_doc = self.doc.clone();
     }
 
     fn save_personal_dict(&self) {
@@ -5289,7 +5377,7 @@ impl App {
             self.rescan_spell();
         }
         if let Some(word) = ignore_word {
-            self.spell.ignore(&word);
+            self.spell_ignored.push(word.to_lowercase());
             self.rescan_spell();
         }
         if recheck {

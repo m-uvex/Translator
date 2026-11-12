@@ -90,22 +90,37 @@ impl Spell {
             cur.clear();
         }
 
-        // Ngram-Vorschlaege sind sehr langsam, deshalb abgeschaltet; die
-        // restlichen Vorschlagsverfahren reichen fuer Tippfehler aus.
-        let suggester = dict.checker().into_suggester().with_ngram_suggestions(false);
-        let mut hits: Vec<Misspelled> = Vec::new();
-        for (word, count) in counts {
-            let mut suggestions: Vec<String> = Vec::new();
-            suggester.suggest(&word, &mut suggestions);
-            suggestions.truncate(5);
-            hits.push(Misspelled {
+        // Keine Vorschlaege in diesem Durchlauf: sie kosten rund anderthalb
+        // Sekunden je Wort (gemessen an einem 200-KB-Text mit 1649 falschen
+        // Woertern: 30 s fuer 20 Woerter). Die Vorlage holt sie ebenfalls erst
+        // fuer das eine angeklickte Wort (`spellSuggest` in `editor.js`),
+        // deshalb liefert `suggest` sie einzeln.
+        let mut hits: Vec<Misspelled> = counts
+            .into_iter()
+            .map(|(word, count)| Misspelled {
                 word,
                 count,
-                suggestions,
-            });
-        }
+                suggestions: Vec::new(),
+            })
+            .collect();
         hits.sort_by(|a, b| b.count.cmp(&a.count).then(a.word.cmp(&b.word)));
         Ok(hits)
+    }
+
+    /// Vorschlaege fuer ein einzelnes Wort. `scan` laesst sie bewusst aus;
+    /// hier kostet ein Wort Bruchteile einer Sekunde.
+    pub fn suggest(&mut self, lang: &str, word: &str) -> Vec<String> {
+        self.ensure(lang);
+        let Some(dict) = self.dicts.get(lang).and_then(|d| d.as_ref()) else {
+            return Vec::new();
+        };
+        let mut out: Vec<String> = Vec::new();
+        dict.checker()
+            .into_suggester()
+            .with_ngram_suggestions(false)
+            .suggest(word, &mut out);
+        out.truncate(5);
+        out
     }
 
     pub fn ignore(&mut self, word: &str) {
@@ -171,6 +186,104 @@ fn find_pair(lang: &str, dirs: &[PathBuf]) -> Option<(PathBuf, PathBuf)> {
     None
 }
 
+
+// ---- Hintergrund-Thread -------------------------------------------------
+
+/// Auftrag an den Rechtschreib-Thread.
+enum Auftrag {
+    Scan {
+        gen: u64,
+        lang: String,
+        doc: String,
+        personal: Vec<String>,
+    },
+    Suggest {
+        lang: String,
+        word: String,
+    },
+}
+
+/// Ergebnis aus dem Rechtschreib-Thread.
+pub enum Ergebnis {
+    Scan {
+        gen: u64,
+        doc: String,
+        hits: Vec<Misspelled>,
+        error: Option<String>,
+    },
+    Suggest {
+        word: String,
+        list: Vec<String>,
+    },
+}
+
+/// Prueft im Hintergrund. Das Woerterbuch wird im Thread einmalig geladen und
+/// bleibt dort — im UI-Thread wuerde schon das Laden die Oberflaeche anhalten
+/// (gemessen: knapp eine Sekunde fuer Deutsch, sechs Sekunden fuer Tuerkisch).
+pub struct SpellWorker {
+    tx: std::sync::mpsc::Sender<Auftrag>,
+    rx: std::sync::mpsc::Receiver<Ergebnis>,
+}
+
+impl SpellWorker {
+    pub fn new() -> Self {
+        let (tx, job_rx) = std::sync::mpsc::channel::<Auftrag>();
+        let (res_tx, rx) = std::sync::mpsc::channel::<Ergebnis>();
+        std::thread::spawn(move || {
+            let mut spell = Spell::new();
+            while let Ok(auftrag) = job_rx.recv() {
+                let ergebnis = match auftrag {
+                    Auftrag::Scan {
+                        gen,
+                        lang,
+                        doc,
+                        personal,
+                    } => {
+                        let (hits, error) = match spell.scan(&lang, &doc, &personal) {
+                            Ok(hits) => (hits, None),
+                            Err(code) => (Vec::new(), Some(code)),
+                        };
+                        Ergebnis::Scan {
+                            gen,
+                            doc,
+                            hits,
+                            error,
+                        }
+                    }
+                    Auftrag::Suggest { lang, word } => {
+                        let list = spell.suggest(&lang, &word);
+                        Ergebnis::Suggest { word, list }
+                    }
+                };
+                if res_tx.send(ergebnis).is_err() {
+                    break;
+                }
+            }
+        });
+        Self { tx, rx }
+    }
+
+    pub fn scan(&self, gen: u64, lang: &str, doc: &str, personal: &[String]) {
+        let _ = self.tx.send(Auftrag::Scan {
+            gen,
+            lang: lang.to_string(),
+            doc: doc.to_string(),
+            personal: personal.to_vec(),
+        });
+    }
+
+    pub fn suggest(&self, lang: &str, word: &str) {
+        let _ = self.tx.send(Auftrag::Suggest {
+            lang: lang.to_string(),
+            word: word.to_string(),
+        });
+    }
+
+    pub fn try_recv(&self) -> Option<Ergebnis> {
+        self.rx.try_recv().ok()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -192,6 +305,20 @@ mod tests {
             }
         }
         None
+    }
+
+    #[test]
+    fn vorschlaege_einzeln() {
+        let mut s = Spell::new();
+        if !s.has_dict("de") {
+            return;
+        }
+        let hits = s.scan("de", "Das ist ein Tst.", &[]).unwrap_or_default();
+        assert!(hits.iter().any(|h| h.word == "Tst"));
+        // Der Durchlauf liefert bewusst keine Vorschlaege mit.
+        assert!(hits.iter().all(|h| h.suggestions.is_empty()));
+        // Einzeln abgefragt kommen sie.
+        assert!(!s.suggest("de", "Tst").is_empty());
     }
 
     #[test]
@@ -259,3 +386,4 @@ mod tests {
         }
     }
 }
+
