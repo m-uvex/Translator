@@ -1174,6 +1174,7 @@ fn side_label(
 fn menu_row(
     ui: &mut egui::Ui,
     p: &Palette,
+    lang: Lang,
     name: &str,
     sel: bool,
     vision: bool,
@@ -1210,13 +1211,14 @@ fn menu_row(
         x -= 18.0;
     }
     if mt {
-        ui.painter().text(
-            egui::pos2(x, rect.center().y),
-            egui::Align2::RIGHT_CENTER,
-            "MT",
-            egui::FontId::proportional(11.0),
-            p.muted,
+        // Reines Uebersetzungsmodell: zwei Pfeile statt der Buchstaben „MT“.
+        let sym = egui::Rect::from_center_size(
+            egui::pos2(x - 7.5, rect.center().y),
+            egui::vec2(15.0, 15.0),
         );
+        crate::icons::paint(ui.painter(), sym, "swap", p.muted);
+        ui.interact(sym, egui::Id::new(("mt_tip", name)), egui::Sense::hover())
+            .on_hover_text(t(lang, "mt_tip"));
     }
     let text_rect = egui::Rect::from_min_max(
         rect.left_top(),
@@ -2260,7 +2262,7 @@ impl App {
                                         } else {
                                             self.set.ed_write == *name
                                         };
-                                        if menu_row(ui, &pal, name, sel, *vision, *thinking, false) {
+                                        if menu_row(ui, &pal, lang, name, sel, *vision, *thinking, false) {
                                             pick_write = Some(name.clone());
                                         }
                                     }
@@ -2272,14 +2274,14 @@ impl App {
                                     );
                                     for (name, vision, thinking, mt) in &rows {
                                         let sel = self.set.ed_trans == *name;
-                                        if menu_row(ui, &pal, name, sel, *vision, *thinking, *mt) {
+                                        if menu_row(ui, &pal, lang, name, sel, *vision, *thinking, *mt) {
                                             pick_trans = Some(name.clone());
                                         }
                                     }
                                 } else {
                                     for (name, vision, thinking, mt) in &rows {
                                         let sel = self.set.model == *name;
-                                        if menu_row(ui, &pal, name, sel, *vision, *thinking, *mt) {
+                                        if menu_row(ui, &pal, lang, name, sel, *vision, *thinking, *mt) {
                                             pick_model = Some(name.clone());
                                         }
                                     }
