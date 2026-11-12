@@ -544,3 +544,7 @@ Bei „Modell für Ersatzwörter …“ lagen Beschriftung und Auswahlfeld über
 
 Die Markierung mit der Maus war auf der weißen Schreibseite kaum zu erkennen. Sie bestand aus dem Akzent bei 55 % Deckkraft — derselbe Wert wie `::selection` in `style.css`, der auf dem Papierweiß aber fast verschwindet. `apply_theme` setzt sie jetzt deckend aus 70 % Akzent und 30 % Akzenttinte (`mix_color`), sodass sie in beiden Farbmodi klar sichtbar bleibt, ohne die Schrift zu überdecken; die Schrift selbst behält ihre Farbe (`stroke: Stroke::NONE`, wie `color:inherit` in der Vorlage).
 
+## 44. Ein Schließen je Fenster
+
+Das Einstellungsfenster hatte zwei Wege zum Schließen: das Kreuz im Kopf und einen eigenen Knopf „Schließen“ neben „Alles zurücksetzen“. In `index.html` steht dort nur ein Knopf (`#resetAll`), geschlossen wird über das Kreuz. Der zweite Knopf ist entfallen; „Alles zurücksetzen“ hat dabei die Form von `.ghost` bekommen (weicher Grund, Rundung 999, 13 px Schrift). Gespeichert wird beim Schließen weiterhin.
+

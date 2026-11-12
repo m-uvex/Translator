@@ -3001,19 +3001,23 @@ impl App {
                     }
 
                     ui.add_space(10.0);
-                    ui.horizontal(|ui| {
-                        if ui.button(t(lang, "reset_all")).clicked() {
-                            let doc = self.set.doc.clone();
-                            self.set = Settings::default();
-                            self.set.doc = doc;
-                            self.save_set();
-                            self.lang = Lang::resolve(&self.set.ui_lang);
-                        }
-                        if ui.button(t(lang, "close")).clicked() {
-                            self.save_set();
-                            self.show_settings = false;
-                        }
-                    });
+                    // Nur „Alles zuruecksetzen“ wie `.ghost` der Vorlage; das
+                    // Fenster schliesst ueber das Kreuz im Kopf, ein zweiter
+                    // Schliessen-Knopf gehoert nicht dorthin.
+                    let zuruecksetzen = egui::Button::new(
+                        RichText::new(t(lang, "reset_all")).size(13.0).color(pal.text),
+                    )
+                    .fill(pal.soft)
+                    .stroke(Stroke::NONE)
+                    .rounding(Rounding::same(999.0))
+                    .min_size(egui::vec2(0.0, 30.0));
+                    if ui.add(zuruecksetzen).clicked() {
+                        let doc = self.set.doc.clone();
+                        self.set = Settings::default();
+                        self.set.doc = doc;
+                        self.save_set();
+                        self.lang = Lang::resolve(&self.set.ui_lang);
+                    }
                 });
             });
         self.save_set();
