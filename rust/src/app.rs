@@ -934,7 +934,8 @@ fn model_pill(
         p.text,
     );
     let icons = (vision as i32 + thinking as i32) as f32;
-    let extra = if icons > 0.0 { icons * 19.0 } else { 0.0 };
+    // `.mi` in `style.css` hat 6 px Abstand zum Namen.
+    let extra = if icons > 0.0 { icons * 19.0 + 6.0 } else { 0.0 };
     let w = (galley.size().x + extra + 36.0).max(min_w);
     let (rect, resp) = ui.allocate_exact_size(egui::vec2(w, 36.0), egui::Sense::click());
     let stroke = if resp.hovered() {
@@ -952,6 +953,9 @@ fn model_pill(
         p.text,
     );
     x += galley.size().x;
+    if icons > 0.0 {
+        x += 6.0;
+    }
     for icon in [vision.then_some("eye"), thinking.then_some("bulb")]
         .into_iter()
         .flatten()
@@ -1773,6 +1777,10 @@ impl App {
             }))
             .show(ctx, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
+                    // Feste Innenbreite der Leiste (300 px minus 2 x 14 px Rand),
+                    // damit die Karten nicht ueber den Fensterrand hinauswachsen.
+                    let side_w = 300.0 - 28.0;
+                    ui.set_width(side_w);
                     // Die Vorlage rechnet mit festen Abstaenden (8 px). egui
                     // wuerde zwischen jedem Element zusaetzlich 8 px setzen;
                     // hier wird deshalb nur mit `add_space` gearbeitet.
@@ -1789,7 +1797,7 @@ impl App {
                             bottom: 16.0,
                         })
                         .show(ui, |ui| {
-                            ui.set_width(ui.available_width());
+                            ui.set_width(side_w - 24.0);
                             side_label(ui, &t(lang, "style"), 15.0, 22.5, 4.0, pal.text, true);
                             ui.add_space(16.0);
                             let groups: [(&str, &[(&str, &str)]); 4] = [
@@ -1880,7 +1888,7 @@ impl App {
                             bottom: 10.0,
                         })
                         .show(ui, |ui| {
-                            ui.set_width(ui.available_width());
+                            ui.set_width(side_w - 24.0);
                             if bar_header(ui, &pal, &t(lang, "context"), ctx_open).clicked() {
                                 ctx_open = !ctx_open;
                             }
@@ -1914,7 +1922,7 @@ impl App {
                             bottom: 10.0,
                         })
                         .show(ui, |ui| {
-                            ui.set_width(ui.available_width());
+                            ui.set_width(side_w - 24.0);
                             if bar_header(ui, &pal, &t(lang, "glossary"), gl_open).clicked() {
                                 gl_open = !gl_open;
                             }
@@ -2230,10 +2238,19 @@ impl App {
                             });
                     });
             });
+        let anchor = self.models_anchor;
         let mut close = ctx.input(|i| i.key_pressed(egui::Key::Escape));
-        if ctx.input(|i| i.pointer.button_clicked(egui::PointerButton::Primary))
-            && !area.response.hovered()
-        {
+        // Nur ein Klick ausserhalb von Menue und Ausloeser schliesst. Der Klick,
+        // der das Menue geoeffnet hat, liegt im Ausloeser und wuerde es sonst
+        // noch im selben Bild wieder zumachen.
+        let clicked_out = ctx.input(|i| {
+            i.pointer.button_clicked(egui::PointerButton::Primary)
+                && i.pointer
+                    .interact_pos()
+                    .map(|pos| !area.response.rect.contains(pos) && !anchor.contains(pos))
+                    .unwrap_or(false)
+        });
+        if clicked_out {
             close = true;
         }
         if retry {
