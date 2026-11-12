@@ -139,6 +139,7 @@ fn strings(k: &str) -> Six {
         "stop"         => ("Stoppen", "Stop", "Stoppen", "Detener", "Durdur", "إيقاف"),
         "stopped"      => ("Übersetzung angehalten", "Translation stopped", "Vertaling gestopt", "Traducción detenida", "Çeviri durduruldu", "تم إيقاف الترجمة"),
         "translating"  => ("Übersetze …", "Translating …", "Bezig met vertalen …", "Traduciendo …", "Çevriliyor …", "جاري الترجمة …"),
+        "part"         => ("Teil {} von {}", "Part {} of {}", "Deel {} van {}", "Parte {} de {}", "Bölüm {} / {}", "الجزء {} من {}"),
         "no_model"     => ("Kein Modell gewählt", "No model selected", "Geen model gekozen", "Ningún modelo elegido", "Model seçilmedi", "لم يتم اختيار نموذج"),
         "no_models"    => ("Keine Modelle gefunden", "No models found", "Geen modellen gevonden", "No se encontraron modelos", "Model bulunamadı", "لم يتم العثور على نماذج"),
         "ollama_down"  => ("Ollama ist nicht erreichbar", "Ollama is not reachable", "Ollama is niet bereikbaar", "No se puede acceder a Ollama", "Ollama'ya ulaşılamıyor", "تعذر الوصول إلى Ollama"),

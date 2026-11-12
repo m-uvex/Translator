@@ -81,6 +81,18 @@ enum Confirm {
 /// Ein Dokument der Sitzungsliste (nur im Speicher, wie in der
 /// Electron-Fassung). `saved_text` ist der zuletzt gespeicherte Stand und
 /// dient der Erkennung ungespeicherter Aenderungen.
+/// Ein Auftrag ueber das ganze Dokument, in Abschnitte zerlegt (`chunkText`
+/// in `editor.js`): jeder Teil geht einzeln ans Modell, danach wird gesetzt.
+struct ChunkJob {
+    parts: Vec<String>,
+    idx: usize,
+    out: Vec<String>,
+    instr: String,
+    /// `summarize` laesst am Ende noch einen Durchgang ueber die Teile laufen.
+    zusammenfassen: bool,
+    zweiter_durchgang: bool,
+}
+
 /// Menue mit Ersatzwoertern unter einem Wort der Ausgabe (`#alt` in der Vorlage).
 #[derive(Clone)]
 struct AltMenu {
@@ -166,6 +178,7 @@ pub struct App {
     dict_anchor: Option<egui::Rect>,
     show_save_menu: bool,
     alt_menu: Option<AltMenu>,
+    chunk_job: Option<ChunkJob>,
     reword_job: bool,
     save_anchor: Option<egui::Rect>,
     dock_drag: Option<usize>,
@@ -294,6 +307,7 @@ impl App {
             dict_anchor: None,
             show_save_menu: false,
             alt_menu: None,
+            chunk_job: None,
             reword_job: false,
             save_anchor: None,
             dock_drag: None,
@@ -512,7 +526,10 @@ impl App {
                 }
                 Msg::Done(text) => {
                     self.busy = false;
-                    if self.reword_job {
+                    if self.chunk_job.is_some() {
+                        self.chunk_fertig(clean_editor_output(&text));
+                        ctx.request_repaint();
+                    } else if self.reword_job {
                         self.reword_job = false;
                         let clean = filter_profanity(
                             &strip_stars(&text, &self.last_src),
@@ -596,6 +613,7 @@ impl App {
                     self.editor_job = false;
                     self.mini_job = false;
                     self.reword_job = false;
+                    self.chunk_job = None;
                     self.last_tr = self.output.clone();
                     self.status = t(self.lang, "stopped");
                 }
@@ -604,6 +622,7 @@ impl App {
                     self.editor_job = false;
                     self.mini_job = false;
                     self.reword_job = false;
+                    self.chunk_job = None;
                     self.status = format!("{}: {}", t(self.lang, "error"), e);
                 }
             }
@@ -696,22 +715,139 @@ impl App {
     }
 
     fn start_editor_op(&mut self, kind: &str) {
-        let instr = match kind {
-            "shorten" => "Shorten the following text by about one third. Keep the meaning, tone and key facts. Output only the shortened text, in the same language as the input, without explanations.",
-            "lengthen" => "Expand the following text by about 50%: add useful detail, explanation and smoother transitions, but do not invent facts. Output only the expanded text, in the same language as the input.",
-            "summarize" => "Summarize the following text concisely in one to three sentences. Output only the summary, in the same language as the input.",
-            _ => "Proofread the following text. Correct only spelling, grammar, punctuation and obvious typos. Do not translate, do not change wording or style. Output only the corrected text.",
-        };
-        self.start_editor_instr(instr, kind == "proofread");
+        self.start_editor_instr(editor_instr(kind), kind == "proofread");
     }
 
-    /// Wie `start_editor_op`, aber immer fuer das ganze Dokument. Die drei
-    /// Knoepfe der Werkzeugleiste entsprechen `allOp` in der Vorlage.
+    /// Wie `start_editor_op`, aber fuer das ganze Dokument — entspricht `allOp`
+    /// in der Vorlage: bis 3500 Zeichen ein Aufruf, darueber Abschnitt fuer
+    /// Abschnitt, damit lange Texte nicht an der Kontextgrenze scheitern.
     fn start_editor_all(&mut self, kind: &str) {
-        let saved = self.sel;
+        if self.busy {
+            return;
+        }
+        if kind == "proofread" {
+            let saved = self.sel;
+            self.sel = None;
+            self.start_editor_op(kind);
+            self.sel = saved;
+            return;
+        }
+        if self.write_model().is_none() {
+            self.status = t(self.lang, "no_model");
+            return;
+        }
+        let text = self.doc.clone();
+        if text.trim().is_empty() {
+            return;
+        }
+        let parts = chunk_text(&text, 3500);
+        if parts.len() <= 1 {
+            let saved = self.sel;
+            self.sel = None;
+            self.start_editor_op(kind);
+            self.sel = saved;
+            return;
+        }
+        self.chunk_job = Some(ChunkJob {
+            parts,
+            idx: 0,
+            out: Vec::new(),
+            instr: editor_instr(kind).to_string(),
+            zusammenfassen: kind == "summarize",
+            zweiter_durchgang: false,
+        });
+        self.busy = true;
+        self.editor_job = true;
+        self.pending_diff = false;
+        self.pending_sel = None;
+        self.status = String::new();
+        self.spawn_chunk(0);
+    }
+
+    /// Schickt den naechsten Abschnitt des laufenden Auftrags ans Modell.
+    fn spawn_chunk(&mut self, idx: usize) {
+        let Some(model) = self.write_model() else {
+            self.status = t(self.lang, "no_model");
+            self.chunk_job = None;
+            self.busy = false;
+            self.editor_job = false;
+            return;
+        };
+        let Some(job) = self.chunk_job.as_ref() else {
+            return;
+        };
+        let Some(teil) = job.parts.get(idx).cloned() else {
+            return;
+        };
+        let instr = job.instr.clone();
+        let sys = EDITOR_SYS.to_string();
+        self.stop.store(false, Ordering::SeqCst);
+        net::spawn_chat(
+            self.cfg(),
+            model,
+            vec![
+                json!({"role":"system","content":sys}),
+                json!({"role":"user","content":format!("{}\n\n<text>\n{}\n</text>", instr, teil)}),
+            ],
+            None,
+            None,
+            false,
+            self.tx.clone(),
+            self.stop.clone(),
+        );
+    }
+
+    /// Ergebnis eines Abschnitts: naechster Teil, zweiter Durchgang beim
+    /// Zusammenfassen oder fertig.
+    fn chunk_fertig(&mut self, text: String) {
+        let Some(job) = self.chunk_job.as_mut() else {
+            return;
+        };
+        job.out.push(text);
+        job.idx += 1;
+        let gesamt = job.parts.len();
+        let naechster = job.idx;
+        if naechster < gesamt {
+            let lang = self.lang;
+            let fortschritt = t(lang, "part")
+                .replacen("{}", &(naechster + 1).to_string(), 1)
+                .replacen("{}", &gesamt.to_string(), 1);
+            self.status = fortschritt;
+            self.spawn_chunk(naechster);
+            return;
+        }
+        let zusammen = job.out.join("\n\n");
+        let nachlauf = job.zusammenfassen && !job.zweiter_durchgang;
+        if nachlauf {
+            // Wie `summarizeLong`: aus den Teilzusammenfassungen eine machen.
+            let instr = "Summarize the following summary concisely in one to three sentences. Output only the summary, in the same language as the input.".to_string();
+            self.chunk_job = Some(ChunkJob {
+                parts: vec![zusammen],
+                idx: 0,
+                out: Vec::new(),
+                instr,
+                zusammenfassen: true,
+                zweiter_durchgang: true,
+            });
+            self.status = String::new();
+            self.spawn_chunk(0);
+            return;
+        }
+        self.chunk_job = None;
+        self.busy = false;
+        self.editor_job = false;
+        self.status = String::new();
+        if zusammen.trim().is_empty() {
+            return;
+        }
+        self.push_undo();
+        self.doc = zusammen;
         self.sel = None;
-        self.start_editor_op(kind);
-        self.sel = saved;
+        self.saved = false;
+        self.set.doc = self.doc.clone();
+        self.save_set();
+        self.sync_active_session();
+        self.spell_scanned_doc.clear();
     }
 
     /// Setzt die Ueberschriftenebene der markierten Zeilen.
@@ -1223,6 +1359,39 @@ fn side_label(
             .galley(pos + egui::vec2(0.6, 0.0), galley.clone(), color);
     }
     ui.painter().galley(pos, galley, color);
+}
+
+/// Die Anweisung zu einem Knopf der Leiste oder Kontextleiste (`OPS` in
+/// `editor.js`).
+fn editor_instr(kind: &str) -> &'static str {
+    match kind {
+        "shorten" => "Shorten the following text by about one third. Keep the meaning, tone and key facts. Output only the shortened text, in the same language as the input, without explanations.",
+        "lengthen" => "Expand the following text by about 50%: add useful detail, explanation and smoother transitions, but do not invent facts. Output only the expanded text, in the same language as the input.",
+        "summarize" => "Summarize the following text concisely in one to three sentences. Output only the summary, in the same language as the input.",
+        _ => "Proofread the following text. Correct only spelling, grammar, punctuation and obvious typos. Do not translate, do not change wording or style. Output only the corrected text.",
+    }
+}
+
+/// Zerlegt Text an Absatzgrenzen in Stuecke von hoechstens `n` Zeichen
+/// (`chunkText` in `editor.js`).
+fn chunk_text(text: &str, n: usize) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    let mut aktuell = String::new();
+    for absatz in text.split('\n') {
+        if !aktuell.is_empty() && aktuell.chars().count() + absatz.chars().count() > n {
+            out.push(aktuell.clone());
+            aktuell.clear();
+        }
+        aktuell.push_str(absatz);
+        aktuell.push('\n');
+    }
+    if !aktuell.trim().is_empty() {
+        out.push(aktuell);
+    }
+    if out.is_empty() {
+        out.push(text.to_string());
+    }
+    out
 }
 
 /// Entfernt, was das Modell ausser dem Text mitliefert: wiederholte
@@ -5628,4 +5797,30 @@ fn local_offset_secs() -> i64 {
 #[cfg(not(windows))]
 fn local_offset_secs() -> i64 {
     0
+}
+
+#[cfg(test)]
+mod app_tests {
+    use super::chunk_text;
+
+    #[test]
+    fn kurzer_text_bleibt_ein_stueck() {
+        let teile = chunk_text("Ein Absatz.
+Noch einer.", 3500);
+        assert_eq!(teile.len(), 1);
+    }
+
+    #[test]
+    fn langer_text_wird_zerlegt() {
+        let absatz = "Wort Wort Wort Wort Wort Wort Wort Wort.
+";
+        let text = absatz.repeat(200);
+        let teile = chunk_text(&text, 500);
+        assert!(teile.len() > 1);
+        for teil in &teile {
+            assert!(teil.chars().count() <= 560, "Teil zu gross: {}", teil.chars().count());
+        }
+        let zusammen: String = teile.concat();
+        assert_eq!(zusammen.matches("Wort").count(), text.matches("Wort").count());
+    }
 }

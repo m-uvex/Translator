@@ -477,3 +477,11 @@ Waehrend eines Auftrags legt `paint_processing` die Partikel-Animation ueber den
 Die Kontextleiste bleibt waehrend eines Auftrags stehen und zeigt statt der sieben Knoepfe einen Ladekreis in einer kleinen Pille (`ladekreis`, `.ctxbar.working`); dasselbe Symbol ersetzt in den Menues fuer Synonyme und Kontext-Uebersetzer die Standard-Anzeige `ui.spinner()`, der Uebersetzen-Knopf bleibt sichtbar und wird nur blass.
 
 In der Werkzeugleiste ist das Code-Symbol entfallen; die vier Ausrichtungen (`alignL`, `alignC`, `alignR`, `alignJ`) sind dazugekommen und schliessen die Auswahl in `<div align="...">`.
+
+## 35. Ganze Dokumente in Abschnitten
+
+„Alles verkuerzen“, „Alles verlaengern“ und „Alles zusammenfassen“ schickten den ganzen Text in einem Aufruf ans Modell; bei laengeren Dokumenten lief das in die Kontextgrenze und die Antwort brach ab. `start_editor_all` zerlegt den Text jetzt wie `chunkText` in `editor.js` an Absatzgrenzen in Stuecke von hoechstens 3500 Zeichen (`chunk_text`) und schickt sie nacheinander ueber `spawn_chunk`.
+
+Den Fortschritt zeigt die Statusleiste als „Teil 3 von 7“. `chunk_fertig` sammelt die Antworten und setzt sie am Ende als neuen Dokumentinhalt (ein Undo-Schritt, Sitzung und Einstellungsdatei werden mitgeschrieben). Beim Zusammenfassen folgt ein zweiter Durchgang wie bei `summarizeLong`: erst jeder Abschnitt, dann die Zusammenfassungen zu einer.
+
+Probelesen bleibt ein einzelner Aufruf ueber das ganze Dokument, weil die Vorlage dort ebenfalls nicht teilt.
