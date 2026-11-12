@@ -502,3 +502,9 @@ Ein Unterschied bleibt: Die Vorlage faerbt die Stellen direkt im Dokument (`diff
 
 Beim Probelesen einer Markierung verglich der alte Ablauf den ganzen Dokumenttext mit dem korrigierten Ausschnitt; jetzt wird zuerst der neue Dokumenttext gebaut und dann alt gegen neu verglichen, sodass nur die Aenderungen an dieser Stelle erscheinen.
 
+## 37. Kontext-Übersetzer und Sprachauswahl
+
+Das Menue am Kontext-Übersetzer (`mini_window`) wich in zwei Punkten von `#trpop` ab. Es war 320 px breit statt der 280 px Mindestbreite aus `style.css`, und seine Sprachpillen standen auf einer festen Breite von 90 px, obwohl `.trpop .pill` mit `min-width:0` genau so breit wird wie ihre Beschriftung. Beides ist angeglichen: Breite 280 px, Pillen ohne Mindestbreite, Abstand der Zeile 6 px wie `.trrow`. Der Übersetzen-Knopf unten ist jetzt der Knopf aus `.primary` — Schrift 15 px halbfett, Polster 8 px oben und unten sowie 22 px seitlich — statt eines festen Masses von 120 × 32 px mit kleinerer Schrift; `.go` gibt ihm 10 px Abstand nach oben. `pop_at` legt Menues rechtsbuendig unter den Auslöser, alle anderen Menues der App hängen daran; die Vorlage setzt die linke Kante des Auslösers.
+
+In der Sprachauswahl (`lang_popup`) stand vor der eingestellten Sprache ein Punkt. Die Vorlage markiert die Auswahl allein über die Farbe (`--accent-ink`), der Punkt ist entfallen. Außerdem fehlte der Trennstrich zwischen den angepinnten Sprachen und dem Rest der Liste (`hr` in `.pop`): die Reihenfolge ist jetzt „Sprache erkennen“, angepinnte Sprachen, Strich, alle übrigen. Das Suchfeld ist 34 px hoch und schreibt in 15 px, wie `.psearch`.
+

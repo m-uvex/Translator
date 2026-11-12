@@ -2452,11 +2452,12 @@ impl App {
                 // Suchfeld wie `.psearch`: volle Breite, weicher Grund.
                 ui.scope(|ui| {
                     ui.style_mut().visuals.extreme_bg_color = pal.soft;
-                    ui.add_sized(
-                        egui::vec2(ui.available_width(), 30.0),
+                                        ui.add_sized(
+                        egui::vec2(ui.available_width(), 34.0),
                         egui::TextEdit::singleline(&mut self.lang_search)
+                            .font(egui::FontId::proportional(15.0))
                             .hint_text(t(lang, "search_lang"))
-                            .margin(egui::vec2(10.0, 6.0)),
+                            .margin(egui::vec2(10.0, 8.0)),
                     );
                 });
                 ui.add_space(4.0);
@@ -2484,9 +2485,20 @@ impl App {
                     let pinned = pins.contains(code);
                     rows.push((code.clone(), label, pinned));
                 }
-                // Angepinnte zuerst, dann der Rest.
-                rows.sort_by_key(|(_, _, pinned)| !*pinned);
+                // Reihenfolge wie `langPop` in `renderer.js`: erst „Sprache
+                // erkennen“, dann die angepinnten Sprachen, ein Trennstrich und
+                // danach der Rest der Liste.
+                rows.sort_by_key(|(code, _, pinned)| {
+                    if code == "auto" {
+                        0u8
+                    } else if *pinned {
+                        1
+                    } else {
+                        2
+                    }
+                });
                 let mut shown = 0usize;
+                let mut vorige_gruppe = 0u8;
                 egui::ScrollArea::vertical()
                     .max_height(360.0)
                     .auto_shrink([false, false])
@@ -2497,6 +2509,26 @@ impl App {
                         for (code, label, pinned) in rows {
                             shown += 1;
                             let on = code == current;
+                            let gruppe = if code == "auto" {
+                                0u8
+                            } else if pinned {
+                                1
+                            } else {
+                                2
+                            };
+                            // Trennstrich zwischen angepinnten und uebrigen
+                            // Sprachen wie `hr` in `.pop` (4 px Abstand, 1 px
+                            // Linie, seitlich 8 px eingerueckt).
+                            if vorige_gruppe == 1 && gruppe == 2 {
+                                ui.add_space(4.0);
+                                let (linie, _) = ui.allocate_exact_size(
+                                    egui::vec2(breite - 8.0, 1.0),
+                                    egui::Sense::hover(),
+                                );
+                                ui.painter().rect_filled(linie, Rounding::ZERO, pal.line);
+                                ui.add_space(4.0);
+                            }
+                            vorige_gruppe = gruppe;
                             // Ganze Zeile wie `.row` in `style.css`: 32 px hoch,
                             // 10er Rundung, Hintergrund nur beim Ueberfahren.
                             let (rect, resp) = ui.allocate_exact_size(
@@ -2506,15 +2538,10 @@ impl App {
                             if resp.hovered() {
                                 ui.painter().rect_filled(rect, Rounding::same(10.0), pal.soft);
                             }
-                            let text = if on {
-                                format!("• {}", label)
-                            } else {
-                                label.clone()
-                            };
                             ui.painter().text(
                                 egui::pos2(rect.left() + 12.0, rect.center().y),
                                 egui::Align2::LEFT_CENTER,
-                                text,
+                                label.clone(),
                                 egui::FontId::proportional(14.0),
                                 if on { pal.accent_ink } else { pal.text },
                             );
@@ -5035,18 +5062,22 @@ impl App {
         let anchor = self
             .ctx_bar_rect
             .unwrap_or_else(|| egui::Rect::from_center_size(ctx.screen_rect().center(), egui::vec2(1.0, 1.0)));
-        let closed = pop_at(ctx, "mini_tr_pop", anchor, 320.0, &pal, |ui| {
+        // Breite wie `#trpop` in `style.css` (Mindestbreite 280 px).
+        let closed = pop_at(ctx, "mini_tr_pop", anchor, 280.0, &pal, |ui| {
+            ui.spacing_mut().item_spacing.x = 6.0;
             ui.horizontal(|ui| {
-                let r = pill(ui, &pal, &src, 90.0);
+                // `.trpop .pill` setzt `min-width:0`: die Pillen sind so breit
+                // wie ihre Beschriftung, nicht wie in der Kopfzeile der Seite.
+                let r = pill(ui, &pal, &src, 0.0);
                 if r.clicked() {
                     self.lang_search.clear();
                     self.popup_lang = Some("src");
                     self.lang_anchor = Some(r.rect);
                 }
                 let (icon_rect, _) =
-                    ui.allocate_exact_size(egui::vec2(18.0, 18.0), egui::Sense::hover());
+                    ui.allocate_exact_size(egui::vec2(16.0, 16.0), egui::Sense::hover());
                 crate::icons::paint(ui.painter(), icon_rect, "arrowR", pal.muted);
-                let r = pill(ui, &pal, &tgt, 90.0);
+                let r = pill(ui, &pal, &tgt, 0.0);
                 if r.clicked() {
                     self.lang_search.clear();
                     self.popup_lang = Some("tgt");
@@ -5099,16 +5130,22 @@ impl App {
                     });
                 }
             }
-            ui.add_space(8.0);
+            // `.go` in `style.css`: Abstand nach oben 10 px, der Knopf rechts.
+            ui.add_space(10.0);
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    // `.primary`: Polster 8 px oben/unten und 22 px seitlich,
+                    // Schrift 15 px halbfett — kein festes Mindestmass.
+                    ui.spacing_mut().button_padding = egui::vec2(22.0, 8.0);
                     let btn = egui::Button::new(
-                        RichText::new(t(lang, "translate")).color(pal.on_accent).size(13.0),
+                        RichText::new(t(lang, "translate"))
+                            .color(pal.on_accent)
+                            .size(15.0)
+                            .strong(),
                     )
                     .fill(pal.accent)
                     .stroke(Stroke::NONE)
-                    .rounding(Rounding::same(999.0))
-                    .min_size(egui::vec2(120.0, 32.0));
+                    .rounding(Rounding::same(999.0));
                     // Waehrend der Uebersetzung bleibt der Knopf stehen, nur
                     // blass; den Ladekreis zeigt die kleine Pille an der
                     // Kontextleiste wie `.ctxbar.working` in der Vorlage.
