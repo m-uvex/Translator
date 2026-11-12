@@ -2805,35 +2805,35 @@ impl App {
                 left: 16.0,
                 right: 16.0,
                 top: 28.0,
-                bottom: 28.0,
+                // Unten ohne Rand: Wie in der Vorlage wird die Seite an der
+                // Kante der Flaeche abgeschnitten, nicht 28 px davor.
+                bottom: 0.0,
             })
             .show(ui, |ui| {
                 ui.set_width(ui.available_width());
-                ui.set_height((h - 56.0).max(80.0));
+                ui.set_height((h - 28.0).max(80.0));
                 egui::ScrollArea::vertical()
                     .id_source("page_scroll")
                     .auto_shrink([false, false])
                     .show(ui, |ui| {
                         let page_w = 794.0_f32.min(ui.available_width());
-                        ui.vertical_centered(|ui| {
-                            egui::Frame::none()
-                                .fill(pal.card)
-                                .rounding(Rounding::same(22.0))
-                                .shadow(egui::epaint::Shadow {
-                                    offset: egui::vec2(0.0, 2.0),
-                                    blur: 14.0,
-                                    spread: 0.0,
-                                    color: egui::Color32::from_black_alpha(28),
-                                })
-                                .inner_margin(egui::Margin {
-                                    left: 72.0,
-                                    right: 72.0,
-                                    top: 64.0,
-                                    bottom: 64.0,
-                                })
-                                .show(ui, |ui| {
-                        ui.set_width((page_w - 144.0).max(200.0));
-                        ui.set_min_height(1040.0 - 128.0);
+                        // Die Seite ist immer mindestens so hoch wie die Flaeche
+                        // selbst, damit sie erst an deren Kante abgeschnitten wird
+                        // und nicht schon vorher aufhoert.
+                        let page_h = (h - 56.0).max(1040.0);
+                        let (page_rect, _) = ui.allocate_exact_size(
+                            egui::vec2(page_w, page_h),
+                            egui::Sense::hover(),
+                        );
+                        let painter = ui.painter();
+                        painter.rect_filled(
+                            page_rect.translate(egui::vec2(0.0, 2.0)),
+                            22.0,
+                            egui::Color32::from_black_alpha(24),
+                        );
+                        painter.rect_filled(page_rect, 22.0, pal.card);
+                        let inner = page_rect.shrink2(egui::vec2(72.0, 64.0));
+                        ui.allocate_ui_at_rect(inner, |ui| {
                         let before = self.doc.clone();
                         let out = egui::TextEdit::multiline(&mut self.doc)
                             .frame(false)
@@ -2895,7 +2895,6 @@ impl App {
                             self.save_set();
                             self.sync_active_session();
                         }
-                                });
                         });
                     });
             });
@@ -2915,7 +2914,12 @@ impl App {
             })
             .show(ui, |ui| {
         ui.set_width(ui.available_width());
-        ui.horizontal(|ui| {
+        // Feste Zeilenhoehe, damit Wortzahl und Meldung mittig stehen und nicht
+        // am oberen Rand kleben (egui richtet das erste Element sonst oben aus).
+        ui.allocate_ui_with_layout(
+            egui::vec2(ui.available_width(), 32.0),
+            egui::Layout::left_to_right(egui::Align::Center),
+            |ui| {
             let words = self.doc.split_whitespace().count();
             ui.label(
                 RichText::new(format!("{} {}", words, t(lang, "words")))

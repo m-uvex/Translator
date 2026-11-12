@@ -379,3 +379,13 @@ Bisher lag der Text in einer einzigen Karte ohne Seitenmaß, die Statusleiste wa
 `App::editor` in `rust/src/app.rs` bildet das jetzt nach: aussen ein Rahmen in `pal.soft` mit 20er Rundung und 28/16 px Rand, darin eine Scrollflaeche (`page_scroll`), in der ein mittiger Rahmen in `pal.card` mit 22er Rundung, Schatten (`epaint::Shadow`, Versatz 2 px, Weichzeichnen 14 px) und 64/72 px Innenstand die Seite bildet. Der Text steht in einem `TextEdit::multiline` ohne eigenen Rahmen mit 24 Zeilen Grundhoehe. Die Statusleiste (Wortzahl, Meldung, Speicherpunkt, Sprachwahl, Rechtschreibung) sitzt in einem eigenen Kartenrahmen mit 14/4 px Innenstand und 12 px Abstand nach unten.
 
 Geprueft am laufenden Fenster (1500x900): Die Seite steht mittig mit sichtbarem Rand rundum, die Statusleiste liegt als gerundete Karte am Boden. Rechtschreibpruefung, Kontextleiste und Sitzungsliste blieben unveraendert; `cargo build` und `cargo test` laufen durch.
+
+## 22. Statusleiste, Seitenkante und Fensterecken
+
+Drei Kleinigkeiten aus dem Vergleich mit der Vorlage. Erstens stand die Wortzahl in der Statusleiste am oberen Rand der Karte, waehrend die Knoepfe rechts mittig sassen: egui richtet das erste Element einer Zeile oben aus, weil die Zeilenhoehe erst mit den folgenden Elementen waechst. Die Zeile bekommt jetzt mit `ui.allocate_ui_with_layout(vec2(breite, 32.0), Layout::left_to_right(Align::Center), ...)` vorab eine feste Hoehe, danach stehen Wortzahl, Meldung und Knoepfe auf einer Linie.
+
+Zweitens hoerte die Schreibseite zu frueh auf. Die Seite wird in `App::editor` als eigene Flaeche gezeichnet (`allocate_exact_size`, mindestens 1040 px hoch, mindestens so hoch wie die Flaeche, mit 22er Rundung und einem Schatten darunter); der Text sitzt in einem `allocate_ui_at_rect` mit 72/64 px Innenstand. Der untere Rand der Flaeche entfaellt, damit die Seite — wie in der Vorlage, wo `overflow:auto` am Rand des Padding-Kastens abschneidet — erst an der Kante der Flaeche endet.
+
+Drittens waren die Fensterecken eckig. Das neue Modul `rust/src/fenster.rs` sucht beim Start das eigene Fenster (`EnumWindows` mit `GetCurrentProcessId`, kein zusaetzliches Paket) und setzt `DWMWA_WINDOW_CORNER_PREFERENCE` auf `DWMWCP_ROUND` (`DwmSetWindowAttribute`). Windows 11 zeichnet das Fenster damit wie jedes andere Programm mit runden Ecken; unter Windows 10 bleibt der Aufruf wirkungslos. Aufruf in `main` vor `app::App::new`.
+
+Geprueft am laufenden Fenster: Wortzahl mittig auf der Hoehe der Knoepfe (Text 835–845, Knoepfe 831–848), Seite endet an der Kante der Flaeche (Schnitt bei y 800, Leiste beginnt bei 814), Ecke oben links sichtbar gerundet.

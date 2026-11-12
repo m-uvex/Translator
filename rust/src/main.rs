@@ -1,6 +1,7 @@
 mod app;
 mod editor;
 mod engine;
+mod fenster;
 mod icons;
 mod icons_data;
 mod i18n;
@@ -66,6 +67,8 @@ fn main() -> eframe::Result<()> {
         options,
         Box::new(|cc| {
             setup_fonts(&cc.egui_ctx);
+            // Abgerundete Fensterecken wie bei jedem anderen Windows-Programm.
+            fenster::runde_ecken();
             Box::new(app::App::new(cc))
         }),
     )
