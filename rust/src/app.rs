@@ -1794,19 +1794,34 @@ impl App {
                 self.clear_formatting();
             }
             ui.separator();
-            if ui.button(t(lang, "shorten")).clicked() {
+            if icon_btn(ui, &pal, "shorten", false)
+                .on_hover_text(t(lang, "shorten"))
+                .clicked()
+            {
                 self.start_editor_op("shorten");
             }
-            if ui.button(t(lang, "lengthen")).clicked() {
+            if icon_btn(ui, &pal, "lengthen", false)
+                .on_hover_text(t(lang, "lengthen"))
+                .clicked()
+            {
                 self.start_editor_op("lengthen");
             }
-            if ui.button(t(lang, "summarize")).clicked() {
+            if icon_btn(ui, &pal, "summarize", false)
+                .on_hover_text(t(lang, "summarize"))
+                .clicked()
+            {
                 self.start_editor_op("summarize");
             }
-            if ui.button(t(lang, "proofread")).clicked() {
+            if icon_btn(ui, &pal, "proofread", false)
+                .on_hover_text(t(lang, "proofread"))
+                .clicked()
+            {
                 self.start_editor_op("proofread");
             }
-            if ui.button(t(lang, "synonyms")).clicked() {
+            if icon_btn(ui, &pal, "synonyms", false)
+                .on_hover_text(t(lang, "synonyms"))
+                .clicked()
+            {
                 self.show_syn = true;
             }
         });

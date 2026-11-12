@@ -172,5 +172,5 @@ dieselben Prompt-Regeln und dieselben Ablagedateien.
 | Editor: Markdown-Formatierung mit Umschaltern, Undo/Redo, Sitzungsliste, Diff-Probelesen, KI-Operationen, Ablage, Export | umgesetzt (ohne Rich-Text-Seite) |
 | Rechtschreibprüfung mit Hunspell (spellbook, Prüffenster mit Vorschlägen, persönliches Wörterbuch) | umgesetzt (ohne Wellenlinien im Text) |
 | Schwebende Kontextleiste (Verkürzen, Verlängern, Zusammenfassen, Probelesen, Synonyme) | umgesetzt (ohne Stil- und Mini-Übersetzer-Knopf) |
-| Visuelle Angleichung an die Electron-Fassung | teilweise: Symbole als Vektoren, Segoe UI als Schrift; Farben, Maße, Reihenfolge und KI-Knöpfe offen (Doku.txt Abschnitt 15) |
+| Visuelle Angleichung an die Electron-Fassung | teilweise: Symbole als Vektoren, Segoe UI als Schrift; Farben, Maße und Reihenfolge offen (Doku.txt Abschnitt 15) |
 | Seitenumbruch, PDF-Export | offen |
