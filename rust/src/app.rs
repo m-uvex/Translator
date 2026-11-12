@@ -2681,6 +2681,59 @@ impl App {
                 self.redo();
             }
             ui.separator();
+            // Ueberschrift wie die Auswahl `.tsel` in der Vorlage: eine runde
+            // Pille auf weichem Grund, mit den vollen Namen statt „H1“.
+            let level = editor::heading_of(&self.doc, self.selection().0);
+            let mut new_level: Option<&str> = None;
+            let head_label = match level {
+                1 => t(lang, "h1"),
+                2 => t(lang, "h2"),
+                3 => t(lang, "h3"),
+                _ => t(lang, "heading"),
+            };
+            ui.scope(|ui| {
+                let st = ui.style_mut();
+                st.spacing.button_padding = egui::vec2(10.0, 6.0);
+                for w in [
+                    &mut st.visuals.widgets.inactive,
+                    &mut st.visuals.widgets.hovered,
+                    &mut st.visuals.widgets.active,
+                    &mut st.visuals.widgets.open,
+                ] {
+                    w.bg_fill = pal.soft;
+                    w.weak_bg_fill = pal.soft;
+                    w.bg_stroke = Stroke::NONE;
+                    w.rounding = Rounding::same(999.0);
+                }
+                egui::ComboBox::from_id_source("ed_head")
+                    .selected_text(RichText::new(&head_label).size(13.0).color(pal.text))
+                    .width(150.0)
+                    .show_ui(ui, |ui| {
+                        if ui
+                            .selectable_label(
+                                level == 0,
+                                RichText::new(t(lang, "heading")).size(13.0),
+                            )
+                            .clicked()
+                        {
+                            new_level = Some("");
+                        }
+                        for (lvl, key, prefix) in
+                            [(1usize, "h1", "# "), (2, "h2", "## "), (3, "h3", "### ")]
+                        {
+                            if ui
+                                .selectable_label(level == lvl, RichText::new(t(lang, key)).size(13.0))
+                                .clicked()
+                            {
+                                new_level = Some(prefix);
+                            }
+                        }
+                    });
+            });
+            if let Some(prefix) = new_level {
+                self.set_heading(prefix);
+            }
+            ui.separator();
             if icon_btn(ui, &pal, "bold", self.selection_wrapped("**", "**"))
                 .on_hover_text(t(lang, "bold"))
                 .clicked()
@@ -2710,33 +2763,6 @@ impl App {
                 .clicked()
             {
                 self.format_wrap("`", "`");
-            }
-            ui.separator();
-            let level = editor::heading_of(&self.doc, self.selection().0);
-            let mut new_level: Option<&str> = None;
-            let head_label = match level {
-                1 => "H1".to_string(),
-                2 => "H2".to_string(),
-                3 => "H3".to_string(),
-                _ => t(lang, "heading"),
-            };
-            egui::ComboBox::from_id_source("ed_head")
-                .selected_text(head_label)
-                .width(120.0)
-                .show_ui(ui, |ui| {
-                    if ui.selectable_label(level == 0, t(lang, "heading")).clicked() {
-                        new_level = Some("");
-                    }
-                    for (lvl, label, prefix) in
-                        [(1usize, "H1", "# "), (2, "H2", "## "), (3, "H3", "### ")]
-                    {
-                        if ui.selectable_label(level == lvl, label).clicked() {
-                            new_level = Some(prefix);
-                        }
-                    }
-                });
-            if let Some(prefix) = new_level {
-                self.set_heading(prefix);
             }
             if icon_btn(ui, &pal, "ul", false)
                 .on_hover_text(t(lang, "list"))
