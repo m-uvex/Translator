@@ -1,6 +1,8 @@
 mod app;
 mod editor;
 mod engine;
+mod icons;
+mod icons_data;
 mod i18n;
 mod library;
 mod net;
@@ -19,21 +21,32 @@ use eframe::egui;
 /// leere Kaestchen.
 fn setup_fonts(ctx: &egui::Context) {
     let mut fonts = egui::FontDefinitions::default();
-    let mut loaded = false;
+    let mut namen: Vec<String> = Vec::new();
+    // Reihenfolge = Vorrang. Segoe UI ist die Schrift der Electron-Fassung;
+    // die eingebauten egui-Schriften bleiben als Rueckfall erhalten.
     for (name, path) in [
         ("segoe", "C:/Windows/Fonts/segoeui.ttf"),
+        ("segoeui", "C:/Windows/Fonts/segoeui.ttf"),
         ("arial", "C:/Windows/Fonts/arial.ttf"),
+        // Nur als letzter Rueckfall fuer einzelne Zeichen wie ▾ oder → gedacht;
+        // die Knopfsymbole sind Vektorgrafik und brauchen sie nicht.
         ("seguisym", "C:/Windows/Fonts/seguisym.ttf"),
     ] {
+        if namen.iter().any(|n| n == name) {
+            continue;
+        }
         if let Ok(bytes) = std::fs::read(path) {
             fonts.font_data.insert(name.to_string(), egui::FontData::from_owned(bytes));
-            for family in [egui::FontFamily::Proportional, egui::FontFamily::Monospace] {
-                fonts.families.entry(family).or_default().push(name.to_string());
-            }
-            loaded = true;
+            namen.push(name.to_string());
         }
     }
-    if loaded {
+    if !namen.is_empty() {
+        for family in [egui::FontFamily::Proportional, egui::FontFamily::Monospace] {
+            let list = fonts.families.entry(family).or_default();
+            for name in namen.iter().rev() {
+                list.insert(0, name.clone());
+            }
+        }
         ctx.set_fonts(fonts);
     }
 }

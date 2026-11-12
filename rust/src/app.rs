@@ -651,16 +651,31 @@ fn pill(ui: &mut egui::Ui, p: &Palette, text: &str, min_w: f32) -> egui::Respons
     )
 }
 
-fn icon_btn(ui: &mut egui::Ui, p: &Palette, label: &str, on: bool) -> egui::Response {
+/// Knopf mit Vektorsymbol aus `icons_data.rs`. Ist kein Symbol vorhanden,
+/// wird die Beschriftung als Text gezeichnet (etwa „H1“ oder „abc“).
+fn icon_btn(ui: &mut egui::Ui, p: &Palette, name: &str, on: bool) -> egui::Response {
     let fill = if on { p.accent } else { p.soft };
     let ink = if on { p.on_accent } else { p.muted };
-    ui.add(
-        egui::Button::new(RichText::new(label).size(13.0).color(ink))
+    if crate::icons::icon(name).is_none() {
+        // Kein Symbol vorhanden (etwa „H1“): als Textknopf mit echter Breite.
+        return ui.add(
+            egui::Button::new(RichText::new(name).size(13.0).color(ink))
+                .fill(fill)
+                .stroke(Stroke::NONE)
+                .rounding(Rounding::same(12.0))
+                .min_size(egui::vec2(32.0, 32.0)),
+        );
+    }
+    // Runde Knoepfe: bei quadratischer Groesse ergibt 999 einen Kreis.
+    let resp = ui.add(
+        egui::Button::new("")
             .fill(fill)
             .stroke(Stroke::NONE)
-            .rounding(Rounding::same(12.0))
+            .rounding(Rounding::same(999.0))
             .min_size(egui::vec2(32.0, 32.0)),
-    )
+    );
+    crate::icons::paint(ui.painter(), resp.rect.shrink(8.0), name, ink);
+    resp
 }
 
 fn card_ui<R>(
@@ -713,20 +728,20 @@ impl eframe::App for App {
                     ui.with_layout(
                         egui::Layout::right_to_left(egui::Align::Center),
                         |ui| {
-                            if icon_btn(ui, &pal, "✕", false)
+                            if icon_btn(ui, &pal, "x", false)
                                 .on_hover_text(t(lang, "win_close"))
                                 .clicked()
                             {
                                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                             }
-                            if icon_btn(ui, &pal, "▢", false)
+                            if icon_btn(ui, &pal, "winMax", false)
                                 .on_hover_text(t(lang, "win_max"))
                                 .clicked()
                             {
                                 let maximized = ctx.input(|i| i.viewport().maximized.unwrap_or(false));
                                 ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(!maximized));
                             }
-                            if icon_btn(ui, &pal, "–", false)
+                            if icon_btn(ui, &pal, "winMin", false)
                                 .on_hover_text(t(lang, "win_min"))
                                 .clicked()
                             {
@@ -751,7 +766,7 @@ impl eframe::App for App {
                 ui.vertical(|ui| {
                     let both = self.set.workspace == "both";
                     if both || self.set.workspace == "tr" {
-                        if icon_btn(ui, &pal, "⇄", self.view == View::Translator)
+                        if icon_btn(ui, &pal, "swap", self.view == View::Translator)
                             .on_hover_text(t(lang, "nav_tr"))
                             .clicked()
                         {
@@ -759,13 +774,13 @@ impl eframe::App for App {
                         }
                     }
                     if both || self.set.workspace == "ed" {
-                        if icon_btn(ui, &pal, "✎", self.view == View::Editor)
+                        if icon_btn(ui, &pal, "pencil", self.view == View::Editor)
                             .on_hover_text(t(lang, "nav_ed"))
                             .clicked()
                         {
                             self.set_view(View::Editor);
                         }
-                        if icon_btn(ui, &pal, "▤", self.view == View::Library)
+                        if icon_btn(ui, &pal, "library", self.view == View::Library)
                             .on_hover_text(t(lang, "nav_lib"))
                             .clicked()
                         {
@@ -773,7 +788,7 @@ impl eframe::App for App {
                         }
                     }
                     ui.add_space(ui.available_height() - 40.0);
-                    if icon_btn(ui, &pal, "⚙", false)
+                    if icon_btn(ui, &pal, "sliders", false)
                         .on_hover_text(t(lang, "settings"))
                         .clicked()
                     {
@@ -836,7 +851,7 @@ impl App {
                 self.lang_search.clear();
                 self.popup_lang = Some("src");
             }
-            if icon_btn(ui, &pal, "⇆", false)
+            if icon_btn(ui, &pal, "swap", false)
                 .on_hover_text(t(lang, "swap"))
                 .clicked()
                 && self.set.src != "auto"
@@ -865,7 +880,7 @@ impl App {
                 if pill(ui, &pal, &format!("▤  {}", short_model(&self.set.model)), 210.0).clicked() {
                     self.show_models = true;
                 }
-                if icon_btn(ui, &pal, if self.models_loading { "◌" } else { "⟳" }, false)
+                if icon_btn(ui, &pal, "refresh", false)
                     .on_hover_text(t(lang, "reload"))
                     .clicked()
                 {
@@ -989,7 +1004,7 @@ impl App {
                             ui.label(RichText::new(&self.status).size(12.0).color(pal.muted));
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                 ui.add_space(8.0);
-                                if icon_btn(ui, &pal, "⧉", false)
+                                if icon_btn(ui, &pal, "copy", false)
                                     .on_hover_text(t(lang, "copy"))
                                     .clicked()
                                 {
@@ -1002,7 +1017,7 @@ impl App {
                                     });
                                     self.status = t(lang, "copied");
                                 }
-                                if self.busy && icon_btn(ui, &pal, "■", false)
+                                if self.busy && icon_btn(ui, &pal, "stop", false)
                                     .on_hover_text(t(lang, "stop"))
                                     .clicked()
                                 {
@@ -1054,7 +1069,21 @@ impl App {
                                     _ => &self.set.style.writer,
                                 };
                                 let on = current == value;
-                                if icon_btn(ui, &pal, t(lang, text).as_str(), on).clicked() {
+                                let option = t(lang, text);
+                                let btn = if on {
+                                    egui::Button::new(RichText::new(&option).color(pal.on_accent).size(13.0))
+                                        .fill(pal.accent)
+                                        .stroke(Stroke::NONE)
+                                        .rounding(Rounding::same(999.0))
+                                        .min_size(egui::vec2(32.0, 30.0))
+                                } else {
+                                    egui::Button::new(RichText::new(&option).color(pal.text).size(13.0))
+                                        .fill(pal.card)
+                                        .stroke(Stroke::new(1.0_f32, pal.line))
+                                        .rounding(Rounding::same(999.0))
+                                        .min_size(egui::vec2(32.0, 30.0))
+                                };
+                                if ui.add(btn).clicked() {
                                     match label {
                                         "l_type" => self.set.style.kind = value.to_string(),
                                         "l_formal" => self.set.style.formal = value.to_string(),
@@ -1109,7 +1138,7 @@ impl App {
                                             .desired_width(100.0)
                                             .hint_text(t(lang, "term_t")),
                                     );
-                                    if icon_btn(ui, &pal, "✕", false).clicked() {
+                                    if icon_btn(ui, &pal, "x", false).clicked() {
                                         remove = Some(i);
                                     }
                                 });
@@ -1465,10 +1494,10 @@ impl App {
                                 ui.label(&*w);
                             }
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                if icon_btn(ui, &pal, "✕", false).clicked() {
+                                if icon_btn(ui, &pal, "x", false).clicked() {
                                     remove = Some(i);
                                 }
-                                if icon_btn(ui, &pal, "✎", false).clicked() {
+                                if icon_btn(ui, &pal, "pencil", false).clicked() {
                                     self.rename = Some(i);
                                 }
                             });
@@ -1649,51 +1678,63 @@ impl App {
         self.handle_shortcuts(ui.ctx());
 
         ui.horizontal_wrapped(|ui| {
-            if ui.button(t(lang, "new_doc")).clicked() {
+            if icon_btn(ui, &pal, "filenew", false)
+                .on_hover_text(t(lang, "new_doc"))
+                .clicked()
+            {
                 self.new_document();
             }
-            if ui.button(t(lang, "open")).clicked() {
+            if icon_btn(ui, &pal, "folder", false)
+                .on_hover_text(t(lang, "open"))
+                .clicked()
+            {
                 self.import_document();
             }
-            if ui.button(t(lang, "save")).clicked() {
+            if icon_btn(ui, &pal, "save", false)
+                .on_hover_text(t(lang, "save"))
+                .clicked()
+            {
                 self.save_doc_to_tray(true);
             }
-            if ui.button(t(lang, "export")).clicked() {
+            if icon_btn(ui, &pal, "download", false)
+                .on_hover_text(t(lang, "export"))
+                .clicked()
+            {
                 self.export_document();
             }
             ui.separator();
-            if icon_btn(ui, &pal, "↶", false)
+            if icon_btn(ui, &pal, "undo", false)
                 .on_hover_text(t(lang, "undo"))
                 .clicked()
             {
                 self.undo();
             }
-            if icon_btn(ui, &pal, "↷", false)
+            if icon_btn(ui, &pal, "redo", false)
                 .on_hover_text(t(lang, "redo"))
                 .clicked()
             {
                 self.redo();
             }
             ui.separator();
-            if icon_btn(ui, &pal, "B", self.selection_wrapped("**", "**"))
+            if icon_btn(ui, &pal, "bold", self.selection_wrapped("**", "**"))
                 .on_hover_text(t(lang, "bold"))
                 .clicked()
             {
                 self.format_wrap("**", "**");
             }
-            if icon_btn(ui, &pal, "I", self.selection_wrapped("*", "*"))
+            if icon_btn(ui, &pal, "italic", self.selection_wrapped("*", "*"))
                 .on_hover_text(t(lang, "italic"))
                 .clicked()
             {
                 self.format_wrap("*", "*");
             }
-            if icon_btn(ui, &pal, "U", self.selection_wrapped("<u>", "</u>"))
+            if icon_btn(ui, &pal, "underline", self.selection_wrapped("<u>", "</u>"))
                 .on_hover_text(t(lang, "underline"))
                 .clicked()
             {
                 self.format_wrap("<u>", "</u>");
             }
-            if icon_btn(ui, &pal, "S", self.selection_wrapped("~~", "~~"))
+            if icon_btn(ui, &pal, "strike", self.selection_wrapped("~~", "~~"))
                 .on_hover_text(t(lang, "strike"))
                 .clicked()
             {
@@ -1714,31 +1755,31 @@ impl App {
                     self.format_line(prefix);
                 }
             }
-            if icon_btn(ui, &pal, "•", false)
+            if icon_btn(ui, &pal, "ul", false)
                 .on_hover_text(t(lang, "list"))
                 .clicked()
             {
                 self.format_line("- ");
             }
-            if icon_btn(ui, &pal, "1.", false)
+            if icon_btn(ui, &pal, "ol", false)
                 .on_hover_text(t(lang, "list"))
                 .clicked()
             {
                 self.format_line("1. ");
             }
-            if icon_btn(ui, &pal, "»", false)
+            if icon_btn(ui, &pal, "quote", false)
                 .on_hover_text(t(lang, "quote"))
                 .clicked()
             {
                 self.format_line("> ");
             }
-            if icon_btn(ui, &pal, "Link", false)
+            if icon_btn(ui, &pal, "link", false)
                 .on_hover_text(t(lang, "link"))
                 .clicked()
             {
                 self.format_link();
             }
-            if icon_btn(ui, &pal, "⊘", false)
+            if icon_btn(ui, &pal, "eraser", false)
                 .on_hover_text(t(lang, "clear_fmt"))
                 .clicked()
             {
@@ -1822,13 +1863,13 @@ impl App {
                 ui.label(RichText::new("•").size(12.0).color(pal.accent_ink));
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if icon_btn(ui, &pal, "▤", self.show_sessions)
+                if icon_btn(ui, &pal, "docs", self.show_sessions)
                     .on_hover_text(t(lang, "session_docs"))
                     .clicked()
                 {
                     self.show_sessions = !self.show_sessions;
                 }
-                if icon_btn(ui, &pal, "✎", false).on_hover_text(t(lang, "personal_dict")).clicked() {
+                if icon_btn(ui, &pal, "book", false).on_hover_text(t(lang, "personal_dict")).clicked() {
                     self.show_dict = true;
                 }
                 if icon_btn(ui, &pal, "abc", self.show_spell && self.set.ed_spell)
@@ -1915,7 +1956,7 @@ impl App {
                                                     {
                                                         switch = Some(i);
                                                     }
-                                                    if icon_btn(ui, &pal, "✕", false)
+                                                    if icon_btn(ui, &pal, "x", false)
                                                         .on_hover_text(t(lang, "close_session"))
                                                         .clicked()
                                                     {
