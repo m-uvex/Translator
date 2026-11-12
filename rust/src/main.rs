@@ -26,19 +26,33 @@ fn setup_fonts(ctx: &egui::Context) {
     let mut namen: Vec<String> = Vec::new();
     // Reihenfolge = Vorrang. Segoe UI ist die Schrift der Electron-Fassung;
     // die eingebauten egui-Schriften bleiben als Rueckfall erhalten.
-    for (name, path) in [
-        ("segoe", "C:/Windows/Fonts/segoeui.ttf"),
-        ("segoeui", "C:/Windows/Fonts/segoeui.ttf"),
-        ("arial", "C:/Windows/Fonts/arial.ttf"),
+    // Die Schriftnamen stehen fuer den Nutzer da, nicht fuer den Rechner: Die
+    // Sprachenliste zeigt Koreanisch, Japanisch, Chinesisch und Arabisch in
+    // eigener Schrift, sonst erscheinen dort leere Kaestchen. Die .ttc-Dateien
+    // sind Sammlungen; `index` waehlt die erste Schrift darin.
+    for (name, path, index) in [
+        ("segoe", "C:/Windows/Fonts/segoeui.ttf", 0),
+        ("segoeui", "C:/Windows/Fonts/segoeui.ttf", 0),
+        ("arial", "C:/Windows/Fonts/arial.ttf", 0),
         // Nur als letzter Rueckfall fuer einzelne Zeichen wie ▾ oder → gedacht;
         // die Knopfsymbole sind Vektorgrafik und brauchen sie nicht.
-        ("seguisym", "C:/Windows/Fonts/seguisym.ttf"),
+        ("seguisym", "C:/Windows/Fonts/seguisym.ttf", 0),
+        ("malgun", "C:/Windows/Fonts/malgun.ttf", 0),
+        ("yugoth", "C:/Windows/Fonts/YuGothR.ttc", 0),
+        ("yahei", "C:/Windows/Fonts/msyh.ttc", 0),
     ] {
         if namen.iter().any(|n| n == name) {
             continue;
         }
         if let Ok(bytes) = std::fs::read(path) {
-            fonts.font_data.insert(name.to_string(), egui::FontData::from_owned(bytes));
+            fonts.font_data.insert(
+                name.to_string(),
+                egui::FontData {
+                    font: bytes.into(),
+                    index,
+                    tweak: Default::default(),
+                },
+            );
             namen.push(name.to_string());
         }
     }

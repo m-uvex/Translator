@@ -2039,10 +2039,17 @@ impl App {
             .unwrap_or_else(|| egui::Rect::from_min_size(egui::pos2(100.0, 90.0), egui::vec2(150.0, 32.0)));
         let _ = title;
         let closed = pop_at(ctx, "lang_pop", anchor, 300.0, &pal, |ui| {
-                ui.add(
-                    egui::TextEdit::singleline(&mut self.lang_search)
-                        .hint_text(t(lang, "search_lang")),
-                );
+                // Suchfeld wie `.psearch`: volle Breite, weicher Grund.
+                ui.scope(|ui| {
+                    ui.style_mut().visuals.extreme_bg_color = pal.soft;
+                    ui.add_sized(
+                        egui::vec2(ui.available_width(), 30.0),
+                        egui::TextEdit::singleline(&mut self.lang_search)
+                            .hint_text(t(lang, "search_lang"))
+                            .margin(egui::vec2(10.0, 6.0)),
+                    );
+                });
+                ui.add_space(4.0);
                 let mut pick: Option<String> = None;
                 let mut toggle_pin: Option<String> = None;
                 let pins = if pins_key == "nllb" {
@@ -2070,39 +2077,72 @@ impl App {
                 // Angepinnte zuerst, dann der Rest.
                 rows.sort_by_key(|(_, _, pinned)| !*pinned);
                 let mut shown = 0usize;
-                egui::ScrollArea::vertical().max_height(360.0).show(ui, |ui| {
-                    for (code, label, pinned) in rows {
-                        shown += 1;
-                        ui.horizontal(|ui| {
+                egui::ScrollArea::vertical()
+                    .max_height(360.0)
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        // Platz fuer die Scrollleiste, damit sie die Sterne am
+                        // rechten Rand nicht ueberdeckt.
+                        let breite = (ui.available_width() - 12.0).max(120.0);
+                        for (code, label, pinned) in rows {
+                            shown += 1;
                             let on = code == current;
+                            // Ganze Zeile wie `.row` in `style.css`: 32 px hoch,
+                            // 10er Rundung, Hintergrund nur beim Ueberfahren.
+                            let (rect, resp) = ui.allocate_exact_size(
+                                egui::vec2(breite, 32.0),
+                                egui::Sense::click(),
+                            );
+                            if resp.hovered() {
+                                ui.painter().rect_filled(rect, Rounding::same(10.0), pal.soft);
+                            }
                             let text = if on {
-                                RichText::new(format!("• {}", label)).color(pal.accent_ink)
+                                format!("• {}", label)
                             } else {
-                                RichText::new(&label).color(pal.text)
+                                label.clone()
                             };
-                            if ui.add(egui::Button::new(text).fill(Color32::TRANSPARENT)).clicked() {
+                            ui.painter().text(
+                                egui::pos2(rect.left() + 12.0, rect.center().y),
+                                egui::Align2::LEFT_CENTER,
+                                text,
+                                egui::FontId::proportional(14.0),
+                                if on { pal.accent_ink } else { pal.text },
+                            );
+                            let mut stern = false;
+                            if code != "auto" {
+                                let stern_rect = egui::Rect::from_center_size(
+                                    egui::pos2(rect.right() - 18.0, rect.center().y),
+                                    egui::vec2(26.0, 26.0),
+                                );
+                                let sresp = ui.interact(
+                                    stern_rect,
+                                    egui::Id::new(("lang_pin", code.as_str())),
+                                    egui::Sense::click(),
+                                );
+                                if sresp.hovered() {
+                                    ui.painter().rect_filled(
+                                        stern_rect,
+                                        Rounding::same(999.0),
+                                        pal.soft,
+                                    );
+                                }
+                                crate::icons::paint(
+                                    ui.painter(),
+                                    stern_rect.shrink(5.0),
+                                    "star",
+                                    if pinned { pal.accent_ink } else { pal.muted },
+                                );
+                                if sresp.on_hover_text(t(lang, "pin")).clicked() {
+                                    stern = true;
+                                }
+                            }
+                            if stern {
+                                toggle_pin = Some(code.clone());
+                            } else if resp.clicked() {
                                 pick = Some(code.clone());
                             }
-                            if code != "auto" {
-                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                    if ui
-                                        .add(
-                                            egui::Button::new(
-                                                RichText::new(if pinned { "★" } else { "☆" })
-                                                    .color(if pinned { pal.accent_ink } else { pal.muted }),
-                                            )
-                                            .fill(Color32::TRANSPARENT),
-                                        )
-                                        .on_hover_text(t(lang, "pin"))
-                                        .clicked()
-                                    {
-                                        toggle_pin = Some(code.clone());
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
+                        }
+                    });
                 if shown == 0 {
                     ui.label(RichText::new(t(lang, "no_hits")).color(pal.muted));
                 }
@@ -4716,12 +4756,6 @@ fn section(ui: &mut egui::Ui, pal: &Palette, label: &str) {
     ui.add_space(6.0);
 }
 
-fn labeled(ui: &mut egui::Ui, label: &str, add: impl FnOnce(&mut egui::Ui)) {
-    ui.label(RichText::new(label).size(13.0));
-    add(ui);
-    ui.add_space(4.0);
-}
-
 /// Stil von `.tsel` und `.set select` aus `style.css`: runde Pille auf weichem
 /// Grund, keine Umrandung, 13 px Schrift. Auch der gewaehlte Eintrag im
 /// aufgeklappten Menue bleibt dunkel und bekommt nur einen Akzentrahmen —
@@ -4839,26 +4873,6 @@ fn set_field(ui: &mut egui::Ui, pal: &Palette, label: &str, add: impl FnOnce(&mu
         .inner_margin(egui::Margin::symmetric(10.0, 6.0))
         .show(ui, |ui| add(ui));
     ui.add_space(4.0);
-}
-
-fn combo(ui: &mut egui::Ui, id: &str, label: &str, value: &mut String, options: &[(&str, String)]) {
-    ui.horizontal(|ui| {
-        ui.label(RichText::new(label).size(13.0));
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let current = options
-                .iter()
-                .find(|(v, _)| v == value)
-                .map(|(_, l)| l.clone())
-                .unwrap_or_default();
-            egui::ComboBox::from_id_source(id)
-                .selected_text(current)
-                .show_ui(ui, |ui| {
-                    for (v, l) in options {
-                        ui.selectable_value(value, (*v).to_string(), l.clone());
-                    }
-                });
-        });
-    });
 }
 
 /// Wie `libDate` in `editor.js`: Datum und Uhrzeit in der Ortszeit.
