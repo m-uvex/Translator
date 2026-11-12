@@ -23,6 +23,11 @@ Markup, an den Skripten und am CSS wurde nichts geändert.
 | `screenshots/10-mini-uebersetzer.png` | Mini-Übersetzer mit Stilgruppen |
 | `screenshots/11-arabisch-rtl.png` | Arabische Oberfläche, rechts-nach-links |
 | `screenshots/12-helles-theme.png` | Helles Theme |
+| `screenshots/13-rechtschreibung.png` | Rechtschreibprüfung der Rust-Fassung, deutsches Wort mit Vorschlägen |
+
+Hinweis: Die Bilder 01 bis 12 zeigen die Electron-Fassung, aufgenommen über
+den Harness. Bild 13 zeigt die Rust-Fassung selbst (echtes Fenster, 1600 x 950,
+UI-Sprache Englisch, Wörterbuchsprache Deutsch).
 
 Hinweis: Das Vorschaufenster der Aufnahmeumgebung blendet links oben ein
 eigenes Badge ein. Es wurde in den Bildern mit der Hintergrundfarbe überdeckt,
