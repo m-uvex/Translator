@@ -117,6 +117,10 @@ fn strings(k: &str) -> Six {
         "off"          => ("Aus", "Off", "Uit", "Desactivado", "Kapalı", "معطّل"),
         // --- Uebersetzer ----------------------------------------------------
         "translate"    => ("Übersetzen", "Translate", "Vertalen", "Traducir", "Çevir", "ترجم"),
+        "rewrite"      => ("Umschreiben", "Rewrite", "Herschrijven", "Reescribir", "Yeniden yaz", "إعادة الصياغة"),
+        "translate_sel" => ("Auswahl übersetzen", "Translate selection", "Selectie vertalen", "Traducir selección", "Seçimi çevir", "ترجمة التحديد"),
+        "insert"       => ("Einfügen", "Insert", "Invoegen", "Insertar", "Ekle", "إدراج"),
+        "mini_hint"    => ("Text eingeben oder im Editor markieren.", "Type text or select some in the editor.", "Voer tekst in of selecteer tekst in de editor.", "Escribe texto o selecciona texto en el editor.", "Metin yaz veya düzenleyicide seç.", "اكتب نصًا أو حدد نصًا في المحرر."),
         "swap"         => ("Tauschen", "Swap languages", "Wisselen", "Intercambiar", "Değiştir", "تبديل"),
         "reload"       => ("Modelle neu laden", "Reload models", "Modellen opnieuw laden", "Recargar modelos", "Modelleri yeniden yükle", "إعادة تحميل النماذج"),
         "input_ph"     => ("Text eingeben oder Datei hineinziehen …", "Type text or drop a file here …", "Typ tekst of sleep een bestand hierheen …", "Escribe el texto o arrastra un archivo aquí …", "Metin girin veya buraya bir dosya bırakın …", "اكتب نصاً أو أسقط ملفاً هنا …"),

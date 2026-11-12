@@ -146,6 +146,18 @@ pub struct App {
     /// Zeigt der Zeiger auf die Kontextleiste? Sie bleibt dann stehen, auch
     /// wenn der Editor beim Klick den Fokus verliert.
     bar_hover: bool,
+    /// Bildschirmposition des ersten markierten Rechtschreibfehlers; dient als
+    /// Anker fuer das Rechtschreibfenster.
+    spell_anchor: Option<egui::Pos2>,
+    /// Einmalige Startposition fuer das Rechtschreibfenster.
+    spell_pos: Option<egui::Pos2>,
+    /// Stil-Auswahl der Kontextleiste (`styleB` der Vorlage).
+    show_style_bar: bool,
+    /// Mini-Uebersetzer der Kontextleiste (`translateSel` der Vorlage).
+    show_mini: bool,
+    mini_in: String,
+    mini_out: String,
+    mini_job: bool,
 
     syn_word: String,
     syn_out: Vec<String>,
@@ -237,6 +249,13 @@ impl App {
             show_spell_lang: false,
             bar_rect: None,
             bar_hover: false,
+            spell_anchor: None,
+            spell_pos: None,
+            show_style_bar: false,
+            show_mini: false,
+            mini_in: String::new(),
+            mini_out: String::new(),
+            mini_job: false,
             syn_word: String::new(),
             syn_out: Vec::new(),
             show_settings: false,
@@ -383,13 +402,19 @@ impl App {
                 Msg::Token(text) => {
                     if self.editor_job {
                         self.doc = text;
+                    } else if self.mini_job {
+                        self.mini_out = text;
                     } else {
                         self.output = text;
                     }
                 }
                 Msg::Done(text) => {
                     self.busy = false;
-                    if self.editor_job {
+                    if self.mini_job {
+                        self.mini_job = false;
+                        self.mini_out = text.trim_end().to_string();
+                        self.status = String::new();
+                    } else if self.editor_job {
                         self.editor_job = false;
                         let clean = text.trim_end().to_string();
                         if self.pending_diff {
@@ -432,12 +457,14 @@ impl App {
                 Msg::Stopped => {
                     self.busy = false;
                     self.editor_job = false;
+                    self.mini_job = false;
                     self.last_tr = self.output.clone();
                     self.status = t(self.lang, "stopped");
                 }
                 Msg::Error(e) => {
                     self.busy = false;
                     self.editor_job = false;
+                    self.mini_job = false;
                     self.status = format!("{}: {}", t(self.lang, "error"), e);
                 }
             }
@@ -530,6 +557,18 @@ impl App {
     }
 
     fn start_editor_op(&mut self, kind: &str) {
+        let instr = match kind {
+            "shorten" => "Shorten the following text by about one third. Keep the meaning, tone and key facts. Output only the shortened text, in the same language as the input, without explanations.",
+            "lengthen" => "Expand the following text by about 50%: add useful detail, explanation and smoother transitions, but do not invent facts. Output only the expanded text, in the same language as the input.",
+            "summarize" => "Summarize the following text concisely in one to three sentences. Output only the summary, in the same language as the input.",
+            _ => "Proofread the following text. Correct only spelling, grammar, punctuation and obvious typos. Do not translate, do not change wording or style. Output only the corrected text.",
+        };
+        self.start_editor_instr(instr, kind == "proofread");
+    }
+
+    /// Wie `start_editor_op`, aber mit frei formulierter Anweisung; die
+    /// Stil-Auswahl der Kontextleiste (`styleB` der Vorlage) nutzt das.
+    fn start_editor_instr(&mut self, instr: &str, diff: bool) {
         if self.busy {
             return;
         }
@@ -549,15 +588,10 @@ impl App {
         if text.trim().is_empty() {
             return;
         }
-        let instr = match kind {
-            "shorten" => "Shorten the following text by about one third. Keep the meaning, tone and key facts. Output only the shortened text, in the same language as the input, without explanations.",
-            "lengthen" => "Expand the following text by about 50%: add useful detail, explanation and smoother transitions, but do not invent facts. Output only the expanded text, in the same language as the input.",
-            "summarize" => "Summarize the following text concisely in one to three sentences. Output only the summary, in the same language as the input.",
-            _ => "Proofread the following text. Correct only spelling, grammar, punctuation and obvious typos. Do not translate, do not change wording or style. Output only the corrected text.",
-        };
         self.busy = true;
         self.editor_job = true;
-        self.pending_diff = kind == "proofread";
+        self.mini_job = false;
+        self.pending_diff = diff;
         self.pending_sel = match self.sel {
             Some((a, b)) if b > a => Some((a, b)),
             _ => None,
@@ -827,6 +861,8 @@ impl eframe::App for App {
         self.diff_window(ctx);
         self.spell_window(ctx);
         self.spell_lang_window(ctx);
+        self.style_bar_window(ctx);
+        self.mini_window(ctx);
     }
 }
 
@@ -1861,6 +1897,11 @@ impl App {
                         } else if !self.bar_hover {
                             self.bar_rect = None;
                         }
+                        if self.set.ed_spell && !self.spell_hits.is_empty() {
+                            self.paint_spell_marks(ui, &out);
+                        } else {
+                            self.spell_anchor = None;
+                        }
                         if out.response.changed() {
                             let now = ui.input(|i| i.time);
                             if now - self.last_undo > 1.0 {
@@ -1913,6 +1954,9 @@ impl App {
                 {
                     self.show_spell = !self.show_spell;
                     self.spell_scanned_doc.clear();
+                    if self.show_spell {
+                        self.open_spell(ui.ctx().screen_rect());
+                    }
                 }
                 if ui
                     .add(
@@ -2140,6 +2184,103 @@ impl App {
 
     /// Schwebende Leiste über der Textauswahl, wie `#bar` in der
     /// Electron-Fassung: dieselben fünf Aktionen in derselben Reihenfolge.
+    /// Text der aktuellen Auswahl, wie er in der Kontextleiste gebraucht wird.
+    fn selected_text(&self) -> String {
+        let (a, b) = self.selection();
+        if b <= a {
+            return String::new();
+        }
+        let src = &self.doc;
+        src[byte_idx(src, a)..byte_idx(src, b)].to_string()
+    }
+
+    /// Uebersetzt die Auswahl im kleinen Fenster der Kontextleiste, ohne den
+    /// Uebersetzer-Arbeitsplatz zu benutzen.
+    fn start_mini_translate(&mut self) {
+        if self.busy {
+            return;
+        }
+        let Some(model) = self.write_model() else {
+            self.status = t(self.lang, "no_model");
+            return;
+        };
+        let text = self.mini_in.trim().to_string();
+        if text.is_empty() {
+            return;
+        }
+        self.busy = true;
+        self.editor_job = false;
+        self.mini_job = true;
+        self.mini_out.clear();
+        self.stop.store(false, Ordering::SeqCst);
+        self.status = t(self.lang, "translating");
+        let gloss = self
+            .set
+            .gloss
+            .iter()
+            .map(|g| (g.s.clone(), g.t.clone()))
+            .collect();
+        let pctx = PromptCtx {
+            src: &self.set.src,
+            tgt: &self.set.tgt,
+            style: &self.set.style,
+            ctxt: &self.set.ctxt,
+            gloss,
+            has_images: false,
+            nllb: &self.nllb_langs,
+        };
+        let prompt = user_prompt_for(&text, &pctx);
+        let sys = self.set.sys.clone();
+        net::spawn_chat(
+            self.cfg(),
+            model,
+            vec![
+                json!({"role":"system","content":sys}),
+                json!({"role":"user","content":prompt}),
+            ],
+            None,
+            None,
+            true,
+            self.tx.clone(),
+            self.stop.clone(),
+        );
+    }
+
+    /// Schreibt die Auswahl im eingestellten Stil um (`styleB` der Vorlage).
+    fn start_editor_style(&mut self) {
+        let mut parts: Vec<String> = Vec::new();
+        parts.push(
+            if self.set.style.kind == "literal" {
+                "Rewrite the text as literally as possible, staying close to its wording and structure."
+            } else {
+                "Rewrite the text naturally and idiomatically."
+            }
+            .to_string(),
+        );
+        match self.set.style.formal.as_str() {
+            "formal" => parts.push("Use a formal register.".into()),
+            "informal" => parts.push("Use an informal, casual register.".into()),
+            _ => {}
+        }
+        match self.set.style.gender.as_str() {
+            "neutral" => parts.push("Use gender-neutral wording for the addressed person.".into()),
+            "male" => parts.push("The addressed person is male; use matching grammatical forms.".into()),
+            "female" => parts.push("The addressed person is female; use matching grammatical forms.".into()),
+            _ => {}
+        }
+        match self.set.style.writer.as_str() {
+            "male" => parts.push("The writer is male; use matching grammatical forms for first-person references.".into()),
+            "female" => parts.push("The writer is female; use matching grammatical forms for first-person references.".into()),
+            "neutral" => parts.push("The writer is gender-neutral; avoid gendered first-person forms.".into()),
+            _ => {}
+        }
+        let instr = format!(
+            "{} Do not translate; keep the language and the meaning. Output only the rewritten text.",
+            parts.join(" ")
+        );
+        self.start_editor_instr(&instr, false);
+    }
+
     fn context_bar(&mut self, ctx: &egui::Context) {
         let Some(sel_rect) = self.bar_rect else { return };
         if self.busy {
@@ -2147,12 +2288,14 @@ impl App {
         }
         let pal = self.pal;
         let lang = self.lang;
-        let ops: [(&str, &str); 5] = [
-            ("shorten", "shorten"),
-            ("lengthen", "lengthen"),
-            ("summarize", "summarize"),
-            ("proofread", "proofread"),
-            ("synonyms", "synonyms"),
+        let ops: [(&str, &str, &str); 7] = [
+            ("shorten", "shorten", "shorten"),
+            ("lengthen", "lengthen", "lengthen"),
+            ("summarize", "summarize", "summarize"),
+            ("proofread", "proofread", "proofread"),
+            ("synonyms", "synonyms", "synonyms"),
+            ("styleB", "wand", "rewrite"),
+            ("translateSel", "languages", "translate_sel"),
         ];
         let width = ops.len() as f32 * 32.0 + (ops.len() as f32 - 1.0) * 6.0 + 16.0;
         let height = 40.0;
@@ -2183,9 +2326,9 @@ impl App {
                     .show(ui, |ui| {
                         over_bar = ui.rect_contains_pointer(ui.max_rect());
                         ui.horizontal(|ui| {
-                            for (op, icon) in ops {
+                            for (op, icon, tip) in ops {
                                 if icon_btn(ui, &pal, icon, false)
-                                    .on_hover_text(t(lang, op))
+                                    .on_hover_text(t(lang, tip))
                                     .clicked()
                                 {
                                     action = Some(op);
@@ -2197,21 +2340,87 @@ impl App {
         self.bar_hover = over_bar;
 
         if let Some(op) = action {
-            if op == "synonyms" {
-                let (a, b) = self.selection();
-                let src = &self.doc;
-                let text: String = src
-                    .chars()
-                    .skip(a)
-                    .take(b.saturating_sub(a))
-                    .collect();
-                self.syn_word = text.trim().to_string();
-                self.syn_out.clear();
-                self.show_syn = true;
-            } else {
-                self.start_editor_op(op);
+            match op {
+                "synonyms" => {
+                    self.syn_word = self.selected_text().trim().to_string();
+                    self.syn_out.clear();
+                    self.show_syn = true;
+                }
+                "styleB" => self.show_style_bar = true,
+                "translateSel" => {
+                    let text = self.selected_text();
+                    if !text.trim().is_empty() {
+                        self.mini_in = text;
+                    }
+                    self.mini_out.clear();
+                    self.show_mini = true;
+                }
+                _ => self.start_editor_op(op),
             }
         }
+    }
+
+    /// Zeichnet die Wellenlinien unter den falsch geschriebenen Woertern und
+    /// merkt sich die Lage des ersten Fundes fuer das Rechtschreibfenster.
+    fn paint_spell_marks(&mut self, ui: &egui::Ui, out: &egui::text_edit::TextEditOutput) {
+        let chars: Vec<char> = self.doc.chars().collect();
+        let mut marks: Vec<(usize, usize)> = Vec::new();
+        for hit in &self.spell_hits {
+            let needle: Vec<char> = hit.word.chars().collect();
+            if needle.is_empty() {
+                continue;
+            }
+            let mut i = 0usize;
+            while i + needle.len() <= chars.len() {
+                if chars[i..i + needle.len()] == needle[..] {
+                    let after = i + needle.len();
+                    let before_ok = i == 0 || !chars[i - 1].is_alphanumeric();
+                    let after_ok = after >= chars.len() || !chars[after].is_alphanumeric();
+                    if before_ok && after_ok {
+                        marks.push((i, after));
+                        i = after;
+                        continue;
+                    }
+                }
+                i += 1;
+            }
+        }
+        let painter = ui.painter();
+        let offset = out.galley_pos.to_vec2();
+        let color = Color32::from_rgb(0xd0, 0x3a, 0x3a);
+        let mut anchor: Option<egui::Pos2> = None;
+        for (a, b) in marks {
+            let p1 = out.galley.pos_from_ccursor(egui::text::CCursor::new(a));
+            let p2 = out.galley.pos_from_ccursor(egui::text::CCursor::new(b));
+            let same_row = (p1.top() - p2.top()).abs() < 1.0;
+            let x0 = p1.left() + offset.x;
+            let x1 = if same_row {
+                p2.left() + offset.x
+            } else {
+                p1.right() + offset.x
+            };
+            if x1 <= x0 + 1.0 {
+                continue;
+            }
+            let y = p1.bottom() + offset.y - 1.5;
+            if anchor.is_none() {
+                anchor = Some(egui::pos2(x0, p1.top() + offset.y));
+            }
+            let step = 3.0;
+            let mut x = x0;
+            let mut up = true;
+            while x < x1 {
+                let nx = (x + step).min(x1);
+                let (ya, yb) = if up { (y, y + 2.0) } else { (y + 2.0, y) };
+                painter.line_segment(
+                    [egui::pos2(x, ya), egui::pos2(nx, yb)],
+                    Stroke::new(1.3_f32, color),
+                );
+                x = nx;
+                up = !up;
+            }
+        }
+        self.spell_anchor = anchor;
     }
 
     fn format_link(&mut self) {
@@ -2574,6 +2783,210 @@ impl App {
         }
     }
 
+    /// Setzt die Startposition des Rechtschreibfensters an den ersten
+    /// markierten Fehler, begrenzt auf den Bildschirm.
+    fn open_spell(&mut self, screen: egui::Rect) {
+        if let Some(a) = self.spell_anchor {
+            let x = (a.x - 40.0).clamp(8.0, (screen.right() - 420.0).max(8.0));
+            let y = (a.y + 20.0).clamp(40.0, (screen.bottom() - 320.0).max(40.0));
+            self.spell_pos = Some(egui::pos2(x, y));
+        }
+    }
+
+    /// Stil-Auswahl der Kontextleiste; entspricht `stylePop` in der
+    /// Electron-Fassung.
+    fn style_bar_window(&mut self, ctx: &egui::Context) {
+        if !self.show_style_bar {
+            return;
+        }
+        let pal = self.pal;
+        let lang = self.lang;
+        let mut open = true;
+        let mut rewrite = false;
+        egui::Window::new(t(lang, "style"))
+            .id(egui::Id::new("style_bar_win"))
+            .open(&mut open)
+            .collapsible(false)
+            .default_width(340.0)
+            .show(ctx, |ui| {
+                let groups: [(&str, &[(&str, &str)]); 4] = [
+                    ("l_type", &[("natural", "o_natural"), ("literal", "o_literal")]),
+                    (
+                        "l_formal",
+                        &[("standard", "o_standard"), ("formal", "o_formal"), ("informal", "o_informal")],
+                    ),
+                    (
+                        "l_gender",
+                        &[("unknown", "o_unknown"), ("neutral", "o_neutral"), ("male", "o_male"), ("female", "o_female")],
+                    ),
+                    (
+                        "l_writer",
+                        &[("unknown", "o_unknown"), ("neutral", "o_neutral"), ("male", "o_male"), ("female", "o_female")],
+                    ),
+                ];
+                for (label, opts) in groups {
+                    ui.label(RichText::new(t(lang, label)).size(12.5).color(pal.muted));
+                    ui.horizontal_wrapped(|ui| {
+                        for (value, text) in opts {
+                            let current = match label {
+                                "l_type" => &self.set.style.kind,
+                                "l_formal" => &self.set.style.formal,
+                                "l_gender" => &self.set.style.gender,
+                                _ => &self.set.style.writer,
+                            };
+                            let on = current == value;
+                            let option = t(lang, text);
+                            let btn = if on {
+                                egui::Button::new(
+                                    RichText::new(&option).color(pal.on_accent).size(13.0),
+                                )
+                                .fill(pal.accent)
+                                .stroke(Stroke::NONE)
+                                .rounding(Rounding::same(999.0))
+                                .min_size(egui::vec2(32.0, 30.0))
+                            } else {
+                                egui::Button::new(RichText::new(&option).color(pal.text).size(13.0))
+                                    .fill(pal.card)
+                                    .stroke(Stroke::new(1.0_f32, pal.line))
+                                    .rounding(Rounding::same(999.0))
+                                    .min_size(egui::vec2(32.0, 30.0))
+                            };
+                            if ui.add(btn).clicked() {
+                                match label {
+                                    "l_type" => self.set.style.kind = value.to_string(),
+                                    "l_formal" => self.set.style.formal = value.to_string(),
+                                    "l_gender" => self.set.style.gender = value.to_string(),
+                                    _ => self.set.style.writer = value.to_string(),
+                                }
+                                self.save_set();
+                            }
+                        }
+                    });
+                    ui.add_space(6.0);
+                }
+                ui.separator();
+                let go = egui::Button::new(
+                    RichText::new(t(lang, "rewrite"))
+                        .color(pal.on_accent)
+                        .size(13.5),
+                )
+                .fill(pal.accent)
+                .stroke(Stroke::NONE)
+                .rounding(Rounding::same(999.0))
+                .min_size(egui::vec2(150.0, 34.0));
+                if ui.add(go).clicked() {
+                    rewrite = true;
+                }
+            });
+        if rewrite {
+            self.show_style_bar = false;
+            self.start_editor_style();
+        }
+        if !open {
+            self.show_style_bar = false;
+        }
+    }
+
+    /// Kleiner Uebersetzer fuer die Auswahl; entspricht `transPop` in der
+    /// Electron-Fassung.
+    fn mini_window(&mut self, ctx: &egui::Context) {
+        if !self.show_mini {
+            return;
+        }
+        let pal = self.pal;
+        let lang = self.lang;
+        let mut open = true;
+        let mut go = false;
+        let mut insert = false;
+        let mut copy = false;
+        let target = lang_label(&self.set.tgt, &self.nllb_langs);
+        egui::Window::new(t(lang, "translate_sel"))
+            .id(egui::Id::new("mini_tr"))
+            .open(&mut open)
+            .collapsible(false)
+            .default_width(400.0)
+            .show(ctx, |ui| {
+                ui.add(
+                    egui::TextEdit::multiline(&mut self.mini_in)
+                        .desired_rows(3)
+                        .desired_width(f32::INFINITY)
+                        .hint_text(t(lang, "mini_hint")),
+                );
+                ui.horizontal(|ui| {
+                    if pill(ui, &pal, &format!("{} ▾", target), 120.0).clicked() {
+                        self.popup_lang = Some("tgt");
+                    }
+                    let btn = egui::Button::new(
+                        RichText::new(t(lang, "translate"))
+                            .color(pal.on_accent)
+                            .size(13.0),
+                    )
+                    .fill(pal.accent)
+                    .stroke(Stroke::NONE)
+                    .rounding(Rounding::same(999.0))
+                    .min_size(egui::vec2(120.0, 32.0));
+                    if ui.add(btn).clicked() {
+                        go = true;
+                    }
+                    if self.busy {
+                        ui.spinner();
+                    }
+                });
+                ui.add_space(4.0);
+                egui::Frame::none()
+                    .fill(pal.soft)
+                    .rounding(Rounding::same(14.0))
+                    .inner_margin(egui::Margin::same(10.0))
+                    .show(ui, |ui| {
+                        if self.mini_out.is_empty() {
+                            ui.label(
+                                RichText::new(t(lang, "mini_hint"))
+                                    .size(12.0)
+                                    .color(pal.muted),
+                            );
+                        } else {
+                            ui.label(RichText::new(&self.mini_out).size(13.5));
+                        }
+                    });
+                if !self.mini_out.is_empty() {
+                    ui.horizontal(|ui| {
+                        if pill(ui, &pal, &t(lang, "insert"), 96.0).clicked() {
+                            insert = true;
+                        }
+                        if pill(ui, &pal, &t(lang, "copy"), 96.0).clicked() {
+                            copy = true;
+                        }
+                    });
+                }
+            });
+        if go {
+            self.start_mini_translate();
+        }
+        if copy {
+            ctx.output_mut(|o| o.copied_text = self.mini_out.clone());
+        }
+        if insert {
+            let (a, b) = self.selection();
+            let text = self.mini_out.clone();
+            self.push_undo();
+            if b > a {
+                let ba = byte_idx(&self.doc, a);
+                let bb = byte_idx(&self.doc, b);
+                self.doc = format!("{}{}{}", &self.doc[..ba], text, &self.doc[bb..]);
+            } else {
+                self.doc.push_str(&text);
+            }
+            self.saved = false;
+            self.set.doc = self.doc.clone();
+            self.save_set();
+            self.spell_scanned_doc.clear();
+            self.sync_active_session();
+        }
+        if !open {
+            self.show_mini = false;
+        }
+    }
+
     fn spell_window(&mut self, ctx: &egui::Context) {
         if !self.show_spell {
             return;
@@ -2588,12 +3001,15 @@ impl App {
         let hits = self.spell_hits.clone();
         let error = self.spell_error.clone();
         let enabled = self.set.ed_spell;
-        egui::Window::new(t(lang, "spell_title"))
+        let mut win = egui::Window::new(t(lang, "spell_title"))
             .id(egui::Id::new("spell_win"))
             .open(&mut open)
             .collapsible(false)
-            .default_width(520.0)
-            .show(ctx, |ui| {
+            .default_width(520.0);
+        if let Some(p) = self.spell_pos.take() {
+            win = win.current_pos(p);
+        }
+        win.show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut self.set.ed_spell, t(lang, "spell_on"));
                     ui.label(
