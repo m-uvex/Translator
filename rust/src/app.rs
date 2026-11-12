@@ -1085,6 +1085,20 @@ fn pill(ui: &mut egui::Ui, p: &Palette, text: &str, min_w: f32) -> egui::Respons
 /// Karte wie `.pop` in `style.css`: Rundung 16, Schatten, sechs Pixel
 /// Innenabstand, rechtsbuendig unter dem Ausloeser und auf den Bildschirm
 /// begrenzt.
+/// Streuwerte (0 bis 1) fuer einen Punkt im Partikelraster. Rechnet in 64 Bit
+/// mit Ueberlaufschutz: `cx * 73856093` lief bei breiten Zeilen im i32-Bereich
+/// ueber und liess die App mitten in der Animation abstuerzen.
+fn punkt_streu(cx: i32, cy: i32, raster: f32) -> (f32, f32) {
+    let h = (cx as i64).wrapping_mul(73856093)
+        ^ (cy as i64).wrapping_mul(19349663)
+        ^ (raster as i64).wrapping_mul(83492791);
+    let h = h.unsigned_abs();
+    (
+        ((h % 977) as f32) / 977.0,
+        (((h / 977) % 991) as f32) / 991.0,
+    )
+}
+
 /// Mischt zwei Farben deckend: `t` ist der Anteil von `b`.
 fn mix_color(a: Color32, b: Color32, t: f32) -> Color32 {
     let t = t.clamp(0.0, 1.0);
@@ -4475,9 +4489,7 @@ impl App {
                 let reihen = (hoehe / raster).ceil() as i32 + 2;
                 for cx in 0..spalten {
                     for cy in -1..reihen {
-                        let h = (cx * 73856093) ^ (cy * 19349663) ^ (raster as i32 * 83492791);
-                        let hx = ((h.unsigned_abs() % 977) as f32) / 977.0;
-                        let hy = ((h.unsigned_abs() / 977 % 991) as f32) / 991.0;
+                        let (hx, hy) = punkt_streu(cx, cy, raster);
                         let x = zeile.left() + (cx as f32 + hx) * raster;
                         let roh = zeile.top() + (cy as f32 + hy) * raster + versatz;
                         let y = zeile.top() + (roh - zeile.top()).rem_euclid(hoehe);
@@ -6288,6 +6300,22 @@ fn local_offset_secs() -> i64 {
 
 #[cfg(test)]
 mod app_tests {
+    use super::punkt_streu;
+
+    #[test]
+    fn partikel_streu_bleibt_im_bereich() {
+        // Breite Zeilen (viele Spalten, feines Raster) liefen frueher ueber.
+        for cx in [0, 5, 73, 400, 4000] {
+            for cy in [-1, 0, 3, 260] {
+                for raster in [31.0, 17.6, 11.0] {
+                    let (hx, hy) = punkt_streu(cx, cy, raster);
+                    assert!((0.0..1.0).contains(&hx), "hx {} bei {} {}", hx, cx, raster);
+                    assert!((0.0..1.0).contains(&hy), "hy {} bei {} {}", hy, cy, raster);
+                }
+            }
+        }
+    }
+
     use super::chunk_text;
 
     #[test]

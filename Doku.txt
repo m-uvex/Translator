@@ -552,3 +552,9 @@ Das Einstellungsfenster hatte zwei Wege zum Schließen: das Kreuz im Kopf und ei
 
 Die Auswahl „Automatisch (Programm wählt)“ war so breit, dass sie in den Einstellungen neben langen Beschriftungen umbrechen musste. In beiden Fassungen heißt die Option jetzt nur noch „Automatisch“ (englisch „Automatic“, niederländisch „Automatisch“, spanisch „Automático“, türkisch „Otomatik“, arabisch „تلقائي“) — in der Rust-Fassung der Schlüssel `auto_model` in `i18n.rs`, in der Electron-Fassung `autoModel` in `renderer.js`. Der Zusatz erklärte nichts, was die Option nicht schon sagt.
 
+## 46. Absturz der KI-Animation behoben
+
+Jede LLM-gestützte Bearbeitung im Editor beendete das Programm. Im Protokoll stand `attempt to multiply with overflow` in `paint_processing`: Die Streuwerte der Punkte wurden als `cx * 73856093` im 32-Bit-Bereich gerechnet. Mit dem feineren Raster (11 px statt 31 px) gibt es in einer Zeile bis zu 70 Spalten, und 70 × 73 856 093 überschreitet den i32-Bereich — im Debug-Build eine Panik, im Release ein stiller Überlauf. Das ist jetzt `punkt_streu`: 64 Bit mit `wrapping_mul`, damit auch sehr breite Zeilen nicht überlaufen. Der Test `partikel_streu_bleibt_im_bereich` prüft Spalten bis 4000 und alle drei Rasterweiten; mit der alten Rechnung schlägt er im Debug-Build fehl.
+
+Für die Fehlersuche wichtig: Das Programm schreibt panics auf die Standardfehlerausgabe; beim Start mit `> /tmp/app.log 2>&1` steht die Ursache dort im Klartext.
+
