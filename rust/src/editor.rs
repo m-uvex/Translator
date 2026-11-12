@@ -393,3 +393,87 @@ mod tests {
         assert_eq!(url, "https://");
     }
 }
+
+/// Setzt die Ueberschriftenebene der markierten Zeilen. Vorhandene Marker
+/// (`#`, `##`, `###`) werden entfernt, danach wird `prefix` gesetzt; ein leerer
+/// Prefix macht daraus wieder Fliesstext.
+pub fn set_heading(doc: &str, sel: (usize, usize), prefix: &str) -> (String, (usize, usize)) {
+    let chars: Vec<char> = doc.chars().collect();
+    let n = chars.len();
+    let a = sel.0.min(sel.1).min(n);
+    let b = sel.0.max(sel.1).min(n);
+    let start = chars[..a]
+        .iter()
+        .rposition(|c| *c == '\n')
+        .map(|i| i + 1)
+        .unwrap_or(0);
+    let end = chars[b..]
+        .iter()
+        .position(|c| *c == '\n')
+        .map(|i| b + i)
+        .unwrap_or(n);
+    let block: String = chars[start..end].iter().collect();
+    let mut lines: Vec<String> = block.split('\n').map(|l| l.to_string()).collect();
+    for line in lines.iter_mut() {
+        for marker in ["### ", "## ", "# "] {
+            if let Some(rest) = line.strip_prefix(marker) {
+                *line = rest.to_string();
+                break;
+            }
+        }
+        if !prefix.is_empty() && !line.trim().is_empty() {
+            line.insert_str(0, prefix);
+        }
+    }
+    let new_block = lines.join("\n");
+    let mut out: String = chars[..start].iter().collect();
+    out.push_str(&new_block);
+    out.extend(chars[end..].iter());
+    let delta = new_block.chars().count() as isize - block.chars().count() as isize;
+    let nb = (end as isize + delta).max(0) as usize;
+    (out, (start, nb))
+}
+
+/// Ueberschriftenebene der Zeile, in der `pos` steht: 0 = Fliesstext.
+pub fn heading_of(doc: &str, pos: usize) -> usize {
+    let start = doc
+        .chars()
+        .take(pos)
+        .collect::<String>()
+        .rfind('\n')
+        .map(|i| doc.chars().take(i + 1).count())
+        .unwrap_or(0);
+    let line: String = doc.chars().skip(start).take_while(|c| *c != '\n').collect();
+    if line.starts_with("### ") {
+        3
+    } else if line.starts_with("## ") {
+        2
+    } else if line.starts_with("# ") {
+        1
+    } else {
+        0
+    }
+}
+
+#[cfg(test)]
+mod heading_tests {
+    use super::*;
+
+    #[test]
+    fn ueberschrift_setzen_und_entfernen() {
+        let (text, _) = set_heading("Titel\nText", (0, 0), "## ");
+        assert_eq!(text, "## Titel\nText");
+        let (zurueck, _) = set_heading(&text, (0, 0), "");
+        assert_eq!(zurueck, "Titel\nText");
+        let (andere, _) = set_heading("## Titel\n# Zwei", (0, 12), "### ");
+        assert_eq!(andere, "### Titel\n### Zwei");
+    }
+
+    #[test]
+    fn ebene_wird_erkannt() {
+        assert_eq!(heading_of("Text", 2), 0);
+        assert_eq!(heading_of("# Eins", 3), 1);
+        assert_eq!(heading_of("a\n## Zwei", 5), 2);
+        assert_eq!(heading_of("a\n### Drei", 4), 3);
+    }
+}

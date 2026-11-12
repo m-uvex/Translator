@@ -240,6 +240,7 @@ fn strings(k: &str) -> Six {
         "font"         => ("Schrift", "Font", "Lettertype", "Fuente", "Yazı tipi", "الخط"),
         "size"         => ("Größe", "Size", "Grootte", "Tamaño", "Boyut", "الحجم"),
         "heading"      => ("Absatz", "Paragraph", "Alinea", "Párrafo", "Paragraf", "فقرة"),
+        "model"        => ("Modell", "Model", "Model", "Modelo", "Model", "النموذج"),
         "personal_dict" => ("Eigenes Wörterbuch", "Personal dictionary", "Persoonlijk woordenboek", "Diccionario personal", "Kişisel sözlük", "القاموس الشخصي"),
         "dict_words"   => ("Gespeicherte Wörter", "Saved words", "Opgeslagen woorden", "Palabras guardadas", "Kayıtlı kelimeler", "الكلمات المحفوظة"),
         "add_word"     => ("Wort hinzufügen", "Add word", "Woord toevoegen", "Añadir palabra", "Kelime ekle", "إضافة كلمة"),

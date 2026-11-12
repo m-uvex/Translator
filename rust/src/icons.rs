@@ -367,7 +367,10 @@ fn arc_points(
         delta += std::f32::consts::TAU;
     }
 
-    let steps = ((delta.abs() / std::f32::consts::FRAC_PI_4).ceil() as usize).max(4);
+    // Aufloesung nach Bogenlaenge: bei 45-Grad-Schritten wirken groessere
+    // Boegen (etwa im Neuladen-Symbol) eckig.
+    let radius = rx.abs().max(ry.abs());
+    let steps = ((delta.abs() * radius / 1.2).ceil() as usize).clamp(6, 64);
     let mut pts = Vec::with_capacity(steps);
     for i in 1..=steps {
         let t = theta1 + delta * (i as f32 / steps as f32);

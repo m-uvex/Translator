@@ -586,6 +586,27 @@ impl App {
         self.start_editor_instr(instr, kind == "proofread");
     }
 
+    /// Wie `start_editor_op`, aber immer fuer das ganze Dokument. Die drei
+    /// Knoepfe der Werkzeugleiste entsprechen `allOp` in der Vorlage.
+    fn start_editor_all(&mut self, kind: &str) {
+        let saved = self.sel;
+        self.sel = None;
+        self.start_editor_op(kind);
+        self.sel = saved;
+    }
+
+    /// Setzt die Ueberschriftenebene der markierten Zeilen.
+    fn set_heading(&mut self, prefix: &str) {
+        self.push_undo();
+        let (text, sel) = editor::set_heading(&self.doc, self.selection(), prefix);
+        self.doc = text;
+        self.sel = Some(sel);
+        self.saved = false;
+        self.set.doc = self.doc.clone();
+        self.save_set();
+        self.spell_scanned_doc.clear();
+    }
+
     /// Wie `start_editor_op`, aber mit frei formulierter Anweisung; die
     /// Stil-Auswahl der Kontextleiste (`styleB` der Vorlage) nutzt das.
     fn start_editor_instr(&mut self, instr: &str, diff: bool) {
@@ -941,9 +962,6 @@ impl App {
                 {
                     ui.label(RichText::new("◉").size(13.0).color(pal.accent_ink));
                 }
-                if pill(ui, &pal, &format!("▤  {}", short_model(&self.set.model)), 210.0).clicked() {
-                    self.show_models = true;
-                }
                 if icon_btn(ui, &pal, "refresh", false)
                     .on_hover_text(t(lang, "reload"))
                     .clicked()
@@ -951,6 +969,9 @@ impl App {
                     self.models_loading = true;
                     self.models_error = None;
                     net::spawn_models(self.cfg(), self.tx.clone(), Vec::new());
+                }
+                if pill(ui, &pal, &format!("▤  {}", short_model(&self.set.model)), 210.0).clicked() {
+                    self.show_models = true;
                 }
             });
         });
@@ -1834,13 +1855,31 @@ impl App {
                 self.format_wrap("`", "`");
             }
             ui.separator();
-            for (label, prefix) in [("H1", "# "), ("H2", "## "), ("H3", "### ")] {
-                if icon_btn(ui, &pal, label, false)
-                    .on_hover_text(t(lang, "heading"))
-                    .clicked()
-                {
-                    self.format_line(prefix);
-                }
+            let level = editor::heading_of(&self.doc, self.selection().0);
+            let mut new_level: Option<&str> = None;
+            let head_label = match level {
+                1 => "H1".to_string(),
+                2 => "H2".to_string(),
+                3 => "H3".to_string(),
+                _ => t(lang, "heading"),
+            };
+            egui::ComboBox::from_id_source("ed_head")
+                .selected_text(head_label)
+                .width(120.0)
+                .show_ui(ui, |ui| {
+                    if ui.selectable_label(level == 0, t(lang, "heading")).clicked() {
+                        new_level = Some("");
+                    }
+                    for (lvl, label, prefix) in
+                        [(1usize, "H1", "# "), (2, "H2", "## "), (3, "H3", "### ")]
+                    {
+                        if ui.selectable_label(level == lvl, label).clicked() {
+                            new_level = Some(prefix);
+                        }
+                    }
+                });
+            if let Some(prefix) = new_level {
+                self.set_heading(prefix);
             }
             if icon_btn(ui, &pal, "ul", false)
                 .on_hover_text(t(lang, "list"))
@@ -1873,36 +1912,40 @@ impl App {
                 self.clear_formatting();
             }
             ui.separator();
+            // Wie in der Vorlage wirken diese drei auf das ganze Dokument;
+            // die Auswahl-Aktionen sitzen in der schwebenden Leiste.
             if icon_btn(ui, &pal, "shorten", false)
                 .on_hover_text(t(lang, "shorten"))
                 .clicked()
             {
-                self.start_editor_op("shorten");
+                self.start_editor_all("shorten");
             }
             if icon_btn(ui, &pal, "lengthen", false)
                 .on_hover_text(t(lang, "lengthen"))
                 .clicked()
             {
-                self.start_editor_op("lengthen");
+                self.start_editor_all("lengthen");
             }
             if icon_btn(ui, &pal, "summarize", false)
                 .on_hover_text(t(lang, "summarize"))
                 .clicked()
             {
-                self.start_editor_op("summarize");
+                self.start_editor_all("summarize");
             }
-            if icon_btn(ui, &pal, "proofread", false)
-                .on_hover_text(t(lang, "proofread"))
-                .clicked()
-            {
-                self.start_editor_op("proofread");
-            }
-            if icon_btn(ui, &pal, "synonyms", false)
-                .on_hover_text(t(lang, "synonyms"))
-                .clicked()
-            {
-                self.show_syn = true;
-            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let name = match self.write_model() {
+                    Some(m) => short_model(&m),
+                    None => t(lang, "no_model"),
+                };
+                if pill(ui, &pal, &format!("▤  {}", name), 190.0)
+                    .on_hover_text(t(lang, "model"))
+                    .clicked()
+                {
+                    self.models_error = None;
+                    net::spawn_models(self.cfg(), self.tx.clone(), Vec::new());
+                    self.show_models = true;
+                }
+            });
         });
         ui.add_space(6.0);
 
