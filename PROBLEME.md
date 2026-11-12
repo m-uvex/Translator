@@ -8,10 +8,10 @@ mit Commit-Kurz-Hash.
 ## Gerade in Arbeit
 
 - **Buffy:** P1, P2, P3, P7, P11, P12, P14, P16, P17, P18, P19, P20, P21, P22,
-  P23, P25, P26, P27, P28, P29, P30 und P31 sind erledigt, P9 nachgesehen (Rest:
-  Dokumentenablage, Fensterleiste). Nachgetragen: P32 bis P41 (fehlende
-  Funktionen gegenüber der Vorlage). In Arbeit: P39, P40, P41 und P36.
-  Danach P33 und P32. Offen bleiben P24, P34, P35, P37 und P38.
+  P23, P25, P26, P27, P28, P29, P30, P31, P33, P36, P39, P40 und P41 sind
+  erledigt, P9 nachgesehen (Rest: Dokumentenablage, Fensterleiste).
+  Nachgetragen: P32 bis P41 (fehlende Funktionen gegenüber der Vorlage).
+  Offen: P24, P32, P34, P35, P37 und P38.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
   (`1863576`). P15 und P4 sind damit ganz erledigt, P5/P6/P8/P10/P13 fuer diese
@@ -72,15 +72,15 @@ mit Commit-Kurz-Hash.
 | P30 | **Oberflächensprache lässt sich nicht live ändern:** Nur Englisch wirkte sofort, alle anderen brauchten einen Neustart. | erledigt (`59c46c5`): Sprache wird in jedem Bild aus den Einstellungen gelesen |
 | P31 | **Wörterbuchmenü falsch aufgebaut:** Statt eines Popups über dem Knopf erschien ein mittiger Dialog mit Häkchen, Trennstrichen und umrandeten Sprachknöpfen. | erledigt (`fba0ec7`): Popup oberhalb des Globus-Knopfs, Zeilen wie `.row`, Haken bei „Rechtschreibung prüfen“ |
 | P32 | **Bilder im Übersetzer fehlen ganz:** Anhängen, Hineinziehen, Einfügen aus der Zwischenablage, Vorschautapel und der Vision-Rückfall sind nicht umgesetzt; im Rust-Code steht überall `has_images: false`, Datei-Ablage (`dropped_files`) gibt es nicht. | offen |
-| P33 | **Wortalternativen fehlen:** In der Vorlage ist jedes Wort der Ausgabe anklickbar (`#alt`, `reword`) und lässt sich im Satz ersetzen; bei uns ist die Ausgabe ein reines Textfeld. | offen |
+| P33 | **Wortalternativen fehlen:** In der Vorlage ist jedes Wort der Ausgabe anklickbar (`#alt`, `reword`) und lässt sich im Satz ersetzen; bei uns ist die Ausgabe ein reines Textfeld. | erledigt (`54376b0`): Ausgabe als Layout, Klick auf ein Wort öffnet die Alternativen, Auswahl formuliert den Satz neu |
 | P34 | **Modell lässt sich nicht nachladen:** Die Vorlage ruft `/api/pull` mit Fortschritt auf (`pullModel`); in Rust fehlt jeder solche Aufruf. | offen |
 | P35 | **Ausrichtungen fehlen in der Editor-Leiste:** links, zentriert, rechts und Blocksatz (`alignL/alignC/alignR/alignJ` in der Vorlage) gibt es in Rust nicht. | offen |
-| P36 | **Speichern ohne Menü:** Die Vorlage öffnet ein Menü mit „In Ablage speichern“ und Markdown, Text, PDF (`savePop`, `doSave`); bei uns schreibt der Knopf sofort eine `.md`-Datei. | offen |
+| P36 | **Speichern ohne Menü:** Die Vorlage öffnet ein Menü mit „In Ablage speichern“ und Markdown, Text, PDF (`savePop`, `doSave`); bei uns schrieb der Knopf sofort eine `.md`-Datei. | erledigt (`54376b0`): verankertes Menü mit Ablage, Markdown, Text und PDF (neues Modul `pdf.rs`) |
 | P37 | **Import nur txt/md/html:** Die Vorlage liest auch PDF und DOCX (Editor-Ablage und Übersetzer über `window.api.extract`). | offen |
 | P38 | **„Dynamisches Markdown“ ohne Wirkung:** Die Einstellung `ed_markdown` steht in den Einstellungen, wird aber nirgends ausgewertet. | offen |
-| P39 | **Wörterbuch ohne Import und Export:** Die zwei Knöpfe im Kopf des Wörterbuchfensters (`dictExport`, `dictImport`) fehlen samt Übersetzungstexten. | offen |
-| P40 | **Rechtschreibwellen animieren fehlt:** Einstellung `edSpellAnim` und die Bewegung der Wellenlinie sind nicht umgesetzt. | offen |
-| P41 | **Sitzungskarten lassen sich nicht umsortieren:** Die Vorlage verschiebt Karten beim Ziehen (`dockDragStart/Move/End`); bei uns stehen sie fest. | offen |
+| P39 | **Wörterbuch ohne Import und Export:** Die zwei Knöpfe im Kopf des Wörterbuchfensters (`dictExport`, `dictImport`) fehlten samt Übersetzungstexten. | erledigt (`54376b0`): zwei Kreise im Kopf, eine Wortliste je Zeile, Zusammenführen ohne Doppelte |
+| P40 | **Rechtschreibwellen animieren fehlt:** Einstellung `edSpellAnim` und die Bewegung der Wellenlinie sind nicht umgesetzt. | erledigt (`54376b0`): Schalter `ed_spell_anim`, Wellen wandern mit der Zeit |
+| P41 | **Sitzungskarten lassen sich nicht umsortieren:** Die Vorlage verschiebt Karten beim Ziehen (`dockDragStart/Move/End`); bei uns standen sie fest. | erledigt (`54376b0`): Ziehen setzt die Karte an die Stelle unter dem Zeiger, die aktive Karte rückt mit |
 
 ## Erledigt
 
