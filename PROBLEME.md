@@ -8,7 +8,7 @@ mit Commit-Kurz-Hash.
 ## Gerade in Arbeit
 
 - **Buffy:** P1, P2, P3, P7, P11, P12, P14, P16, P17, P18, P19, P20, P21, P22,
-  P23, P25 und P26 sind erledigt, P9 nachgesehen (Rest: Dokumentenablage,
+  P23, P25, P26 und P27 sind erledigt, P9 nachgesehen (Rest: Dokumentenablage,
   Fensterleiste). Offen: P24 (Schrift- und Größenauswahl fehlen). Im Augenblick
   nichts in Arbeit — wartet auf die Auswahl des nächsten Punktes.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
@@ -65,6 +65,7 @@ mit Commit-Kurz-Hash.
 | P24 | **Editor-Leiste: Schrift- und Größenauswahl fehlen** ganz, die Vorlage hat drei Auswahlfelder `.tsel` nebeneinander (Schrift, Größe, Überschrift). | offen |
 | P25 | **Schreibseite hängt über die Kante ihrer Fläche und klebt links** statt mittig: Sie lief genau auf die gerundete Kante zu und `allocate_exact_size` setzte sie an den linken Rand. | erledigt (`f3bb7f6`), mittig und 8 px über der Kante; Sichtprüfung stand noch aus, weil das Fenster beim Aufnehmen verdeckt war |
 | P26 | **Einstellungen wirken fremd gegenüber der Vorlage:** Texte und Auswahlfelder zu nah an den Innenkanten, Knöpfe im dunklen Modus zu hell unterlegt, hässliche Häkchen-Kästchen, schlecht greifbare Zahlenfelder („Slider“ unter dem System-Prompt), insgesamt egui-Standardoptik. | erledigt (`48bf9bd`): Zeilen mit fettem Titel und Pille rechts, Schalter als „An/Aus“-Liste, Zahlen und Textfelder auf weichem Grund, 14 px Innenabstand, Auswahl im Menü nicht mehr grell |
+| P27 | **Sprachauswahlmenü falsch dargestellt:** Namen und Sterne standen in eigenen Rahmen, die Scrollleiste überdeckte die Stern-Knöpfe, und für Koreanisch, Japanisch und Chinesisch fehlten die Schriften (leere Kästchen). | erledigt (`66919e5`): Zeilen wie `.row` mit Hover statt Rahmen, Stern als reines Symbol mit Platz vor der Leiste, Malgun/Yu Gothic/YaHei nachgeladen |
 
 ## Erledigt
 
