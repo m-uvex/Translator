@@ -7,8 +7,8 @@ mit Commit-Kurz-Hash.
 
 ## Gerade in Arbeit
 
-- **Buffy:** P1, P2, P3, P11, P12 und P14 sind erledigt. Im Augenblick nichts
-  in Arbeit — wartet auf die Auswahl des nächsten Punktes.
+- **Buffy:** P1, P2, P3, P11, P12, P14 und P17 sind erledigt. Im Augenblick
+  nichts in Arbeit — wartet auf die Auswahl des nächsten Punktes.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
   (`1863576`). P15 und P4 sind damit ganz erledigt, P5/P6/P8/P10/P13 fuer diese
@@ -53,6 +53,7 @@ mit Commit-Kurz-Hash.
 | P14 | **Alle Menüs prüfen:** freischwebende Fenster durch verankerte Menüs bzw. mittige, unverschiebbare Dialoge ersetzen (`pop_at`, `dialog`). | erledigt, Stilfenster und Mini-Übersetzer hängen noch nicht an der Kontextleiste |
 | P15 | **Übersetzer-Textfelder** sollen keinen Trennstrich zu ihren Knöpfen haben und sich fast bis zum Boden strecken. | erledigt (`1863576`) |
 | P16 | **Überschriften-Dropdown** im Editor: Verhalten und Aussehen gegen die Vorlage prüfen (gesetzt sind H1–H3 über `editor::set_heading`). | zu prüfen |
+| P17 | **NLLB-Server startet nicht mit der App:** Schalter in den Einstellungen fehlte, der Server musste von Hand gestartet werden. | erledigt (`b0ebe30`) |
 
 ## Erledigt
 
@@ -61,6 +62,8 @@ mit Commit-Kurz-Hash.
 - **Editor-Werkzeugleiste:** Überschriften im Dropdown, drei KI-Knöpfe fürs
   ganze Dokument, Modellpille rechts, Neuladen rechts vom Modellknopf, runde
   Bögen in Symbolen — `ab212fc`.
+- **NLLB-Server:** Schalter in den Einstellungen, Start neben der Exe und
+  Beenden beim Schließen (`nllb.rs`, `nllb_autostart`) — `b0ebe30`.
 - **Mini-Übersetzer und Synonyme:** Sprachpillen, Stilreihen mit Symbolen,
   Ersetzen der Auswahl; Synonyme als anklickbare Liste unter der Leiste.
 - **Kontextleiste als Anker:** Stilfenster und Mini-Übersetzer hängen unter
