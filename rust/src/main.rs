@@ -4,6 +4,7 @@ mod engine;
 mod fenster;
 mod pdf;
 mod import;
+mod bilder;
 mod icons;
 mod icons_data;
 mod i18n;

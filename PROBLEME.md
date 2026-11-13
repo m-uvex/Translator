@@ -13,7 +13,7 @@ mit Commit-Kurz-Hash.
   Nachgetragen: P32 bis P41 (fehlende Funktionen) und P42 bis P55 (Rückmeldung
   des Nutzers zum Editor). P42 bis P51 sowie P53, P55 bis P69 sind erledigt.
   P38, P52 und P54 sind ebenfalls erledigt, P24 mit einer Abweichung (Schrift und Größe gelten für die
-  ganze Seite), P37 für den Dateidialog. Offen bleiben P32 und P34.
+  ganze Seite), P37 für den Dateidialog, P32 und P34. Damit ist die Liste abgearbeitet.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
   (`1863576`). P15 und P4 sind damit ganz erledigt, P5/P6/P8/P10/P13 fuer diese
@@ -83,9 +83,9 @@ lesen, wird der Punkt geschlossen.
 | P29 | **„Alternativmodell“ bleibt leer:** Die Einstellung für Ersatzwörter war ein freies Feld ohne Auswahlmöglichkeiten. | erledigt (`5135758`): Auswahlliste „Automatisch“ plus alle allgemeinen Ollama-Modelle |
 | P30 | **Oberflächensprache lässt sich nicht live ändern:** Nur Englisch wirkte sofort, alle anderen brauchten einen Neustart. | erledigt (`59c46c5`): Sprache wird in jedem Bild aus den Einstellungen gelesen |
 | P31 | **Wörterbuchmenü falsch aufgebaut:** Statt eines Popups über dem Knopf erschien ein mittiger Dialog mit Häkchen, Trennstrichen und umrandeten Sprachknöpfen. | erledigt (`fba0ec7`): Popup oberhalb des Globus-Knopfs, Zeilen wie `.row`, Haken bei „Rechtschreibung prüfen“ |
-| P32 | **Bilder im Übersetzer fehlen ganz:** Anhängen, Hineinziehen, Einfügen aus der Zwischenablage, Vorschautapel und der Vision-Rückfall sind nicht umgesetzt; im Rust-Code steht überall `has_images: false`, Datei-Ablage (`dropped_files`) gibt es nicht. | offen |
+| P32 | **Bilder im Übersetzer fehlen ganz:** Anhängen, Hineinziehen, Einfügen aus der Zwischenablage, Vorschautapel und der Vision-Rückfall sind nicht umgesetzt; im Rust-Code steht überall `has_images: false`, Datei-Ablage (`dropped_files`) gibt es nicht. | erledigt: `bilder.rs`, Anhängen/Ablegen/Einfügen, Vorschautapel mit Raster, Bilder als Base64 in der Anfrage, `has_images` gesetzt, Vision-Rückfall mit Wechsel oder Nachladen. Ohne Übergangs-Animation und ohne abgerundete Vorschauen (Mesh) — `Doku.txt` 51. |
 | P33 | **Wortalternativen fehlen:** In der Vorlage ist jedes Wort der Ausgabe anklickbar (`#alt`, `reword`) und lässt sich im Satz ersetzen; bei uns ist die Ausgabe ein reines Textfeld. | erledigt (`54376b0`): Ausgabe als Layout, Klick auf ein Wort öffnet die Alternativen, Auswahl formuliert den Satz neu |
-| P34 | **Modell lässt sich nicht nachladen:** Die Vorlage ruft `/api/pull` mit Fortschritt auf (`pullModel`); in Rust fehlt jeder solche Aufruf. | offen |
+| P34 | **Modell lässt sich nicht nachladen:** Die Vorlage ruft `/api/pull` mit Fortschritt auf (`pullModel`); in Rust fehlt jeder solche Aufruf. | erledigt: `net::spawn_pull` liest den Strom zeilenweise, Fortschritt in Prozent über `Msg::Pull`, danach Modellwahl und neue Modellliste. Ausgelöst vom Vision-Rückfall, wie in der Vorlage. |
 | P35 | **Ausrichtungen fehlen in der Editor-Leiste:** links, zentriert, rechts und Blocksatz (`alignL/alignC/alignR/alignJ` in der Vorlage) gibt es in Rust nicht. | offen |
 | P36 | **Speichern ohne Menü:** Die Vorlage öffnet ein Menü mit „In Ablage speichern“ und Markdown, Text, PDF (`savePop`, `doSave`); bei uns schrieb der Knopf sofort eine `.md`-Datei. | erledigt (`54376b0`): verankertes Menü mit Ablage, Markdown, Text und PDF (neues Modul `pdf.rs`) |
 | P37 | **Import nur txt/md/html:** Die Vorlage liest auch PDF und DOCX (Editor-Ablage und Übersetzer über `window.api.extract`). | erledigt für den Dateidialog: `import.rs` liest DOCX (ZIP + `word/document.xml`) und PDF (Inhaltsströme, `Tj`/`TJ`), Filter in `import_document` erweitert. Die Ablage per Hineinziehen fehlt weiterhin in beiden Ansichten — das gehört zu P32. Grenzen in `Doku.txt` 50. |

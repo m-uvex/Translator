@@ -40,6 +40,13 @@ pub enum Msg {
     ModelsError(String),
     /// Ersatzwoerter fuer ein Wort der Ausgabe; der Text nennt den Fehler.
     Alts(Vec<String>, String),
+    /// Fortschritt eines Modell-Downloads (`/api/pull`).
+    Pull {
+        model: String,
+        text: String,
+    },
+    PullDone(String),
+    PullErr(String),
 }
 
 #[derive(Clone, Debug)]
@@ -345,6 +352,61 @@ pub fn spawn_model_action(cfg: Cfg, id: String, action: &'static str, tx: Sender
             if let Ok(Value::Array(arr)) = r.into_json::<Value>() {
                 let _ = tx.send(Msg::ModelsMeta(arr));
             }
+        }
+    });
+}
+
+/// Laedt ein Modell nach (`/api/pull`, wie `pullModel` in `renderer.js`).
+/// Der Fortschritt kommt zeilenweise ueber `Msg::Pull`, am Ende immer
+/// `Msg::PullDone` oder `Msg::PullErr`.
+pub fn spawn_pull(cfg: Cfg, model: String, tx: Sender<Msg>) {
+    std::thread::spawn(move || {
+        let resp = ureq::post(&format!("{}/api/pull", base(&cfg.url)))
+            .timeout(Duration::from_secs(60))
+            .send_json(json!({ "model": model, "stream": true }));
+        let resp = match resp {
+            Ok(r) => r,
+            Err(e) => {
+                let _ = tx.send(Msg::PullErr(e.to_string()));
+                return;
+            }
+        };
+        use std::io::BufRead;
+        let leser = std::io::BufReader::new(resp.into_reader());
+        let mut fertig = false;
+        for zeile in leser.lines() {
+            let Ok(zeile) = zeile else { break };
+            if zeile.trim().is_empty() {
+                continue;
+            }
+            let Ok(v) = serde_json::from_str::<Value>(&zeile) else {
+                continue;
+            };
+            if let Some(e) = v.get("error").and_then(|e| e.as_str()) {
+                let _ = tx.send(Msg::PullErr(e.to_string()));
+                return;
+            }
+            let status = v.get("status").and_then(|s| s.as_str()).unwrap_or("");
+            if status == "success" {
+                fertig = true;
+            }
+            let total = v.get("total").and_then(|t| t.as_u64());
+            let erledigt = v.get("completed").and_then(|t| t.as_u64());
+            let text = match (total, erledigt) {
+                (Some(t), Some(c)) if t > 0 => {
+                    format!("{} %", (c as f64 / t as f64 * 100.0).round() as u64)
+                }
+                _ => status.to_string(),
+            };
+            let _ = tx.send(Msg::Pull {
+                model: model.clone(),
+                text,
+            });
+        }
+        if fertig {
+            let _ = tx.send(Msg::PullDone(model));
+        } else {
+            let _ = tx.send(Msg::PullErr("abgebrochen".into()));
         }
     });
 }

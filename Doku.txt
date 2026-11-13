@@ -586,14 +586,38 @@ Die Leiste hatte nur die Überschriftauswahl; die Vorlage zeigt drei Felder `.ts
 
 Abweichung: Die Vorlage setzt Schriftart und Größe mit `execCommand('fontName')` und `applySize` auf die *markierte Stelle* und schreibt dafür HTML-Spans in die Seite. Der Rust-Editor führt den Text als Markdown (`doc`), dort gibt es keine Auszeichnung für Schrift und Größe — ein `<span>`-Tag im Markdown wäre sichtbarer Text. Deshalb gilt die Wahl hier für das ganze Papier; die Felder stehen an derselben Stelle der Leiste und wirken sofort (`TextEdit::font` in `fn editor`).
 
-## 50. Import von PDF und DOCX
+## 50. Import von PDF und DOCX
+
+
+
+Der Editor konnte bisher nur txt, md und html oeffnen. Die Vorlage liest auch PDF und DOCX: In `main.js` holt `ipcMain.handle('extract', ...)` den Text mit `mammoth` (DOCX) und `pdf-parse` (PDF). Diese Bibliotheken gibt es in der Rust-Fassung nicht; das neue Modul `import.rs` liest beide Formate selbst.
+
+
+
+`import::extract` entscheidet nach der Endung. DOCX ist ein ZIP-Archiv: `unzip` sucht das Verzeichnis am Dateiende (PK), geht die Eintraege durch und entpackt `word/document.xml`; gespeicherte und deflate-gepackte Eintraege werden beide gelesen (Deflate ueber `flate2`, die einzige neue Abhaengigkeit in `Cargo.toml`). `docx_text` zieht dann den Text aus dem XML: Absaetze `w:p` werden durch eine Leerzeile getrennt, `w:br` wird ein Zeilenumbruch, `w:tab` ein Tabulator, die Entitaeten `&amp;`, `&lt;`, `&gt;`, `&quot;` und `&apos;` werden aufgeloest.
+
+
+
+PDF wird ueber die Inhaltsstroeme gelesen: `stroeme` sammelt alle `stream ... endstream`-Bereiche, entpackt sie bei `/FlateDecode` mit `ZlibDecoder` und ueberspringt Bilder und eingebettete Schriften (`DCTDecode`, `/Image`, `FontFile`, `Length1` ...). `seiten_text` wertet die Textoperatoren aus: `Tj`, `TJ`, `'` und `"` zeigen Text an, `Td`, `TD`, `T*`, `BT` und `ET` setzen einen Zeilenumbruch; literale Strings in Klammern (mit allen Maskierungen und Oktalzahlen) und Hex-Strings werden gelesen, UTF-16 mit Byte Order Mark erkannt. `pdf_text` haengt die Seiten zusammen und entfernt Steuerzeichen.
+
+
+
+In `import_document` (`app.rs`) steht der Dateifilter jetzt auf `txt`, `md`, `html`, `pdf` und `docx`; schlaegt das Lesen fehl, steht der Grund in der Statuszeile.
+
+
+
+Grenzen: Verschluesselte PDFs und PDFs, deren Schriften nur Zeichennummern ohne Zuordnung enthalten (viele CID-Schriften), liefern keinen brauchbaren Text — `pdf-parse` loest das ueber die Font-Tabellen, `import.rs` nicht. Kopf- und Fusszeilen sowie Tabellenzellen erscheinen als eigene Absaetze. Geprueft ist der Weg mit den Tests `docx_wird_gelesen`, `gepacktes_docx_wird_gelesen`, `pdf_text_wird_gelesen` und `eigenes_pdf_wird_wieder_gelesen` (Rundlauf ueber den eigenen PDF-Schreiber `pdf::text_pdf`).
+
+## 51. Bilder im Uebersetzer (P32 und P34)
 
-Der Editor konnte bisher nur txt, md und html oeffnen. Die Vorlage liest auch PDF und DOCX: In `main.js` holt `ipcMain.handle('extract', ...)` den Text mit `mammoth` (DOCX) und `pdf-parse` (PDF). Diese Bibliotheken gibt es in der Rust-Fassung nicht; das neue Modul `import.rs` liest beide Formate selbst.
+Der Uebersetzer nimmt jetzt Bilder an, wie die Vorlage: anhaengen ueber den Knopf, in das Fenster ziehen oder mit Strg+V einfuegen. Das neue Modul `bilder.rs` haelt `Bild` (Base64 fuer die Anfrage, Textur zum Zeichnen, Masse); `aus_bytes`, `aus_pfad` und `aus_zwischenablage` lesen PNG, JPEG, WebP, GIF und BMP ueber `image`, entschluesseln sie zu einer egui-Textur und kodieren die Rohdaten mit `base64`. Die Zwischenablage liest `arboard`.
 
-`import::extract` entscheidet nach der Endung. DOCX ist ein ZIP-Archiv: `unzip` sucht das Verzeichnis am Dateiende (PK), geht die Eintraege durch und entpackt `word/document.xml`; gespeicherte und deflate-gepackte Eintraege werden beide gelesen (Deflate ueber `flate2`, die einzige neue Abhaengigkeit in `Cargo.toml`). `docx_text` zieht dann den Text aus dem XML: Absaetze `w:p` werden durch eine Leerzeile getrennt, `w:br` wird ein Zeilenumbruch, `w:tab` ein Tabulator, die Entitaeten `&amp;`, `&lt;`, `&gt;`, `&quot;` und `&apos;` werden aufgeloest.
+Anhaengen und Ablegen laufen ueber `datei_anhaengen` in `app.rs`: Bilder wandern in den Stapel, PDF, DOCX und Text in das Eingabefeld (ueber `import::extract`). `bilder_abholen` sammelt die abgelegten Dateien aus `i.raw.dropped_files` und versucht beim Einfuegen ein Bild aus der Zwischenablage — nur wenn der Textcursor im Eingabefeld steht (`in_edit`).
 
-PDF wird ueber die Inhaltsstroeme gelesen: `stroeme` sammelt alle `stream ... endstream`-Bereiche, entpackt sie bei `/FlateDecode` mit `ZlibDecoder` und ueberspringt Bilder und eingebettete Schriften (`DCTDecode`, `/Image`, `FontFile`, `Length1` ...). `seiten_text` wertet die Textoperatoren aus: `Tj`, `TJ`, `'` und `"` zeigen Text an, `Td`, `TD`, `T*`, `BT` und `ET` setzen einen Zeilenumbruch; literale Strings in Klammern (mit allen Maskierungen und Oktalzahlen) und Hex-Strings werden gelesen, UTF-16 mit Byte Order Mark erkannt. `pdf_text` haengt die Seiten zusammen und entfernt Steuerzeichen.
+Der Vorschautapel ist `bilderstapel`: zugeklappt liegen bis zu drei Blatt gefaechert (92 px, 10 px nach rechts, 9 px nach oben, das vorderste um 6,4 Grad gedreht — die Werte aus `IMG_CFG`), ein Klick klappt ihn auf. Aufgeklappt stehen alle Bilder als Raster mit Entfernen-Knopf in der Ecke; Groesse und Spaltenzahl rechnet `bilder::img_fit` wie `imgFit` aus `renderer.js` (4 Spalten, bei Bedarf bis 5, 48 bis 96 px, hoechstens 40 % der Flaeche), die Hoechstzahl liefert `img_limit` fuer die Meldung „Maximal N Bilder moeglich“. Gezeichnet wird `bild_zeichnen` als Mesh, damit sich das vorderste Blatt drehen laesst; der Rand folgt der Drehung.
 
-In `import_document` (`app.rs`) steht der Dateifilter jetzt auf `txt`, `md`, `html`, `pdf` und `docx`; schlaegt das Lesen fehl, steht der Grund in der Statuszeile.
+Beim Uebersetzen gehen die Bilder als Base64 in die Nutzernachricht (`nutzer["images"]`), und der Auftrag bekommt den Zusatz „Also translate any text visible in the attached image(s)“ (`has_images` in `PromptCtx`). Kann das gewaehlte Modell keine Bilder lesen (`hat_vision`), fragt `vision_frage` wie `visionFallback`: entweder auf ein vorhandenes Bildmodell wechseln (`no_vision_switch`, danach `Confirm::VisionSwitch`) oder `gemma3:4b` nachladen (`no_vision_pull`, `Confirm::VisionPull`).
 
-Grenzen: Verschluesselte PDFs und PDFs, deren Schriften nur Zeichennummern ohne Zuordnung enthalten (viele CID-Schriften), liefern keinen brauchbaren Text — `pdf-parse` loest das ueber die Font-Tabellen, `import.rs` nicht. Kopf- und Fusszeilen sowie Tabellenzellen erscheinen als eigene Absaetze. Geprueft ist der Weg mit den Tests `docx_wird_gelesen`, `gepacktes_docx_wird_gelesen`, `pdf_text_wird_gelesen` und `eigenes_pdf_wird_wieder_gelesen` (Rundlauf ueber den eigenen PDF-Schreiber `pdf::text_pdf`).
+Das Nachladen ist `net::spawn_pull`: ein POST auf `/api/pull` mit `stream: true`, zeilenweise gelesen, Fortschritt als Prozent aus `completed` und `total` ueber `Msg::Pull` in die Statuszeile, am Ende `Msg::PullDone` (Modell wird gewaehlt, Liste neu geholt, Uebersetzung startet) oder `Msg::PullErr`.
+
+Abweichungen: Die Vorlage laesst den Stapel mit einer FLIP-Animation auf- und zuklappen; hier springt er ohne Uebergang. Vorschauen haben keine abgerundeten Ecken und keinen Schatten (ein gedrehtes Mesh kennt beides nicht). Bilder ohne Text sind erlaubt (`start_translate` prueft Text und Stapel).

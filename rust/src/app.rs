@@ -76,6 +76,10 @@ enum Confirm {
     LibDelete(String),
     ModelDelete(String),
     SessionClose(usize),
+    /// Vorhandenes Bildmodell waehlen (Rueckfall nach `visionFallback`).
+    VisionSwitch(String),
+    /// Fehlendes Bildmodell nachladen.
+    VisionPull(String),
 }
 
 /// Ein Dokument der Sitzungsliste (nur im Speicher, wie in der
@@ -209,6 +213,14 @@ pub struct App {
     spell_anchor: Option<egui::Pos2>,
     /// Einmalige Startposition fuer das Rechtschreibfenster.
     spell_pos: Option<egui::Pos2>,
+    /// Angehaengte Bilder, wie `images` in `renderer.js`.
+    bilder: Vec<crate::bilder::Bild>,
+    /// Vorschautapel aufgeklappt (`.open` statt `.stack`).
+    bilder_offen: bool,
+    /// Flaeche des Texteingabefelds fuer die Groesse der Vorschauen.
+    input_rect: egui::Rect,
+    /// Bildfaehigkeit geprueft und erlaubt (nach Wechsel oder Download).
+    vision_frei: bool,
     /// Rechtecke der unterstrichenen Woerter aus dem letzten Frame; Grundlage
     /// fuer das Rechtsklick-Menue.
     spell_mark_rects: Vec<(String, egui::Rect)>,
@@ -337,6 +349,10 @@ impl App {
             bar_hover: false,
             spell_anchor: None,
             spell_pos: None,
+            bilder: Vec::new(),
+            bilder_offen: false,
+            input_rect: egui::Rect::NOTHING,
+            vision_frei: false,
             spell_mark_rects: Vec::new(),
             spell_menu: None,
             show_style_bar: false,
@@ -651,6 +667,22 @@ impl App {
                     self.last_tr = self.output.clone();
                     self.status = t(self.lang, "stopped");
                 }
+                Msg::Pull { model, text } => {
+                    let kurz = short_model(&model);
+                    self.status = self.tf("pulling", &[&kurz, &text]);
+                }
+                Msg::PullDone(model) => {
+                    self.set.model = model.clone();
+                    self.set.pref = model.clone();
+                    self.vision_frei = true;
+                    self.save_set();
+                    self.status = String::new();
+                    net::spawn_models(self.cfg(), self.tx.clone(), Vec::new());
+                    self.start_translate();
+                }
+                Msg::PullErr(e) => {
+                    self.status = format!("{}: {}", t(self.lang, "pull_err"), e);
+                }
                 Msg::Error(e) => {
                     self.busy = false;
                     self.editor_job = false;
@@ -666,9 +698,45 @@ impl App {
         }
     }
 
+    /// Kann das gewaehlte Modell Bilder lesen? (Reihenfolge wie `hasVision`
+    /// in `renderer.js`: Uebersetzungsmodelle nie.)
+    fn hat_vision(&self) -> bool {
+        let model = &self.set.model;
+        if is_mt(model) || is_tg(model) {
+            return false;
+        }
+        self.models
+            .iter()
+            .any(|m| m.name == *model && m.vision)
+    }
+
+    /// Rueckfall wie `visionFallback`: entweder auf ein vorhandenes Bildmodell
+    /// wechseln oder das Standardmodell nachladen.
+    fn vision_frage(&mut self) {
+        let ziel = self
+            .models
+            .iter()
+            .find(|m| m.vision && !is_tg(&m.name))
+            .map(|m| m.name.clone());
+        self.confirm = Some(match ziel {
+            Some(z) => {
+                let text = self.tf("no_vision_switch", &[&z]);
+                (text, Confirm::VisionSwitch(z))
+            }
+            None => {
+                let text = self.tf("no_vision_pull", &["gemma3:4b", "3,3 GB"]);
+                (text, Confirm::VisionPull("gemma3:4b".into()))
+            }
+        });
+    }
+
     fn start_translate(&mut self) {
         let text = self.input.trim().to_string();
-        if self.busy || text.is_empty() {
+        if self.busy || (text.is_empty() && self.bilder.is_empty()) {
+            return;
+        }
+        if !self.bilder.is_empty() && !self.vision_frei && !self.hat_vision() {
+            self.vision_frage();
             return;
         }
         if self.set.model.is_empty() {
@@ -723,15 +791,22 @@ impl App {
                 style: &self.set.style,
                 ctxt: &self.set.ctxt,
                 gloss,
-                has_images: false,
+                has_images: !self.bilder.is_empty(),
                 nllb: &langs,
             };
             let prompt = user_prompt_for(&text, &pctx);
             let sys = self.set.sys.clone();
+            // Bilder gehen als Base64 mit der Nutzernachricht, wie `msg.images`
+            // in `renderer.js`.
+            let mut nutzer = json!({"role":"user","content":prompt});
+            if !self.bilder.is_empty() {
+                let bilder: Vec<String> = self.bilder.iter().map(|b| b.b64.clone()).collect();
+                nutzer["images"] = json!(bilder);
+            }
             net::spawn_chat(
                 cfg,
                 model,
-                vec![json!({"role":"system","content":sys}), json!({"role":"user","content":prompt})],
+                vec![json!({"role":"system","content":sys}), nutzer],
                 None,
                 None,
                 true,
@@ -1318,6 +1393,51 @@ fn json_strings(text: &str) -> Vec<String> {
         }
     }
     out
+}
+
+/// Zeichnet eine Textur in ein Rechteck, um die Mitte gedreht — fuer die
+/// gefaecherten Blatt des Vorschautapels.
+fn bild_zeichnen(
+    painter: &egui::Painter,
+    tex: &egui::TextureHandle,
+    rect: egui::Rect,
+    winkel: f32,
+    pal: Palette,
+) {
+    let ecken = [
+        rect.left_top(),
+        rect.right_top(),
+        rect.right_bottom(),
+        rect.left_bottom(),
+    ];
+    let mitte = rect.center();
+    let (sin, cos) = winkel.sin_cos();
+    let uv = [
+        egui::pos2(0.0, 0.0),
+        egui::pos2(1.0, 0.0),
+        egui::pos2(1.0, 1.0),
+        egui::pos2(0.0, 1.0),
+    ];
+    let mut mesh = egui::Mesh::with_texture(tex.id());
+    for (i, ecke) in ecken.iter().enumerate() {
+        let v = *ecke - mitte;
+        mesh.vertices.push(egui::epaint::Vertex {
+            pos: mitte + egui::vec2(v.x * cos - v.y * sin, v.x * sin + v.y * cos),
+            uv: uv[i],
+            color: egui::Color32::WHITE,
+        });
+    }
+    mesh.add_triangle(0, 1, 2);
+    mesh.add_triangle(0, 2, 3);
+    painter.add(egui::Shape::mesh(mesh));
+    // Feiner Rand wie `border: 1px solid` an `.thumb` (gedreht mitgezeichnet).
+    let mut rahmen = Vec::new();
+    for ecke in ecken.iter() {
+        let v = *ecke - mitte;
+        rahmen.push(mitte + egui::vec2(v.x * cos - v.y * sin, v.x * sin + v.y * cos));
+    }
+    rahmen.push(rahmen[0]);
+    painter.add(egui::Shape::line(rahmen, Stroke::new(1.0_f32, pal.line)));
 }
 
 fn icon_btn_sized(
@@ -2100,20 +2220,24 @@ impl App {
                     ui.set_min_size(egui::vec2(col_w, card_h));
                     ui.vertical(|ui| {
                         ui.spacing_mut().item_spacing.y = 0.0;
-                        egui::ScrollArea::vertical()
+                        let flaeche = egui::ScrollArea::vertical()
                             .id_source("in_scroll")
                             .max_height(body_h)
                             .auto_shrink([false, false])
                             .show(ui, |ui| {
                                 ui.add(
                                     egui::TextEdit::multiline(&mut self.input)
+                                        .id(egui::Id::new("in_edit"))
                                         .frame(false)
                                         .font(egui::FontId::proportional(17.0))
                                         .desired_width(f32::INFINITY)
                                         .hint_text(RichText::new(t(lang, "input_ph")).color(pal.muted))
                                         .margin(egui::vec2(20.0, 18.0)),
-                                );
+                                )
                             });
+                        self.input_rect = flaeche.inner.rect;
+                        self.bilder_abholen(ui.ctx());
+                        self.bilderstapel(ui);
                         egui::Frame::none()
                             .inner_margin(egui::Margin {
                                 left: 12.0,
@@ -2130,17 +2254,16 @@ impl App {
                                     {
                                         if let Some(path) = rfd::FileDialog::new()
                                             .add_filter(
-                                                "Text",
-                                                &["txt", "md", "csv", "srt", "json", "html"],
+                                                "Bild",
+                                                &["png", "jpg", "jpeg", "webp", "gif", "bmp"],
+                                            )
+                                            .add_filter(
+                                                "Dokument",
+                                                &["pdf", "docx", "txt", "md", "csv", "srt", "json", "html"],
                                             )
                                             .pick_file()
                                         {
-                                            if let Ok(text) = std::fs::read_to_string(&path) {
-                                                if !self.input.is_empty() {
-                                                    self.input.push_str("\n\n");
-                                                }
-                                                self.input.push_str(&text);
-                                            }
+                                            self.datei_anhaengen(&path, ui.ctx());
                                         }
                                     }
                                     ui.label(
@@ -3472,6 +3595,17 @@ impl App {
                 Confirm::ModelDelete(id) => {
                     let mid = id.split(':').nth(1).unwrap_or("").to_string();
                     net::spawn_model_action(self.cfg(), mid, "delete", self.tx.clone());
+                }
+                Confirm::VisionSwitch(ziel) => {
+                    self.set.model = ziel.clone();
+                    self.set.pref = ziel;
+                    self.vision_frei = true;
+                    self.save_set();
+                    self.start_translate();
+                }
+                Confirm::VisionPull(ziel) => {
+                    self.status = self.tf("pulling", &[&ziel, ""]);
+                    net::spawn_pull(self.cfg(), ziel, self.tx.clone());
                 }
                 Confirm::SessionClose(idx) => {
                     self.close_session(idx);
@@ -5016,6 +5150,203 @@ impl App {
             let _ = std::fs::write(path, inhalt);
             self.status = t(lang, "saved");
             self.save_doc_to_tray(true);
+        }
+    }
+
+    /// Text mit eingesetzten Werten (`{}` der Reihe nach).
+    fn tf(&self, key: &str, args: &[&str]) -> String {
+        let mut s = t(self.lang, key);
+        for a in args {
+            s = s.replacen("{}", a, 1);
+        }
+        s
+    }
+
+    /// Datei anhaengen: Bilder wandern in den Stapel, alles andere in den Text.
+    fn datei_anhaengen(&mut self, pfad: &std::path::Path, ctx: &egui::Context) {
+        if crate::bilder::ist_bild(pfad) {
+            self.bild_hinzufuegen(pfad, ctx);
+            return;
+        }
+        match crate::import::extract(pfad) {
+            Ok(text) => {
+                if text.trim().is_empty() {
+                    self.status = t(self.lang, "no_text");
+                    return;
+                }
+                if !self.input.is_empty() {
+                    self.input.push_str("\n\n");
+                }
+                self.input.push_str(&text);
+            }
+            Err(_) => {
+                self.status = t(self.lang, "fmt_no");
+            }
+        }
+    }
+
+    fn bild_hinzufuegen(&mut self, pfad: &std::path::Path, ctx: &egui::Context) {
+        let (w, h) = (self.input_rect.width().max(320.0), self.input_rect.height().max(320.0));
+        let lim = crate::bilder::img_limit(w, h);
+        if self.bilder.len() >= lim {
+            self.status = self.tf("img_max", &[&lim.to_string()]);
+            return;
+        }
+        match crate::bilder::aus_pfad(pfad, ctx) {
+            Ok(b) => self.bilder.push(b),
+            Err(_) => self.status = t(self.lang, "read_err"),
+        }
+    }
+
+    /// Abgelegte Dateien und Bilder aus der Zwischenablage einsammeln.
+    fn bilder_abholen(&mut self, ctx: &egui::Context) {
+        let abgelegt = ctx.input(|i| i.raw.dropped_files.clone());
+        for f in abgelegt {
+            if let Some(pfad) = f.path {
+                self.datei_anhaengen(&pfad, ctx);
+            }
+        }
+        // Einfuegen: nur wenn der Textcursor im Eingabefeld steht.
+        let einfuegen = ctx.input(|i| {
+            i.key_pressed(egui::Key::V) && (i.modifiers.command || i.modifiers.ctrl)
+        });
+        if einfuegen && ctx.memory(|m| m.has_focus(egui::Id::new("in_edit"))) {
+            if let Some(b) = crate::bilder::aus_zwischenablage(ctx) {
+                let (w, h) = (
+                    self.input_rect.width().max(320.0),
+                    self.input_rect.height().max(320.0),
+                );
+                let lim = crate::bilder::img_limit(w, h);
+                if self.bilder.len() >= lim {
+                    self.status = self.tf("img_max", &[&lim.to_string()]);
+                } else {
+                    self.bilder.push(b);
+                }
+            }
+        }
+    }
+
+    /// Vorschautapel ueber dem Eingabefeld (`#thumbs` in `renderer.js`).
+    /// Zugeklappt liegen bis zu drei Blatt gefaechert, aufgeklappt stehen alle
+    /// Bilder als Raster mit Entfernen-Knopf.
+    fn bilderstapel(&mut self, ui: &mut egui::Ui) {
+        if self.bilder.is_empty() {
+            self.bilder_offen = false;
+            return;
+        }
+        let pal = self.pal;
+        let flaeche = self.input_rect;
+        let mut entfernen: Option<usize> = None;
+        let mut umschalten = false;
+        let mut klick_draussen = false;
+
+        if self.bilder_offen {
+            let (breite, spalten) =
+                crate::bilder::img_fit(self.bilder.len(), flaeche.width(), flaeche.height())
+                    .unwrap_or((crate::bilder::MIN, crate::bilder::COLS));
+            let s = breite;
+            let gap = crate::bilder::GAP;
+            let btn = crate::bilder::BTN;
+            let zeilen = (self.bilder.len() + spalten - 1) / spalten;
+            let kasten_w = spalten as f32 * s + (spalten as f32 - 1.0) * gap + 2.0 * btn;
+            let kasten_h = zeilen as f32 * s + (zeilen as f32 - 1.0) * gap + 2.0 * btn;
+            let kasten = egui::Rect::from_min_size(
+                egui::pos2(
+                    flaeche.left() + 22.0,
+                    flaeche.bottom() - 58.0 - kasten_h,
+                ),
+                egui::vec2(kasten_w, kasten_h),
+            );
+            let _resp = ui.interact(
+                kasten,
+                egui::Id::new("bilder_raster"),
+                egui::Sense::click(),
+            );
+            ui.painter().rect_filled(
+                kasten,
+                Rounding::same(14.0),
+                pal.card,
+            );
+            for (i, bild) in self.bilder.iter().enumerate() {
+                let sp = i % spalten;
+                let zeile = i / spalten;
+                let r = egui::Rect::from_min_size(
+                    egui::pos2(
+                        kasten.left() + btn + sp as f32 * (s + gap),
+                        kasten.top() + btn + zeile as f32 * (s + gap),
+                    ),
+                    egui::vec2(s, s),
+                );
+                bild_zeichnen(ui.painter(), &bild.tex, r, 0.0, pal);
+                // Entfernen-Knopf in der Ecke wie `.thumb .rm`.
+                let knopf = egui::Rect::from_center_size(
+                    egui::pos2(r.right() - 4.0, r.top() + 4.0),
+                    egui::vec2(20.0, 20.0),
+                );
+                let kresp = ui
+                    .interact(knopf, egui::Id::new(("bild_rm", i)), egui::Sense::click())
+                    .on_hover_text(t(self.lang, "remove"));
+                ui.painter().circle_filled(knopf.center(), 10.0, pal.card);
+                ui.painter().circle_stroke(
+                    knopf.center(),
+                    10.0,
+                    Stroke::new(1.0_f32, pal.line),
+                );
+                crate::icons::paint(
+                    ui.painter(),
+                    knopf.shrink(6.0),
+                    "x",
+                    if kresp.hovered() { pal.text } else { pal.muted },
+                );
+                if kresp.clicked() {
+                    entfernen = Some(i);
+                }
+            }
+            if ui.input(|i| i.pointer.any_click()) {
+                let zeiger = ui.input(|i| i.pointer.interact_pos());
+                if let Some(pos) = zeiger {
+                    klick_draussen = !kasten.contains(pos);
+                }
+            }
+        } else {
+            let anzahl = self.bilder.len().min(3);
+            let ts = crate::bilder::STACK;
+            let w = ts + crate::bilder::STEP * (anzahl as f32 - 1.0) + 16.0;
+            let h = ts + crate::bilder::UP * (anzahl as f32 - 1.0) + 16.0;
+            let kasten = egui::Rect::from_min_size(
+                egui::pos2(flaeche.left() + 22.0, flaeche.bottom() - 58.0 - h),
+                egui::vec2(w, h),
+            );
+            let resp = ui
+                .interact(kasten, egui::Id::new("bilder_stapel"), egui::Sense::click())
+                .on_hover_text(t(self.lang, "img_open_tip"));
+            let start = self.bilder.len().saturating_sub(3);
+            for (j, bild) in self.bilder[start..].iter().enumerate() {
+                let r = egui::Rect::from_min_size(
+                    egui::pos2(
+                        kasten.left() + 8.0 + j as f32 * crate::bilder::STEP,
+                        kasten.top() + 8.0 + (anzahl as f32 - 1.0 - j as f32) * crate::bilder::UP,
+                    ),
+                    egui::vec2(ts, ts),
+                );
+                let winkel = if j == 0 { crate::bilder::DREHUNG.to_radians() } else { 0.0 };
+                bild_zeichnen(ui.painter(), &bild.tex, r, winkel, pal);
+            }
+            if resp.clicked() {
+                umschalten = true;
+            }
+        }
+
+        if let Some(i) = entfernen {
+            self.bilder.remove(i);
+            if self.bilder.is_empty() {
+                self.bilder_offen = false;
+            }
+        }
+        if umschalten {
+            self.bilder_offen = !self.bilder_offen;
+        } else if klick_draussen && ui.input(|i| i.pointer.any_click()) {
+            self.bilder_offen = false;
         }
     }
 
