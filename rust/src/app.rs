@@ -221,6 +221,8 @@ pub struct App {
     bilder_t: f32,
     /// Ziel der Animation (0 oder 1).
     bilder_ziel: f32,
+    /// Zeitstempel des letzten Bildes (fuer den Fortschritt der Animation).
+    bilder_zeit: f64,
     /// Bild unter dem Zeiger (fuer den Entfernen-Knopf).
     bild_hover: Option<usize>,
     /// Flaeche des Texteingabefelds fuer die Groesse der Vorschauen.
@@ -362,6 +364,7 @@ impl App {
             bilder_offen: false,
             bilder_t: 0.0,
             bilder_ziel: 0.0,
+            bilder_zeit: 0.0,
             bild_hover: None,
             input_rect: egui::Rect::NOTHING,
             vision_frei: false,
@@ -1408,26 +1411,13 @@ fn json_strings(text: &str) -> Vec<String> {
     out
 }
 
-/// Zeichnet ein Bild wie `.thumb img` der Vorlage: runde Ecken (12 px),
-/// weicher Schatten, 1:1 beschnitten (`object-fit:cover`), um die Mitte
-/// gedreht. Die runden Ecken entstehen als Faecher mit UV-Koordinaten, damit
-/// die Textur an den Ecken beschnitten wird statt ueberzustehen.
-fn bild_zeichnen(
-    painter: &egui::Painter,
-    tex: &egui::TextureHandle,
-    mitte: egui::Pos2,
-    groesse: f32,
-    radius: f32,
-    winkel: f32,
-    deckkraft: f32,
-    pal: &Palette,
-) {
-    if groesse <= 0.0 {
-        return;
-    }
+/// Weicher Schatten unter einer Karte, wie `box-shadow:0 6px 18px #00000038,
+/// 0 1px 4px #00000024`. Bewusst zwei Lagen mit kleiner Ausdehnung: Die
+/// Vorschauen liegen nur 12 px auseinander, ein breiter Schatten frisst den
+/// Abstand auf.
+fn bild_schatten(painter: &egui::Painter, mitte: egui::Pos2, groesse: f32, radius: f32, deckkraft: f32) {
     let halb = egui::vec2(groesse / 2.0, groesse / 2.0);
-    // Schatten wie `0 6px 18px #00000038, 0 1px 4px #00000024`.
-    for (ab, zuwachs, alpha) in [(2.0_f32, 1.0_f32, 14.0_f32), (5.0, 2.0, 16.0), (9.0, 4.0, 10.0)] {
+    for (ab, zuwachs, alpha) in [(5.0_f32, 4.0_f32, 40.0_f32), (1.0, 2.0, 28.0)] {
         let r = egui::Rect::from_center_size(
             mitte + egui::vec2(0.0, ab),
             halb * 2.0 + egui::vec2(zuwachs, zuwachs),
@@ -1438,7 +1428,29 @@ fn bild_zeichnen(
             egui::Color32::from_black_alpha((alpha * deckkraft) as u8),
         );
     }
+}
 
+/// Zeichnet ein Bild wie `.thumb img` der Vorlage: runde Ecken (12 px),
+/// 1:1 beschnitten (`object-fit:cover`), um die Mitte gedreht. Die runden
+/// Ecken entstehen als Faecher mit UV-Koordinaten, damit die Textur an den
+/// Ecken beschnitten wird statt ueberzustehen.
+#[allow(clippy::too_many_arguments)]
+fn bild_zeichnen(
+    painter: &egui::Painter,
+    tex: &egui::TextureHandle,
+    bild_w: u32,
+    bild_h: u32,
+    mitte: egui::Pos2,
+    groesse: f32,
+    radius: f32,
+    winkel: f32,
+    deckkraft: f32,
+    pal: &Palette,
+) {
+    if groesse <= 0.0 || bild_w == 0 || bild_h == 0 {
+        return;
+    }
+    let halb = egui::vec2(groesse / 2.0, groesse / 2.0);
     let (sin, cos) = winkel.sin_cos();
     let drehen = |p: egui::Pos2| -> egui::Pos2 {
         let v = p - mitte;
@@ -1462,9 +1474,8 @@ fn bild_zeichnen(
             umriss.push(zentrum + egui::vec2(w.cos() * r, w.sin() * r));
         }
     }
-    let tint = egui::Color32::from_white_alpha((255.0 * deckkraft) as u8);
-    // Grund in Kartenfarbe wie `background:var(--soft)` an `.thumb img`; ohne
-    // ihn schimmert bei durchsichtigen Stellen das Papier durch.
+
+    // Grund in Kartenfarbe wie `background:var(--soft)` an `.thumb img`.
     let grund: Vec<egui::Pos2> = umriss.iter().map(|p| drehen(*p)).collect();
     painter.add(egui::Shape::convex_polygon(
         grund,
@@ -1476,10 +1487,35 @@ fn bild_zeichnen(
         ),
         Stroke::NONE,
     ));
-    let mut mesh = egui::Mesh::with_texture(tex.id());
-    let uv_von = |p: egui::Pos2| -> egui::Pos2 {
-        egui::pos2((p.x - min.x) / size.x, (p.y - min.y) / size.y)
+
+    // `object-fit:cover`: Die Textur wird mittig so beschnitten, dass ihr
+    // Seitenverhaeltnis erhalten bleibt — sonst wirken die Bilder verzerrt.
+    let (bw, bh) = (bild_w as f32, bild_h as f32);
+    let (u0, v0, u1, v1) = if bw >= bh {
+        let anteil = bh / bw;
+        (
+            (1.0 - anteil) / 2.0,
+            0.0,
+            1.0 - (1.0 - anteil) / 2.0,
+            1.0,
+        )
+    } else {
+        let anteil = bw / bh;
+        (
+            0.0,
+            (1.0 - anteil) / 2.0,
+            1.0,
+            1.0 - (1.0 - anteil) / 2.0,
+        )
     };
+    let uv_von = |p: egui::Pos2| -> egui::Pos2 {
+        egui::pos2(
+            u0 + (p.x - min.x) / size.x * (u1 - u0),
+            v0 + (p.y - min.y) / size.y * (v1 - v0),
+        )
+    };
+    let tint = egui::Color32::from_white_alpha((255.0 * deckkraft) as u8);
+    let mut mesh = egui::Mesh::with_texture(tex.id());
     mesh.vertices.push(egui::epaint::Vertex {
         pos: drehen(mitte),
         uv: uv_von(mitte),
@@ -1498,7 +1534,6 @@ fn bild_zeichnen(
         mesh.add_triangle(0, a, b);
     }
     painter.add(egui::Shape::mesh(mesh));
-    let _ = pal;
 }
 
 fn icon_btn_sized(
@@ -5363,8 +5398,17 @@ impl App {
         );
 
         // Animation fortschreiben (0,2 s wie `transition:transform .2s ease`).
-        let dt = ui.input(|i| i.stable_dt).min(0.05);
-        let schritt = dt / 0.2;
+        // Gerechnet wird mit der Uhr von egui, nicht mit `stable_dt`: Der Wert
+        // kann in Bildern ohne Zeitschritt null sein, dann bliebe die
+        // Bewegung mitten im Uebergang stehen.
+        let jetzt = ui.input(|i| i.time);
+        let dt = if self.bilder_zeit > 0.0 {
+            (jetzt - self.bilder_zeit).clamp(0.0, 0.05)
+        } else {
+            0.0
+        };
+        self.bilder_zeit = jetzt;
+        let schritt = (dt / 0.2) as f32;
         if (self.bilder_t - self.bilder_ziel).abs() > f32::EPSILON {
             if self.bilder_t < self.bilder_ziel {
                 self.bilder_t = (self.bilder_t + schritt).min(self.bilder_ziel);
@@ -5387,7 +5431,10 @@ impl App {
                 bottom - ts / 2.0 - j as f32 * crate::bilder::UP,
             );
             let winkel = if j == 0 { crate::bilder::DREHUNG.to_radians() } else { 0.0 };
-            (mitte, ts, winkel)
+            // Aeltere Bilder liegen beim Zuklappen verkleinert am vorderen
+            // Blatt und blenden aus (`scale(0.6)`, `opacity:0`).
+            let groesse = if i < last { ts * 0.6 } else { ts };
+            (mitte, groesse, winkel)
         };
         let raster_mitte = |i: usize| -> (egui::Pos2, f32, f32) {
             let sp = i % spalten;
@@ -5427,6 +5474,19 @@ impl App {
         // Zeichnen: hinten nach vorn, damit das vorderste Blatt oben liegt.
         let mut reihenfolge: Vec<usize> = (0..self.bilder.len()).collect();
         reihenfolge.sort_by_key(|i| std::cmp::Reverse(*i));
+
+        // Erst alle Schatten, dann alle Bilder: sonst legt sich der Schatten
+        // einer hinteren Karte ueber die Bilder davor und alles wirkt
+        // geisterhaft.
+        for i in reihenfolge.iter().copied() {
+            let (s_mitte, s_groesse, _) = stapel_mitte(i);
+            let (r_mitte, r_groesse, _) = raster_mitte(i);
+            let mitte = s_mitte + (r_mitte - s_mitte) * e;
+            let groesse = s_groesse + (r_groesse - s_groesse) * e;
+            let alpha = if i >= last { 1.0 } else { e };
+            bild_schatten(ui.painter(), mitte, groesse, 12.0, alpha);
+        }
+
         let mut hover: Option<usize> = None;
         for i in reihenfolge {
             let (s_mitte, s_groesse, s_winkel) = stapel_mitte(i);
@@ -5440,9 +5500,11 @@ impl App {
             bild_zeichnen(
                 ui.painter(),
                 &self.bilder[i].tex,
+                self.bilder[i].w,
+                self.bilder[i].h,
                 mitte,
                 groesse,
-                12.0 * (1.0 - 0.4 * (1.0 - e)),
+                12.0,
                 winkel,
                 alpha,
                 &pal,

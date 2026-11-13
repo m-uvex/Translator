@@ -652,10 +652,24 @@ Drittens die Bilderkarten: Sie haben wieder die Form der Vorlage. `bild_zeichnen
 
 Auf- und Zuklappen ist die FLIP-Animation aus `openImages`/`collapseImages`: `bilder_t` laeuft in 0,2 s auf das Ziel (`bilder_ziel`, 0 oder 1) zu, die Kacheln gleiten von ihrer Stapelposition in die Rasterzelle und zurueck, verlieren dabei die Drehung und wachsen von 0,6 auf 1; Bilder ausserhalb der letzten drei blenden ein beziehungsweise aus. Die Kurve ist `cubic-bezier(.2,.8,.2,1)` als `1-(1-t)^3`. Der Entfernen-Knopf erscheint nur im Raster und nur auf der Karte unter dem Zeiger (20 px, 2 px Rand in Kartenfarbe, wie `.thumb .rm`); sein Ueberstand zaehlt beim Zuklappen als „in der Karte“.
 
-## 53. Vorschautapel: richtige Flaeche, kein leerer Tooltip, Grundfarbe
+## 53. Vorschautapel: richtige Flaeche, kein leerer Tooltip, Grundfarbe
+
+
+
+Drei Fehler aus dem Betrieb. Der Stapel hing an der Antwortflaeche des TextEdit (`flaeche.inner.rect`); deren Hoehe richtet sich nach der Textlaenge, also standen die Bilder bei leerem Feld oben in der Karte und bei langem Text weit unten. Die Textflaeche wird jetzt selbst belegt (`ui.allocate_exact_size` mit `body_h`, darin `allocate_ui_at_rect` fuer den Scrollbereich); `input_rect` ist damit immer die ganze Karte unter der Kopfzeile.
+
+
+
+Im aufgeklappten Raster lag ein `on_hover_text` mit leerem Text auf der Flaeche — egui zeigt dafuer ein weisses Kaestchen ohne Inhalt. Der Hinweis haengt jetzt nur noch am zugeklappten Stapel.
+
+
+
+Unter jedem Bild liegt ein Grund in `pal.soft` als abgerundetes Vieleck, wie `background:var(--soft)` an `.thumb img`; Kanten und Ecken sind damit deckend, auch wo die Textur durchsichtig ist.
+
+## 54. Vorschauen ohne Verzerrung, Schatten unter allen Karten
 
-Drei Fehler aus dem Betrieb. Der Stapel hing an der Antwortflaeche des TextEdit (`flaeche.inner.rect`); deren Hoehe richtet sich nach der Textlaenge, also standen die Bilder bei leerem Feld oben in der Karte und bei langem Text weit unten. Die Textflaeche wird jetzt selbst belegt (`ui.allocate_exact_size` mit `body_h`, darin `allocate_ui_at_rect` fuer den Scrollbereich); `input_rect` ist damit immer die ganze Karte unter der Kopfzeile.
+Die Bilder wirkten verzerrt, weil die Textur auf die quadratische Kachel gestreckt wurde. `bild_zeichnen` bekommt jetzt die Masse des Bildes (`Bild::w`, `Bild::h`) und beschneidet die Textur mittig wie `object-fit:cover` in `style.css`: Bei breiten Bildern wird links und rechts, bei hohen oben und unten weggeschnitten, das Seitenverhaeltnis bleibt erhalten.
 
-Im aufgeklappten Raster lag ein `on_hover_text` mit leerem Text auf der Flaeche — egui zeigt dafuer ein weisses Kaestchen ohne Inhalt. Der Hinweis haengt jetzt nur noch am zugeklappten Stapel.
+Der geisterhafte Eindruck kam von den Schatten: Sie wurden je Karte zwischen den Bildern gezeichnet, sodass die Schattenflaeche einer hinteren Karte ueber den Bildern davor lag. Neu ist `bild_schatten`, das in einem eigenen Durchgang **vor** allen Bildern laeuft, mit nur zwei Lagen (5 px Abstand, 4 px Zuwachs, 40/255 und 1 px/2 px/28) — die alte Fassung hatte drei Lagen bis 9 px Abstand und frass den Abstand von 12 px zwischen den Kacheln auf.
 
-Unter jedem Bild liegt ein Grund in `pal.soft` als abgerundetes Vieleck, wie `background:var(--soft)` an `.thumb img`; Kanten und Ecken sind damit deckend, auch wo die Textur durchsichtig ist.
+Der Fortschritt der FLIP-Animation rechnet jetzt mit der Uhr von egui (`i.time` und `bilder_zeit`) statt mit `stable_dt`. Der Wert kann in Bildern ohne Zeitschritt null sein; dann blieb die Bewegung mitten im Uebergang stehen und die Karten blieben gedreht und halb auseinandergezogen. Aeltere Bilder als die letzten drei liegen im Stapel verkleinert am vorderen Blatt (`ts * 0.6`) und blenden beim Aufklappen ein, wie `scale(0.6)`/`opacity:0` der Vorlage.
