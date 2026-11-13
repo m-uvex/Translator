@@ -217,10 +217,19 @@ pub struct App {
     bilder: Vec<crate::bilder::Bild>,
     /// Vorschautapel aufgeklappt (`.open` statt `.stack`).
     bilder_offen: bool,
+    /// Fortschritt der FLIP-Animation: 0 = Stapel, 1 = Raster.
+    bilder_t: f32,
+    /// Ziel der Animation (0 oder 1).
+    bilder_ziel: f32,
+    /// Bild unter dem Zeiger (fuer den Entfernen-Knopf).
+    bild_hover: Option<usize>,
     /// Flaeche des Texteingabefelds fuer die Groesse der Vorschauen.
     input_rect: egui::Rect,
     /// Bildfaehigkeit geprueft und erlaubt (nach Wechsel oder Download).
     vision_frei: bool,
+    /// Der Klick, der das Sitzungsmenue geoeffnet hat, darf es nicht gleich
+    /// wieder schliessen.
+    dock_skip_click: bool,
     /// Rechtecke der unterstrichenen Woerter aus dem letzten Frame; Grundlage
     /// fuer das Rechtsklick-Menue.
     spell_mark_rects: Vec<(String, egui::Rect)>,
@@ -351,8 +360,12 @@ impl App {
             spell_pos: None,
             bilder: Vec::new(),
             bilder_offen: false,
+            bilder_t: 0.0,
+            bilder_ziel: 0.0,
+            bild_hover: None,
             input_rect: egui::Rect::NOTHING,
             vision_frei: false,
+            dock_skip_click: false,
             spell_mark_rects: Vec::new(),
             spell_menu: None,
             show_style_bar: false,
@@ -1395,49 +1408,84 @@ fn json_strings(text: &str) -> Vec<String> {
     out
 }
 
-/// Zeichnet eine Textur in ein Rechteck, um die Mitte gedreht — fuer die
-/// gefaecherten Blatt des Vorschautapels.
+/// Zeichnet ein Bild wie `.thumb img` der Vorlage: runde Ecken (12 px),
+/// weicher Schatten, 1:1 beschnitten (`object-fit:cover`), um die Mitte
+/// gedreht. Die runden Ecken entstehen als Faecher mit UV-Koordinaten, damit
+/// die Textur an den Ecken beschnitten wird statt ueberzustehen.
 fn bild_zeichnen(
     painter: &egui::Painter,
     tex: &egui::TextureHandle,
-    rect: egui::Rect,
+    mitte: egui::Pos2,
+    groesse: f32,
+    radius: f32,
     winkel: f32,
-    pal: Palette,
+    deckkraft: f32,
+    pal: &Palette,
 ) {
-    let ecken = [
-        rect.left_top(),
-        rect.right_top(),
-        rect.right_bottom(),
-        rect.left_bottom(),
-    ];
-    let mitte = rect.center();
+    if groesse <= 0.0 {
+        return;
+    }
+    let halb = egui::vec2(groesse / 2.0, groesse / 2.0);
+    // Schatten wie `0 6px 18px #00000038, 0 1px 4px #00000024`.
+    for (ab, zuwachs, alpha) in [(2.0_f32, 1.0_f32, 14.0_f32), (5.0, 2.0, 16.0), (9.0, 4.0, 10.0)] {
+        let r = egui::Rect::from_center_size(
+            mitte + egui::vec2(0.0, ab),
+            halb * 2.0 + egui::vec2(zuwachs, zuwachs),
+        );
+        painter.rect_filled(
+            r,
+            Rounding::same(radius + zuwachs),
+            egui::Color32::from_black_alpha((alpha * deckkraft) as u8),
+        );
+    }
+
     let (sin, cos) = winkel.sin_cos();
-    let uv = [
-        egui::pos2(0.0, 0.0),
-        egui::pos2(1.0, 0.0),
-        egui::pos2(1.0, 1.0),
-        egui::pos2(0.0, 1.0),
+    let drehen = |p: egui::Pos2| -> egui::Pos2 {
+        let v = p - mitte;
+        mitte + egui::vec2(v.x * cos - v.y * sin, v.x * sin + v.y * cos)
+    };
+
+    // Umriss des abgerundeten Rechtecks als Faecher.
+    let min = egui::pos2(mitte.x - halb.x, mitte.y - halb.y);
+    let size = egui::vec2(groesse, groesse);
+    let r = radius.min(groesse / 2.0);
+    let ecken = [
+        (egui::pos2(min.x + halb.x - r, min.y + r), -std::f32::consts::FRAC_PI_2),
+        (egui::pos2(min.x + size.x - r, min.y + r), 0.0_f32),
+        (egui::pos2(min.x + size.x - r, min.y + size.y - r), std::f32::consts::FRAC_PI_2),
+        (egui::pos2(min.x + r, min.y + size.y - r), std::f32::consts::PI),
     ];
+    let mut umriss: Vec<egui::Pos2> = Vec::new();
+    for (zentrum, start) in ecken {
+        for k in 0..=6 {
+            let w = start + std::f32::consts::FRAC_PI_2 * (k as f32 / 6.0);
+            umriss.push(zentrum + egui::vec2(w.cos() * r, w.sin() * r));
+        }
+    }
+    let tint = egui::Color32::from_white_alpha((255.0 * deckkraft) as u8);
     let mut mesh = egui::Mesh::with_texture(tex.id());
-    for (i, ecke) in ecken.iter().enumerate() {
-        let v = *ecke - mitte;
+    let uv_von = |p: egui::Pos2| -> egui::Pos2 {
+        egui::pos2((p.x - min.x) / size.x, (p.y - min.y) / size.y)
+    };
+    mesh.vertices.push(egui::epaint::Vertex {
+        pos: drehen(mitte),
+        uv: uv_von(mitte),
+        color: tint,
+    });
+    for p in &umriss {
         mesh.vertices.push(egui::epaint::Vertex {
-            pos: mitte + egui::vec2(v.x * cos - v.y * sin, v.x * sin + v.y * cos),
-            uv: uv[i],
-            color: egui::Color32::WHITE,
+            pos: drehen(*p),
+            uv: uv_von(*p),
+            color: tint,
         });
     }
-    mesh.add_triangle(0, 1, 2);
-    mesh.add_triangle(0, 2, 3);
-    painter.add(egui::Shape::mesh(mesh));
-    // Feiner Rand wie `border: 1px solid` an `.thumb` (gedreht mitgezeichnet).
-    let mut rahmen = Vec::new();
-    for ecke in ecken.iter() {
-        let v = *ecke - mitte;
-        rahmen.push(mitte + egui::vec2(v.x * cos - v.y * sin, v.x * sin + v.y * cos));
+    for i in 0..umriss.len() {
+        let a = 1 + i as u32;
+        let b = 1 + ((i + 1) % umriss.len()) as u32;
+        mesh.add_triangle(0, a, b);
     }
-    rahmen.push(rahmen[0]);
-    painter.add(egui::Shape::line(rahmen, Stroke::new(1.0_f32, pal.line)));
+    painter.add(egui::Shape::mesh(mesh));
+    let _ = pal;
 }
 
 fn icon_btn_sized(
@@ -2252,7 +2300,7 @@ impl App {
                                         .on_hover_text(t(lang, "attach"))
                                         .clicked()
                                     {
-                                        if let Some(path) = rfd::FileDialog::new()
+                                        if let Some(paths) = rfd::FileDialog::new()
                                             .add_filter(
                                                 "Bild",
                                                 &["png", "jpg", "jpeg", "webp", "gif", "bmp"],
@@ -2261,9 +2309,11 @@ impl App {
                                                 "Dokument",
                                                 &["pdf", "docx", "txt", "md", "csv", "srt", "json", "html"],
                                             )
-                                            .pick_file()
+                                            .pick_files()
                                         {
-                                            self.datei_anhaengen(&path, ui.ctx());
+                                            for path in paths {
+                                                self.datei_anhaengen(&path, ui.ctx());
+                                            }
                                         }
                                     }
                                     ui.label(
@@ -4019,6 +4069,7 @@ impl App {
                     .clicked()
                 {
                     self.show_sessions = !self.show_sessions;
+                    self.dock_skip_click = self.show_sessions;
                 }
             });
         });
@@ -4036,6 +4087,13 @@ impl App {
     fn session_dock(&mut self, ui: &mut egui::Ui) {
         let pal = self.pal;
         let lang = self.lang;
+        // Escape und ein Klick daneben schliessen das Menue (`dockClose`).
+        if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+            self.show_sessions = false;
+            return;
+        }
+        let klick_pos = ui.input(|i| i.pointer.interact_pos());
+        let geklickt = ui.input(|i| i.pointer.any_click());
         self.sync_active_session();
         let mut switch: Option<usize> = None;
         let mut close: Option<usize> = None;
@@ -4207,6 +4265,18 @@ impl App {
         }
         if let Some(i) = switch {
             self.switch_session(i);
+            // `dockPick` schliesst das Menue nach dem Wechsel.
+            self.show_sessions = false;
+        }
+        // Klick ausserhalb der Kartenflaeche schliesst das Menue.
+        if self.dock_skip_click {
+            self.dock_skip_click = false;
+        } else if geklickt {
+            if let Some(pos) = klick_pos {
+                if !rects.iter().any(|r| r.contains(pos)) {
+                    self.show_sessions = false;
+                }
+            }
         }
         if let Some(i) = close {
             let dirty = self
@@ -5239,126 +5309,180 @@ impl App {
     }
 
     /// Vorschautapel ueber dem Eingabefeld (`#thumbs` in `renderer.js`).
-    /// Zugeklappt liegen bis zu drei Blatt gefaechert, aufgeklappt stehen alle
-    /// Bilder als Raster mit Entfernen-Knopf.
+    /// Zugeklappt liegen die letzten drei Bilder gefaechert (92 px, 10 px nach
+    /// rechts, 9 px nach oben, das vorderste um 6,4 Grad gedreht). Aufgeklappt
+    /// stehen alle als Raster. Beides geht mit der FLIP-Animation der Vorlage
+    /// ineinander ueber (0,2 s, ease).
     fn bilderstapel(&mut self, ui: &mut egui::Ui) {
         if self.bilder.is_empty() {
             self.bilder_offen = false;
+            self.bilder_t = 0.0;
+            self.bilder_ziel = 0.0;
             return;
         }
         let pal = self.pal;
         let flaeche = self.input_rect;
-        let mut entfernen: Option<usize> = None;
-        let mut umschalten = false;
-        let mut klick_draussen = false;
+        let left = flaeche.left() + 22.0;
+        let bottom = flaeche.bottom() - 58.0;
+        let ts = crate::bilder::STACK;
+        let gap = crate::bilder::GAP;
 
-        if self.bilder_offen {
-            let (breite, spalten) =
-                crate::bilder::img_fit(self.bilder.len(), flaeche.width(), flaeche.height())
-                    .unwrap_or((crate::bilder::MIN, crate::bilder::COLS));
-            let s = breite;
-            let gap = crate::bilder::GAP;
-            let btn = crate::bilder::BTN;
-            let zeilen = (self.bilder.len() + spalten - 1) / spalten;
-            let kasten_w = spalten as f32 * s + (spalten as f32 - 1.0) * gap + 2.0 * btn;
-            let kasten_h = zeilen as f32 * s + (zeilen as f32 - 1.0) * gap + 2.0 * btn;
-            let kasten = egui::Rect::from_min_size(
+        // Rastergeometrie (`imgFit`): Groesse, Spalten, Zeilen.
+        let (zelle, spalten) =
+            crate::bilder::img_fit(self.bilder.len(), flaeche.width(), flaeche.height())
+                .unwrap_or((crate::bilder::MIN, crate::bilder::COLS));
+        let zeilen = (self.bilder.len() + spalten - 1) / spalten;
+        let raster_w = spalten as f32 * zelle + (spalten as f32 - 1.0) * gap;
+        let raster_h = zeilen as f32 * zelle + (zeilen as f32 - 1.0) * gap;
+        let raster_min = egui::pos2(
+            flaeche.center().x - raster_w / 2.0,
+            bottom - raster_h,
+        );
+
+        // Animation fortschreiben (0,2 s wie `transition:transform .2s ease`).
+        let dt = ui.input(|i| i.stable_dt).min(0.05);
+        let schritt = dt / 0.2;
+        if (self.bilder_t - self.bilder_ziel).abs() > f32::EPSILON {
+            if self.bilder_t < self.bilder_ziel {
+                self.bilder_t = (self.bilder_t + schritt).min(self.bilder_ziel);
+            } else {
+                self.bilder_t = (self.bilder_t - schritt).max(self.bilder_ziel);
+            }
+            ui.ctx().request_repaint();
+        }
+        let fortschritt = self.bilder_t;
+        // ease aus `cubic-bezier(.2,.8,.2,1)`.
+        let e = 1.0 - (1.0 - fortschritt).powi(3);
+        let mut entfernen: Option<usize> = None;
+
+        // Stapelpositionen (nur die letzten drei), Rasterpositionen.
+        let last = self.bilder.len().saturating_sub(3);
+        let stapel_mitte = |i: usize| -> (egui::Pos2, f32, f32) {
+            let j = i.saturating_sub(last);
+            let mitte = egui::pos2(
+                left + ts / 2.0 + j as f32 * crate::bilder::STEP,
+                bottom - ts / 2.0 - j as f32 * crate::bilder::UP,
+            );
+            let winkel = if j == 0 { crate::bilder::DREHUNG.to_radians() } else { 0.0 };
+            (mitte, ts, winkel)
+        };
+        let raster_mitte = |i: usize| -> (egui::Pos2, f32, f32) {
+            let sp = i % spalten;
+            let zeile = i / spalten;
+            (
                 egui::pos2(
-                    flaeche.left() + 22.0,
-                    flaeche.bottom() - 58.0 - kasten_h,
+                    raster_min.x + zelle / 2.0 + sp as f32 * (zelle + gap),
+                    raster_min.y + zelle / 2.0 + zeile as f32 * (zelle + gap),
                 ),
-                egui::vec2(kasten_w, kasten_h),
-            );
-            let _resp = ui.interact(
-                kasten,
-                egui::Id::new("bilder_raster"),
-                egui::Sense::click(),
-            );
-            ui.painter().rect_filled(
-                kasten,
-                Rounding::same(14.0),
-                pal.card,
-            );
-            for (i, bild) in self.bilder.iter().enumerate() {
-                let sp = i % spalten;
-                let zeile = i / spalten;
-                let r = egui::Rect::from_min_size(
-                    egui::pos2(
-                        kasten.left() + btn + sp as f32 * (s + gap),
-                        kasten.top() + btn + zeile as f32 * (s + gap),
-                    ),
-                    egui::vec2(s, s),
-                );
-                bild_zeichnen(ui.painter(), &bild.tex, r, 0.0, pal);
-                // Entfernen-Knopf in der Ecke wie `.thumb .rm`.
-                let knopf = egui::Rect::from_center_size(
-                    egui::pos2(r.right() - 4.0, r.top() + 4.0),
-                    egui::vec2(20.0, 20.0),
-                );
-                let kresp = ui
-                    .interact(knopf, egui::Id::new(("bild_rm", i)), egui::Sense::click())
-                    .on_hover_text(t(self.lang, "remove"));
-                ui.painter().circle_filled(knopf.center(), 10.0, pal.card);
-                ui.painter().circle_stroke(
-                    knopf.center(),
-                    10.0,
-                    Stroke::new(1.0_f32, pal.line),
-                );
-                crate::icons::paint(
-                    ui.painter(),
-                    knopf.shrink(6.0),
-                    "x",
-                    if kresp.hovered() { pal.text } else { pal.muted },
-                );
-                if kresp.clicked() {
-                    entfernen = Some(i);
-                }
-            }
-            if ui.input(|i| i.pointer.any_click()) {
-                let zeiger = ui.input(|i| i.pointer.interact_pos());
-                if let Some(pos) = zeiger {
-                    klick_draussen = !kasten.contains(pos);
-                }
-            }
+                zelle,
+                0.0,
+            )
+        };
+
+        // Klickflaechen: Stapel oder Raster.
+        let (klick_min, klick_max) = if self.bilder_ziel > 0.5 {
+            (raster_min, raster_min + egui::vec2(raster_w, raster_h))
         } else {
-            let anzahl = self.bilder.len().min(3);
-            let ts = crate::bilder::STACK;
-            let w = ts + crate::bilder::STEP * (anzahl as f32 - 1.0) + 16.0;
-            let h = ts + crate::bilder::UP * (anzahl as f32 - 1.0) + 16.0;
-            let kasten = egui::Rect::from_min_size(
-                egui::pos2(flaeche.left() + 22.0, flaeche.bottom() - 58.0 - h),
-                egui::vec2(w, h),
+            (
+                egui::pos2(left - 8.0, bottom - ts - 2.0 * crate::bilder::UP - 8.0),
+                egui::pos2(
+                    left + ts + 2.0 * crate::bilder::STEP + 8.0,
+                    bottom + 8.0,
+                ),
+            )
+        };
+        let kasten = egui::Rect::from_min_max(klick_min, klick_max);
+        let resp = ui
+            .interact(kasten, egui::Id::new("bilder_flaeche"), egui::Sense::click())
+            .on_hover_text(if self.bilder_ziel > 0.5 {
+                String::new()
+            } else {
+                t(self.lang, "img_open_tip")
+            });
+
+        // Zeichnen: hinten nach vorn, damit das vorderste Blatt oben liegt.
+        let mut reihenfolge: Vec<usize> = (0..self.bilder.len()).collect();
+        reihenfolge.sort_by_key(|i| std::cmp::Reverse(*i));
+        let mut hover: Option<usize> = None;
+        for i in reihenfolge {
+            let (s_mitte, s_groesse, s_winkel) = stapel_mitte(i);
+            let (r_mitte, r_groesse, _) = raster_mitte(i);
+            let mitte = s_mitte + (r_mitte - s_mitte) * e;
+            let groesse = s_groesse + (r_groesse - s_groesse) * e;
+            let winkel = s_winkel * (1.0 - e);
+            // Bilder ausserhalb der letzten drei blenden beim Aufklappen ein.
+            let alpha = if i >= last { 1.0 } else { e };
+            let rect = egui::Rect::from_center_size(mitte, egui::vec2(groesse, groesse));
+            bild_zeichnen(
+                ui.painter(),
+                &self.bilder[i].tex,
+                mitte,
+                groesse,
+                12.0 * (1.0 - 0.4 * (1.0 - e)),
+                winkel,
+                alpha,
+                &pal,
             );
-            let resp = ui
-                .interact(kasten, egui::Id::new("bilder_stapel"), egui::Sense::click())
-                .on_hover_text(t(self.lang, "img_open_tip"));
-            let start = self.bilder.len().saturating_sub(3);
-            for (j, bild) in self.bilder[start..].iter().enumerate() {
-                let r = egui::Rect::from_min_size(
-                    egui::pos2(
-                        kasten.left() + 8.0 + j as f32 * crate::bilder::STEP,
-                        kasten.top() + 8.0 + (anzahl as f32 - 1.0 - j as f32) * crate::bilder::UP,
-                    ),
-                    egui::vec2(ts, ts),
-                );
-                let winkel = if j == 0 { crate::bilder::DREHUNG.to_radians() } else { 0.0 };
-                bild_zeichnen(ui.painter(), &bild.tex, r, winkel, pal);
-            }
-            if resp.clicked() {
-                umschalten = true;
+            // Entfernen-Knopf nur im Raster und nur beim Ueberfahren
+            // (`.thumb .rm{opacity:0}` / `:hover .rm{opacity:1}`).
+            if self.bilder_ziel > 0.5 && e > 0.6 {
+                let zeiger = ui.input(|inp| inp.pointer.hover_pos());
+                let uber = zeiger
+                    .map(|z| {
+                        egui::Rect::from_center_size(mitte, egui::vec2(groesse, groesse))
+                            .contains(z)
+                    })
+                    .unwrap_or(false);
+                if uber {
+                    hover = Some(i);
+                }
+                if hover == Some(i) {
+                    let knopf = egui::Rect::from_center_size(
+                        egui::pos2(rect.right() + 4.0, rect.top() - 4.0),
+                        egui::vec2(20.0, 20.0),
+                    );
+                    let kresp = ui.interact(
+                        knopf,
+                        egui::Id::new(("bild_rm", i)),
+                        egui::Sense::click(),
+                    );
+                    ui.painter().circle_filled(knopf.center(), 10.0, pal.text);
+                    ui.painter()
+                        .circle_stroke(knopf.center(), 9.0, Stroke::new(2.0_f32, pal.card));
+                    crate::icons::paint(ui.painter(), knopf.shrink(5.0), "x", pal.bg);
+                    if kresp.clicked() {
+                        entfernen = Some(i);
+                    }
+                }
             }
         }
+        self.bild_hover = hover;
 
+        let mut geoeffnet = false;
+        if resp.clicked() && self.bilder_ziel < 0.5 {
+            self.bilder_ziel = 1.0;
+            geoeffnet = true;
+        }
+        // Ein Klick ausserhalb des Rasters (auch ins Textfeld) klappt zu, wie
+        // `collapseImages` der Vorlage — nicht aber der Klick, der gerade
+        // aufgeklappt hat.
+        if !geoeffnet && self.bilder_ziel > 0.5 && ui.input(|inp| inp.pointer.any_click()) {
+            if let Some(z) = ui.input(|inp| inp.pointer.interact_pos()) {
+                // Der Entfernen-Knopf ragt ueber die Kachel hinaus; ein Klick
+                // auf ihn darf nicht als Klick daneben gelten.
+                if !kasten.expand(crate::bilder::BTN).contains(z) {
+                    self.bilder_ziel = 0.0;
+                }
+            }
+        }
+        self.bilder_offen = self.bilder_ziel > 0.5;
         if let Some(i) = entfernen {
             self.bilder.remove(i);
             if self.bilder.is_empty() {
                 self.bilder_offen = false;
+                self.bilder_ziel = 0.0;
+                self.bilder_t = 0.0;
             }
-        }
-        if umschalten {
-            self.bilder_offen = !self.bilder_offen;
-        } else if klick_draussen && ui.input(|i| i.pointer.any_click()) {
-            self.bilder_offen = false;
         }
     }
 

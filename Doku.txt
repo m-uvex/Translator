@@ -608,16 +608,38 @@ In `import_document` (`app.rs`) steht der Dateifilter jetzt auf `txt`, `md`, `ht
 
 Grenzen: Verschluesselte PDFs und PDFs, deren Schriften nur Zeichennummern ohne Zuordnung enthalten (viele CID-Schriften), liefern keinen brauchbaren Text — `pdf-parse` loest das ueber die Font-Tabellen, `import.rs` nicht. Kopf- und Fusszeilen sowie Tabellenzellen erscheinen als eigene Absaetze. Geprueft ist der Weg mit den Tests `docx_wird_gelesen`, `gepacktes_docx_wird_gelesen`, `pdf_text_wird_gelesen` und `eigenes_pdf_wird_wieder_gelesen` (Rundlauf ueber den eigenen PDF-Schreiber `pdf::text_pdf`).
 
-## 51. Bilder im Uebersetzer (P32 und P34)
+## 51. Bilder im Uebersetzer (P32 und P34)
+
+
+
+Der Uebersetzer nimmt jetzt Bilder an, wie die Vorlage: anhaengen ueber den Knopf, in das Fenster ziehen oder mit Strg+V einfuegen. Das neue Modul `bilder.rs` haelt `Bild` (Base64 fuer die Anfrage, Textur zum Zeichnen, Masse); `aus_bytes`, `aus_pfad` und `aus_zwischenablage` lesen PNG, JPEG, WebP, GIF und BMP ueber `image`, entschluesseln sie zu einer egui-Textur und kodieren die Rohdaten mit `base64`. Die Zwischenablage liest `arboard`.
+
+
+
+Anhaengen und Ablegen laufen ueber `datei_anhaengen` in `app.rs`: Bilder wandern in den Stapel, PDF, DOCX und Text in das Eingabefeld (ueber `import::extract`). `bilder_abholen` sammelt die abgelegten Dateien aus `i.raw.dropped_files` und versucht beim Einfuegen ein Bild aus der Zwischenablage — nur wenn der Textcursor im Eingabefeld steht (`in_edit`).
+
+
+
+Der Vorschautapel ist `bilderstapel`: zugeklappt liegen bis zu drei Blatt gefaechert (92 px, 10 px nach rechts, 9 px nach oben, das vorderste um 6,4 Grad gedreht — die Werte aus `IMG_CFG`), ein Klick klappt ihn auf. Aufgeklappt stehen alle Bilder als Raster mit Entfernen-Knopf in der Ecke; Groesse und Spaltenzahl rechnet `bilder::img_fit` wie `imgFit` aus `renderer.js` (4 Spalten, bei Bedarf bis 5, 48 bis 96 px, hoechstens 40 % der Flaeche), die Hoechstzahl liefert `img_limit` fuer die Meldung „Maximal N Bilder moeglich“. Gezeichnet wird `bild_zeichnen` als Mesh, damit sich das vorderste Blatt drehen laesst; der Rand folgt der Drehung.
+
+
+
+Beim Uebersetzen gehen die Bilder als Base64 in die Nutzernachricht (`nutzer["images"]`), und der Auftrag bekommt den Zusatz „Also translate any text visible in the attached image(s)“ (`has_images` in `PromptCtx`). Kann das gewaehlte Modell keine Bilder lesen (`hat_vision`), fragt `vision_frage` wie `visionFallback`: entweder auf ein vorhandenes Bildmodell wechseln (`no_vision_switch`, danach `Confirm::VisionSwitch`) oder `gemma3:4b` nachladen (`no_vision_pull`, `Confirm::VisionPull`).
+
+
+
+Das Nachladen ist `net::spawn_pull`: ein POST auf `/api/pull` mit `stream: true`, zeilenweise gelesen, Fortschritt als Prozent aus `completed` und `total` ueber `Msg::Pull` in die Statuszeile, am Ende `Msg::PullDone` (Modell wird gewaehlt, Liste neu geholt, Uebersetzung startet) oder `Msg::PullErr`.
+
+
+
+Abweichungen: Die Vorlage laesst den Stapel mit einer FLIP-Animation auf- und zuklappen; hier springt er ohne Uebergang. Vorschauen haben keine abgerundeten Ecken und keinen Schatten (ein gedrehtes Mesh kennt beides nicht). Bilder ohne Text sind erlaubt (`start_translate` prueft Text und Stapel).
+
+## 52. Bilderkarten, Mehrfachauswahl und das Sitzungsmenue
 
-Der Uebersetzer nimmt jetzt Bilder an, wie die Vorlage: anhaengen ueber den Knopf, in das Fenster ziehen oder mit Strg+V einfuegen. Das neue Modul `bilder.rs` haelt `Bild` (Base64 fuer die Anfrage, Textur zum Zeichnen, Masse); `aus_bytes`, `aus_pfad` und `aus_zwischenablage` lesen PNG, JPEG, WebP, GIF und BMP ueber `image`, entschluesseln sie zu einer egui-Textur und kodieren die Rohdaten mit `base64`. Die Zwischenablage liest `arboard`.
+Drei Nachbesserungen aus dem Betrieb. Erstens nimmt der Anhaengen-Knopf jetzt mehrere Dateien auf einmal an (`pick_files` statt `pick_file`), jede laeuft durch `datei_anhaengen`; vorher blieb es bei einer.
 
-Anhaengen und Ablegen laufen ueber `datei_anhaengen` in `app.rs`: Bilder wandern in den Stapel, PDF, DOCX und Text in das Eingabefeld (ueber `import::extract`). `bilder_abholen` sammelt die abgelegten Dateien aus `i.raw.dropped_files` und versucht beim Einfuegen ein Bild aus der Zwischenablage — nur wenn der Textcursor im Eingabefeld steht (`in_edit`).
+Zweitens liess sich das Sitzungsmenue („Aktive Seiten“) nicht oeffnen: Der Klick auf den Schalter in der Statusleiste oeffnete es und schloss es im selben Bild wieder, weil die Pruefung „Klick ausserhalb der Karten“ diesen Klick mitzaehlte. Neu ist `dock_skip_click`: Der Schalter merkt sich, dass er gerade geoeffnet hat (`self.dock_skip_click = self.show_sessions`), und `session_dock` ueberspringt die Schliesspruefung genau einmal. Ausserdem schliesst die Wahl einer Karte das Menue wie `dockPick`, Escape und ein Klick neben die Karten schliessen es wie `dockClose`.
 
-Der Vorschautapel ist `bilderstapel`: zugeklappt liegen bis zu drei Blatt gefaechert (92 px, 10 px nach rechts, 9 px nach oben, das vorderste um 6,4 Grad gedreht — die Werte aus `IMG_CFG`), ein Klick klappt ihn auf. Aufgeklappt stehen alle Bilder als Raster mit Entfernen-Knopf in der Ecke; Groesse und Spaltenzahl rechnet `bilder::img_fit` wie `imgFit` aus `renderer.js` (4 Spalten, bei Bedarf bis 5, 48 bis 96 px, hoechstens 40 % der Flaeche), die Hoechstzahl liefert `img_limit` fuer die Meldung „Maximal N Bilder moeglich“. Gezeichnet wird `bild_zeichnen` als Mesh, damit sich das vorderste Blatt drehen laesst; der Rand folgt der Drehung.
+Drittens die Bilderkarten: Sie haben wieder die Form der Vorlage. `bild_zeichnen` baut den Umriss eines abgerundeten Rechtecks (Radius 12 px) als Faecher, dessen Eckpunkte UV-Koordinaten tragen — damit wird die Textur an den Ecken beschnitten statt ueberzustehen, das ist das `border-radius` von `.thumb img`. Darunter liegen drei weiche Schattenflaechen als Ersatz fuer `box-shadow:0 6px 18px #00000038, 0 1px 4px #00000024`.
 
-Beim Uebersetzen gehen die Bilder als Base64 in die Nutzernachricht (`nutzer["images"]`), und der Auftrag bekommt den Zusatz „Also translate any text visible in the attached image(s)“ (`has_images` in `PromptCtx`). Kann das gewaehlte Modell keine Bilder lesen (`hat_vision`), fragt `vision_frage` wie `visionFallback`: entweder auf ein vorhandenes Bildmodell wechseln (`no_vision_switch`, danach `Confirm::VisionSwitch`) oder `gemma3:4b` nachladen (`no_vision_pull`, `Confirm::VisionPull`).
-
-Das Nachladen ist `net::spawn_pull`: ein POST auf `/api/pull` mit `stream: true`, zeilenweise gelesen, Fortschritt als Prozent aus `completed` und `total` ueber `Msg::Pull` in die Statuszeile, am Ende `Msg::PullDone` (Modell wird gewaehlt, Liste neu geholt, Uebersetzung startet) oder `Msg::PullErr`.
-
-Abweichungen: Die Vorlage laesst den Stapel mit einer FLIP-Animation auf- und zuklappen; hier springt er ohne Uebergang. Vorschauen haben keine abgerundeten Ecken und keinen Schatten (ein gedrehtes Mesh kennt beides nicht). Bilder ohne Text sind erlaubt (`start_translate` prueft Text und Stapel).
+Auf- und Zuklappen ist die FLIP-Animation aus `openImages`/`collapseImages`: `bilder_t` laeuft in 0,2 s auf das Ziel (`bilder_ziel`, 0 oder 1) zu, die Kacheln gleiten von ihrer Stapelposition in die Rasterzelle und zurueck, verlieren dabei die Drehung und wachsen von 0,6 auf 1; Bilder ausserhalb der letzten drei blenden ein beziehungsweise aus. Die Kurve ist `cubic-bezier(.2,.8,.2,1)` als `1-(1-t)^3`. Der Entfernen-Knopf erscheint nur im Raster und nur auf der Karte unter dem Zeiger (20 px, 2 px Rand in Kartenfarbe, wie `.thumb .rm`); sein Ueberstand zaehlt beim Zuklappen als „in der Karte“.
