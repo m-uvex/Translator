@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 11. November 2026, App-Version 1.5.0 (package.json). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 13. November 2026, App-Version 1.5.0 (package.json). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -273,7 +273,10 @@ Die Iteration vom 11. November 2026 (Nachtrag: Einstellungstitel, Wörterbuch-Im
 
 Damit ist die Codebasis in einem Zustand, in dem ein anderes Modell sie ohne Rückfragen weiterentwickeln kann: Der Stil ist über CSS-Variablen und Konventionen klar definiert, die kritischen Utilities für Undo, Animation, Diff und Rechtschreibung sind an einer Stelle konzentriert, die Eigenheiten der PowerShell- und Batch-Dateien sind dokumentiert, und die toten beziehungsweise halbfertigen Codebestände sind benannt. Neue Features sollten sich in dieses Raster einfügen, statt eigene Muster zu etablieren; die Erfahrung aus den letzten Iterationen zeigt, dass die visuelle Konsistenz davon lebt, dass man die vorhandenen Bausteine wiederverwendet, statt sie neu zu erfinden. Und die wichtigste Regel bleibt: Nach jeder Code-Änderung wird diese Datei im selben Commit aktualisiert.
 
-## 13. Rust-Neufassung (Stand 11. November 2026)
+## 13. Rust-Neufassung — WIP, On Hold (Stand 13. November 2026)
+
+> **Status: Work in Progress, Arbeit eingestellt (On Hold).** Die Rust-Fassung unter `rust/` ist ein zweiter Zweig, unfertig und nicht vollständig durchgetestet; sie wird derzeit nicht weitergeführt. Der Ordner trägt diesen Hinweis auch in `rust/README.md`. Die aktuelle und vollständig funktionsfähige Fassung ist die Electron-App im Wurzelverzeichnis; offen sind dort nur kleinere Fehler.
+
 
 Neben der Electron-Fassung liegt unter `rust/` eine Neufassung derselben Anwendung in Rust. Sie ist kein Ersatz, sondern ein zweiter Zweig: Die Electron-Dateien im Wurzelverzeichnis bleiben unverändert und startbar, und die Rust-Fassung greift auf dieselben lokalen Dienste und dieselben Ablagedateien zu. Wer die Electron-App starten will, braucht nichts aus `rust/`; wer die Rust-Fassung bauen will, braucht die Rust-Toolchain.
 
@@ -666,10 +669,17 @@ Im aufgeklappten Raster lag ein `on_hover_text` mit leerem Text auf der Flaeche 
 
 Unter jedem Bild liegt ein Grund in `pal.soft` als abgerundetes Vieleck, wie `background:var(--soft)` an `.thumb img`; Kanten und Ecken sind damit deckend, auch wo die Textur durchsichtig ist.
 
-## 54. Vorschauen ohne Verzerrung, Schatten unter allen Karten
-
-Die Bilder wirkten verzerrt, weil die Textur auf die quadratische Kachel gestreckt wurde. `bild_zeichnen` bekommt jetzt die Masse des Bildes (`Bild::w`, `Bild::h`) und beschneidet die Textur mittig wie `object-fit:cover` in `style.css`: Bei breiten Bildern wird links und rechts, bei hohen oben und unten weggeschnitten, das Seitenverhaeltnis bleibt erhalten.
-
-Der geisterhafte Eindruck kam von den Schatten: Sie wurden je Karte zwischen den Bildern gezeichnet, sodass die Schattenflaeche einer hinteren Karte ueber den Bildern davor lag. Neu ist `bild_schatten`, das in einem eigenen Durchgang **vor** allen Bildern laeuft, mit nur zwei Lagen (5 px Abstand, 4 px Zuwachs, 40/255 und 1 px/2 px/28) — die alte Fassung hatte drei Lagen bis 9 px Abstand und frass den Abstand von 12 px zwischen den Kacheln auf.
-
-Der Fortschritt der FLIP-Animation rechnet jetzt mit der Uhr von egui (`i.time` und `bilder_zeit`) statt mit `stable_dt`. Der Wert kann in Bildern ohne Zeitschritt null sein; dann blieb die Bewegung mitten im Uebergang stehen und die Karten blieben gedreht und halb auseinandergezogen. Aeltere Bilder als die letzten drei liegen im Stapel verkleinert am vorderen Blatt (`ts * 0.6`) und blenden beim Aufklappen ein, wie `scale(0.6)`/`opacity:0` der Vorlage.
+## 54. Vorschauen ohne Verzerrung, Schatten unter allen Karten
+
+
+
+Die Bilder wirkten verzerrt, weil die Textur auf die quadratische Kachel gestreckt wurde. `bild_zeichnen` bekommt jetzt die Masse des Bildes (`Bild::w`, `Bild::h`) und beschneidet die Textur mittig wie `object-fit:cover` in `style.css`: Bei breiten Bildern wird links und rechts, bei hohen oben und unten weggeschnitten, das Seitenverhaeltnis bleibt erhalten.
+
+
+
+Der geisterhafte Eindruck kam von den Schatten: Sie wurden je Karte zwischen den Bildern gezeichnet, sodass die Schattenflaeche einer hinteren Karte ueber den Bildern davor lag. Neu ist `bild_schatten`, das in einem eigenen Durchgang **vor** allen Bildern laeuft, mit nur zwei Lagen (5 px Abstand, 4 px Zuwachs, 40/255 und 1 px/2 px/28) — die alte Fassung hatte drei Lagen bis 9 px Abstand und frass den Abstand von 12 px zwischen den Kacheln auf.
+
+
+
+Der Fortschritt der FLIP-Animation rechnet jetzt mit der Uhr von egui (`i.time` und `bilder_zeit`) statt mit `stable_dt`. Der Wert kann in Bildern ohne Zeitschritt null sein; dann blieb die Bewegung mitten im Uebergang stehen und die Karten blieben gedreht und halb auseinandergezogen. Aeltere Bilder als die letzten drei liegen im Stapel verkleinert am vorderen Blatt (`ts * 0.6`) und blenden beim Aufklappen ein, wie `scale(0.6)`/`opacity:0` der Vorlage.
+
