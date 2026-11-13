@@ -574,9 +574,26 @@ Die Einstellung `ed_markdown` („Dynamisches Markdown“, `s_md`) stand im Eins
 
 Die Vorlage füllt den Stern einer angepinnten Sprache (`style.css`: `.star.on svg{fill:currentColor}`). `icons::paint` zeichnet jedoch nur Umrisse, sodass angepinnt und nicht angepinnt fast gleich aussahen. Neu ist `icons::paint_filled` in `icons.rs`: Es füllt geschlossene Pfade als Fächer vom Schwerpunkt — das ist für sternförmige Umrisse wie den Stern richtig und für die übrigen Symbole unerheblich, weil nur der Stern gefüllt aufgerufen wird. `lang_popup` in `app.rs` benutzt es für `pinned` mit `pal.accent_ink`, sonst weiterhin `paint` mit `pal.muted`.
 
+
+
+## 49. Schrift, Größe und Überschrift in der Editor-Leiste
+
+
+
+Die Leiste hatte nur die Überschriftauswahl; die Vorlage zeigt drei Felder `.tsel` nebeneinander (Schrift, Größe, Überschrift). Neu ist `tsel_pill` in `app.rs` — eine runde Pille auf weichem Grund, die für alle drei Felder dient — sowie `SCHRIFTEN` und `schrift_familien()` in `main.rs`: Für jede wählbare Schrift (Segoe UI, Arial, Georgia, Times New Roman, Verdana, Consolas) wird beim Start eine eigene egui-Familie angelegt, mit den übrigen geladenen Schriften als Rückfall für fremde Zeichen. Die Größen sind dieselben elf Stufen wie `SIZES` in `editor.js` (10 bis 40). Gespeichert wird in `ed_font` und `ed_size` (`settings.rs`).
+
+
+
+Abweichung: Die Vorlage setzt Schriftart und Größe mit `execCommand('fontName')` und `applySize` auf die *markierte Stelle* und schreibt dafür HTML-Spans in die Seite. Der Rust-Editor führt den Text als Markdown (`doc`), dort gibt es keine Auszeichnung für Schrift und Größe — ein `<span>`-Tag im Markdown wäre sichtbarer Text. Deshalb gilt die Wahl hier für das ganze Papier; die Felder stehen an derselben Stelle der Leiste und wirken sofort (`TextEdit::font` in `fn editor`).
+
+## 50. Import von PDF und DOCX
 
-## 49. Schrift, Größe und Überschrift in der Editor-Leiste
+Der Editor konnte bisher nur txt, md und html oeffnen. Die Vorlage liest auch PDF und DOCX: In `main.js` holt `ipcMain.handle('extract', ...)` den Text mit `mammoth` (DOCX) und `pdf-parse` (PDF). Diese Bibliotheken gibt es in der Rust-Fassung nicht; das neue Modul `import.rs` liest beide Formate selbst.
 
-Die Leiste hatte nur die Überschriftauswahl; die Vorlage zeigt drei Felder `.tsel` nebeneinander (Schrift, Größe, Überschrift). Neu ist `tsel_pill` in `app.rs` — eine runde Pille auf weichem Grund, die für alle drei Felder dient — sowie `SCHRIFTEN` und `schrift_familien()` in `main.rs`: Für jede wählbare Schrift (Segoe UI, Arial, Georgia, Times New Roman, Verdana, Consolas) wird beim Start eine eigene egui-Familie angelegt, mit den übrigen geladenen Schriften als Rückfall für fremde Zeichen. Die Größen sind dieselben elf Stufen wie `SIZES` in `editor.js` (10 bis 40). Gespeichert wird in `ed_font` und `ed_size` (`settings.rs`).
+`import::extract` entscheidet nach der Endung. DOCX ist ein ZIP-Archiv: `unzip` sucht das Verzeichnis am Dateiende (PK), geht die Eintraege durch und entpackt `word/document.xml`; gespeicherte und deflate-gepackte Eintraege werden beide gelesen (Deflate ueber `flate2`, die einzige neue Abhaengigkeit in `Cargo.toml`). `docx_text` zieht dann den Text aus dem XML: Absaetze `w:p` werden durch eine Leerzeile getrennt, `w:br` wird ein Zeilenumbruch, `w:tab` ein Tabulator, die Entitaeten `&amp;`, `&lt;`, `&gt;`, `&quot;` und `&apos;` werden aufgeloest.
 
-Abweichung: Die Vorlage setzt Schriftart und Größe mit `execCommand('fontName')` und `applySize` auf die *markierte Stelle* und schreibt dafür HTML-Spans in die Seite. Der Rust-Editor führt den Text als Markdown (`doc`), dort gibt es keine Auszeichnung für Schrift und Größe — ein `<span>`-Tag im Markdown wäre sichtbarer Text. Deshalb gilt die Wahl hier für das ganze Papier; die Felder stehen an derselben Stelle der Leiste und wirken sofort (`TextEdit::font` in `fn editor`).
+PDF wird ueber die Inhaltsstroeme gelesen: `stroeme` sammelt alle `stream ... endstream`-Bereiche, entpackt sie bei `/FlateDecode` mit `ZlibDecoder` und ueberspringt Bilder und eingebettete Schriften (`DCTDecode`, `/Image`, `FontFile`, `Length1` ...). `seiten_text` wertet die Textoperatoren aus: `Tj`, `TJ`, `'` und `"` zeigen Text an, `Td`, `TD`, `T*`, `BT` und `ET` setzen einen Zeilenumbruch; literale Strings in Klammern (mit allen Maskierungen und Oktalzahlen) und Hex-Strings werden gelesen, UTF-16 mit Byte Order Mark erkannt. `pdf_text` haengt die Seiten zusammen und entfernt Steuerzeichen.
+
+In `import_document` (`app.rs`) steht der Dateifilter jetzt auf `txt`, `md`, `html`, `pdf` und `docx`; schlaegt das Lesen fehl, steht der Grund in der Statuszeile.
+
+Grenzen: Verschluesselte PDFs und PDFs, deren Schriften nur Zeichennummern ohne Zuordnung enthalten (viele CID-Schriften), liefern keinen brauchbaren Text — `pdf-parse` loest das ueber die Font-Tabellen, `import.rs` nicht. Kopf- und Fusszeilen sowie Tabellenzellen erscheinen als eigene Absaetze. Geprueft ist der Weg mit den Tests `docx_wird_gelesen`, `gepacktes_docx_wird_gelesen`, `pdf_text_wird_gelesen` und `eigenes_pdf_wird_wieder_gelesen` (Rundlauf ueber den eigenen PDF-Schreiber `pdf::text_pdf`).

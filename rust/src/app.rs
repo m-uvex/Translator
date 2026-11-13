@@ -5021,16 +5021,22 @@ impl App {
 
     fn import_document(&mut self) {
         if let Some(path) = rfd::FileDialog::new()
-            .add_filter("Dokument", &["txt", "md", "html"])
+            // Wie `IMP_EXT` der Vorlage: Text, Markdown, HTML, PDF und DOCX.
+            .add_filter("Dokument", &["txt", "md", "html", "pdf", "docx"])
             .pick_file()
         {
-            if let Ok(text) = std::fs::read_to_string(&path) {
-                self.push_undo();
-                self.doc = text;
-                self.doc_id = None;
-                self.sel = None;
-                self.saved = false;
-                self.sync_active_session();
+            match crate::import::extract(&path) {
+                Ok(text) => {
+                    self.push_undo();
+                    self.doc = text;
+                    self.doc_id = None;
+                    self.sel = None;
+                    self.saved = false;
+                    self.sync_active_session();
+                }
+                Err(fehler) => {
+                    self.status = fehler;
+                }
             }
         }
     }

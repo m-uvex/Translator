@@ -3,6 +3,7 @@ mod editor;
 mod engine;
 mod fenster;
 mod pdf;
+mod import;
 mod icons;
 mod icons_data;
 mod i18n;

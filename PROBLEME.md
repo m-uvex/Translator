@@ -13,7 +13,7 @@ mit Commit-Kurz-Hash.
   Nachgetragen: P32 bis P41 (fehlende Funktionen) und P42 bis P55 (Rückmeldung
   des Nutzers zum Editor). P42 bis P51 sowie P53, P55 bis P69 sind erledigt.
   P38, P52 und P54 sind ebenfalls erledigt, P24 mit einer Abweichung (Schrift und Größe gelten für die
-  ganze Seite). Offen bleiben P32, P34 und P37.
+  ganze Seite), P37 für den Dateidialog. Offen bleiben P32 und P34.
 - **Zweiter Agent (`rust-oberflaeche`):** Uebersetzer, Seitenleiste,
   Fensterleiste, Navigationsleiste und Dokumentenablage sind angeglichen
   (`1863576`). P15 und P4 sind damit ganz erledigt, P5/P6/P8/P10/P13 fuer diese
@@ -88,7 +88,7 @@ lesen, wird der Punkt geschlossen.
 | P34 | **Modell lässt sich nicht nachladen:** Die Vorlage ruft `/api/pull` mit Fortschritt auf (`pullModel`); in Rust fehlt jeder solche Aufruf. | offen |
 | P35 | **Ausrichtungen fehlen in der Editor-Leiste:** links, zentriert, rechts und Blocksatz (`alignL/alignC/alignR/alignJ` in der Vorlage) gibt es in Rust nicht. | offen |
 | P36 | **Speichern ohne Menü:** Die Vorlage öffnet ein Menü mit „In Ablage speichern“ und Markdown, Text, PDF (`savePop`, `doSave`); bei uns schrieb der Knopf sofort eine `.md`-Datei. | erledigt (`54376b0`): verankertes Menü mit Ablage, Markdown, Text und PDF (neues Modul `pdf.rs`) |
-| P37 | **Import nur txt/md/html:** Die Vorlage liest auch PDF und DOCX (Editor-Ablage und Übersetzer über `window.api.extract`). | offen |
+| P37 | **Import nur txt/md/html:** Die Vorlage liest auch PDF und DOCX (Editor-Ablage und Übersetzer über `window.api.extract`). | erledigt für den Dateidialog: `import.rs` liest DOCX (ZIP + `word/document.xml`) und PDF (Inhaltsströme, `Tj`/`TJ`), Filter in `import_document` erweitert. Die Ablage per Hineinziehen fehlt weiterhin in beiden Ansichten — das gehört zu P32. Grenzen in `Doku.txt` 50. |
 | P38 | **„Dynamisches Markdown“ ohne Wirkung:** Die Einstellung `ed_markdown` steht in den Einstellungen, wird aber nirgends ausgewertet. | erledigt: Die Option ist in der Rust-Fassung entfallen. Sie kann dort keine Wirkung haben, weil der Editor Markdown als Text schreibt; `# ` und `- ` sind bereits die Auszeichnung, die Electron-Fassung wandelt dagegen HTML-Blöcke um. Begründung in `Doku.txt` 47. |
 | P39 | **Wörterbuch ohne Import und Export:** Die zwei Knöpfe im Kopf des Wörterbuchfensters (`dictExport`, `dictImport`) fehlten samt Übersetzungstexten. | erledigt (`54376b0`): zwei Kreise im Kopf, eine Wortliste je Zeile, Zusammenführen ohne Doppelte |
 | P40 | **Rechtschreibwellen animieren fehlt:** Einstellung `edSpellAnim` und die Bewegung der Wellenlinie sind nicht umgesetzt. | erledigt (`54376b0`): Schalter `ed_spell_anim`, Wellen wandern mit der Zeit |
