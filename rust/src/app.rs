@@ -1463,6 +1463,19 @@ fn bild_zeichnen(
         }
     }
     let tint = egui::Color32::from_white_alpha((255.0 * deckkraft) as u8);
+    // Grund in Kartenfarbe wie `background:var(--soft)` an `.thumb img`; ohne
+    // ihn schimmert bei durchsichtigen Stellen das Papier durch.
+    let grund: Vec<egui::Pos2> = umriss.iter().map(|p| drehen(*p)).collect();
+    painter.add(egui::Shape::convex_polygon(
+        grund,
+        egui::Color32::from_rgba_unmultiplied(
+            pal.soft.r(),
+            pal.soft.g(),
+            pal.soft.b(),
+            (255.0 * deckkraft) as u8,
+        ),
+        Stroke::NONE,
+    ));
     let mut mesh = egui::Mesh::with_texture(tex.id());
     let uv_von = |p: egui::Pos2| -> egui::Pos2 {
         egui::pos2((p.x - min.x) / size.x, (p.y - min.y) / size.y)
@@ -2268,22 +2281,32 @@ impl App {
                     ui.set_min_size(egui::vec2(col_w, card_h));
                     ui.vertical(|ui| {
                         ui.spacing_mut().item_spacing.y = 0.0;
-                        let flaeche = egui::ScrollArea::vertical()
-                            .id_source("in_scroll")
-                            .max_height(body_h)
-                            .auto_shrink([false, false])
-                            .show(ui, |ui| {
-                                ui.add(
-                                    egui::TextEdit::multiline(&mut self.input)
-                                        .id(egui::Id::new("in_edit"))
-                                        .frame(false)
-                                        .font(egui::FontId::proportional(17.0))
-                                        .desired_width(f32::INFINITY)
-                                        .hint_text(RichText::new(t(lang, "input_ph")).color(pal.muted))
-                                        .margin(egui::vec2(20.0, 18.0)),
-                                )
-                            });
-                        self.input_rect = flaeche.inner.rect;
+                        // Die Flaeche des Textfelds wird selbst belegt: Der
+                        // Antwort-Rect des TextEdit haengt an der Laenge des
+                        // Textes, der Stapel braucht aber immer die ganze Karte.
+                        let (textflaeche, _) = ui.allocate_exact_size(
+                            egui::vec2(ui.available_width(), body_h),
+                            egui::Sense::hover(),
+                        );
+                        self.input_rect = textflaeche;
+                        ui.allocate_ui_at_rect(textflaeche, |ui| {
+                            egui::ScrollArea::vertical()
+                                .id_source("in_scroll")
+                                .auto_shrink([false, false])
+                                .show(ui, |ui| {
+                                    ui.add(
+                                        egui::TextEdit::multiline(&mut self.input)
+                                            .id(egui::Id::new("in_edit"))
+                                            .frame(false)
+                                            .font(egui::FontId::proportional(17.0))
+                                            .desired_width(f32::INFINITY)
+                                            .hint_text(
+                                                RichText::new(t(lang, "input_ph")).color(pal.muted),
+                                            )
+                                            .margin(egui::vec2(20.0, 18.0)),
+                                    )
+                                });
+                        });
                         self.bilder_abholen(ui.ctx());
                         self.bilderstapel(ui);
                         egui::Frame::none()
@@ -5392,13 +5415,14 @@ impl App {
             )
         };
         let kasten = egui::Rect::from_min_max(klick_min, klick_max);
-        let resp = ui
-            .interact(kasten, egui::Id::new("bilder_flaeche"), egui::Sense::click())
-            .on_hover_text(if self.bilder_ziel > 0.5 {
-                String::new()
-            } else {
-                t(self.lang, "img_open_tip")
-            });
+        let resp = ui.interact(kasten, egui::Id::new("bilder_flaeche"), egui::Sense::click());
+        // Nur im Stapel gibt es einen Hinweis; im Raster wuerde ein leerer
+        // Tooltip als weisses Kaestchen aufblitzen.
+        let resp = if self.bilder_ziel > 0.5 {
+            resp
+        } else {
+            resp.on_hover_text(t(self.lang, "img_open_tip"))
+        };
 
         // Zeichnen: hinten nach vorn, damit das vorderste Blatt oben liegt.
         let mut reihenfolge: Vec<usize> = (0..self.bilder.len()).collect();

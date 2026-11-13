@@ -634,12 +634,28 @@ Das Nachladen ist `net::spawn_pull`: ein POST auf `/api/pull` mit `stream: true`
 
 Abweichungen: Die Vorlage laesst den Stapel mit einer FLIP-Animation auf- und zuklappen; hier springt er ohne Uebergang. Vorschauen haben keine abgerundeten Ecken und keinen Schatten (ein gedrehtes Mesh kennt beides nicht). Bilder ohne Text sind erlaubt (`start_translate` prueft Text und Stapel).
 
-## 52. Bilderkarten, Mehrfachauswahl und das Sitzungsmenue
+## 52. Bilderkarten, Mehrfachauswahl und das Sitzungsmenue
+
+
+
+Drei Nachbesserungen aus dem Betrieb. Erstens nimmt der Anhaengen-Knopf jetzt mehrere Dateien auf einmal an (`pick_files` statt `pick_file`), jede laeuft durch `datei_anhaengen`; vorher blieb es bei einer.
+
+
+
+Zweitens liess sich das Sitzungsmenue („Aktive Seiten“) nicht oeffnen: Der Klick auf den Schalter in der Statusleiste oeffnete es und schloss es im selben Bild wieder, weil die Pruefung „Klick ausserhalb der Karten“ diesen Klick mitzaehlte. Neu ist `dock_skip_click`: Der Schalter merkt sich, dass er gerade geoeffnet hat (`self.dock_skip_click = self.show_sessions`), und `session_dock` ueberspringt die Schliesspruefung genau einmal. Ausserdem schliesst die Wahl einer Karte das Menue wie `dockPick`, Escape und ein Klick neben die Karten schliessen es wie `dockClose`.
+
+
+
+Drittens die Bilderkarten: Sie haben wieder die Form der Vorlage. `bild_zeichnen` baut den Umriss eines abgerundeten Rechtecks (Radius 12 px) als Faecher, dessen Eckpunkte UV-Koordinaten tragen — damit wird die Textur an den Ecken beschnitten statt ueberzustehen, das ist das `border-radius` von `.thumb img`. Darunter liegen drei weiche Schattenflaechen als Ersatz fuer `box-shadow:0 6px 18px #00000038, 0 1px 4px #00000024`.
+
+
+
+Auf- und Zuklappen ist die FLIP-Animation aus `openImages`/`collapseImages`: `bilder_t` laeuft in 0,2 s auf das Ziel (`bilder_ziel`, 0 oder 1) zu, die Kacheln gleiten von ihrer Stapelposition in die Rasterzelle und zurueck, verlieren dabei die Drehung und wachsen von 0,6 auf 1; Bilder ausserhalb der letzten drei blenden ein beziehungsweise aus. Die Kurve ist `cubic-bezier(.2,.8,.2,1)` als `1-(1-t)^3`. Der Entfernen-Knopf erscheint nur im Raster und nur auf der Karte unter dem Zeiger (20 px, 2 px Rand in Kartenfarbe, wie `.thumb .rm`); sein Ueberstand zaehlt beim Zuklappen als „in der Karte“.
+
+## 53. Vorschautapel: richtige Flaeche, kein leerer Tooltip, Grundfarbe
 
-Drei Nachbesserungen aus dem Betrieb. Erstens nimmt der Anhaengen-Knopf jetzt mehrere Dateien auf einmal an (`pick_files` statt `pick_file`), jede laeuft durch `datei_anhaengen`; vorher blieb es bei einer.
+Drei Fehler aus dem Betrieb. Der Stapel hing an der Antwortflaeche des TextEdit (`flaeche.inner.rect`); deren Hoehe richtet sich nach der Textlaenge, also standen die Bilder bei leerem Feld oben in der Karte und bei langem Text weit unten. Die Textflaeche wird jetzt selbst belegt (`ui.allocate_exact_size` mit `body_h`, darin `allocate_ui_at_rect` fuer den Scrollbereich); `input_rect` ist damit immer die ganze Karte unter der Kopfzeile.
 
-Zweitens liess sich das Sitzungsmenue („Aktive Seiten“) nicht oeffnen: Der Klick auf den Schalter in der Statusleiste oeffnete es und schloss es im selben Bild wieder, weil die Pruefung „Klick ausserhalb der Karten“ diesen Klick mitzaehlte. Neu ist `dock_skip_click`: Der Schalter merkt sich, dass er gerade geoeffnet hat (`self.dock_skip_click = self.show_sessions`), und `session_dock` ueberspringt die Schliesspruefung genau einmal. Ausserdem schliesst die Wahl einer Karte das Menue wie `dockPick`, Escape und ein Klick neben die Karten schliessen es wie `dockClose`.
+Im aufgeklappten Raster lag ein `on_hover_text` mit leerem Text auf der Flaeche — egui zeigt dafuer ein weisses Kaestchen ohne Inhalt. Der Hinweis haengt jetzt nur noch am zugeklappten Stapel.
 
-Drittens die Bilderkarten: Sie haben wieder die Form der Vorlage. `bild_zeichnen` baut den Umriss eines abgerundeten Rechtecks (Radius 12 px) als Faecher, dessen Eckpunkte UV-Koordinaten tragen — damit wird die Textur an den Ecken beschnitten statt ueberzustehen, das ist das `border-radius` von `.thumb img`. Darunter liegen drei weiche Schattenflaechen als Ersatz fuer `box-shadow:0 6px 18px #00000038, 0 1px 4px #00000024`.
-
-Auf- und Zuklappen ist die FLIP-Animation aus `openImages`/`collapseImages`: `bilder_t` laeuft in 0,2 s auf das Ziel (`bilder_ziel`, 0 oder 1) zu, die Kacheln gleiten von ihrer Stapelposition in die Rasterzelle und zurueck, verlieren dabei die Drehung und wachsen von 0,6 auf 1; Bilder ausserhalb der letzten drei blenden ein beziehungsweise aus. Die Kurve ist `cubic-bezier(.2,.8,.2,1)` als `1-(1-t)^3`. Der Entfernen-Knopf erscheint nur im Raster und nur auf der Karte unter dem Zeiger (20 px, 2 px Rand in Kartenfarbe, wie `.thumb .rm`); sein Ueberstand zaehlt beim Zuklappen als „in der Karte“.
+Unter jedem Bild liegt ein Grund in `pal.soft` als abgerundetes Vieleck, wie `background:var(--soft)` an `.thumb img`; Kanten und Ecken sind damit deckend, auch wo die Textur durchsichtig ist.
