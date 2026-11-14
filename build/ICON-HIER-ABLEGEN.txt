@@ -1,6 +1,15 @@
-Die Icons entstehen mit "node build/make-icon.js":
+Die Icons entstehen mit
+  powershell -NoProfile -ExecutionPolicy Bypass -File build/make-icon.ps1
+
+Das Skript braucht Windows mit .NET (System.Drawing) und die Schrift Segoe UI.
+Es schreibt beide Dateien:
   icon.png (512x512) fuer Linux
   icon.ico (256, 128, 64, 48, 32, 16 px) fuer Windows
+
+Das Logo zeigt ein abgerundetes Quadrat in Babyblau mit den Zeichen ẞ (Latein)
+und Ж (Kyrillisch) in Tintenfarbe - eine Entsprechung zu den Buchstaben-Symbolen
+anderer Uebersetzer. Die fertigen Dateien liegen versioniert bei; ohne Windows
+muessen sie nicht neu erzeugt werden.
 
 Ein eigenes Icon ersetzt diese Dateien einfach; electron-builder nimmt sie aus
 diesem Ordner. Fehlt icon.ico, baut der Windows-Installer mit dem
