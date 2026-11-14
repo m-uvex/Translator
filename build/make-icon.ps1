@@ -1,10 +1,11 @@
 # Erzeugt das Logo der App: build/icon.png (512 px) und build/icon.ico (256 bis 16 px).
 # Aufruf: powershell -NoProfile -ExecutionPolicy Bypass -File build/make-icon.ps1
 #
-# Die beiden Zeichen stehen fuer den Namen der App und ersetzen die Buchstaben
-# anderer Uebersetzer-Symbole: ẞ (Latein, U+1E9E) und Ж (Kyrillisch, U+0416).
-# Sie werden als Vektorpfade gezeichnet und auf gleiche Hoehe gebracht, damit
-# beide optisch gleich schwer wirken.
+# Das Logo ist eine weisse Sprechblase auf einem abgerundeten Feld in Babyblau.
+# Darin stehen die Zeichen ẞ (Latein, U+1E9E) und Ж (Kyrillisch, U+0416) - die
+# Entsprechung zu den Buchstaben-Symbolen anderer Uebersetzer. Die Zeichen
+# werden als Vektorpfade gezeichnet und auf gleiche Hoehe gebracht, damit beide
+# optisch gleich schwer wirken.
 param([string]$Root = (Split-Path -Parent $PSScriptRoot))
 
 Add-Type -AssemblyName System.Drawing
@@ -13,14 +14,26 @@ $fontFamily = 'Segoe UI'
 $accentTop = [System.Drawing.Color]::FromArgb(255, 156, 207, 245)
 $accentBottom = [System.Drawing.Color]::FromArgb(255, 126, 189, 238)
 $ink = [System.Drawing.Color]::FromArgb(255, 14, 42, 68)
+$white = [System.Drawing.Color]::White
 
-function Get-GlyphPath([string]$ch) {
+function Get-Glyph([string]$ch) {
   $path = New-Object System.Drawing.Drawing2D.GraphicsPath
   $family = New-Object System.Drawing.FontFamily($fontFamily)
   $fmt = [System.Drawing.StringFormat]::GenericTypographic
-  $path.AddString($ch, $family, [int][System.Drawing.FontStyle]::Bold, 200, (New-Object System.Drawing.PointF(0, 0)), $fmt)
+  $path.AddString($ch, $family, [int][System.Drawing.FontStyle]::Bold, 200, [System.Drawing.PointF]::new(0, 0), $fmt)
   $family.Dispose()
-  return $path
+  return @{ Path = $path; Box = $path.GetBounds() }
+}
+
+function RoundRect([single]$x, [single]$y, [single]$w, [single]$h, [single]$r) {
+  $p = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $d = 2 * $r
+  $p.AddArc($x, $y, $d, $d, 180, 90)
+  $p.AddArc($x + $w - $d, $y, $d, $d, 270, 90)
+  $p.AddArc($x + $w - $d, $y + $h - $d, $d, $d, 0, 90)
+  $p.AddArc($x, $y + $h - $d, $d, $d, 90, 90)
+  $p.CloseFigure()
+  return $p
 }
 
 function New-LogoBitmap([int]$size) {
@@ -29,63 +42,50 @@ function New-LogoBitmap([int]$size) {
   $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
   $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
   $g.Clear([System.Drawing.Color]::Transparent)
+  $s = [single]$size
 
-  # Abgerundetes Quadrat: 22 Prozent der Kante, wie die Karten der App.
-  $r = $size * 0.22
-  $d = 2 * $r
-  $rect = New-Object System.Drawing.RectangleF(0, 0, $size, $size)
-  $shape = New-Object System.Drawing.Drawing2D.GraphicsPath
-  $shape.AddArc($rect.X, $rect.Y, $d, $d, 180, 90)
-  $shape.AddArc($rect.Right - $d, $rect.Y, $d, $d, 270, 90)
-  $shape.AddArc($rect.Right - $d, $rect.Bottom - $d, $d, $d, 0, 90)
-  $shape.AddArc($rect.X, $rect.Bottom - $d, $d, $d, 90, 90)
-  $shape.CloseFigure()
-  $brush = New-Object System.Drawing.Drawing2D.LinearGradientBrush($rect, $accentTop, $accentBottom, 90.0)
-  $g.FillPath($brush, $shape)
+  # Feld: abgerundetes Quadrat mit 22 Prozent Rundung, wie die Karten der App.
+  $field = RoundRect 0 0 $s $s ($s * 0.22)
+  $gradient = New-Object System.Drawing.Drawing2D.LinearGradientBrush([System.Drawing.RectangleF]::new(0, 0, $s, $s), $accentTop, $accentBottom, 90.0)
+  $g.FillPath($gradient, $field)
 
-  # Beide Zeichen auf dieselbe Hoehe bringen und zusammen zentrieren.
-  $paths = @()
-  foreach ($ch in @([string][char]0x1E9E, [string][char]0x0416)) {
-    $p = Get-GlyphPath $ch
-    $b = $p.GetBounds()
-    if ($b.Height -le 0) { continue }
-    $paths += , @{ Path = $p; Bounds = $b }
-  }
-  if ($paths.Count -eq 0) { throw 'Keine Glyphen gezeichnet - Schrift pruefen.' }
+  # Sprechblase mit Schwanz unten links.
+  $bubble = RoundRect ($s * 0.10) ($s * 0.12) ($s * 0.80) ($s * 0.58) ($s * 0.17)
+  $tail = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $tail.AddPolygon(@(
+      [System.Drawing.PointF]::new(($s * 0.27), ($s * 0.68)),
+      [System.Drawing.PointF]::new(($s * 0.45), ($s * 0.68)),
+      [System.Drawing.PointF]::new(($s * 0.26), ($s * 0.87))
+    ))
+  $whiteBrush = New-Object System.Drawing.SolidBrush($white)
+  $g.FillPath($whiteBrush, $bubble)
+  $g.FillPath($whiteBrush, $tail)
 
-  # Hoehe so waehlen, dass beide Zeichen zusammen in die Flaeche passen; die
-  # Breite ist hier der Engpass, nicht die Hoehe.
-  $gap = $size * 0.06
-  $aspect = 0
-  foreach ($item in $paths) { $aspect += $item.Bounds.Width / $item.Bounds.Height }
-  $maxWidth = $size * 0.74
-  $target = [Math]::Min($size * 0.42, ($maxWidth - $gap) / $aspect)
-  $scales = @()
-  foreach ($item in $paths) { $scales += , ($target / $item.Bounds.Height) }
-  $total = 0
-  for ($i = 0; $i -lt $paths.Count; $i++) {
-    $total += $paths[$i].Bounds.Width * $scales[$i]
-    if ($i -gt 0) { $total += $gap }
-  }
-
+  # Beide Zeichen auf gleiche Hoehe bringen und in der Blase zentrieren.
+  $left = Get-Glyph ([string][char]0x1E9E)
+  $right = Get-Glyph ([string][char]0x0416)
+  $h = $s * 0.29
+  $gap = $s * 0.075
+  $w1 = $left.Box.Width * ($h / $left.Box.Height)
+  $w2 = $right.Box.Width * ($h / $right.Box.Height)
+  $x = ($s - ($w1 + $gap + $w2)) / 2
+  $y = ($s * 0.415) - ($h / 2)
   $inkBrush = New-Object System.Drawing.SolidBrush($ink)
-  $x = ($size - $total) / 2
-  for ($i = 0; $i -lt $paths.Count; $i++) {
-    $p = $paths[$i].Path
-    $b = $paths[$i].Bounds
-    $s = $scales[$i]
-    $y = ($size - $b.Height * $s) / 2
+  foreach ($item in @(@($left, $x), @($right, ($x + $w1 + $gap)))) {
+    $path = $item[0].Path
+    $box = $item[0].Box
+    $scale = $h / $box.Height
     $m = New-Object System.Drawing.Drawing2D.Matrix
-    $m.Translate(-$b.X, -$b.Y, [System.Drawing.Drawing2D.MatrixOrder]::Append)
-    $m.Scale($s, $s, [System.Drawing.Drawing2D.MatrixOrder]::Append)
-    $m.Translate($x, $y, [System.Drawing.Drawing2D.MatrixOrder]::Append)
-    $p.Transform($m)
-    $g.FillPath($inkBrush, $p)
-    $m.Dispose(); $p.Dispose()
-    $x += $b.Width * $s + $gap
+    $m.Translate(-$box.X, -$box.Y, [System.Drawing.Drawing2D.MatrixOrder]::Append)
+    $m.Scale($scale, $scale, [System.Drawing.Drawing2D.MatrixOrder]::Append)
+    $m.Translate($item[1], $y, [System.Drawing.Drawing2D.MatrixOrder]::Append)
+    $path.Transform($m)
+    $g.FillPath($inkBrush, $path)
+    $m.Dispose(); $path.Dispose()
   }
 
-  $inkBrush.Dispose(); $brush.Dispose(); $shape.Dispose(); $g.Dispose()
+  $inkBrush.Dispose(); $whiteBrush.Dispose()
+  $bubble.Dispose(); $tail.Dispose(); $field.Dispose(); $gradient.Dispose(); $g.Dispose()
   return $bmp
 }
 
@@ -100,12 +100,12 @@ function Save-Ico([int[]]$sizes, [string]$file) {
   $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('ico-' + [Guid]::NewGuid().ToString('N'))
   New-Item -ItemType Directory -Force -Path $tmp | Out-Null
   $images = @()
-  foreach ($s in $sizes) {
-    $b = New-LogoBitmap $s
-    $png = Join-Path $tmp "$s.png"
+  foreach ($size in $sizes) {
+    $b = New-LogoBitmap $size
+    $png = Join-Path $tmp "$size.png"
     $b.Save($png, [System.Drawing.Imaging.ImageFormat]::Png)
     $b.Dispose()
-    $images += , @{ Size = $s; Bytes = [System.IO.File]::ReadAllBytes($png) }
+    $images += , @{ Size = $size; Bytes = [System.IO.File]::ReadAllBytes($png) }
   }
   Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
 
