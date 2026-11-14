@@ -1,13 +1,15 @@
 {
  "name": "uebersetzer",
- "version": "1.5.0",
+ "version": "1.6.0",
  "private": true,
  "description": "Lokaler Übersetzer und Texteditor mit Ollama, NLLB-200 und Omnilingual MT",
  "author": "Janek",
  "main": "main.js",
  "scripts": {
   "start": "electron .",
-  "dist": "electron-builder --win nsis"
+  "dist": "electron-builder --win nsis",
+  "dist:win": "electron-builder --win nsis",
+  "dist:linux": "electron-builder --linux AppImage deb rpm tar.gz"
  },
  "dependencies": {
   "electron": "^33.0.0",
@@ -30,14 +32,42 @@
    "*.js",
    "*.html",
    "*.css",
+   "*.py",
+   "requirements.txt",
    "build/icon.ico",
+   "build/icon.png",
+   "dict/**",
    "node_modules/**"
+  ],
+  "asarUnpack": [
+   "nllb_server.py",
+   "requirements.txt",
+   "dict/**",
+   "build/icon.png"
   ],
   "nsis": {
    "oneClick": true,
    "perMachine": false,
    "createDesktopShortcut": true,
    "createStartMenuShortcut": true
+  },
+  "linux": {
+   "target": ["AppImage", "deb", "rpm", "tar.gz"],
+   "executableName": "uebersetzer",
+   "category": "Utility",
+   "icon": "build/icon.png",
+   "maintainer": "Janek",
+   "synopsis": "Lokaler Übersetzer und Texteditor",
+   "description": "Lokaler Übersetzer und Texteditor mit Ollama, NLLB-200 und Omnilingual MT; läuft vollständig offline.",
+   "desktop": {
+    "entry": {
+     "Name": "Übersetzer",
+     "Comment": "Lokaler Übersetzer und Texteditor",
+     "Categories": "Utility;TextTools;",
+     "Keywords": "übersetzen;übersetzer;editor;offline;",
+     "StartupWMClass": "uebersetzer"
+    }
+   }
   }
  }
 }

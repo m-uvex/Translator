@@ -1,28 +1,79 @@
 const { app, BrowserWindow, ipcMain, dialog, session } = require('electron');
 const { spawn } = require('child_process');
-const http = require('http'), path = require('path'), fs = require('fs');
+const http = require('http'), path = require('path'), fs = require('fs'), os = require('os');
 let nllb = null, ollama = null, nllbWanted = false, win = null;
 
 // Erlaubt queryLocalFonts() im Renderer (fuer die Schriftartenliste)
 app.commandLine.appendSwitch('enable-features', 'FontAccess');
 
-const killTree = c => { try { if (c && c.pid) spawn('taskkill', ['/pid', String(c.pid), '/t', '/f'], { windowsHide: true, stdio: 'ignore' }); } catch {} };
+// ---------- Plattform: Windows und Linux ----------
+// Alle Unterschiede zwischen den Systemen stehen hier beieinander, damit eine
+// Funktion nicht auf einem System nachgezogen werden muss: dieselben Dienste,
+// dieselben Ports, nur andere Pfade und andere Mittel zum Beenden.
+const IS_WIN = process.platform === 'win32';
+
+// Im gepackten Betrieb liegt der Code in app.asar. Alles, was ein fremdes
+// Programm oeffnen muss - der Python-Server und die Woerterbuecher -, liegt
+// daneben in app.asar.unpacked (siehe asarUnpack in package.json).
+const resPath = (...parts) => path.join(__dirname, ...parts).replace(/app\.asar([/\\])/, 'app.asar.unpacked$1');
+
+// Kindprozesse bekommen unter Linux eine eigene Prozessgruppe, damit das
+// Beenden der Gruppe auch die Enkel erwischt; unter Windows erledigt das
+// taskkill /t.
+const runHidden = (cmd, args, extra) => spawn(cmd, args, Object.assign({ windowsHide: true, stdio: 'ignore', detached: !IS_WIN }, extra || {}));
+
+// Ollama liegt unter Windows im Benutzerprofil, unter Linux in einem der
+// ueblichen Systemordner; fehlt beides, entscheidet der PATH.
+function ollamaExe() {
+  const list = IS_WIN
+    ? [path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Ollama', 'ollama.exe')]
+    : ['/usr/local/bin/ollama', '/usr/bin/ollama', path.join(os.homedir(), '.local', 'bin', 'ollama')];
+  return list.find(p => p && fs.existsSync(p)) || 'ollama';
+}
+
+// Die Umgebung heisst auf beiden Systemen nllb-venv. Unter Windows liegt der
+// Interpreter in Scripts\pythonw.exe (ohne Konsolenfenster), unter Linux in
+// bin/python3. Zusaetzlich wird der Ordner im Benutzerprofil geprueft, weil
+// eine AppImage-Datei schreibgeschuetzt eingehaengt wird.
+function venvPython() {
+  const dirs = [path.join(__dirname, 'nllb-venv'), path.join(app.getPath('userData'), 'nllb-venv')];
+  const rels = IS_WIN ? ['Scripts/pythonw.exe', 'Scripts/python.exe'] : ['bin/python3', 'bin/python'];
+  for (const d of dirs) {
+    for (const r of rels) { const f = path.join(d, r); if (fs.existsSync(f)) return f; }
+  }
+  return null;
+}
+
+// config.json steht im Programmordner; im Benutzerprofil hat sie Vorrang, weil
+// sie dort auch bei einer schreibgeschuetzten Installation aenderbar ist.
+function readCfg() {
+  const files = [path.join(app.getPath('userData'), 'config.json'), path.join(__dirname, 'config.json')];
+  for (const f of files) { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch {} }
+  return {};
+}
+
+function killTree(c) {
+  if (!c || !c.pid) return;
+  try {
+    if (IS_WIN) spawn('taskkill', ['/pid', String(c.pid), '/t', '/f'], { windowsHide: true, stdio: 'ignore' });
+    else process.kill(-c.pid, 'SIGTERM');
+  } catch { try { c.kill(); } catch {} }
+}
 
 function startOllama() {
   const req = http.get('http://127.0.0.1:11434', { timeout: 1500 }, res => res.resume());
   req.on('timeout', () => req.destroy());
   req.on('error', () => {
-    const exe = path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Ollama', 'ollama.exe');
-    try { ollama = spawn(fs.existsSync(exe) ? exe : 'ollama', ['serve'], { windowsHide: true, stdio: 'ignore' }); ollama.on('error', () => { ollama = null; }); } catch { ollama = null; }
+    try { ollama = runHidden(ollamaExe(), ['serve']); ollama.on('error', () => { ollama = null; }); } catch { ollama = null; }
   });
 }
 function startNllb() {
   try {
-    const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
-    const py = path.join(__dirname, 'nllb-venv', 'Scripts', 'pythonw.exe');
-    if (cfg.nllbAutostart && fs.existsSync(py)) {
+    const cfg = readCfg();
+    const py = venvPython();
+    if (cfg.nllbAutostart && py) {
       nllbWanted = true;
-      nllb = spawn(py, [path.join(__dirname, 'nllb_server.py')], { cwd: __dirname, windowsHide: true, stdio: 'ignore' });
+      nllb = runHidden(py, [resPath('nllb_server.py')], { cwd: __dirname });
       nllb.on('error', () => {});
     }
   } catch {}
@@ -39,22 +90,42 @@ ipcMain.handle('extract', async (_e, name, data) => {
 });
 
 // ---------- Schriftarten des Systems (Fallback, wenn queryLocalFonts nicht geht) ----------
+// Systemschriften: Unter Linux liefert fc-list die Familiennamen, unter Windows
+// werden die Dateinamen der Schriftordner ausgewertet. Fehlt fc-list, laeuft
+// derselbe Weg wie unter Windows - dann rekursiv, weil Linux die Schriften in
+// Unterordnern ablegt.
+const FONT_DIRS = IS_WIN
+  ? [path.join(process.env.WINDIR || 'C:\\Windows', 'Fonts'), path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'Windows', 'Fonts')]
+  : [path.join(os.homedir(), '.local', 'share', 'fonts'), path.join(os.homedir(), '.fonts'), '/usr/local/share/fonts', '/usr/share/fonts'];
+const FONT_EXT = /\.(ttf|otf|ttc|woff2?)$/i;
+const FONT_CUT = /[-_ ]?(bold|italic|regular|light|medium|semibold|black|thin|condensed|expanded|oblique|extralight|extrabold|heavy|ultralight)\b/gi;
+function fontFiles(dir, depth) {
+  const out = [];
+  let list = [];
+  try { list = fs.readdirSync(dir, { withFileTypes: true }); } catch { return out; }
+  for (const e of list) {
+    if (e.isDirectory()) { if (depth > 0) out.push(...fontFiles(path.join(dir, e.name), depth - 1)); continue; }
+    if (FONT_EXT.test(e.name)) out.push(e.name);
+  }
+  return out;
+}
+function fcFamilies() {
+  try {
+    const out = require('child_process').execFileSync('fc-list', ['--format', '%{family}\n'], { encoding: 'utf8', timeout: 4000, maxBuffer: 8 << 20 });
+    return out.split('\n').flatMap(l => l.split(',')).map(s => s.trim()).filter(Boolean);
+  } catch { return []; }
+}
 ipcMain.handle('fonts:list', () => {
-  const dirs = [
-    path.join(process.env.WINDIR || 'C:\\Windows', 'Fonts'),
-    path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'Windows', 'Fonts'),
-  ];
+  const fc = IS_WIN ? [] : fcFamilies();
+  if (fc.length) return [...new Set(fc)].sort((a, b) => a.localeCompare(b));
   const names = new Set();
-  for (const d of dirs) {
-    try {
-      for (const f of fs.readdirSync(d)) {
-        if (!/\.(ttf|otf|ttc|woff2?)$/i.test(f)) continue;
-        let n = path.basename(f, path.extname(f));
-        n = n.replace(/[-_ ]?(bold|italic|regular|light|medium|semibold|black|thin|condensed|expanded|oblique|extralight|extrabold|heavy|ultralight)\b/gi, '').trim();
-        if (n === n.toLowerCase() || n === n.toUpperCase()) n = n.replace(/\b\w/g, c => c.toUpperCase());
-        if (n) names.add(n);
-      }
-    } catch {}
+  for (const d of FONT_DIRS) {
+    for (const f of fontFiles(d, IS_WIN ? 0 : 3)) {
+      let n = path.basename(f, path.extname(f));
+      n = n.replace(FONT_CUT, '').trim();
+      if (n === n.toLowerCase() || n === n.toUpperCase()) n = n.replace(/\b\w/g, c => c.toUpperCase());
+      if (n) names.add(n);
+    }
   }
   return [...names].sort((a, b) => a.localeCompare(b));
 });
@@ -235,7 +306,7 @@ app.whenReady().then(() => {
   try { personal = JSON.parse(fs.readFileSync(persFile(), 'utf8')); } catch {}
   session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => cb(permission === 'local-fonts'));
   startOllama(); startNllb();
-  const icon = path.join(__dirname, 'build', 'icon.ico');
+  const icon = resPath('build', IS_WIN ? 'icon.ico' : 'icon.png');
   win = new BrowserWindow({ width: 1280, height: 820, minWidth: 980, minHeight: 600, autoHideMenuBar: true, frame: false,
     ...(fs.existsSync(icon) ? { icon } : {}),
     webPreferences: { webSecurity: false, preload: path.join(__dirname, 'preload.js') } });

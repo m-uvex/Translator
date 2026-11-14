@@ -1,13 +1,17 @@
-# Problemliste — Electron-Fassung (Vorlage) gegen Rust-Fassung (Nachbau)
+# Problemliste — Rust-Fassung
 
-Stand: 12. November 2026. An diesem Projekt arbeiten zwei Agents parallel.
+Diese Liste betrifft ausschließlich die Rust-Fassung unter `rust/`. Die Electron-Fassung im Wurzelverzeichnis ist die Vorlage und dient hier nur als Vergleichsmaßstab: Kein Punkt in dieser Datei bedeutet, dass die Electron-App einen Fehler hat oder geändert werden muss. Wird ein Punkt für beide Fassungen relevant, steht das ausdrücklich im Eintrag.
+
+Fehler der Electron-Fassung gehören nicht hierher, sondern in eine eigene Liste, die je Eintrag die Plattform mitführt, auf der der Fehler auftritt (Windows, Linux und jedes künftige System), weil ein Fehler dort immer plattformgebunden geprüft wird.
+
+Stand: 14. November 2026. An diesem Projekt arbeiten zwei Agents parallel.
 Jeder trägt hier ein, woran er gerade sitzt, damit der andere nicht dieselbe
 Datei anfasst. Nach jedem erledigten Punkt: Eintrag nach „Erledigt“ verschieben,
 mit Commit-Kurz-Hash.
 
 ## Gerade in Arbeit
 
-- **Buffy:** P1, P2, P3, P7, P11, P12, P14, P16, P17, P18, P19, P20, P21, P22,
+- **Agent (Rust-Fassung):** P1, P2, P3, P7, P11, P12, P14, P16, P17, P18, P19, P20, P21, P22,
   P23, P25, P26, P27, P28, P29, P30, P31, P33, P36, P39, P40 und P41 sind
   erledigt, P9 nachgesehen (Rest: Dokumentenablage, Fensterleiste).
   Nachgetragen: P32 bis P41 (fehlende Funktionen) und P42 bis P55 (Rückmeldung
