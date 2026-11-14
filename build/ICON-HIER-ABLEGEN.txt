@@ -6,9 +6,10 @@ Es schreibt beide Dateien:
   icon.png (512x512) fuer Linux
   icon.ico (256, 128, 64, 48, 32, 16 px) fuer Windows
 
-Das Logo zeigt ein abgerundetes Quadrat in Babyblau, darin eine weisse
-Sprechblase mit den Zeichen ẞ (Latein) und Ж (Kyrillisch) in Tintenfarbe - die
-Entsprechung zu den Buchstaben-Symbolen anderer Uebersetzer. Die fertigen
+Das Logo zeigt ein abgerundetes Feld in Babyblau, darauf ein weisses Blatt mit
+umgeknickter Ecke: oben links ẞ (Latein) in Tintenfarbe, unten rechts Ж
+(Kyrillisch) im Akzentblau - die Entsprechung zu den Buchstaben-Symbolen anderer
+Uebersetzer. Die fertigen
 Dateien liegen versioniert bei; ohne Windows muessen sie nicht neu erzeugt
 werden.
 
