@@ -389,3 +389,17 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
    gleich anfuehlen, aber getrennt bleiben. */
 #vTxt{display:flex;flex-direction:column;padding:12px 12px 12px 0;gap:8px;min-height:0}
 #vTxt .libgrid{flex:1}
+
+/* Dialog „Text hinzufügen“: Titel und Textart nebeneinander, darunter das
+   Textfeld, unten die beiden Quellen (Datei, Zwischenablage) und die
+   Bestaetigung. Die Felder sehen aus wie die der Einstellungen. */
+#txDlg{width:min(640px,92vw)}
+#txDlg .txrow{display:grid;grid-template-columns:1.5fr 1fr;gap:10px}
+#txDlg .txf{display:flex;flex-direction:column;gap:6px;margin-top:12px;min-width:0}
+#txDlg .txf>span{font-size:13px;color:var(--muted)}
+#txDlg input,#txDlg select,#txDlg textarea{width:100%;font:inherit;color:var(--text);background:var(--soft);border:0;border-radius:12px;padding:9px 12px;outline:0}
+#txDlg textarea{height:200px;min-height:120px;resize:vertical;line-height:1.5}
+#txDlg .txacts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+#txDlg .txacts .ghost{display:inline-flex;align-items:center;gap:6px}
+#txDlg .txacts svg{flex:none}
+@media (max-width:520px){#txDlg .txrow{grid-template-columns:1fr}}

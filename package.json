@@ -1,6 +1,6 @@
 {
  "name": "uebersetzer",
- "version": "1.8.4",
+ "version": "1.9.0",
  "private": true,
  "description": "Lokaler Übersetzer und Texteditor mit Ollama, NLLB-200 und Omnilingual MT",
  "author": "Janek",
@@ -20,7 +20,8 @@
   "dictionary-en": "^4.0.0",
   "dictionary-nl": "^2.0.0",
   "dictionary-es": "^4.0.0",
-  "dictionary-tr": "^2.0.0"
+  "dictionary-tr": "^2.0.0",
+  "jszip": "^3.10.2"
  },
  "devDependencies": {
   "electron-builder": "^25.0.0"

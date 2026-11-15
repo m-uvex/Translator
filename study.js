@@ -260,17 +260,48 @@ function fillCats() {
   sel.innerHTML = CATS.map(c => `<option value="${c[0]}">${esc(LANG === 'de' ? c[1] : c[2])}</option>`).join('');
 }
 
-async function addTextFromFile() {
-  const r = await window.api.studyImportText();
-  if (!r) return;
-  if (r.error) return window.trStatus(t('txNoRead'));
-  const title = await askLine(t('txAdd'), r.name || '');
-  if (title === null) return;
-  const cat = $('#txCat').value || 'other';
-  const tx = { id: uid('t'), title: title.trim() || r.name, cat, text: r.text, pos: 0, src: S.studySrc, tgt: S.studyTgt, created: Date.now(), updated: Date.now() };
-  ST.texts.unshift(tx);
+// ---------- Text hinzufuegen ----------
+// Ein Dialog sammelt alles, was ein neuer Lesetext braucht: den Text selbst
+// (eingefuegt, aus der Zwischenablage oder aus einer Datei), den Titel und die
+// Textart. Der Titel wird beim Waehlen einer Datei vorbelegt, solange der
+// Nutzer ihn nicht selbst angefasst hat.
+let txAutoTitle = '';
+
+function txOpen() {
+  const d = $('#txDlg'); if (!d) return;
+  $('#txTitle').value = ''; $('#txBody').value = '';
+  txAutoTitle = '';
+  const cat = $('#txCat'); if (cat) cat.value = 'other';
+  d.showModal();
+  $('#txBody').focus();
+}
+
+function txSuggestTitle(title) {
+  const inp = $('#txTitle'); if (!inp) return;
+  const t0 = String(title || '').trim();
+  if (inp.value.trim() && inp.value !== txAutoTitle) return;
+  inp.value = t0; txAutoTitle = t0;
+}
+
+function txAppend(text) {
+  const body = $('#txBody'); if (!body) return;
+  const add = String(text || '').trim();
+  if (!add) return;
+  body.value = body.value.trim() ? body.value.trim() + '\n\n' + add : add;
+  body.focus();
+}
+
+function txAdd() {
+  const body = $('#txBody'), d = $('#txDlg');
+  const text = body ? String(body.value).trim() : '';
+  if (!text) return window.trStatus(t('txNeedText'));
+  const title = ($('#txTitle').value || '').trim() || t('txUntitled');
+  const cat = ($('#txCat') && $('#txCat').value) || 'other';
+  ST.texts.unshift({ id: uid('t'), title, cat, text, pos: 0, src: S.studySrc, tgt: S.studyTgt, created: Date.now(), updated: Date.now() });
   persist('texts');
   renderTexts();
+  if (d) d.close();
+  window.trStatus(t('txtAdded'));
 }
 
 function dropText(id) {
@@ -632,25 +663,6 @@ function importTexts(text) {
   window.trStatus(t('txtDone', n));
 }
 
-// ---------- Kleine Rueckfrage mit Eingabefeld ----------
-// Nutzt denselben Dialog wie ask(), nur mit sichtbarem Feld.
-function askLine(label, value = '') {
-  const d = $('#ask'), inp = $('#askIn');
-  $('#askText').textContent = label;
-  inp.classList.remove('hidden'); inp.value = value;
-  $('#askYes').textContent = t('yes'); $('#askNo').textContent = t('cancel');
-  d.showModal();
-  inp.focus(); inp.select();
-  return new Promise(res => {
-    let done = false;
-    const fin = v => { if (done) return; done = true; d.close(); inp.classList.add('hidden'); res(v); };
-    $('#askYes').onclick = () => fin(inp.value);
-    $('#askNo').onclick = () => fin(null);
-    inp.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); fin(inp.value); } };
-    d.oncancel = ev => { ev.preventDefault(); fin(null); };
-  });
-}
-
 // ---------- Verdrahtung ----------
 function wire() {
   $('#rBack').onclick = () => { savePos(); showView('txt'); };
@@ -670,7 +682,23 @@ function wire() {
     if (b) dropVocab(b.dataset.del);
   });
 
-  $('#txAdd').onclick = addTextFromFile;
+  $('#txAdd').onclick = txOpen;
+  $('#txClose').onclick = () => $('#txDlg').close();
+  $('#txCancel').onclick = () => $('#txDlg').close();
+  $('#txOk').onclick = txAdd;
+  $('#txFile').onclick = async () => {
+    const r = await window.api.studyImportText();
+    if (!r) return;
+    if (r.error) return window.trStatus(t('txNoRead'));
+    txAppend(r.text);
+    txSuggestTitle(r.title || r.name || '');
+  };
+  $('#txPaste').onclick = async () => {
+    let s = '';
+    try { s = await window.api.clipText(); } catch { }
+    if (!String(s || '').trim()) return window.trStatus(t('txClipEmpty'));
+    txAppend(s);
+  };
   $('#txExp').onclick = () => window.api.studyExportFile('texte', textsJson(), 'json');
   $('#txImp').onclick = async () => {
     const r = await window.api.studyImportFile('json');

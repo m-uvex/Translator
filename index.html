@@ -46,7 +46,7 @@
     <header class="libhead"><h2 data-t="readTitle"></h2><span class="sp"></span><span class="pairbar" id="libPair"></span><span class="muted" id="txOther"></span></header>
     <div id="txtGrid" class="libgrid"></div>
     <div id="txtEmpty" class="libempty hidden"><p data-t="txEmpty"></p><p class="muted" data-t="txEmptyHint"></p></div>
-    <div class="rfootbar"><button class="ib" id="txAdd" data-i="plus" data-tt="txAdd"></button><select id="txCat" class="tsel"></select><span class="sp"></span><button class="ib" id="txExp" data-i="download" data-tt="txtExp"></button><button class="ib" id="txImp" data-i="upload" data-tt="txtImp"></button></div>
+    <div class="rfootbar"><button class="ib" id="txAdd" data-i="plus" data-tt="txAdd"></button><span class="sp"></span><button class="ib" id="txExp" data-i="download" data-tt="txtExp"></button><button class="ib" id="txImp" data-i="upload" data-tt="txtImp"></button></div>
   </div>
   <div id="vR" class="view hidden">
     <div class="rhead"><button class="ib" id="rBack" data-i="back" data-tt="navTxt"></button><h2 id="rTitle"></h2><span class="sp"></span><span class="muted" id="rMeta"></span></div>
@@ -64,6 +64,15 @@
   </div>
 </div>
 <div id="pop" class="pop hidden"></div><div id="alt" class="pop alt hidden"></div><div id="cm" class="pop hidden"></div><div id="trPop" class="pop trpop hidden"></div>
+<dialog id="txDlg">
+  <div class="dh"><h2 data-t="txAdd"></h2><button class="ib" id="txClose" data-i="x" data-tt="cancel"></button></div>
+  <div class="txrow">
+    <label class="txf"><span data-t="txTitleL"></span><input id="txTitle" data-ph="txTitlePh" maxlength="200"></label>
+    <label class="txf"><span data-t="txCatL"></span><select id="txCat"></select></label>
+  </div>
+  <label class="txf"><span data-t="txBodyL"></span><textarea id="txBody" data-ph="txBodyPh"></textarea></label>
+  <div class="txacts"><button class="ghost" id="txFile"><span data-i="upload"></span><span data-t="txFileL"></span></button><button class="ghost" id="txPaste"><span data-i="copy"></span><span data-t="txPasteL"></span></button><span class="sp"></span><button class="ghost" id="txCancel" data-t="cancel"></button><button class="primary" id="txOk" data-t="txOkL"></button></div>
+</dialog>
 <dialog id="ask"><p id="askText"></p><input id="askIn" class="hidden"><div class="dh"><button class="ghost" id="askNo"></button><button class="primary" id="askYes"></button></div></dialog>
 <dialog id="styleDlg"></dialog>
 <dialog id="sumDlg"></dialog>

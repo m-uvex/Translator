@@ -107,7 +107,15 @@ const K = {
   learnLang:['Sprache, die gelernt wird','Language being learned'], nativeLang:['Muttersprache (Übersetzungsziel)','Native language (translation target)'],
   pairHint:['Sprachenpaar gilt für Vokabeln und Üben','Language pair applies to vocabulary and practice'],
   csvExp:['CSV exportieren','Export CSV'], csvImp:['CSV importieren','Import CSV'], txtExp:['Texte exportieren','Export texts'], txtImp:['Texte importieren','Import texts'],
-  txAdd:['Text hinzufügen','Add text'], txHint:['Als Textart gilt die Auswahl rechts.','The selected option is used as the text type.'],
+  txAdd:['Text hinzufügen','Add text'],
+  // Dialog „Text hinzufügen“: Titel, Textart, Text und die beiden Quellen.
+  txTitleL:['Titel','Title'], txCatL:['Textart','Type'], txBodyL:['Text','Text'],
+  txTitlePh:['Wird beim Wählen einer Datei vorbelegt','Filled in when you choose a file'],
+  txBodyPh:['Text einfügen, aus der Zwischenablage holen oder eine Datei wählen …','Paste text, fetch it from the clipboard or choose a file …'],
+  txFileL:['Datei wählen','Choose file'], txPasteL:['Einfügen','Paste'], txOkL:['Hinzufügen','Add'],
+  txNeedText:['Bitte zuerst einen Text einfügen.','Please add some text first.'],
+  txClipEmpty:['Die Zwischenablage enthält keinen Text.','The clipboard holds no text.'],
+  txUntitled:['Ohne Titel','Untitled'], txtAdded:['Text hinzugefügt','Text added'],
   txNoRead:['Datei konnte nicht gelesen werden','Could not read the file'], txDelQ:['Diesen Text samt seinen Vokabeln löschen?','Delete this text and its vocabulary?'],
   srsTitle:['Vokabeln üben','Practice vocabulary'], srsNone:['Nichts fällig.','Nothing due.'], srsDone:['Für heute fertig.','Done for today.']
   , srsReveal:['Übersetzung zeigen','Show translation'], srsShowCtx:['Im Satz','In sentence'],

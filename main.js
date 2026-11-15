@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, session } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, session, clipboard } = require('electron');
 const { spawn } = require('child_process');
 const http = require('http'), path = require('path'), fs = require('fs'), os = require('os');
 let nllb = null, ollama = null, nllbWanted = false, win = null;
@@ -79,10 +79,59 @@ function startNllb() {
   } catch {}
 }
 
-// Text aus einer Datei holen. Word und PDF brauchen die Fremdbibliotheken,
+// ---------- EPUB ----------
+// Ein EPUB ist ein ZIP mit XHTML-Dateien. container.xml nennt die Paketdatei
+// (OPF), dort stehen der Titel und die Lesereihenfolge (spine). Fuer Lesetexte
+// genuegt der reine Text, die Reihenfolge muss aber stimmen, sonst geraten die
+// Kapitel durcheinander.
+const xmlDec = s => String(s || '')
+  .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+  .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)))
+  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+  .replace(/&apos;/g, "'").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+function htmlText(s) {
+  return xmlDec(String(s || '')
+    .replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<\/(p|div|h\d|li|tr|blockquote|section|article)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, ' '))
+    .replace(/[ \t\u00a0]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+async function epubText(buf) {
+  const JSZip = require('jszip');
+  const zip = await JSZip.loadAsync(buf);
+  const read = async n => { const f = n && zip.file(n); return f ? f.async('string') : ''; };
+  const cont = await read('META-INF/container.xml');
+  let opfPath = (cont.match(/full-path="([^"]+)"/i) || [])[1] || '';
+  if (!opfPath) opfPath = Object.keys(zip.files).find(n => /\.opf$/i.test(n)) || '';
+  const opf = await read(opfPath);
+  const title = htmlText((opf.match(/<dc:title[^>]*>([\s\S]*?)<\/dc:title>/i) || [])[1] || '');
+  const base = opfPath.replace(/[^/]+$/, '');
+  const href = {};
+  for (const tag of opf.match(/<item\b[^>]*>/gi) || []) {
+    const id = (tag.match(/\bid="([^"]+)"/) || [])[1];
+    const h = (tag.match(/\bhref="([^"]+)"/) || [])[1];
+    if (id && h) href[id] = decodeURIComponent(h);
+  }
+  const spine = (opf.match(/<itemref\b[^>]*>/gi) || [])
+    .map(t => (t.match(/\bidref="([^"]+)"/) || [])[1]).filter(Boolean);
+  const files = spine.length
+    ? spine.map(id => href[id]).filter(Boolean)
+    : Object.keys(zip.files).filter(n => /\.x?html?$/i.test(n)).sort();
+  const parts = [];
+  for (const h of files) {
+    const src = await read(base + h) || await read(h);
+    const t = htmlText(src);
+    if (t) parts.push(t);
+  }
+  return { title, text: parts.join('\n\n') };
+}
+
+// Text aus einer Datei holen. Word, PDF und EPUB brauchen die Fremdbibliotheken,
 // alles andere (txt, md, csv, html, srt) ist bereits reiner Text.
 async function extractText(name, buf) {
   const ext = path.extname(String(name || '')).toLowerCase();
+  if (ext === '.epub') return (await epubText(buf)).text;
   if (ext === '.docx') return (await require('mammoth').extractRawText({ buffer: buf })).value.trim();
   if (ext === '.pdf') {
     const { PDFParse } = require('pdf-parse'); const p = new PDFParse({ data: new Uint8Array(buf) });
@@ -310,12 +359,26 @@ ipcMain.handle('study:save', (_e, name, data) => {
 });
 // Eine Datei auswaehlen und ihren Text zurueckgeben (eigene Texte hochladen).
 ipcMain.handle('study:importText', async () => {
-  const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: 'Texte', extensions: ['txt', 'md', 'html', 'htm', 'docx', 'pdf'] }] });
+  const r = await dialog.showOpenDialog(win, {
+    properties: ['openFile'],
+    filters: [{ name: 'Text, PDF, EPUB', extensions: ['txt', 'md', 'html', 'htm', 'docx', 'pdf', 'epub'] }]
+  });
   if (r.canceled || !r.filePaths.length) return null;
   const file = r.filePaths[0];
-  try { return { name: path.basename(file).replace(/\.[^.]+$/, ''), text: await extractText(file, fs.readFileSync(file)) }; }
-  catch (e) { return { error: e.message || 'read' }; }
+  const name = path.basename(file).replace(/\.[^.]+$/, '');
+  try {
+    const buf = fs.readFileSync(file);
+    // EPUB liefert den Titel aus seinen Metadaten mit; sonst taugt der Dateiname.
+    if (path.extname(file).toLowerCase() === '.epub') {
+      const e = await epubText(buf);
+      return { name, title: e.title || name, text: e.text };
+    }
+    return { name, title: name, text: await extractText(file, buf) };
+  } catch (e) { return { error: e.message || 'read' }; }
 });
+// Zwischenablage fuer den Textdialog. Der Renderer liest sie nicht selbst, weil
+// file:// kein sicherer Kontext ist und navigator.clipboard dort schweigt.
+ipcMain.handle('clip:readText', () => clipboard.readText());
 ipcMain.handle('study:importFile', async (_e, ext) => {
   const exts = String(ext || 'csv').split(',');
   const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: exts.map(e => e.toUpperCase()).join(' / '), extensions: exts }] });
