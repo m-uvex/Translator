@@ -1656,35 +1656,44 @@ function showView(v) {
   if (v === 'srs' && window.studySrsRender) window.studySrsRender();
   if (v === 'tr' && window.trAlignSide) window.trAlignSide();
 }
+// Die Leiste kennt drei Gruppen: Uebersetzer, Textbearbeitung mit Ablage,
+// Lernen (Lesen, Vokabeln, Ueben). Eine Gruppe erscheint und verschwindet als
+// Ganzes - wie es Editor und Ablage schon immer zusammen getan haben.
+const allowedViews = w => w === 'tr' ? ['tr']
+  : w === 'ed' ? ['ed', 'lib']
+  : w === 'study' ? ['txt', 'read', 'voc', 'srs']
+  : ['tr', 'ed', 'lib', 'txt', 'read', 'voc', 'srs'];
+
 function applyWorkspace() {
   const w = S.workspace || 'both';
-  const single = w !== 'both';
-  $('#nvTr').classList.toggle('hidden', single);
-  $('#nvEd').classList.toggle('hidden', single);
-  // Die Bibliothek gehoert zum Editor: Ist der Editor-Arbeitsplatz abgeschaltet
-  // (nur Uebersetzer), verschwindet auch ihr Rail-Icon.
-  $('#nvLib').classList.toggle('hidden', w === 'tr');
-  // Die Vokabel-Arbeitsplaetze haengen nicht am Uebersetzer: Bei „nur
-  // Uebersetzer“ stehen sie als Seitenspalte bereit (Einstellung „Vokabeln
-  // neben dem Uebersetzer“), sonst ueber ihre eigenen Icons.
-  const libHidden = w === 'tr';
-  for (const id of ['nvVoc', 'nvSrs', 'nvTxt']) $('#' + id).classList.toggle('hidden', libHidden);
-  if (w === 'tr' && (S.view === 'lib' || S.view === 'read' || S.view === 'txt')) showView('tr');
-  else if (w === 'tr' && (S.view === 'voc' || S.view === 'srs')) showView('tr');
-  else if (single && S.view !== w && S.view !== 'lib') showView(w);
+  const showStudy = w === 'both' || w === 'study';
+  $('#nvTr').classList.toggle('hidden', w !== 'both' && w !== 'tr');
+  $('#nvEd').classList.toggle('hidden', w !== 'both');
+  // Die Bibliothek gehoert zur Textbearbeitung: ohne sie verschwindet auch ihr
+  // Rail-Icon, mit ihr stehen beide Symbole zusammen da (nvLib schaltet um).
+  $('#nvLib').classList.toggle('hidden', !(w === 'both' || w === 'ed'));
+  for (const id of ['nvTxt', 'nvVoc', 'nvSrs']) $('#' + id).classList.toggle('hidden', !showStudy);
+  const ok = allowedViews(w);
+  if (!ok.includes(S.view)) showView(w === 'study' ? 'voc' : w);
 }
 $('#nvTr').onclick = () => showView('tr'); $('#nvEd').onclick = () => showView('ed');
 $('#nvLib').onclick = () => showView(S.view === 'lib' ? 'ed' : 'lib');
-$('#nvTxt').onclick = () => showView(S.view === 'txt' || S.view === 'read' ? 'tr' : 'txt');
-$('#nvVoc').onclick = () => showView(S.view === 'voc' ? 'tr' : 'voc');
-$('#nvSrs').onclick = () => showView(S.view === 'srs' ? 'tr' : 'srs');
+// Zurueck geht es in den Uebersetzer, ausser im Lern-Arbeitsplatz: dort gibt
+// es ihn nicht, also zur Leseliste.
+const railBack = () => (S.workspace === 'study' ? 'txt' : 'tr');
+$('#nvTxt').onclick = () => showView(S.view === 'txt' || S.view === 'read' ? railBack() : 'txt');
+$('#nvVoc').onclick = () => showView(S.view === 'voc' ? railBack() : 'voc');
+$('#nvSrs').onclick = () => showView(S.view === 'srs' ? railBack() : 'srs');
 window.edRender = () => { buildBar(); renderTb(); renderSb(); applyI18n(); reicon(); applyWorkspace(); scheduleScan(); };
 window.edModels = () => { fixEdLangs(); renderTb(); };
 window.edWorkspace = applyWorkspace;
 window.edShowView = showView;
 const startView = () => {
+  const w = S.workspace || 'both';
   const v = S.start === 'last' ? (S.view || 'tr') : (S.start || 'tr');
-  return (v === 'ed' || v === 'lib') ? 'ed' : 'tr';
+  // Beim Start nur eine Ansicht zeigen, die zur gewaehlten Gruppe gehoert.
+  if (!allowedViews(w).includes(v)) return w === 'study' ? 'voc' : (w === 'ed' ? 'ed' : 'tr');
+  return v === 'lib' ? 'ed' : (v === 'read' ? 'txt' : v);
 };
 if (window.api?.onRequestClose) {
   window.api.onRequestClose(async () => {
