@@ -1652,7 +1652,6 @@ function showView(v) {
   if (v === 'voc' && window.studyVocRender) window.studyVocRender();
   if (v === 'srs' && window.studySrsRender) window.studySrsRender();
   if (v === 'tr' && window.trAlignSide) window.trAlignSide();
-  if (window.studyPanelSync) window.studyPanelSync();
 }
 function applyWorkspace() {
   const w = S.workspace || 'both';
@@ -1670,7 +1669,6 @@ function applyWorkspace() {
   if (w === 'tr' && (S.view === 'lib' || S.view === 'read')) showView('tr');
   else if (w === 'tr' && (S.view === 'voc' || S.view === 'srs')) showView('tr');
   else if (single && S.view !== w && S.view !== 'lib') showView(w);
-  if (window.studyPanelSync) window.studyPanelSync();
 }
 $('#nvTr').onclick = () => showView('tr'); $('#nvEd').onclick = () => showView('ed');
 $('#nvLib').onclick = () => showView(S.view === 'lib' || S.view === 'read' ? 'ed' : 'lib');

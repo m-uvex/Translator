@@ -310,18 +310,6 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
   ::highlight(spell){text-decoration:none!important;background:none!important;color:inherit!important}
   ::selection{background:transparent!important;color:inherit!important}}
 
-/* =============================================================================
-   Lesen, Vokabeln und Ueben
-   -----------------------------------------------------------------------------
-   Der Lese-Arbeitsplatz gehoert zum Text-Arbeitsplatz und benutzt dessen Ablage
-   (#vL). Die beiden Vokabel-Arbeitsplaetze stehen auf eigenen Symbolen in der
-   Leiste; auf Wunsch liegt der Vokabel-Arbeitsplatz zusaetzlich als schmale
-   Spalte neben dem Uebersetzer (#vT.with-vpanel).
-   ============================================================================= */
-#vT.with-vpanel{grid-template-columns:1fr 280px 240px}
-.vpanel{border-left:1px solid var(--line);padding:12px 12px 12px 4px;overflow:auto;display:flex;flex-direction:column;gap:8px;min-height:0}
-.vph{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;padding:0 2px}
-.vplist{display:flex;flex-direction:column;gap:6px;overflow:auto;min-height:0}
 /* Auswahlmodus im Uebersetzer: eine mitlaufende Ebene in derselben Schrift ueber
    dem Eingabefeld. Sie zeigt den Text als einzelne Woerter. */
 #pickLayer{position:absolute;inset:0;z-index:3;background:var(--card);border-radius:var(--r);padding:18px 20px 64px;
@@ -364,7 +352,7 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .vctx{color:var(--muted);font-size:13px;line-height:1.5;margin-top:3px}
 .vctx mark{background:none;color:var(--accent-ink);font-weight:600}
 .vmeta{color:var(--muted);font-size:12px;margin-top:4px}
-.vrow .rm,.vpanel .vrow .rm{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--muted);opacity:.5;flex:none}
+.vrow .rm{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--muted);opacity:.5;flex:none}
 .vrow:hover .rm{opacity:1}
 .vrow .rm:hover{background:var(--soft);color:var(--text)}
 /* Abfrage */
@@ -379,7 +367,7 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .srsbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .srsempty{color:var(--muted);text-align:center;display:flex;flex-direction:column;gap:4px}
 .srsempty p{margin:0}
-@media print{#vR,#vV,#vP,.vpanel,#pickLayer{display:none!important}}
+@media print{#vR,#vV,#vP,#pickLayer{display:none!important}}
 
 /* Sprachenpaar: dieselbe Auswahl in Vokabeln, Ueben und in der Ablage. Die
    Pillen sind kleiner als die des Uebersetzers, weil sie in Kopfzeilen mit

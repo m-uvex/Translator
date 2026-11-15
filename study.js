@@ -118,7 +118,6 @@ function addVocab(term, res, ctx, tx, pair) {
   if (ctx && !e.context) e.context = ctx;
   persist('vocab');
   renderVocab();
-  renderPanel();
   return e;
 }
 
@@ -128,7 +127,6 @@ function dropVocab(id) {
   ST.vocab.splice(i, 1);
   persist('vocab');
   renderVocab();
-  renderPanel();
 }
 
 const genderMark = e => e.gender === 'm' ? 'm' : e.gender === 'f' ? 'f' : e.gender === 'n' ? 'n' : '';
@@ -161,27 +159,14 @@ function renderVocab() {
 }
 window.studyVocRender = renderVocab;
 
-// ---------- Seitenspalte neben dem Uebersetzer ----------
-function renderPanel() {
-  const p = $('#vPanel'); if (!p || p.classList.contains('hidden')) return;
-  const mine = ST.vocab.filter(inPair);
-  const due = mine.filter(e => (e.due || todayISO()) <= todayISO()).length;
-  p.innerHTML = `<div class="vph"><b>${esc(t('vocTitle'))}</b><span class="muted">${esc(langLabel(S.studySrc))} → ${esc(langLabel(S.studyTgt))}</span></div>
-    <button class="ghost" id="vPanelTrain">${esc(t('srsTitle'))} · ${esc(t('vocabDue', due))}</button>
-    <div class="vplist">${mine.slice(0, 40).map(e => vocRow(e)).join('')}</div>`;
-  p.querySelector('#vPanelTrain').onclick = () => showView('srs');
-  p.querySelectorAll('[data-del]').forEach(b => b.onclick = () => dropVocab(b.dataset.del));
-}
-
+// ---------- Auswahlmodus im Uebersetzer ----------
 function pickSync() {
-  const panelOn = !!S.studyPanel;
-  const btn = $('#pickBtn');
-  if (btn) btn.classList.toggle('hidden', !panelOn);
-  const live = panelOn && ST.pick && S.view === 'tr';
   const layer = $('#pickLayer');
   if (!layer) return;
+  const live = ST.pick && S.view === 'tr';
   layer.classList.toggle('hidden', !live);
-  if (btn) btn.classList.toggle('on', ST.pick && panelOn);
+  const btn = $('#pickBtn');
+  if (btn) { btn.classList.remove('hidden'); btn.classList.toggle('on', ST.pick); }
   if (live) drawPickLayer();
 }
 
@@ -205,15 +190,6 @@ function drawPickLayer() {
   layer.append(txt.slice(last));
   layer.scrollTop = ta.scrollTop;
 }
-
-window.studyPanelSync = () => {
-  const want = !!S.studyPanel && S.view === 'tr';
-  const p = $('#vPanel');
-  if (p) p.classList.toggle('hidden', !want);
-  $('#vT').classList.toggle('with-vpanel', want);
-  if (want) renderPanel();
-  pickSync();
-};
 
 // ---------- Sprachenpaar ----------
 // Die Auswahl steht oben in beiden Vokabel-Arbeitsplaetzen und in der Ablage.
@@ -248,7 +224,7 @@ function pairChanged() {
   // Beide Seiten gleich ergibt keine Uebersetzung; die Muttersprache weicht aus.
   if (S.studySrc === S.studyTgt) S.studyTgt = S.studySrc === 'en' ? 'de' : 'en';
   save();
-  renderPairs(); renderVocab(); renderPanel(); renderTexts();
+  renderPairs(); renderVocab(); renderTexts();
   if (S.view === 'srs') { srsShow = false; srsQueue = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO()); renderSrs(); }
 }
 
@@ -427,7 +403,7 @@ function pairForPick() {
 function usePair(P) {
   if (!P || samePair(P, curPair())) return;
   S.studySrc = P.src; S.studyTgt = P.tgt; save();
-  renderPairs(); renderVocab(); renderPanel(); renderTexts();
+  renderPairs(); renderVocab(); renderTexts();
 }
 
 async function pickWord(el) {
@@ -693,10 +669,6 @@ function wire() {
     const b = e.target.closest('[data-del]');
     if (b) dropVocab(b.dataset.del);
   });
-  $('#vPanel')?.addEventListener('click', e => {
-    const b = e.target.closest('[data-del]');
-    if (b) dropVocab(b.dataset.del);
-  });
 
   $('#txAdd').onclick = addTextFromFile;
   $('#txExp').onclick = () => window.api.studyExportFile('texte', textsJson(), 'json');
@@ -736,8 +708,6 @@ function wire() {
   wire();
   renderPairs();
   renderVocab();
-  studyPanelSync();
-  renderPanel();
   pickSync();
   applyI18n();
   if (S.view === 'voc') renderVocab();

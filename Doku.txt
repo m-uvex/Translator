@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 15. November 2026, App-Version 1.8.0 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 15. November 2026, App-Version 1.8.1 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -766,7 +766,7 @@ Die App hat neben Übersetzer und Textbearbeitung zwei weitere Arbeitsplätze mi
 
 **Wendungen.** Wer mindestens zwei Wörter markiert, bekommt die ganze Wendung im selben Satzzusammenhang übersetzt und als eine Vokabel eingetragen – gedacht für Redewendungen, die sich nicht aus Einzelwörtern ergibt.
 
-**Neben dem Übersetzer.** Die Einstellung „Vokabeln neben dem Übersetzer einblenden“ (`studyPanel`, Standard an) legt eine dritte Spalte an den Übersetzer. Der Marker-Knopf im Fuß des Eingabefelds schaltet dort den Auswahlmodus ein: Die Ebene `#pickLayer` legt sich über das Textfeld, zeigt denselben Text als einzelne Wörter, und ein Klick übersetzt und trägt ein. Derselbe Knopf schaltet zurück; dann setzt ein Klick wieder nur den Cursor.
+**Auswahl im Übersetzer.** Der Marker-Knopf im Fuß des Eingabefelds schaltet den Auswahlmodus ein: Die Ebene `#pickLayer` legt sich über das Textfeld, zeigt denselben Text als einzelne Wörter, und ein Klick übersetzt und trägt in die Vokabeln des aktuellen Paares ein. Derselbe Knopf schaltet zurück; dann setzt ein Klick wieder nur den Cursor. Eine eigene Vokabelspalte neben dem Übersetzer gibt es nicht mehr (Abschnitt 61).
 
 **Vokabeln.** Die Suchleiste trägt auch ohne Vorlage ein: Wort eingeben, Enter, das Modell übersetzt und die Vokabel wird angelegt. Jede Zeile zeigt Wort, Geschlechtskürzel (m/f/n), Übersetzung und Kontextsatz mit hervorgehobenem Wort und lässt sich einzeln löschen.
 
@@ -788,3 +788,8 @@ Die aktive Seite wird nicht nur in `ED.docs` gehalten, sondern bei jeder Änderu
 **Beenden.** Vor der Prüfung schreibt `flushDoc()` den aktuellen Stand sofort nach `localStorage` (und verwirft den laufenden Zeitgeber). Gefragt wird nur noch, wenn eine **andere** Sitzungskarte ungespeicherte Änderungen hat – die gehen beim Beenden wirklich verloren. Ist nur die aktive Seite offen, schließt das Programm ohne Rückfrage; beim nächsten Start steht der Text wieder da.
 
 **Kreuz im Aktive-Seiten-Menü.** Hier war es umgekehrt: Die Karte verschwand, der Inhalt blieb aber in `localStorage` liegen und tauchte beim nächsten Start wieder auf, obwohl die Rückfrage „Änderungen verwerfen?“ bestätigt worden war. `dockRemove()` ruft nach dem Wechsel auf das Nachbardokument ebenfalls `flushDoc()` auf; damit steht in `localStorage` der neue Stand, und der geschlossene Text ist wirklich weg. Die Rückfrage ist damit ehrlich: Sie erscheint nur, wenn durch das Schließen etwas verloren geht.
+## 61. Vokabelspalte neben dem Übersetzer entfernt
+
+Die Einstellung „Vokabeln neben dem Übersetzer einblenden“ (`studyPanel`) legte eine dritte Spalte `#vPanel` an `#vT`. Dort standen die Vokabeln des aktuellen Paares mit einem Knopf zur Abfrage. Auf Nutzerwunsch ist sie wieder entfernt: Die Spalte war eine leere Fläche von 240 px neben dem Übersetzer, solange keine Vokabeln vorhanden waren, und für die Funktion selbst nicht nötig.
+
+Geblieben ist der Marker-Knopf im Fuß des Eingabefelds. Er schaltet den Auswahlmodus ein (`#pickLayer`, `ST.pick`), in dem ein Klick ein Wort im Satzzusammenhang übersetzt und als Vokabel einträgt; die Blase über dem Wort zeigt die Übersetzung, ein Klick darauf nimmt den Eintrag wieder zurück. Entfernt sind damit `#vPanel` (HTML), `renderPanel()` und `studyPanelSync()` (beide `study.js`), das Feld `studyPanel` samt Beschriftung in den Einstellungen, die CSS-Regeln `.vpanel`, `.vph`, `.vplist` und `#vT.with-vpanel` sowie die beiden Aufrufe in `showView()` und `applyWorkspace()`. Wer die Spalte zurückholen will, braucht eine Stelle, die sie füllt, sonst ist sie wieder nur eine leere Fläche.
