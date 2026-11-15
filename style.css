@@ -443,3 +443,10 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .charbar{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .charbar .ch{font:inherit;line-height:1;min-width:34px;height:32px;padding:0 10px;border-radius:999px;background:var(--soft);border:1px solid var(--line);color:var(--text);cursor:pointer}
 .charbar .ch:hover{border-color:var(--accent);color:var(--accent-ink)}
+
+/* Modellpille in den Lern-Arbeitsplätzen: gleiche Form wie die Sprachpillen,
+   mit den Fähigkeiten als Icons und gekürztem Namen bei langen Modellnamen. */
+.mpill{flex:0 0 auto;min-width:0;padding:5px 12px;font-size:13px;gap:6px;max-width:240px}
+.mpill>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mpill svg{flex:none;color:var(--muted)}
+.mpill:hover svg{color:var(--accent-ink)}

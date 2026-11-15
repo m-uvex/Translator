@@ -37,9 +37,49 @@ function persist(which) {
 // Ist gerade ein reines Uebersetzungsmodell (NLLB, TranslateGemma) gewaehlt,
 // wird das Hilfsmodell aus den Einstellungen genommen.
 function studyModel() {
+  // Eigenes Modell fuer Wortuebersetzungen, sonst das des Uebersetzers.
+  if (S.studyModel) return S.studyModel;
   if (!S.model) return '';
   if (window.trIsStudyless && window.trIsStudyless()) return window.trHelperModel() || '';
   return S.model;
+}
+
+// Welches Modell gerade die angetippten Woerter uebersetzt, steht als Pille in
+// den Kopfzeilen von Lesen, Vokabeln und Leseoberflaeche ([data-study-model]).
+function renderStudyModel() {
+  const eff = studyModel();
+  const o = MODEL_OPTS.find(x => x.value === eff);
+  document.querySelectorAll('[data-study-model]').forEach(b => {
+    b.innerHTML = `<span>${esc(o ? o.label : (eff || '—'))}</span>${o ? modelIcons(o) : ''}`;
+    b.title = t('studyModelT');
+  });
+}
+
+// Auswahl wie beim Editor: dieselbe Liste, nur ohne Schreibmodell - hier wird
+// ausschliesslich uebersetzt. Die erste Zeile stellt auf das Uebersetzer-Modell
+// zurueck.
+function studyModelPop(btn) {
+  closePops();
+  const p = $('#pop');
+  p.innerHTML = '';
+  const row = (label, value, cur, icons) => {
+    const r = document.createElement('div');
+    r.className = 'row' + (cur ? ' sel' : '');
+    r.innerHTML = `<span>${esc(label)}</span><span>${icons || ''}</span>`;
+    r.onclick = () => {
+      S.studyModel = value;
+      save();
+      wordCache.clear();
+      renderStudyModel();
+      closePops();
+    };
+    p.append(r);
+  };
+  row(t('studyModelAuto'), '', !S.studyModel, '');
+  for (const o of MODEL_OPTS) row(o.label, o.value, o.value === S.studyModel, modelIcons(o));
+  const r = btn.getBoundingClientRect();
+  Object.assign(p.style, { left: Math.max(8, Math.min(r.left, innerWidth - 320)) + 'px', top: r.bottom + 6 + 'px' });
+  p.classList.remove('hidden');
 }
 const langName = c => (!c || c === 'auto') ? 'the source language' : (window.trEngName ? window.trEngName(c) : c);
 
@@ -211,6 +251,7 @@ function renderPairs() {
     if (el) el.innerHTML = pairHtml();
   }
   document.querySelectorAll('.pairbar [data-pair]').forEach(b => { b.onclick = () => pairClick(b); });
+  renderStudyModel();
 }
 function pairClick(b) {
   const k = b.dataset.pair;
@@ -856,6 +897,10 @@ function wire() {
   bindPicking($('#pickLayer'), '.w');
 
   $('#pickBtn').onclick = () => { ST.pick = !ST.pick; pickSync(); };
+  document.querySelectorAll('[data-study-model]').forEach(b => { b.onclick = () => studyModelPop(b); });
+  // Nach dem Laden der Modelle (auch beim Nachladen) die Pille auffrischen.
+  const edModelsBase = window.edModels;
+  window.edModels = () => { if (edModelsBase) edModelsBase(); renderStudyModel(); };
   $('#input').addEventListener('input', () => { if (ST.pick && S.view === 'tr') drawPickLayer(); });
   $('#input').addEventListener('scroll', () => { const l = $('#pickLayer'); if (l && !l.classList.contains('hidden')) l.scrollTop = $('#input').scrollTop; });
 
