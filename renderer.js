@@ -12,6 +12,11 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   practice:'<path d="M3 12a9 9 0 0 1 15-6.7"/><path d="M21 12a9 9 0 0 1-15 6.7"/><path d="M18 2v4h-4M6 22v-4h4"/>',
   pick:'<path d="M4 20h5l10-10a3 3 0 0 0-4-4L5 16z"/><path d="M13 7l4 4"/>',
   back:'<path d="M15 5l-7 7 7 7"/>',
+  // Sprachenpaar: Doktorhut fuer die gelernte, Haken im Kreis fuer die schon
+  // bekannte Sprache. Beide sitzen in den Pillen ueber Vokabeln, Ueben und
+  // Texten, damit die Reihenfolge ohne Tooltip lesbar ist.
+  learn:'<path d="M12 4 2.5 8.5 12 13l9.5-4.5z"/><path d="M6 11v4.4c0 1.6 2.7 2.9 6 2.9s6-1.3 6-2.9V11"/><path d="M21 9v5"/>',
+  know:'<circle cx="12" cy="12" r="9"/><path d="m8 12.4 2.6 2.6L16 9.6"/>',
   // Aufgeschlagenes Buch fuer den Lese-Arbeitsplatz. Bewusst ein eigener
   // Schluessel: `book` ist in editor.js das persoenliche Woerterbuch in der
   // Statusleiste und wird von dort ueberschrieben.
@@ -104,7 +109,7 @@ const K = {
   vocTitle:['Vokabeln','Vocabulary'], vocAdd:['Eintragen','Add'], vocTermPh:['Wort oder Wendung eingeben …','Type a word or phrase …'],
   vocEmpty:['Noch keine Vokabeln','No vocabulary yet'], vocEmptyHint:['Beim Lesen ein Wort anklicken oder oben eingeben.','Click a word while reading, or type it above.'],
   vocCount:[n => `${n} Vokabeln`, n => `${n} words`], vocabDue:[n => `${n} fällig`, n => `${n} due`],   vocOther:[n => `${n} in anderen Sprachen`, n => `${n} in other languages`],
-  learnLang:['Sprache, die gelernt wird','Language being learned'], nativeLang:['Muttersprache (Übersetzungsziel)','Native language (translation target)'],
+  learnLang:['Sprache, die du lernst','Language you are learning'], nativeLang:['Sprache, die du schon kennst (Übersetzungsziel)','Language you already know (translation target)'],
   pairHint:['Sprachenpaar gilt für Vokabeln und Üben','Language pair applies to vocabulary and practice'],
   csvExp:['CSV exportieren','Export CSV'], csvImp:['CSV importieren','Import CSV'], txtExp:['Texte exportieren','Export texts'], txtImp:['Texte importieren','Import texts'],
   txAdd:['Text hinzufügen','Add text'],

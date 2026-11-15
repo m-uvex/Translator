@@ -1,6 +1,6 @@
 {
  "name": "uebersetzer",
- "version": "1.9.2",
+ "version": "1.9.3",
  "private": true,
  "description": "Lokaler Übersetzer und Texteditor mit Ollama, NLLB-200 und Omnilingual MT",
  "author": "Janek",

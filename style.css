@@ -379,7 +379,9 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
    Pillen sind kleiner als die des Uebersetzers, weil sie in Kopfzeilen mit
    Titel und Zaehler stehen. */
 .pairbar{display:inline-flex;align-items:center;gap:4px}
-.pairbar .pill{min-width:0;padding:5px 13px;font-size:13px}
+.pairbar .pill{min-width:0;padding:5px 13px;font-size:13px;gap:6px}
+.pairbar .pill svg{flex:none;color:var(--muted)}
+.pairbar .pill:hover svg{color:var(--accent-ink)}
 .pairbar .ib{width:30px;height:30px;border-radius:50%}
 .pairbar .pill:hover{border-color:var(--accent)}
 .libhead .pairbar{margin-inline-start:auto}

@@ -197,10 +197,12 @@ function drawPickLayer() {
 // Die Auswahl steht oben in beiden Vokabel-Arbeitsplaetzen und in der Ablage.
 // Sie liegt in S.studySrc/S.studyTgt und gilt daher ueberall gleichzeitig: Wer
 // die Sprache in „Ueben“ umstellt, sieht in „Vokabeln“ dasselbe Paar.
+// Die linke Pille ist die gelernte Sprache, die rechte die schon bekannte.
+// Das sagt der Doktorhut bzw. der Haken im Kreis; der Tooltip nennt es ganz.
 function pairHtml() {
-  return `<button class="pill" data-pair="src" title="${esc(t('learnLang'))}">${esc(langLabel(S.studySrc))}</button>` +
+  return `<button class="pill" data-pair="src" title="${esc(t('learnLang'))}">${ic('learn', 15)}<span>${esc(langLabel(S.studySrc))}</span></button>` +
     `<button class="ib" data-pair="swap" title="${esc(t('swap'))}">${ic('swap', 15)}</button>` +
-    `<button class="pill" data-pair="tgt" title="${esc(t('nativeLang'))}">${esc(langLabel(S.studyTgt))}</button>`;
+    `<button class="pill" data-pair="tgt" title="${esc(t('nativeLang'))}">${ic('know', 15)}<span>${esc(langLabel(S.studyTgt))}</span></button>`;
 }
 function renderPairs() {
   for (const id of ['#vocPair', '#srsPair', '#libPair']) {
