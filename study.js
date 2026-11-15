@@ -159,6 +159,10 @@ function addVocab(term, res, ctx, tx, pair) {
   if (ctx && !e.context) e.context = ctx;
   persist('vocab');
   renderVocab();
+  if (tx) {
+    if (ST.cur && ST.cur.id === tx.id && S.view === 'read') readerMeta(ST.cur);
+    renderTexts();
+  }
   return e;
 }
 
@@ -386,7 +390,7 @@ function sentenceAt(txt, o) {
 function drawReader() {
   const tx = ST.cur; if (!tx) return;
   $('#rTitle').textContent = tx.title;
-  $('#rMeta').textContent = [`${langLabel(tx.src || S.studySrc)} → ${langLabel(tx.tgt || S.studyTgt)}`, catLabel(tx.cat), t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length)].join(' · ');
+  readerMeta(tx);
   const art = $('#reader');
   art.innerHTML = '';
   const paras = String(tx.text || '').split(/\r?\n\s*\r?\n|\r?\n/).filter(p => p.trim());
@@ -421,6 +425,13 @@ function drawReader() {
   });
 }
 
+// Zahl der Vokabeln dieses Textes; wird nach jedem neuen Wort aufgefrischt,
+// damit der Kopf nicht bei 0 stehen bleibt.
+function readerMeta(tx) {
+  const el = $('#rMeta'); if (!el || !tx) return;
+  el.textContent = [`${langLabel(tx.src || S.studySrc)} → ${langLabel(tx.tgt || S.studyTgt)}`, catLabel(tx.cat), t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length)].join(' · ');
+}
+
 function savePos() {
   if (!ST.cur) return;
   const wrap = $('#readerWrap'); if (!wrap) return;
@@ -439,11 +450,21 @@ function killChip() {
   clearTimeout(ST.chipTimer);
 }
 
-function showChip(anchor, text, onClick) {
+// Fehlermeldung als Blase: bleibt vier Sekunden stehen und verschwindet dann.
+function chipFail(anchor, msg) {
+  showChip(anchor, msg, null, { err: true });
+  clearTimeout(ST.chipTimer);
+  ST.chipTimer = setTimeout(killChip, 4000);
+}
+
+// opts.busy zeigt einen Spinner statt der Uebersetzung, opts.err die Meldung.
+// Das ist im Lesen die einzige Rueckmeldung: die Statuszeile #status gehoert
+// zum Uebersetzer und ist dort nicht zu sehen.
+function showChip(anchor, text, onClick, opts) {
   killChip();
   const c = document.createElement('div');
-  c.className = 'wchip';
-  c.innerHTML = `<span>${esc(text)}</span>`;
+  c.className = 'wchip' + (opts && opts.busy ? ' busy' : '') + (opts && opts.err ? ' err' : '');
+  c.innerHTML = (opts && opts.busy ? '<span class="spin"></span>' : '') + `<span>${esc(text)}</span>`;
   document.body.append(c);
   const r = anchor.getBoundingClientRect();
   const w = c.offsetWidth, h = c.offsetHeight;
@@ -501,10 +522,13 @@ async function pickWord(el) {
     ctx = sentenceAt($('#input').value || '', Number(el.dataset.o) || 0);
   }
   window.trStatus(t('wordTr'));
+  showChip(el, t('wordTr'), null, { busy: true });
   let res;
   try { res = await translateTerm(term, ctx, pair); }
   catch (e) {
-    window.trStatus(e.message === 'nomodel' ? t('studyNoModel') : t('wordErr'));
+    const msg = e.message === 'nomodel' ? t('studyNoModel') : t('wordErr');
+    window.trStatus(msg);
+    chipFail(el, msg);
     return;
   }
   window.trStatus('');
@@ -525,9 +549,16 @@ async function pickPhrase(sel) {
   const spans = [];
   if (para) para.querySelectorAll('.rw').forEach(s => { if (sel.containsNode(s, true)) spans.push(s); });
   window.trStatus(t('wordTr'));
+  const anchor0 = spans[0] || (para || document.body);
+  showChip(anchor0, t('wordTr'), null, { busy: true });
   let res;
   try { res = await translateTerm(phrase, ctx, pair); }
-  catch (e) { window.trStatus(e.message === 'nomodel' ? t('studyNoModel') : t('wordErr')); return; }
+  catch (e) {
+    const msg = e.message === 'nomodel' ? t('studyNoModel') : t('wordErr');
+    window.trStatus(msg);
+    chipFail(anchor0, msg);
+    return;
+  }
   window.trStatus('');
   if (S.view === 'tr') usePair(pair);
   const entry = addVocab(phrase, res, ctx, S.view === 'read' ? ST.cur : null, pair);

@@ -451,3 +451,12 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .charbar .ch{font:inherit;line-height:1;min-width:34px;height:32px;padding:0 10px;border-radius:999px;background:var(--soft);border:1px solid var(--line);color:var(--text);cursor:pointer}
 .charbar .ch:hover{border-color:var(--accent);color:var(--accent-ink)}
 
+
+/* Blase ueber dem angetippten Wort: waehrend das Modell rechnet ein Spinner,
+   bei einem Fehler eine neutrale Blase mit der Meldung. Im Lese-Arbeitsplatz
+   ist das die einzige Rueckmeldung, weil #status zum Uebersetzer gehoert. */
+.wchip{display:inline-flex;align-items:center;gap:7px}
+.wchip.busy{cursor:default}
+.wchip .spin{width:12px;height:12px;border-width:2px;border-color:color-mix(in srgb,var(--on-accent) 35%,transparent);border-top-color:var(--on-accent)}
+.wchip.err{background:var(--card);color:var(--text);border:1px solid var(--line);cursor:default}
+.wchip.err .spin{display:none}
