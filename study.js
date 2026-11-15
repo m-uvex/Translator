@@ -165,8 +165,10 @@ function pickSync() {
   if (!layer) return;
   const live = ST.pick && S.view === 'tr';
   layer.classList.toggle('hidden', !live);
+  // Der Knopf steht fest im Fuss des Eingabefelds; seit dem Wegfall der
+  // Vokabelspalte wird er nicht mehr versteckt, nur noch hervorgehoben.
   const btn = $('#pickBtn');
-  if (btn) { btn.classList.remove('hidden'); btn.classList.toggle('on', ST.pick); }
+  if (btn) btn.classList.toggle('on', ST.pick);
   if (live) drawPickLayer();
 }
 
@@ -427,12 +429,17 @@ function pairForPick() {
   if (S.view === 'tr') {
     const src = (S.src && S.src !== 'auto') ? S.src : S.studySrc;
     const tgt = S.tgt || S.studyTgt;
-    if (src && tgt) return { src, tgt };
+    // Steht der Uebersetzer auf derselben Sprache auf beiden Seiten (etwa
+    // Quellenwahl „Auto“ mit Zielsprache Englisch bei Lernpaar Englisch →
+    // Deutsch), ergibt das Paar keine Uebersetzung und der Eintrag waere in
+    // keiner Liste zu sehen. Dann gilt das eingestellte Lernpaar.
+    if (src && tgt && src !== tgt) return { src, tgt };
   }
   return curPair();
 }
 function usePair(P) {
-  if (!P || samePair(P, curPair())) return;
+  if (!P || !P.src || !P.tgt || P.src === P.tgt) return;
+  if (samePair(P, curPair())) return;
   S.studySrc = P.src; S.studyTgt = P.tgt; save();
   renderPairs(); renderVocab(); renderTexts();
 }
