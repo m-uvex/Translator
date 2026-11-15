@@ -113,11 +113,11 @@ const K = {
   // Dialog „Vokabel bearbeiten“.
   vocEdit:['Vokabel bearbeiten','Edit vocabulary'], vocTermL:['Wort oder Wendung','Word or phrase'],
   vocTransL:['Übersetzung','Translation'], vocCtxL:['Kontextsatz','Context sentence'],
-  vocEmpty:['Noch keine Vokabeln','No vocabulary yet'], vocEmptyHint:['Beim Lesen ein Wort anklicken oder oben eingeben.','Click a word while reading, or type it above.'],
+  vocEmpty:['Noch keine Vokabeln','No vocabulary yet'],   vocEmptyHint:['Beim Lesen ein Wort anklicken oder oben eingeben. Eine Readlang-Liste kommt über den Pfeil nach oben als Textdatei herein.','Click a word while reading, or type it above. A Readlang list comes in as a text file via the arrow pointing up.'],
   vocCount:[n => `${n} Vokabeln`, n => `${n} words`], vocabDue:[n => `${n} fällig`, n => `${n} due`],   vocOther:[n => `${n} in anderen Sprachen`, n => `${n} in other languages`],
   learnLang:['Sprache, die du lernst','Language you are learning'], nativeLang:['Sprache, die du schon kennst (Übersetzungsziel)','Language you already know (translation target)'],
   pairHint:['Sprachenpaar gilt für Vokabeln und Üben','Language pair applies to vocabulary and practice'],
-  csvExp:['CSV exportieren','Export CSV'], csvImp:['CSV importieren','Import CSV'], txtExp:['Texte exportieren','Export texts'], txtImp:['Texte importieren','Import texts'],
+  csvExp:['CSV exportieren','Export CSV'], csvImp:['Vokabeln aus CSV oder Readlang importieren','Import words from CSV or Readlang'], txtExp:['Texte exportieren','Export texts'], txtImp:['Texte importieren','Import texts'],
   txAdd:['Text hinzufügen','Add text'],
   // Dialog „Text hinzufügen“: Titel, Textart, Text und die beiden Quellen.
   txTitleL:['Titel','Title'], txCatL:['Textart','Type'], txBodyL:['Text','Text'],

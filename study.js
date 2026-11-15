@@ -831,37 +831,123 @@ function parseCsv(text) {
   return rows.filter(r => r.some(x => String(x).trim()));
 }
 
-function importCsv(text) {
-  const rows = parseCsv(text);
+// Gemeinsames Eintragen: vorhandene Woerter werden ergaenzt, nicht doppelt
+// angelegt. Kontextsaetze sammeln sich an, die Uebersetzung bleibt die erste.
+function mergeVocab(items) {
+  const P = curPair();
   let n = 0;
-  for (const r of rows) {
-    const first = String(r[0] || '').trim();
-    if (!first) continue;
-    const terms = first.split(' / ').map(s => s.trim()).filter(Boolean);
-    const term = terms[0];
-    const trs = String(r[1] || '').split(' / ').map(s => s.trim()).filter(Boolean);
-    const ctx = String(r[2] || '').trim();
-    const iv = parseInt(String(r[3] || '').trim(), 10);
-    const due = /^\d{4}-\d{2}-\d{2}$/.test(String(r[4] || '').trim()) ? String(r[4]).trim() : '';
-    const P = curPair();
+  for (const it of items) {
+    const term = String(it.term || '').trim();
+    if (!term) continue;
     let e = findVocab(term, P);
     if (!e) {
-      e = { id: uid('v'), term, translation: trs[0] || '', lemma: term, pos: '', gender: '', article: '', alternatives: [], context: '', textId: '', textTitle: '', src: P.src, tgt: P.tgt, created: Date.now(), level: 0, interval: 0, due: todayISO() };
+      e = { id: uid('v'), term, translation: it.translation || '', lemma: term, pos: '', gender: '', article: '', alternatives: [], context: '', textId: '', textTitle: '', src: P.src, tgt: P.tgt, created: Date.now(), level: 0, interval: 0, due: todayISO() };
       ST.vocab.unshift(e);
     }
-    e.alternatives = [...new Set([...(e.alternatives || []), ...terms.slice(1), ...trs.slice(1)].filter(Boolean))];
-    if (!e.translation) e.translation = trs[0] || '';
-    if (ctx && !e.context) e.context = ctx;
-    else if (ctx && e.context && !e.context.includes(ctx)) e.context = e.context + ' ' + ctx;
+    e.alternatives = [...new Set([...(e.alternatives || []), ...(it.alternatives || [])].filter(Boolean))];
+    if (!e.translation) e.translation = it.translation || '';
+    if (it.context && !e.context) e.context = it.context;
+    else if (it.context && e.context && !e.context.includes(it.context)) e.context = e.context + ' ' + it.context;
     if (S.csvSrs) {
-      if (!Number.isNaN(iv) && iv > 0) { e.interval = iv; e.level = Math.max(0, LADDER.indexOf(iv)); }
-      if (due) e.due = due;
+      if (!Number.isNaN(it.interval) && it.interval > 0) { e.interval = it.interval; e.level = Math.max(0, LADDER.indexOf(it.interval)); }
+      if (it.due) e.due = it.due;
     }
     n++;
   }
   persist('vocab');
   renderVocab();
   window.trStatus(t('csvDone', n));
+  return n;
+}
+
+function importCsv(text) {
+  const items = [];
+  for (const r of parseCsv(text)) {
+    const first = String(r[0] || '').trim();
+    if (!first) continue;
+    const terms = first.split(' / ').map(s => s.trim()).filter(Boolean);
+    const trs = String(r[1] || '').split(' / ').map(s => s.trim()).filter(Boolean);
+    const iv = parseInt(String(r[3] || '').trim(), 10);
+    const due = /^\d{4}-\d{2}-\d{2}$/.test(String(r[4] || '').trim()) ? String(r[4]).trim() : '';
+    items.push({
+      term: terms[0], alternatives: [...terms.slice(1), ...trs.slice(1)],
+      translation: trs[0] || '', context: String(r[2] || '').trim(),
+      interval: Number.isNaN(iv) ? 0 : iv, due
+    });
+  }
+  return mergeVocab(items);
+}
+
+// ---------- Vokabelliste aus Readlang ----------
+// Readlang schreibt die Vokabeln als Textdatei, deren Spalten man im Export
+// selbst zusammenstellt (z. B. Kontext mit Uebersetzung, Original, Frequenz)
+// und deren Trenner Tab, Semikolon oder ein eigenes Zeichen ist. Ein Feld wird
+// deshalb nach seinem Aussehen einsortiert, nicht nach seiner Position:
+// [[...]] bzw. {{c1::...}} traegt den Kontext, reine Zahlen die Wortfrequenz,
+// das kuerzeste uebrige Feld ist das Wort.
+const RL_MARK = /\[\[(.+?)\]\]|\{\{c?\d*::(.+?)\}\}/;
+
+// Trenner bestimmen. Anfuehrungszeichen deuten auf unsere eigene CSV-Datei.
+function readlangDelim(text) {
+  const s = String(text).replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+  const lines = s.split('\n').filter(l => l.trim());
+  if (!lines.length) return '';
+  const share = ch => lines.filter(l => l.includes(ch)).length / lines.length;
+  if (share('\t') > 0.8) return '\t';
+  if (share('|') > 0.8) return '|';
+  if (!s.includes('"') && share(';') > 0.8) return ';';
+  return '';
+}
+
+// Listet die Vokabeln einer Readlang-Textdatei; null, wenn es keine ist.
+function readlangWords(text) {
+  const delim = readlangDelim(text);
+  if (!delim) return null;
+  const lines = String(text).replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').split('\n').filter(l => l.trim());
+  const isFreq = s => /^\d+(?:[.,]\d+)?$/.test(s);
+  const out = [], seen = new Map();
+  for (const line of lines) {
+    const fields = line.split(delim).map(x => x.trim()).filter(Boolean);
+    if (!fields.length) continue;
+    let ctx = '', bracket = '', words = [];
+    for (const f of fields) {
+      if (isFreq(f)) continue;
+      const m = f.match(RL_MARK);
+      if (m && !ctx) { ctx = f; bracket = (m[1] || m[2] || '').trim(); continue; }
+      if (f === 'No context') continue;
+      words.push(f);
+    }
+    if (!words.length) continue;
+    const term = words.slice().sort((a, b) => a.length - b.length)[0];
+    let translation = bracket;
+    // „Kontext mit Originalwort“ stellt das Wort selbst in die Klammern.
+    if (translation && nrm(translation) === nrm(term)) translation = '';
+    if (!translation && words.length > 1) translation = words.find(w => w !== term) || '';
+    let context = '';
+    if (ctx) {
+      // Die Klammern durch das Wort ersetzen ergibt den Satz, wie er im Text stand.
+      context = ctx.replace(RL_MARK, term).replace(/^["'„“]\s*/, '').replace(/\s*["'“”]$/, '').trim();
+      if (nrm(context) === nrm(term)) context = '';
+    }
+    const key = nrm(term);
+    const prev = seen.get(key);
+    if (prev) {
+      if (!prev.translation && translation) prev.translation = translation;
+      if (!prev.context && context) prev.context = context;
+      continue;
+    }
+    const e = { term, translation, context };
+    seen.set(key, e);
+    out.push(e);
+  }
+  return out;
+}
+
+// Der Import nimmt beide Formen: die Textdatei aus Readlang und unsere CSV.
+function importVocab(text) {
+  const words = readlangWords(text);
+  if (words) return words.length ? mergeVocab(words) : 0;
+  return importCsv(text);
 }
 
 // ---------- Texte als Datei ----------
@@ -950,9 +1036,9 @@ function wire() {
   };
   $('#vocCsvExp').onclick = () => window.api.studyExportFile('vokabeln', vocabCsv(), 'csv');
   $('#vocCsvImp').onclick = async () => {
-    const r = await window.api.studyImportFile('csv');
+    const r = await window.api.studyImportFile('csv,txt,tsv');
     if (!r) return;
-    try { importCsv(r.text); } catch { window.trStatus(t('csvErr')); }
+    try { importVocab(r.text); } catch { window.trStatus(t('csvErr')); }
   };
 }
 
