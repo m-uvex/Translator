@@ -53,19 +53,28 @@ async function llmJson(prompt) {
   try { return JSON.parse(out); } catch { return {}; }
 }
 
+// Sprachenpaar: Jedes Paar fuehrt seine eigenen Texte und Vokabeln. Die Auswahl
+// steht oben in beiden Vokabel-Arbeitsplaetzen und in der Ablage; sie ist eine
+// gemeinsame Einstellung, damit ein Wechsel ueberall gleichzeitig gilt.
+const curPair = () => ({ src: S.studySrc, tgt: S.studyTgt });
+const pairOf = (o, d) => ({ src: (o && o.src) || (d || curPair()).src, tgt: (o && o.tgt) || (d || curPair()).tgt });
+const samePair = (a, b) => a.src === b.src && a.tgt === b.tgt;
+const inPair = o => samePair(pairOf(o), curPair());
+
 const wordCache = new Map();
-async function translateTerm(term, ctx) {
-  const key = nrm(term) + '|' + nrm(ctx) + '|' + S.tgt;
+async function translateTerm(term, ctx, pair) {
+  const P = pair || curPair();
+  const key = nrm(term) + '|' + nrm(ctx) + '|' + P.src + '>' + P.tgt;
   if (wordCache.has(key)) return wordCache.get(key);
   const prompt =
     `Word or phrase: "${term}"\n` +
     (ctx ? `Sentence it appears in: ${ctx}\n` : '') +
-    `Translate it from ${langName(S.src)} into ${langName(S.tgt)}, exactly as used in the sentence.\n` +
+    `Translate it from ${langName(P.src)} into ${langName(P.tgt)}, exactly as used in the sentence.\n` +
     'Return JSON with these keys:\n' +
     '  "translation": the translation (up to three equivalent meanings separated by " / ")\n' +
     '  "lemma": the dictionary form\n' +
     '  "pos": part of speech in the target language\n' +
-    `  "gender": "m", "f", "n", or "" - grammatical gender of the translation, if ${langName(S.tgt)} marks gender\n` +
+    `  "gender": "m", "f", "n", or "" - grammatical gender of the translation, if ${langName(P.tgt)} marks gender\n` +
     '  "article": the definite article of the translation if the target language has one, otherwise ""';
   const j = await llmJson(prompt);
   const r = {
@@ -81,17 +90,22 @@ async function translateTerm(term, ctx) {
 }
 
 // ---------- Vokabeln ----------
-function findVocab(term) { const n = nrm(term); return ST.vocab.find(v => nrm(v.term) === n); }
+function findVocab(term, pair) {
+  const n = nrm(term), P = pair || curPair();
+  return ST.vocab.find(v => nrm(v.term) === n && samePair(pairOf(v, P), P));
+}
 
-function addVocab(term, res, ctx, tx) {
+function addVocab(term, res, ctx, tx, pair) {
   const t0 = String(term || '').trim();
   if (!t0 || !res) return null;
-  let e = findVocab(t0);
+  const P = pair || (tx ? pairOf(tx) : curPair());
+  let e = findVocab(t0, P);
   if (!e) {
     e = {
       id: uid('v'), term: t0, translation: res.translation || '', lemma: res.lemma || t0,
       pos: res.pos || '', gender: res.gender || '', article: res.article || '',
       alternatives: [], context: '', textId: tx ? tx.id : '', textTitle: tx ? tx.title : '',
+      src: P.src, tgt: P.tgt,
       created: Date.now(), level: 0, interval: 0, due: todayISO()
     };
     ST.vocab.unshift(e);
@@ -99,6 +113,8 @@ function addVocab(term, res, ctx, tx) {
   if (!e.translation && res.translation) e.translation = res.translation;
   if (!e.gender && res.gender) { e.gender = res.gender; e.article = res.article || ''; }
   if (!e.pos && res.pos) e.pos = res.pos;
+  if (!e.src) e.src = P.src;
+  if (!e.tgt) e.tgt = P.tgt;
   if (ctx && !e.context) e.context = ctx;
   persist('vocab');
   renderVocab();
@@ -133,23 +149,26 @@ function vocRow(e, opts) {
 
 function renderVocab() {
   const box = V(); if (!box) return;
+  const mine = ST.vocab.filter(inPair);
   const q = nrm($('#vocTerm') ? $('#vocTerm').value : '');
-  const list = q ? ST.vocab.filter(e => nrm(e.term).includes(q) || nrm(e.translation).includes(q)) : ST.vocab.slice();
+  const list = q ? mine.filter(e => nrm(e.term).includes(q) || nrm(e.translation).includes(q)) : mine.slice();
   list.sort((a, b) => (a.due || '').localeCompare(b.due || '') || a.term.localeCompare(b.term));
   box.innerHTML = list.map(e => vocRow(e, { due: true })).join('');
-  $('#vocCount').textContent = ST.vocab.length ? t('vocCount', ST.vocab.length) : '';
-  $('#vocEmpty').classList.toggle('hidden', ST.vocab.length > 0);
-  box.classList.toggle('hidden', ST.vocab.length === 0);
+  const other = ST.vocab.length - mine.length;
+  $('#vocCount').textContent = (mine.length ? t('vocCount', mine.length) : '') + (other > 0 ? ` · ${t('vocOther', other)}` : '');
+  $('#vocEmpty').classList.toggle('hidden', mine.length > 0);
+  box.classList.toggle('hidden', mine.length === 0);
 }
 window.studyVocRender = renderVocab;
 
 // ---------- Seitenspalte neben dem Uebersetzer ----------
 function renderPanel() {
   const p = $('#vPanel'); if (!p || p.classList.contains('hidden')) return;
-  const due = ST.vocab.filter(e => (e.due || todayISO()) <= todayISO()).length;
-  p.innerHTML = `<div class="vph"><b>${esc(t('vocTitle'))}</b><span class="muted">${esc(t('vocCount', ST.vocab.length))}</span></div>
+  const mine = ST.vocab.filter(inPair);
+  const due = mine.filter(e => (e.due || todayISO()) <= todayISO()).length;
+  p.innerHTML = `<div class="vph"><b>${esc(t('vocTitle'))}</b><span class="muted">${esc(langLabel(S.studySrc))} → ${esc(langLabel(S.studyTgt))}</span></div>
     <button class="ghost" id="vPanelTrain">${esc(t('srsTitle'))} · ${esc(t('vocabDue', due))}</button>
-    <div class="vplist">${ST.vocab.slice(0, 40).map(e => vocRow(e)).join('')}</div>`;
+    <div class="vplist">${mine.slice(0, 40).map(e => vocRow(e)).join('')}</div>`;
   p.querySelector('#vPanelTrain').onclick = () => showView('srs');
   p.querySelectorAll('[data-del]').forEach(b => b.onclick = () => dropVocab(b.dataset.del));
 }
@@ -196,17 +215,56 @@ window.studyPanelSync = () => {
   pickSync();
 };
 
+// ---------- Sprachenpaar ----------
+// Die Auswahl steht oben in beiden Vokabel-Arbeitsplaetzen und in der Ablage.
+// Sie liegt in S.studySrc/S.studyTgt und gilt daher ueberall gleichzeitig: Wer
+// die Sprache in „Ueben“ umstellt, sieht in „Vokabeln“ dasselbe Paar.
+function pairHtml() {
+  return `<button class="pill" data-pair="src" title="${esc(t('learnLang'))}">${esc(langLabel(S.studySrc))}</button>` +
+    `<button class="ib" data-pair="swap" title="${esc(t('swap'))}">${ic('swap', 15)}</button>` +
+    `<button class="pill" data-pair="tgt" title="${esc(t('nativeLang'))}">${esc(langLabel(S.studyTgt))}</button>`;
+}
+function renderPairs() {
+  for (const id of ['#vocPair', '#srsPair', '#libPair']) {
+    const el = $(id);
+    if (el) el.innerHTML = pairHtml();
+  }
+  document.querySelectorAll('.pairbar [data-pair]').forEach(b => { b.onclick = () => pairClick(b); });
+}
+function pairClick(b) {
+  const k = b.dataset.pair;
+  if (k === 'swap') {
+    const a = S.studySrc;
+    S.studySrc = S.studyTgt; S.studyTgt = a;
+    save(); pairChanged();
+    return;
+  }
+  langPop(b, k === 'src' ? 'studySrc' : 'studyTgt', {
+    langs: OLLAMA_LANGS, noAuto: true, pins: () => S.pins.ollama,
+    isSrc: k === 'src', done: pairChanged
+  });
+}
+function pairChanged() {
+  // Beide Seiten gleich ergibt keine Uebersetzung; die Muttersprache weicht aus.
+  if (S.studySrc === S.studyTgt) S.studyTgt = S.studySrc === 'en' ? 'de' : 'en';
+  save();
+  renderPairs(); renderVocab(); renderPanel(); renderTexts();
+  if (S.view === 'srs') { srsShow = false; srsQueue = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO()); renderSrs(); }
+}
+
 // ---------- Texte ----------
 function renderTexts() {
   const grid = $('#libGrid'); if (!grid) return;
   grid.querySelectorAll('.txtcard').forEach(c => c.remove());
   const frag = document.createDocumentFragment();
-  for (const tx of ST.texts) {
+  const mine = ST.texts.filter(inPair);
+  const other = ST.texts.length - mine.length;
+  for (const tx of mine) {
     const card = document.createElement('div');
     card.className = 'libcard txtcard'; card.dataset.tx = tx.id; card.tabIndex = 0;
     const excerpt = String(tx.text || '').slice(0, 420);
     card.innerHTML = `<div class="libprev"><div class="doc">${esc(excerpt)}</div><span class="txbadge">${esc(catLabel(tx.cat))}</span></div>
-      <div class="libmeta"><div class="libname">${esc(tx.title)}</div><div class="libdate">${esc(t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length))}</div></div>
+      <div class="libmeta"><div class="libname">${esc(tx.title)}</div><div class="libdate">${esc(langLabel(tx.src))} → ${esc(langLabel(tx.tgt))} · ${esc(t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length))}</div></div>
       <button class="rm" title="${esc(t('remove'))}">${ic('x', 14)}</button>`;
     card.onclick = ev => { if (!ev.target.closest('.rm')) openText(tx.id); };
     card.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openText(tx.id); } };
@@ -214,8 +272,10 @@ function renderTexts() {
     frag.append(card);
   }
   grid.prepend(frag);
+  const hint = $('#txOther');
+  if (hint) hint.textContent = other > 0 ? t('vocOther', other) : '';
   const empty = $('#libEmpty');
-  if (empty && ST.texts.length) empty.classList.add('hidden');
+  if (empty && mine.length) empty.classList.add('hidden');
 }
 window.studyDrawTexts = renderTexts;
 
@@ -231,7 +291,7 @@ async function addTextFromFile() {
   const title = await askLine(t('txAdd'), r.name || '');
   if (title === null) return;
   const cat = $('#txCat').value || 'other';
-  const tx = { id: uid('t'), title: title.trim() || r.name, cat, text: r.text, created: Date.now(), updated: Date.now(), pos: 0 };
+  const tx = { id: uid('t'), title: title.trim() || r.name, cat, text: r.text, pos: 0, src: S.studySrc, tgt: S.studyTgt, created: Date.now(), updated: Date.now() };
   ST.texts.unshift(tx);
   persist('texts');
   await drawLib();
@@ -270,7 +330,7 @@ function sentenceAt(txt, o) {
 function drawReader() {
   const tx = ST.cur; if (!tx) return;
   $('#rTitle').textContent = tx.title;
-  $('#rMeta').textContent = [catLabel(tx.cat), t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length)].join(' · ');
+  $('#rMeta').textContent = [`${langLabel(tx.src || S.studySrc)} → ${langLabel(tx.tgt || S.studyTgt)}`, catLabel(tx.cat), t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length)].join(' · ');
   const art = $('#reader');
   art.innerHTML = '';
   const paras = String(tx.text || '').split(/\r?\n\s*\r?\n|\r?\n/).filter(p => p.trim());
@@ -351,8 +411,28 @@ function removeWithChip(spans, entry) {
   }, 5000);
 }
 
+// Aus welchem Paar eine angetippte Stelle uebersetzt wird: im Lesen aus dem
+// geoeffneten Text, im Uebersetzer aus dessen Sprachen. Steht der Uebersetzer
+// auf einer anderen Sprache als die Vokabel auswahl, wird diese mitgezogen -
+// sonst waere der neue Eintrag in der Liste nicht zu sehen.
+function pairForPick() {
+  if (S.view === 'read' && ST.cur) return pairOf(ST.cur);
+  if (S.view === 'tr') {
+    const src = (S.src && S.src !== 'auto') ? S.src : S.studySrc;
+    const tgt = S.tgt || S.studyTgt;
+    if (src && tgt) return { src, tgt };
+  }
+  return curPair();
+}
+function usePair(P) {
+  if (!P || samePair(P, curPair())) return;
+  S.studySrc = P.src; S.studyTgt = P.tgt; save();
+  renderPairs(); renderVocab(); renderPanel(); renderTexts();
+}
+
 async function pickWord(el) {
   const term = el.dataset.w || el.textContent;
+  const pair = pairForPick();
   let ctx = '';
   if (S.view === 'read' && el.parentElement && el.parentElement.dataset.txt) {
     ctx = sentenceAt(el.parentElement.dataset.txt, Number(el.dataset.o) || 0);
@@ -361,13 +441,14 @@ async function pickWord(el) {
   }
   window.trStatus(t('wordTr'));
   let res;
-  try { res = await translateTerm(term, ctx); }
+  try { res = await translateTerm(term, ctx, pair); }
   catch (e) {
     window.trStatus(e.message === 'nomodel' ? t('studyNoModel') : t('wordErr'));
     return;
   }
   window.trStatus('');
-  const entry = addVocab(term, res, ctx, S.view === 'read' ? ST.cur : null);
+  if (S.view === 'tr') usePair(pair);
+  const entry = addVocab(term, res, ctx, S.view === 'read' ? ST.cur : null, pair);
   const label = [res.article, res.translation].filter(Boolean).join(' ');
   showChip(el, label, () => removeWithChip([el], entry));
 }
@@ -379,14 +460,16 @@ async function pickPhrase(sel) {
   const host = sel.anchorNode && sel.anchorNode.parentElement;
   const para = host && host.closest ? host.closest('[data-txt]') : null;
   const ctx = para ? para.dataset.txt : (S.view === 'tr' ? $('#input').value : '');
+  const pair = pairForPick();
   const spans = [];
   if (para) para.querySelectorAll('.rw').forEach(s => { if (sel.containsNode(s, true)) spans.push(s); });
   window.trStatus(t('wordTr'));
   let res;
-  try { res = await translateTerm(phrase, ctx); }
+  try { res = await translateTerm(phrase, ctx, pair); }
   catch (e) { window.trStatus(e.message === 'nomodel' ? t('studyNoModel') : t('wordErr')); return; }
   window.trStatus('');
-  const entry = addVocab(phrase, res, ctx, S.view === 'read' ? ST.cur : null);
+  if (S.view === 'tr') usePair(pair);
+  const entry = addVocab(phrase, res, ctx, S.view === 'read' ? ST.cur : null, pair);
   const anchor = spans[0] || (para || document.body);
   showChip(anchor, res.translation, () => removeWithChip(spans, entry));
 }
@@ -453,7 +536,8 @@ function maskTerm(text, term) {
 
 function renderSrs() {
   const box = $('#srsBox'); if (!box) return;
-  const due = ST.vocab.filter(e => (e.due || todayISO()) <= todayISO());
+  srsQueue = srsQueue.filter(inPair);
+  const due = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO());
   $('#srsCount').textContent = due.length ? t('vocabDue', due.length) : '';
   if (!due.length) {
     box.innerHTML = `<div class="srsempty"><p>${esc(t('srsNone'))}</p><p class="muted">${esc(t('srsDone'))}</p></div>`;
@@ -483,14 +567,14 @@ function renderSrs() {
     renderSrs(); renderVocab();
   });
 }
-window.studySrsRender = () => { srsShow = false; srsQueue = ST.vocab.filter(e => (e.due || todayISO()) <= todayISO()); renderSrs(); };
+window.studySrsRender = () => { srsShow = false; srsQueue = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO()); renderSrs(); };
 
 // ---------- CSV im Readlang-Format ----------
 // Spalten: Wort/Wendung, Uebersetzung, Kontext, Intervall in Tagen, naechstes
 // Datum. Synonyme und Alternativuebersetzungen werden mit " / " getrennt.
 const csvCell = v => { const s = String(v == null ? '' : v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 function vocabCsv() {
-  return ST.vocab.map(e => {
+  return ST.vocab.filter(inPair).map(e => {
     const cols = [e.term + (e.alternatives?.length ? ' / ' + e.alternatives.join(' / ') : ''), e.translation, e.context || ''];
     if (S.csvSrs) cols.push(String(e.interval || 0), e.due || '');
     return cols.map(csvCell).join(',');
@@ -527,9 +611,10 @@ function importCsv(text) {
     const ctx = String(r[2] || '').trim();
     const iv = parseInt(String(r[3] || '').trim(), 10);
     const due = /^\d{4}-\d{2}-\d{2}$/.test(String(r[4] || '').trim()) ? String(r[4]).trim() : '';
-    let e = findVocab(term);
+    const P = curPair();
+    let e = findVocab(term, P);
     if (!e) {
-      e = { id: uid('v'), term, translation: trs[0] || '', lemma: term, pos: '', gender: '', article: '', alternatives: [], context: '', textId: '', textTitle: '', created: Date.now(), level: 0, interval: 0, due: todayISO() };
+      e = { id: uid('v'), term, translation: trs[0] || '', lemma: term, pos: '', gender: '', article: '', alternatives: [], context: '', textId: '', textTitle: '', src: P.src, tgt: P.tgt, created: Date.now(), level: 0, interval: 0, due: todayISO() };
       ST.vocab.unshift(e);
     }
     e.alternatives = [...new Set([...(e.alternatives || []), ...terms.slice(1), ...trs.slice(1)].filter(Boolean))];
@@ -637,8 +722,19 @@ function wire() {
     const vo = await window.api.studyLoad('vocab');
     if (Array.isArray(vo)) ST.vocab = vo;
   } catch { }
+  // Sprachenpaar: Standard aus dem Uebersetzer und der Anzeigesprache ableiten.
+  // Texte und Vokabeln aus der Zeit vor der Sprachtrennung bekommen das
+  // aktuelle Paar, damit nichts aus den Listen verschwindet.
+  if (!S.studyTgt) S.studyTgt = (LANG === 'de') ? 'de' : (S.tgt && S.tgt !== 'auto' ? S.tgt : 'en');
+  if (!S.studySrc) S.studySrc = (S.src && S.src !== 'auto') ? S.src : (S.studyTgt === 'de' ? 'en' : 'de');
+  if (S.studySrc === S.studyTgt) S.studyTgt = S.studySrc === 'en' ? 'de' : 'en';
+  for (const tx of ST.texts) if (!tx.src) { tx.src = S.studySrc; tx.tgt = S.studyTgt; }
+  for (const v of ST.vocab) if (!v.src) { v.src = S.studySrc; v.tgt = S.studyTgt; }
+  save();
+  persist('texts'); persist('vocab');
   fillCats();
   wire();
+  renderPairs();
   renderVocab();
   studyPanelSync();
   renderPanel();

@@ -380,3 +380,12 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .srsempty{color:var(--muted);text-align:center;display:flex;flex-direction:column;gap:4px}
 .srsempty p{margin:0}
 @media print{#vR,#vV,#vP,.vpanel,#pickLayer{display:none!important}}
+
+/* Sprachenpaar: dieselbe Auswahl in Vokabeln, Ueben und in der Ablage. Die
+   Pillen sind kleiner als die des Uebersetzers, weil sie in Kopfzeilen mit
+   Titel und Zaehler stehen. */
+.pairbar{display:inline-flex;align-items:center;gap:4px}
+.pairbar .pill{min-width:0;padding:5px 13px;font-size:13px}
+.pairbar .ib{width:30px;height:30px;border-radius:50%}
+.pairbar .pill:hover{border-color:var(--accent)}
+.libhead .pairbar{margin-inline-start:auto}
