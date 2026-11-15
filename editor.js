@@ -1635,19 +1635,22 @@ function showView(v) {
   $('#vT').classList.toggle('hidden', v !== 'tr'); $('#vE').classList.toggle('hidden', v !== 'ed');
   $('#vL').classList.toggle('hidden', v !== 'lib');
   // Leseoberflaeche und die beiden Vokabel-Arbeitsplaetze.
+  $('#vTxt').classList.toggle('hidden', v !== 'txt');
   $('#vR').classList.toggle('hidden', v !== 'read');
   $('#vV').classList.toggle('hidden', v !== 'voc');
   $('#vP').classList.toggle('hidden', v !== 'srs');
   $('#nvTr').classList.toggle('active', v === 'tr'); $('#nvEd').classList.toggle('active', v === 'ed');
-  // Die Leseoberflaeche gehoert zum Text-Arbeitsplatz, deshalb bleibt dessen
-  // Icon hervorgehoben; das Bibliotheks-Icon zeigt sie mit an.
-  $('#nvLib').classList.toggle('active', v === 'lib' || v === 'read');
+  // Lese-Arbeitsplatz und Leseoberflaeche teilen sich ein Symbol; die
+  // Dokumentenablage ist davon getrennt und zeigt nur Dokumente.
+  $('#nvLib').classList.toggle('active', v === 'lib');
+  $('#nvTxt').classList.toggle('active', v === 'txt' || v === 'read');
   $('#nvVoc').classList.toggle('active', v === 'voc');
   $('#nvSrs').classList.toggle('active', v === 'srs');
   S.view = v; save(); closePops(); $('#trPop').classList.add('hidden'); hideBar();
   dockClose();
   if (v === 'ed') { updWords(); scheduleScan(); }
   if (v === 'lib') drawLib();
+  if (v === 'txt' && window.studyTextsRender) window.studyTextsRender();
   if (v === 'read' && window.studyRestore) window.studyRestore();
   if (v === 'voc' && window.studyVocRender) window.studyVocRender();
   if (v === 'srs' && window.studySrsRender) window.studySrsRender();
@@ -1665,18 +1668,16 @@ function applyWorkspace() {
   // Uebersetzer“ stehen sie als Seitenspalte bereit (Einstellung „Vokabeln
   // neben dem Uebersetzer“), sonst ueber ihre eigenen Icons.
   const libHidden = w === 'tr';
-  for (const id of ['nvVoc', 'nvSrs']) $('#' + id).classList.toggle('hidden', libHidden);
-  if (w === 'tr' && (S.view === 'lib' || S.view === 'read')) showView('tr');
+  for (const id of ['nvVoc', 'nvSrs', 'nvTxt']) $('#' + id).classList.toggle('hidden', libHidden);
+  if (w === 'tr' && (S.view === 'lib' || S.view === 'read' || S.view === 'txt')) showView('tr');
   else if (w === 'tr' && (S.view === 'voc' || S.view === 'srs')) showView('tr');
   else if (single && S.view !== w && S.view !== 'lib') showView(w);
 }
 $('#nvTr').onclick = () => showView('tr'); $('#nvEd').onclick = () => showView('ed');
-$('#nvLib').onclick = () => showView(S.view === 'lib' || S.view === 'read' ? 'ed' : 'lib');
+$('#nvLib').onclick = () => showView(S.view === 'lib' ? 'ed' : 'lib');
+$('#nvTxt').onclick = () => showView(S.view === 'txt' || S.view === 'read' ? 'tr' : 'txt');
 $('#nvVoc').onclick = () => showView(S.view === 'voc' ? 'tr' : 'voc');
 $('#nvSrs').onclick = () => showView(S.view === 'srs' ? 'tr' : 'srs');
-// Am Ende der Liste der Dokumente stehen die Lesetexte; drawLib ruft dafuer
-// study.js auf, damit beide Arten in einer Ablage erscheinen.
-const drawLibBase = drawLib; drawLib = async function () { await drawLibBase(); if (window.studyDrawTexts) window.studyDrawTexts(); };
 window.edRender = () => { buildBar(); renderTb(); renderSb(); applyI18n(); reicon(); applyWorkspace(); scheduleScan(); };
 window.edModels = () => { fixEdLangs(); renderTb(); };
 window.edWorkspace = applyWorkspace;

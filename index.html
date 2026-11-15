@@ -3,7 +3,7 @@
 <div class="titlebar"><span class="tbname" data-t="appTitle"></span><span class="sp"></span><div class="tbctl"><button class="ib tbb" id="winMin" data-i="winMin" data-tt="winMin"></button><button class="ib tbb" id="winMax" data-i="winMax" data-tt="winMax"></button><button class="ib tbb" id="winClose" data-i="x" data-tt="winClose"></button></div></div>
 <div class="app">
   <nav class="rail">
-    <div class="rg"><button class="ib rb active" id="nvTr" data-i="languages" data-tt="navTr"></button><button class="ib rb" id="nvEd" data-i="doc" data-tt="navEd"></button><button class="ib rb" id="nvLib" data-i="library" data-tt="navLib"></button><button class="ib rb" id="nvVoc" data-i="vocab" data-tt="navVoc"></button><button class="ib rb" id="nvSrs" data-i="practice" data-tt="navSrs"></button></div>
+    <div class="rg"><button class="ib rb active" id="nvTr" data-i="languages" data-tt="navTr"></button><button class="ib rb" id="nvEd" data-i="doc" data-tt="navEd"></button><button class="ib rb" id="nvLib" data-i="library" data-tt="navLib"></button><button class="ib rb" id="nvTxt" data-i="book" data-tt="navTxt"></button><button class="ib rb" id="nvVoc" data-i="vocab" data-tt="navVoc"></button><button class="ib rb" id="nvSrs" data-i="practice" data-tt="navSrs"></button></div>
     <div class="rg"><button class="ib" id="openSettings" data-i="sliders" data-tt="settings"></button></div>
   </nav>
   <div id="vT" class="view">
@@ -41,10 +41,15 @@
     <header class="libhead"><h2 data-t="libTitle"></h2><span class="sp"></span><span class="muted" id="libCount"></span></header>
     <div id="libGrid" class="libgrid"></div>
     <div id="libEmpty" class="libempty hidden"><p data-t="libEmpty"></p><p class="muted" data-t="libEmptyHint"></p></div>
-    <div class="rfootbar"><span class="pairbar" id="libPair"></span><span class="muted" id="txOther"></span><span class="sp"></span><button class="ib" id="txAdd" data-i="plus" data-tt="txAdd"></button><select id="txCat" class="tsel"></select><button class="ib" id="txExp" data-i="download" data-tt="txtExp"></button><button class="ib" id="txImp" data-i="upload" data-tt="txtImp"></button></div>
+  </div>
+  <div id="vTxt" class="view hidden">
+    <header class="libhead"><h2 data-t="readTitle"></h2><span class="sp"></span><span class="pairbar" id="libPair"></span><span class="muted" id="txOther"></span></header>
+    <div id="txtGrid" class="libgrid"></div>
+    <div id="txtEmpty" class="libempty hidden"><p data-t="txEmpty"></p><p class="muted" data-t="txEmptyHint"></p></div>
+    <div class="rfootbar"><button class="ib" id="txAdd" data-i="plus" data-tt="txAdd"></button><select id="txCat" class="tsel"></select><span class="sp"></span><button class="ib" id="txExp" data-i="download" data-tt="txtExp"></button><button class="ib" id="txImp" data-i="upload" data-tt="txtImp"></button></div>
   </div>
   <div id="vR" class="view hidden">
-    <div class="rhead"><button class="ib" id="rBack" data-i="back" data-tt="navLib"></button><h2 id="rTitle"></h2><span class="sp"></span><span class="muted" id="rMeta"></span></div>
+    <div class="rhead"><button class="ib" id="rBack" data-i="back" data-tt="navTxt"></button><h2 id="rTitle"></h2><span class="sp"></span><span class="muted" id="rMeta"></span></div>
     <div id="readerWrap"><article id="reader"></article></div>
   </div>
   <div id="vV" class="view hidden">

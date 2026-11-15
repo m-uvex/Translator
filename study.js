@@ -230,7 +230,7 @@ function pairChanged() {
 
 // ---------- Texte ----------
 function renderTexts() {
-  const grid = $('#libGrid'); if (!grid) return;
+  const grid = $('#txtGrid'); if (!grid) return;
   grid.querySelectorAll('.txtcard').forEach(c => c.remove());
   const frag = document.createDocumentFragment();
   const mine = ST.texts.filter(inPair);
@@ -250,10 +250,10 @@ function renderTexts() {
   grid.prepend(frag);
   const hint = $('#txOther');
   if (hint) hint.textContent = other > 0 ? t('vocOther', other) : '';
-  const empty = $('#libEmpty');
-  if (empty && mine.length) empty.classList.add('hidden');
+  const empty = $('#txtEmpty');
+  if (empty) empty.classList.toggle('hidden', mine.length > 0);
 }
-window.studyDrawTexts = renderTexts;
+window.studyTextsRender = renderTexts;
 
 function fillCats() {
   const sel = $('#txCat'); if (!sel) return;
@@ -270,7 +270,7 @@ async function addTextFromFile() {
   const tx = { id: uid('t'), title: title.trim() || r.name, cat, text: r.text, pos: 0, src: S.studySrc, tgt: S.studyTgt, created: Date.now(), updated: Date.now() };
   ST.texts.unshift(tx);
   persist('texts');
-  await drawLib();
+  renderTexts();
 }
 
 function dropText(id) {
@@ -280,7 +280,7 @@ function dropText(id) {
     ST.texts = ST.texts.filter(x => x.id !== id);
     ST.vocab = ST.vocab.filter(v => v.textId !== id);
     persist('texts'); persist('vocab');
-    drawLib(); renderVocab();
+    renderTexts(); renderVocab();
   });
 }
 
@@ -334,7 +334,7 @@ function drawReader() {
     <button class="ghost" id="rendLib">${esc(t('readToLib'))}</button></div>`;
   art.append(end);
   end.querySelector('#rendVoc').onclick = () => { savePos(); showView('voc'); };
-  end.querySelector('#rendLib').onclick = () => { savePos(); showView('lib'); };
+  end.querySelector('#rendLib').onclick = () => { savePos(); showView('txt'); };
   requestAnimationFrame(() => {
     const wrap = $('#readerWrap');
     if (wrap) wrap.scrollTop = (Number(tx.pos) || 0) * Math.max(1, wrap.scrollHeight - wrap.clientHeight);
@@ -628,7 +628,7 @@ function importTexts(text) {
     n++;
   }
   persist('texts');
-  drawLib();
+  renderTexts();
   window.trStatus(t('txtDone', n));
 }
 
@@ -653,7 +653,7 @@ function askLine(label, value = '') {
 
 // ---------- Verdrahtung ----------
 function wire() {
-  $('#rBack').onclick = () => { savePos(); showView('lib'); };
+  $('#rBack').onclick = () => { savePos(); showView('txt'); };
   const wrap = $('#readerWrap');
   if (wrap) wrap.addEventListener('scroll', () => { clearTimeout(ST.posTimer); ST.posTimer = setTimeout(savePos, 600); });
   bindPicking($('#reader'), '.rw');
@@ -708,6 +708,7 @@ function wire() {
   wire();
   renderPairs();
   renderVocab();
+  renderTexts();
   pickSync();
   applyI18n();
   if (S.view === 'voc') renderVocab();

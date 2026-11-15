@@ -383,3 +383,9 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .pairbar .ib{width:30px;height:30px;border-radius:50%}
 .pairbar .pill:hover{border-color:var(--accent)}
 .libhead .pairbar{margin-inline-start:auto}
+
+/* Lese-Arbeitsplatz: eigene Liste der Lesetexte. Die Dokumentenablage (#vL)
+   zeigt nur Dokumente; beide nutzen dasselbe Kartenraster, damit sie sich
+   gleich anfuehlen, aber getrennt bleiben. */
+#vTxt{display:flex;flex-direction:column;padding:12px 12px 12px 0;gap:8px;min-height:0}
+#vTxt .libgrid{flex:1}

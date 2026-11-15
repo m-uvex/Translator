@@ -12,6 +12,8 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   practice:'<path d="M3 12a9 9 0 0 1 15-6.7"/><path d="M21 12a9 9 0 0 1-15 6.7"/><path d="M18 2v4h-4M6 22v-4h4"/>',
   pick:'<path d="M4 20h5l10-10a3 3 0 0 0-4-4L5 16z"/><path d="M13 7l4 4"/>',
   back:'<path d="M15 5l-7 7 7 7"/>',
+  // Aufgeschlagenes Buch: eigenes Symbol fuer den Lese-Arbeitsplatz.
+  book:'<path d="M4 5a2 2 0 0 1 2-2h5v18H6a2 2 0 0 1-2-2z"/><path d="M20 5a2 2 0 0 0-2-2h-5v18h5a2 2 0 0 0 2-2z"/>',
   // Drei einfache Zeichen fuer die Vokabel- und Textleisten: eintragen,
   // ausfuehren (Pfeil nach unten in eine Ablage) und einlesen (Pfeil nach oben).
   plus:'<path d="M12 5v14M5 12h14"/>',
@@ -94,7 +96,9 @@ const K = {
   s_groupGeneral:['Allgemein','General'], s_groupConn:['Verbindungen','Connections'], s_groupTrans:['Übersetzung','Translation'],
   startTr:['Übersetzer öffnen','Open translator'], startEd:['Textbearbeitung öffnen','Open text editor'], startLast:['Zuletzt verwendetes öffnen','Open last used'],
   wsBoth:['Beide','Both'], wsTr:['Nur Übersetzer','Translator only'], wsEd:['Nur Textbearbeitung','Text editor only'],
-  navVoc:['Vokabeln','Vocabulary'], navSrs:['Üben','Practice'],
+  navVoc:['Vokabeln','Vocabulary'], navSrs:['Üben','Practice'], navTxt:['Lesen','Reading'],
+  readTitle:['Lesetexte','Reading texts'], txEmpty:['Noch keine Lesetexte','No reading texts yet'],
+  txEmptyHint:['„Text hinzufügen“ lädt eine eigene Datei, die sich dann lesen lässt.','“Add text” loads your own file, which you can then read.'],
   vocTitle:['Vokabeln','Vocabulary'], vocAdd:['Eintragen','Add'], vocTermPh:['Wort oder Wendung eingeben …','Type a word or phrase …'],
   vocEmpty:['Noch keine Vokabeln','No vocabulary yet'], vocEmptyHint:['Beim Lesen ein Wort anklicken oder oben eingeben.','Click a word while reading, or type it above.'],
   vocCount:[n => `${n} Vokabeln`, n => `${n} words`], vocabDue:[n => `${n} fällig`, n => `${n} due`],   vocOther:[n => `${n} in anderen Sprachen`, n => `${n} in other languages`],
@@ -111,7 +115,7 @@ const K = {
   studyNoModel:['Für Wortübersetzungen wird ein allgemeines Ollama-Modell gebraucht (z. B. gemma3:4b).','Word translations need a general Ollama model (e.g. gemma3:4b).'],
   csvDone:[n => `${n} Vokabeln übernommen`, n => `${n} words imported`], csvErr:['CSV konnte nicht gelesen werden','Could not read the CSV'],
   txtDone:[n => `${n} Texte übernommen`, n => `${n} texts imported`], txtErr:['Datei konnte nicht gelesen werden','Could not read the file'],
-  readEnd:['Ende des Textes','End of text'], readToVoc:['Zu den Vokabeln','To vocabulary'], readToLib:['Zum Text-Arbeitsplatz','To the text workspace'],
+  readEnd:['Ende des Textes','End of text'], readToVoc:['Zu den Vokabeln','To vocabulary'], readToLib:['Zum Lese-Arbeitsplatz','To the reading workspace'],
   s_csvSrs:['Lernstände in Export-Dateien schreiben','Include practice state in exported files'],
   s_groupStudy:['Lesen und Vokabeln','Reading and vocabulary'],
   reset:['Zurücksetzen','Reset'], resetAll:['Alles zurücksetzen','Reset all'], autoSys:['Automatisch (System)','Automatic (system)'], autoO:['Automatisch','Automatic'], autoModel:['Automatisch','Automatic'], light:['Hell','Light'], dark:['Dunkel','Dark'],
