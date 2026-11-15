@@ -44,14 +44,14 @@ function studyModel() {
   return S.model;
 }
 
-// Welches Modell gerade die angetippten Woerter uebersetzt, steht als Pille in
-// den Kopfzeilen von Lesen, Vokabeln und Leseoberflaeche ([data-study-model]).
+// Welches Modell gerade die angetippten Woerter uebersetzt, steht als
+// Prozessor-Symbol in den Kopfzeilen von Lesen, Vokabeln und Leseoberflaeche
+// ([data-study-model]); der Modellname steht im Tooltip.
 function renderStudyModel() {
   const eff = studyModel();
-  const o = MODEL_OPTS.find(x => x.value === eff);
   document.querySelectorAll('[data-study-model]').forEach(b => {
-    b.innerHTML = `<span>${esc(o ? o.label : (eff || '—'))}</span>${o ? modelIcons(o) : ''}`;
-    b.title = t('studyModelT');
+    b.innerHTML = ic('cpu');
+    b.title = `${t('studyModelT')}: ${eff || '—'}`;
   });
 }
 
