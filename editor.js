@@ -550,7 +550,7 @@ function showSummary(txt) {
     const a = e.target.dataset.a; if (!a) return;
     if (a === 'top') { const bq = document.createElement('blockquote'); bq.textContent = txt; page.prepend(bq); }
     if (a === 'rep') page.innerHTML = '<p>' + esc(txt).replace(/\n+/g, '</p><p>') + '</p>';
-    if (a === 'copy') navigator.clipboard.writeText(txt);
+    if (a === 'copy') window.copyText(txt);
     if (a !== 'copy') { d.close(); page.dispatchEvent(new Event('input')); }
   };
   d.showModal();
@@ -600,7 +600,7 @@ async function showStyleCtx(x, y, st) {
   closePops(); const p = $('#pop'); p.innerHTML = '';
   const add = (label, fn) => { const r = document.createElement('div'); r.className = 'row'; r.textContent = label; r.onclick = () => { closePops(); fn(); }; p.append(r); };
   add(t('styleEdit'), () => styleDlg(st));
-  add(t('styleCopy'), () => { navigator.clipboard.writeText(st.prompt); });
+  add(t('styleCopy'), () => { window.copyText(st.prompt); });
   add(t('styleDelete'), async () => {
     if (!(await ask(t('styleConfDel', st.name), t('yes'), t('cancel')))) return;
     S.edStyles = S.edStyles.filter(s => s !== st && s.id !== st.id);

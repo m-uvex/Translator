@@ -74,7 +74,7 @@ const K = {
   edit:['Bearbeiten','Edit'], wordExists:['Wort existiert bereits','Word already exists'],
   settings:['Einstellungen','Settings'], swap:['Tauschen','Swap languages'], reloadModels:['Modelle neu laden','Reload models'],
   inputPh:['Text eingeben oder Datei hineinziehen …','Type text or drop a file here …'], attach:['Datei anhängen','Attach file'], translate:['Übersetzen','Translate'],
-  copy:['Kopieren','Copy'], copied:['Kopiert','Copied'], chars:[n => `${n} Zeichen`, n => `${n} characters`],
+  copy:['Kopieren','Copy'], copied:['Kopiert','Copied'], copyErr:['Kopieren fehlgeschlagen','Could not copy'], chars:[n => `${n} Zeichen`, n => `${n} characters`],
   auto:['Sprache erkennen','Detect language'], searchLang:['Sprache suchen …','Search language …'], noHits:['Keine Treffer','No results'], pin:['Anpinnen','Pin'],
   h_style:['Übersetzungsweise','Translation style'], l_type:['Art','Type'], l_formal:['Ton','Tone'], l_gender:['Empfänger*in','Addressee'], l_writer:['Absender*in','Writer'],
   o_natural:['Natürlich','Natural'], o_literal:['Wörtlich','Literal'], o_standard:['Ohne Vorgabe','Standard'], o_formal:['Formell','Formal'], o_informal:['Ungezwungen','Informal'],
@@ -651,8 +651,18 @@ function stopTranslation() {
 function maybeAutoCopy() {
   if (!S.autoCopy || !lastTr) return;
   if (S.autoCopyTyped && inputPasted) return;
-  navigator.clipboard.writeText(lastTr).then(() => status(t('copied'))).catch(() => {});
+  copyText(lastTr).then(ok => { if (ok) status(t('copied')); });
 }
+
+// Kopieren laeuft ueber den Main-Prozess: die App laedt ueber file://, dort
+// gibt es kein navigator.clipboard. Der Webweg bleibt als Rueckfall fuer den
+// Fall, dass die Bruecke fehlt.
+async function copyText(s) {
+  const txt = String(s == null ? '' : s);
+  try { if (window.api && window.api.clipWrite) { await window.api.clipWrite(txt); return true; } } catch { }
+  try { await navigator.clipboard.writeText(txt); return true; } catch { return false; }
+}
+window.copyText = copyText;
 async function translate() {
   const text = $('#input').value.trim();
   if (busy || (!text && !images.length)) return;
@@ -983,7 +993,11 @@ $('#input').oninput = () => {
   }
 };
 $('#input').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); translate(); } };
-$('#go').onclick = translate; $('#stopTr').onclick = stopTranslation; $('#copy').onclick = () => { navigator.clipboard.writeText(lastTr || $('#output').textContent); status(t('copied')); };
+$('#go').onclick = translate; $('#stopTr').onclick = stopTranslation;
+$('#copy').onclick = async () => {
+  const ok = await copyText(lastTr || $('#output').textContent);
+  status(t(ok ? 'copied' : 'copyErr'));
+};
 $('#refresh').onclick = async () => {
   if ($('#refresh').classList.contains('spinning')) return;
   $('#refresh').classList.add('spinning'); status(t('reloadModels')); retries = 0;

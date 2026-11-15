@@ -379,6 +379,12 @@ ipcMain.handle('study:importText', async () => {
 // Zwischenablage fuer den Textdialog. Der Renderer liest sie nicht selbst, weil
 // file:// kein sicherer Kontext ist und navigator.clipboard dort schweigt.
 ipcMain.handle('clip:readText', () => clipboard.readText());
+// Schreiben geht denselben Weg: unter file:// fehlt navigator.clipboard, ein
+// Aufruf im Renderer lief dort still ins Leere.
+ipcMain.handle('clip:writeText', (_e, text) => {
+  clipboard.writeText(String(text == null ? '' : text));
+  return true;
+});
 ipcMain.handle('study:importFile', async (_e, ext) => {
   const exts = String(ext || 'csv').split(',');
   const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: exts.map(e => e.toUpperCase()).join(' / '), extensions: exts }] });

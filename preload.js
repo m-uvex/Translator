@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('api', {
   studySave: (name, data) => ipcRenderer.invoke('study:save', name, data),
   studyImportText: () => ipcRenderer.invoke('study:importText'),
   clipText: () => ipcRenderer.invoke('clip:readText'),
+  clipWrite: text => ipcRenderer.invoke('clip:writeText', text),
   studyImportFile: ext => ipcRenderer.invoke('study:importFile', ext),
   studyExportFile: (name, data, ext) => ipcRenderer.invoke('study:exportFile', name, data, ext),
   fontsList: () => ipcRenderer.invoke('fonts:list'),
