@@ -342,7 +342,13 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .vadd{display:flex;gap:6px;flex:1 1 320px;min-width:0}
 .vadd input{flex:1;min-width:0;font:inherit;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 16px;outline:0}
 .vadd input:focus{border-color:var(--accent)}
-.vacts{display:flex;gap:6px;flex-wrap:wrap}
+/* Die Leiste traegt nur Symbolknoepfe wie die uebrigen Leisten der App; das
+   Eintragen ist der eine gefuellte Knopf (Kreis in der Akzentfarbe). */
+.vacts{display:flex;gap:2px;align-items:center;flex-wrap:wrap}
+.vadd .ib{width:34px;height:34px;border-radius:50%}
+.vadd .ib.go{background:var(--accent);color:var(--on-accent)}
+.vadd .ib.go:hover{background:var(--accent-hover);color:var(--on-accent)}
+.rfootbar .ib{width:34px;height:34px;border-radius:50%}
 .vlist{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:0 4px 16px;min-height:0}
 .vrow{display:flex;gap:8px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
 .vmain{flex:1;min-width:0}
