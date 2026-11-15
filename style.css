@@ -403,3 +403,9 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 #txDlg .txacts .ghost{display:inline-flex;align-items:center;gap:6px}
 #txDlg .txacts svg{flex:none}
 @media (max-width:520px){#txDlg .txrow{grid-template-columns:1fr}}
+
+/* Meldung unter der Eingabezeile der Vokabeln: „Übersetze …“, fehlendes
+   Modell, Fehler. Sie steht hier und nicht in der Statuszeile des
+   Übersetzers, weil die in einer anderen Ansicht unsichtbar wäre. */
+.vmsg{font-size:13px;color:var(--muted);padding:0 6px}
+.vmsg.err{color:#c9605a}

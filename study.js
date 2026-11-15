@@ -510,15 +510,25 @@ function bindPicking(container, selector) {
 }
 
 // ---------- Vokabel-Arbeitsplatz ----------
+// Meldungen zu Eintrag und Uebersetzung gehoeren in diesen Arbeitsplatz: Die
+// Statuszeile des Uebersetzers (#status) steht in einer anderen Ansicht und
+// waere hier unsichtbar.
+function vocStatus(text, err) {
+  const el = $('#vocMsg'); if (!el) return;
+  el.textContent = text || '';
+  el.classList.toggle('hidden', !text);
+  el.classList.toggle('err', !!text && !!err);
+}
+
 async function addFromSearch() {
   const inp = $('#vocTerm');
   const term = inp.value.trim();
-  if (!term) return;
-  window.trStatus(t('wordTr'));
+  if (!term) { vocStatus(t('vocNeedTerm')); inp.focus(); return; }
+  vocStatus(t('wordTr'));
   let res;
   try { res = await translateTerm(term, ''); }
-  catch (e) { window.trStatus(e.message === 'nomodel' ? t('studyNoModel') : t('wordErr')); return; }
-  window.trStatus('');
+  catch (e) { vocStatus(e.message === 'nomodel' ? t('studyNoModel') : t('wordErr'), true); return; }
+  vocStatus('');
   addVocab(term, res, '', null);
   inp.value = '';
   renderVocab();
@@ -683,6 +693,7 @@ function wire() {
   $('#input').addEventListener('scroll', () => { const l = $('#pickLayer'); if (l && !l.classList.contains('hidden')) l.scrollTop = $('#input').scrollTop; });
 
   $('#vocAddBtn').onclick = addFromSearch;
+  $('#vocTerm').addEventListener('input', () => vocStatus(''));
   $('#vocTerm').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addFromSearch(); } });
   $('#vocList').addEventListener('click', e => {
     const b = e.target.closest('[data-del]');

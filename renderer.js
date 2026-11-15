@@ -122,6 +122,7 @@ const K = {
   srsAgain:['Nochmal','Again'], srsHard:['Schwer','Hard'], srsGood:['Gut','Good'], srsEasy:['Einfach','Easy'],
   pickT:['Wörter auswählen','Pick words'], pickNoPanel:['Erst „Vokabeln neben dem Übersetzer“ in den Einstellungen einschalten.','First enable “Vocabulary beside the translator” in the settings.'],
   wordTr:['Übersetze …','Translating …'], wordErr:['Wort konnte nicht übersetzt werden','Could not translate the word'],
+  vocNeedTerm:['Bitte zuerst ein Wort eingeben.','Please enter a word first.'],
   studyNoModel:['Für Wortübersetzungen wird ein allgemeines Ollama-Modell gebraucht (z. B. gemma3:4b).','Word translations need a general Ollama model (e.g. gemma3:4b).'],
   csvDone:[n => `${n} Vokabeln übernommen`, n => `${n} words imported`], csvErr:['CSV konnte nicht gelesen werden','Could not read the CSV'],
   txtDone:[n => `${n} Texte übernommen`, n => `${n} texts imported`], txtErr:['Datei konnte nicht gelesen werden','Could not read the file'],
