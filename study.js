@@ -366,7 +366,9 @@ function dropText(id) {
 function openText(id) {
   ST.cur = ST.texts.find(x => x.id === id) || null;
   if (!ST.cur) return;
-  showView('read');
+  // `showView` liegt in der IIFE von editor.js; nach aussen reicht sie nur als
+  // window.edShowView - der direkte Name ist hier nicht sichtbar.
+  window.edShowView('read');
   drawReader();
 }
 
@@ -411,8 +413,8 @@ function drawReader() {
     <div class="rendbtns"><button class="primary" id="rendVoc">${esc(t('readToVoc'))}</button>
     <button class="ghost" id="rendLib">${esc(t('readToLib'))}</button></div>`;
   art.append(end);
-  end.querySelector('#rendVoc').onclick = () => { savePos(); showView('voc'); };
-  end.querySelector('#rendLib').onclick = () => { savePos(); showView('txt'); };
+  end.querySelector('#rendVoc').onclick = () => { savePos(); window.edShowView('voc'); };
+  end.querySelector('#rendLib').onclick = () => { savePos(); window.edShowView('txt'); };
   requestAnimationFrame(() => {
     const wrap = $('#readerWrap');
     if (wrap) wrap.scrollTop = (Number(tx.pos) || 0) * Math.max(1, wrap.scrollHeight - wrap.clientHeight);
@@ -977,7 +979,7 @@ function importTexts(text) {
 
 // ---------- Verdrahtung ----------
 function wire() {
-  $('#rBack').onclick = () => { savePos(); showView('txt'); };
+  $('#rBack').onclick = () => { savePos(); window.edShowView('txt'); };
   const wrap = $('#readerWrap');
   if (wrap) wrap.addEventListener('scroll', () => { clearTimeout(ST.posTimer); ST.posTimer = setTimeout(savePos, 600); });
   bindPicking($('#reader'), '.rw');
