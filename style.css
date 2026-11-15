@@ -437,3 +437,9 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .srsnote.bad{color:#c9605a}
 /* Gemeisterte Vokabeln tragen in der Liste den Haken. */
 .vok{display:inline-grid;color:var(--accent-ink);margin-left:6px;vertical-align:middle}
+
+/* Zeichenleiste im Tipp-Modus: die Buchstaben, die eine deutsche Tastatur
+   nicht hat, als kleine Pillen unter dem Eingabefeld. */
+.charbar{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.charbar .ch{font:inherit;line-height:1;min-width:34px;height:32px;padding:0 10px;border-radius:999px;background:var(--soft);border:1px solid var(--line);color:var(--text);cursor:pointer}
+.charbar .ch:hover{border-color:var(--accent);color:var(--accent-ink)}

@@ -610,11 +610,28 @@ function maskTerm(text, term) {
 const MASTER = 3;
 const isMastered = e => (Number(e.mastery) || 0) >= MASTER;
 
+// Zeichen, die auf einer deutschen oder englischen Tastatur fehlen, je
+// Zielsprache. Die Tipp-Abfrage bietet sie als Knoepfe an, damit niemand eine
+// Tastaturbelegung wechseln muss. Leere Liste = Sprache ohne Zusatzzeichen.
+const EXTRA_CHARS = {
+  de: 'äöüß', fr: 'àâæçéèêëîïôœùûüÿ', es: '¿¡áéíóúüñ', it: 'àèéìíòóùú',
+  pt: 'áâãàçéêíóôõú', nl: 'áéíóúäëïöü', pl: 'ąćęłńóśźż', cs: 'áčďéěíňóřšťúůýž',
+  sv: 'åäö', da: 'æøå', no: 'æøå', fi: 'äö', tr: 'çğıİöşü', ro: 'ăâîșț', hu: 'áéíóöőúüű'
+};
+const extraChars = () => [...new Set(EXTRA_CHARS[S.studyTgt] || '')];
+
+// Buchstaben, die NFD nicht zerlegt, obwohl sie auf einer Tastatur ohne diese
+// Tasten nur als Umschreibung tippbar sind (ß, æ, ø ...).
+const foldLetters = s => s
+  .replace(/ß/g, 'ss').replace(/æ/g, 'ae').replace(/œ/g, 'oe').replace(/ø/g, 'o')
+  .replace(/ł/g, 'l').replace(/đ|ð/g, 'd').replace(/þ/g, 'th').replace(/ı/g, 'i');
+
 // Vergleich: Gross-/Kleinschreibung, Akzente, Satzzeichen und ein fuehrender
 // Artikel duerfen abweichen; " / " trennt mehrere gueltige Loesungen, wie sie
-// das Modell und der CSV-Import liefern.
-const ansNorm = s => String(s || '').toLowerCase()
-  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+// das Modell und der CSV-Import liefern. Frage- und Ausrufezeichen zaehlen
+// nicht, also gilt ein normales "?" auch fuer das umgedrehte "¿".
+const ansNorm = s => foldLetters(String(s || '').toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, ''))
   .replace(/[.,;:!?¡¿"'„“”«»()]/g, ' ')
   .replace(/\s+/g, ' ').trim();
 function answerOk(e, typed) {
@@ -668,10 +685,12 @@ function renderType(box, due) {
     return;
   }
   const ctx = e.context ? maskTerm(e.context, e.term) : '';
+  const chars = extraChars().map(ch => `<button class="ch" data-ch="${esc(ch)}">${esc(ch)}</button>`).join('');
   box.innerHTML = `<div class="srscard">
     ${ctx ? `<div class="srsctx">${ctx}</div>` : ''}
     <div class="srsword">${esc(e.term)}</div>
     <div class="srsinput"><input id="srsIn" autocomplete="off" spellcheck="false" placeholder="${esc(t('srsTypeIn'))}"><button class="ib go" id="srsCheckBtn" title="${esc(t('srsCheck'))}">${ic('check', 18)}</button></div>
+    ${chars ? `<div class="charbar" title="${esc(t('srsChars'))}">${chars}</div>` : ''}
     <div class="srsmastery muted">${esc(t('srsMastered'))} ${Math.min(MASTER, Number(e.mastery) || 0)} / ${MASTER}</div>
     ${note}
   </div>`;
@@ -682,6 +701,18 @@ function renderType(box, due) {
   }
   const btn = box.querySelector('#srsCheckBtn');
   if (btn) btn.onclick = typeCheck;
+  box.querySelectorAll('.ch').forEach(b => b.onclick = () => srsInsertChar(b.dataset.ch));
+}
+
+// Zeichen an der Cursorposition einfuegen und den Fokus im Feld lassen.
+function srsInsertChar(ch) {
+  const inp = $('#srsIn'); if (!inp || !ch) return;
+  const a = inp.selectionStart == null ? inp.value.length : inp.selectionStart;
+  const b = inp.selectionEnd == null ? a : inp.selectionEnd;
+  inp.value = inp.value.slice(0, a) + ch + inp.value.slice(b);
+  const pos = a + ch.length;
+  inp.focus();
+  try { inp.setSelectionRange(pos, pos); } catch { }
 }
 
 function renderSrs() {

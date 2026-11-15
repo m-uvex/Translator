@@ -138,6 +138,7 @@ const K = {
   srsMastered:['Gemeistert','Mastered'],
   srsAllMastered:['Alles gemeistert.','Everything mastered.'],
   srsMasteredHint:['Gemeisterte Wörter werden hier nicht mehr gefragt.','Mastered words are no longer asked here.'],
+  srsChars:['Zeichen, die auf deiner Tastatur fehlen','Characters missing on your keyboard'],
   pickT:['Wörter auswählen','Pick words'], pickNoPanel:['Erst „Vokabeln neben dem Übersetzer“ in den Einstellungen einschalten.','First enable “Vocabulary beside the translator” in the settings.'],
   wordTr:['Übersetze …','Translating …'], wordErr:['Wort konnte nicht übersetzt werden','Could not translate the word'],
   vocNeedTerm:['Bitte zuerst ein Wort eingeben.','Please enter a word first.'],
