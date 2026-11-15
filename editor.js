@@ -855,6 +855,15 @@ function syncDocEntry() {
   e.html = page.innerHTML;
   e.name = docName();
 }
+// Die aktive Seite wird bei jeder Aenderung (kurz verzoegert) nach
+// localStorage geschrieben und beim naechsten Start wiederhergestellt. Beim
+// Beenden und beim Schliessen eines Dokumentes muss dieser Stand deshalb sofort
+// geschrieben werden - sonst steht in der Ablage noch der alte Text.
+function flushDoc() {
+  clearTimeout(saveTimer);
+  try { localStorage.setItem('edDoc', page.innerHTML); } catch {}
+  try { localStorage.setItem('edDocId', ED.docId || ''); } catch {}
+}
 function isDocDirty(d) {
   if (!d) return false;
   if (d.key === ED.docKey) d.html = page.innerHTML;
@@ -1087,6 +1096,10 @@ async function dockRemove(key) {
       ED.docs.push(blank);
       applyDocEntry(blank);
     } else applyDocEntry(ED.docs[Math.min(i, ED.docs.length - 1)]);
+    // Der geschlossene Text stand bisher in localStorage und waere beim
+    // naechsten Start wieder aufgetaucht. Deshalb wird der neue Stand sofort
+    // geschrieben: Was verworfen wurde, ist damit auch wirklich weg.
+    flushDoc();
     dockClose();
     return;
   }
@@ -1677,7 +1690,11 @@ const startView = () => {
 if (window.api?.onRequestClose) {
   window.api.onRequestClose(async () => {
     syncDocEntry();
-    const dirty = ED.docs.some(d => isDocDirty(d));
+    // Die aktive Seite erscheint beim naechsten Start wieder; nur die uebrigen
+    // Sitzungsdokumente gehen beim Beenden verloren. Ohne diese Unterscheidung
+    // warnte das Programm auch dann, wenn gar nichts verloren ging.
+    flushDoc();
+    const dirty = ED.docs.some(d => d.key !== ED.docKey && isDocDirty(d));
     if (dirty) {
       showView('ed');
       if (!(await ask(t('confQuitDiscard'), t('discard'), t('cancel')))) return;
