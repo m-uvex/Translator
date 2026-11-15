@@ -137,7 +137,7 @@ function vocRow(e, opts) {
   const masked = ctx && e.term ? esc(ctx).replace(new RegExp(`(${esc(e.term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'giu'), '<mark>$1</mark>') : '';
   return `<div class="vrow" data-id="${e.id}">
     <div class="vmain">
-      <div class="vterm">${g ? `<span class="vg">${g}</span>` : ''}${esc(e.term)}<span class="vtr">${esc(e.translation)}</span></div>
+      <div class="vterm">${g ? `<span class="vg">${g}</span>` : ''}${esc(e.term)}${isMastered(e) ? `<span class="vok" title="${esc(t('srsMastered'))}">${ic('know', 13)}</span>` : ''}<span class="vtr">${esc(e.translation)}</span></div>
       ${masked ? `<div class="vctx">${masked}</div>` : ''}
       <div class="vmeta">${e.textTitle ? esc(e.textTitle) : ''}${e.interval ? ` · ${e.interval} ${LANG === 'de' ? 'Tage' : 'days'}` : ''}${opts && opts.due ? ` · ${esc(e.due || '')}` : ''}</div>
     </div>
@@ -230,7 +230,7 @@ function pairChanged() {
   if (S.studySrc === S.studyTgt) S.studyTgt = S.studySrc === 'en' ? 'de' : 'en';
   save();
   renderPairs(); renderVocab(); renderTexts();
-  if (S.view === 'srs') { srsShow = false; srsQueue = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO()); renderSrs(); }
+  if (S.view === 'srs') { srsShow = false; typeQueue = []; srsQueue = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO()); renderSrs(); }
 }
 
 // ---------- Texte ----------
@@ -603,11 +603,94 @@ function maskTerm(text, term) {
   return esc(text).replace(re, '<span class="srsblank">_____</span>');
 }
 
+// ---------- Mastery-Modus: tippen ----------
+// Wie bei Readlang wird die Uebersetzung getippt statt nur aufgedeckt. Drei
+// richtige Antworten meistern ein Wort; gemeisterte Woerter fragt dieser Modus
+// nicht mehr ab, waehrend die normalen Karten unveraendert weiterlaufen.
+const MASTER = 3;
+const isMastered = e => (Number(e.mastery) || 0) >= MASTER;
+
+// Vergleich: Gross-/Kleinschreibung, Akzente, Satzzeichen und ein fuehrender
+// Artikel duerfen abweichen; " / " trennt mehrere gueltige Loesungen, wie sie
+// das Modell und der CSV-Import liefern.
+const ansNorm = s => String(s || '').toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[.,;:!?¡¿"'„“”«»()]/g, ' ')
+  .replace(/\s+/g, ' ').trim();
+function answerOk(e, typed) {
+  const arts = ansNorm(e.article).split(' ').filter(Boolean);
+  const dropArt = x => { const w = x.split(' '); return arts.includes(w[0]) ? w.slice(1).join(' ') : x; };
+  const want = [e.translation, ...(e.alternatives || [])]
+    .flatMap(x => String(x || '').split('/')).map(ansNorm).filter(Boolean);
+  const got = ansNorm(typed);
+  if (!got) return false;
+  return want.some(w => w === got || dropArt(w) === dropArt(got));
+}
+
+let typeQueue = [], srsNote = null;
+
+function typeFill() {
+  const due = ST.vocab.filter(e => inPair(e) && !isMastered(e) && (e.due || todayISO()) <= todayISO());
+  const ids = new Set(due.map(e => e.id));
+  typeQueue = typeQueue.filter(id => ids.has(id));
+  for (const e of due) if (!typeQueue.includes(e.id)) typeQueue.push(e.id);
+}
+
+function typeCheck() {
+  const e = ST.vocab.find(v => v.id === typeQueue[0]); if (!e) return;
+  const inp = $('#srsIn');
+  if (!inp || !inp.value.trim()) return;
+  if (answerOk(e, inp.value)) {
+    e.mastery = Math.min(MASTER, (Number(e.mastery) || 0) + 1);
+    rate(e, 'good');
+    srsNote = { ok: true, text: t('srsRight') + (isMastered(e) ? ' · ' + t('srsMastered') : '') };
+    typeQueue.shift();
+  } else {
+    // Falsch: Wort nach hinten, Meisterschaft zuruecksetzen, Loesung zeigen.
+    e.mastery = 0;
+    rate(e, 'again');
+    srsNote = { ok: false, text: t('srsWrong') + ' ' + [e.article, e.translation].filter(Boolean).join(' ') };
+    typeQueue.push(typeQueue.shift());
+  }
+  persist('vocab');
+  renderVocab();
+  renderSrs();
+  const next = $('#srsIn'); if (next) next.focus();
+}
+
+function renderType(box, due) {
+  typeFill();
+  const e = ST.vocab.find(v => v.id === typeQueue[0]);
+  const note = srsNote ? `<div class="srsnote ${srsNote.ok ? 'ok' : 'bad'}">${esc(srsNote.text)}</div>` : '';
+  if (!e) {
+    const anyLeft = due.some(x => !isMastered(x));
+    box.innerHTML = `<div class="srsempty"><p>${esc(anyLeft ? t('srsNone') : t('srsAllMastered'))}</p><p class="muted">${esc(t('srsMasteredHint'))}</p></div>${note}`;
+    return;
+  }
+  const ctx = e.context ? maskTerm(e.context, e.term) : '';
+  box.innerHTML = `<div class="srscard">
+    ${ctx ? `<div class="srsctx">${ctx}</div>` : ''}
+    <div class="srsword">${esc(e.term)}</div>
+    <div class="srsinput"><input id="srsIn" autocomplete="off" spellcheck="false" placeholder="${esc(t('srsTypeIn'))}"><button class="ib go" id="srsCheckBtn" title="${esc(t('srsCheck'))}">${ic('check', 18)}</button></div>
+    <div class="srsmastery muted">${esc(t('srsMastered'))} ${Math.min(MASTER, Number(e.mastery) || 0)} / ${MASTER}</div>
+    ${note}
+  </div>`;
+  const inp = box.querySelector('#srsIn');
+  if (inp) {
+    inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); typeCheck(); } });
+    inp.focus();
+  }
+  const btn = box.querySelector('#srsCheckBtn');
+  if (btn) btn.onclick = typeCheck;
+}
+
 function renderSrs() {
   const box = $('#srsBox'); if (!box) return;
-  srsQueue = srsQueue.filter(inPair);
   const due = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO());
   $('#srsCount').textContent = due.length ? t('vocabDue', due.length) : '';
+  const tg = $('#srsType'); if (tg) tg.classList.toggle('on', !!S.srsType);
+  if (S.srsType) return renderType(box, due);
+  srsQueue = srsQueue.filter(inPair);
   if (!due.length) {
     box.innerHTML = `<div class="srsempty"><p>${esc(t('srsNone'))}</p><p class="muted">${esc(t('srsDone'))}</p></div>`;
     return;
@@ -636,7 +719,11 @@ function renderSrs() {
     renderSrs(); renderVocab();
   });
 }
-window.studySrsRender = () => { srsShow = false; srsQueue = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO()); renderSrs(); };
+window.studySrsRender = () => {
+  srsShow = false; srsNote = null; typeQueue = [];
+  srsQueue = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO());
+  renderSrs();
+};
 
 // ---------- CSV im Readlang-Format ----------
 // Spalten: Wort/Wendung, Uebersetzung, Kontext, Intervall in Tagen, naechstes
@@ -752,6 +839,12 @@ function wire() {
   $('#vocDlg').addEventListener('keydown', ev => {
     if (ev.key === 'Enter' && ev.target.tagName !== 'TEXTAREA') { ev.preventDefault(); vocSaveEdit(); }
   });
+  $('#srsType').onclick = () => {
+    S.srsType = !S.srsType;
+    save();
+    typeQueue = []; srsNote = null;
+    renderSrs();
+  };
 
   $('#txAdd').onclick = txOpen;
   $('#txClose').onclick = () => $('#txDlg').close();

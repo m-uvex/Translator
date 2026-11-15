@@ -423,3 +423,17 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 #vocDlg .vxacts{display:flex;gap:8px;align-items:center;margin-top:14px}
 /* Zwei Knoepfe je Zeile: Bearbeiten links vom Loeschen, beide gleich zurueckhaltend. */
 .vrow{gap:2px}
+
+/* Mastery-Modus beim Üben: Eingabefeld mit Prüfknopf, Fortschritt und die
+   Rückmeldung zur letzten Antwort. */
+.srsinput{display:flex;gap:8px;align-items:center;margin-top:12px}
+.srsinput input{flex:1;min-width:0;font:inherit;color:var(--text);background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:9px 16px;outline:0}
+.srsinput input:focus{border-color:var(--accent)}
+.srsinput .ib.go{background:var(--accent);color:var(--on-accent);width:34px;height:34px;border-radius:50%}
+.srsinput .ib.go:hover{background:var(--accent-hover);color:var(--on-accent)}
+.srsmastery{font-size:12px;margin-top:8px}
+.srsnote{margin-top:10px;font-size:14px;line-height:1.45}
+.srsnote.ok{color:var(--accent-ink)}
+.srsnote.bad{color:#c9605a}
+/* Gemeisterte Vokabeln tragen in der Liste den Haken. */
+.vok{display:inline-grid;color:var(--accent-ink);margin-left:6px;vertical-align:middle}
