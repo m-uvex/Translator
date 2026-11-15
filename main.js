@@ -79,15 +79,19 @@ function startNllb() {
   } catch {}
 }
 
-ipcMain.handle('extract', async (_e, name, data) => {
-  const buf = Buffer.from(data), ext = path.extname(name).toLowerCase();
+// Text aus einer Datei holen. Word und PDF brauchen die Fremdbibliotheken,
+// alles andere (txt, md, csv, html, srt) ist bereits reiner Text.
+async function extractText(name, buf) {
+  const ext = path.extname(String(name || '')).toLowerCase();
   if (ext === '.docx') return (await require('mammoth').extractRawText({ buffer: buf })).value.trim();
   if (ext === '.pdf') {
     const { PDFParse } = require('pdf-parse'); const p = new PDFParse({ data: new Uint8Array(buf) });
     try { return (await p.getText()).text.replace(/\n*-- \d+ of \d+ --\n*/g, '\n\n').trim(); } finally { await p.destroy(); }
   }
+  if (['.txt', '.md', '.csv', '.srt', '.json', '.html', '.htm'].includes(ext)) return buf.toString('utf8').replace(/^\uFEFF/, '');
   throw new Error('unsupported');
-});
+}
+ipcMain.handle('extract', async (_e, name, data) => extractText(name, Buffer.from(data)));
 
 // ---------- Schriftarten des Systems (Fallback, wenn queryLocalFonts nicht geht) ----------
 // Systemschriften: Unter Linux liefert fc-list die Familiennamen, unter Windows
@@ -283,6 +287,45 @@ ipcMain.handle('lib:save', (_e, doc) => {
 ipcMain.handle('lib:delete', (_e, id) => {
   for (const f of [libHtml(id), libMeta(id)]) { try { fs.unlinkSync(f); } catch {} }
   return true;
+});
+
+// ---------- Lesetexte und Vokabeln ----------
+// Beides liegt als je eine JSON-Datei im Benutzerprofil. Der Renderer haelt die
+// Liste im Speicher und schreibt sie als Ganzes zurueck; so bleibt die Ablage
+// unabhaengig von der Groesse und laesst sich mit jedem Editor ansehen.
+const studyNames = { texts: 'texts.json', vocab: 'vocab.json' };
+const studyDir = () => {
+  const d = path.join(app.getPath('userData'), 'study');
+  fs.mkdirSync(d, { recursive: true });
+  return d;
+};
+const studyFile = name => path.join(studyDir(), studyNames[name] || 'unbekannt.json');
+ipcMain.handle('study:load', (_e, name) => {
+  if (!studyNames[name]) return null;
+  try { return JSON.parse(fs.readFileSync(studyFile(name), 'utf8')); } catch { return null; }
+});
+ipcMain.handle('study:save', (_e, name, data) => {
+  if (!studyNames[name]) return false;
+  try { fs.writeFileSync(studyFile(name), JSON.stringify(data), 'utf8'); return true; } catch { return false; }
+});
+// Eine Datei auswaehlen und ihren Text zurueckgeben (eigene Texte hochladen).
+ipcMain.handle('study:importText', async () => {
+  const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: 'Texte', extensions: ['txt', 'md', 'html', 'htm', 'docx', 'pdf'] }] });
+  if (r.canceled || !r.filePaths.length) return null;
+  const file = r.filePaths[0];
+  try { return { name: path.basename(file).replace(/\.[^.]+$/, ''), text: await extractText(file, fs.readFileSync(file)) }; }
+  catch (e) { return { error: e.message || 'read' }; }
+});
+ipcMain.handle('study:importFile', async (_e, ext) => {
+  const exts = String(ext || 'csv').split(',');
+  const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: exts.map(e => e.toUpperCase()).join(' / '), extensions: exts }] });
+  if (r.canceled || !r.filePaths.length) return null;
+  try { return { name: path.basename(r.filePaths[0]), text: fs.readFileSync(r.filePaths[0], 'utf8') }; } catch { return null; }
+});
+ipcMain.handle('study:exportFile', async (_e, name, data, ext) => {
+  const r = await dialog.showSaveDialog(win, { defaultPath: name + '.' + ext, filters: [{ name: String(ext).toUpperCase(), extensions: [String(ext)] }] });
+  if (r.canceled || !r.filePath) return false;
+  try { fs.writeFileSync(r.filePath, data, 'utf8'); return true; } catch { return false; }
 });
 
 // Eigene Fensterleiste (frame:false). Die drei Knoepfe im Renderer rufen diese

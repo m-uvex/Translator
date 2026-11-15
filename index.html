@@ -3,7 +3,7 @@
 <div class="titlebar"><span class="tbname" data-t="appTitle"></span><span class="sp"></span><div class="tbctl"><button class="ib tbb" id="winMin" data-i="winMin" data-tt="winMin"></button><button class="ib tbb" id="winMax" data-i="winMax" data-tt="winMax"></button><button class="ib tbb" id="winClose" data-i="x" data-tt="winClose"></button></div></div>
 <div class="app">
   <nav class="rail">
-    <div class="rg"><button class="ib rb active" id="nvTr" data-i="languages" data-tt="navTr"></button><button class="ib rb" id="nvEd" data-i="doc" data-tt="navEd"></button><button class="ib rb" id="nvLib" data-i="library" data-tt="navLib"></button></div>
+    <div class="rg"><button class="ib rb active" id="nvTr" data-i="languages" data-tt="navTr"></button><button class="ib rb" id="nvEd" data-i="doc" data-tt="navEd"></button><button class="ib rb" id="nvLib" data-i="library" data-tt="navLib"></button><button class="ib rb" id="nvVoc" data-i="vocab" data-tt="navVoc"></button><button class="ib rb" id="nvSrs" data-i="practice" data-tt="navSrs"></button></div>
     <div class="rg"><button class="ib" id="openSettings" data-i="sliders" data-tt="settings"></button></div>
   </nav>
   <div id="vT" class="view">
@@ -14,9 +14,10 @@
       </header>
       <section class="panes">
         <div class="card" id="drop">
+          <div id="pickLayer" class="hidden"></div>
           <textarea id="input" data-ph="inputPh"></textarea>
           <div id="thumbs"></div>
-          <footer><button class="ib" id="attach" data-i="clip" data-tt="attach"></button><input type="file" id="file" hidden multiple accept="image/*,.txt,.md,.csv,.srt,.json,.html,.pdf,.docx"><span class="muted" id="count"></span><span class="sp"></span><button class="primary" id="go" data-t="translate"></button></footer>
+          <footer><button class="ib" id="attach" data-i="clip" data-tt="attach"></button><button class="ib hidden" id="pickBtn" data-i="pick" data-tt="pickT"></button><input type="file" id="file" hidden multiple accept="image/*,.txt,.md,.csv,.srt,.json,.html,.pdf,.docx"><span class="muted" id="count"></span><span class="sp"></span><button class="primary" id="go" data-t="translate"></button></footer>
         </div>
         <div class="card"><div id="output" class="out"></div><footer><span class="muted" id="status"></span><span class="sp"></span><button class="ib hidden" id="stopTr" data-i="stop" data-tt="stopTr"></button><button class="ib" id="copy" data-i="copy" data-tt="copy"></button></footer></div>
       </section>
@@ -28,6 +29,7 @@
       </div>
       <p id="nllbNote" class="muted hidden"></p>
     </aside>
+    <aside class="vpanel hidden" id="vPanel"></aside>
   </div>
   <div id="vE" class="view hidden">
     <div class="tb" id="edTb"></div>
@@ -40,6 +42,21 @@
     <header class="libhead"><h2 data-t="libTitle"></h2><span class="sp"></span><span class="muted" id="libCount"></span></header>
     <div id="libGrid" class="libgrid"></div>
     <div id="libEmpty" class="libempty hidden"><p data-t="libEmpty"></p><p class="muted" data-t="libEmptyHint"></p></div>
+    <div class="rfootbar"><button class="ghost" id="txAdd" data-t="txAdd"></button><select id="txCat" class="tsel"></select><span class="sp"></span><button class="ghost" id="txExp" data-t="txtExp"></button><button class="ghost" id="txImp" data-t="txtImp"></button></div>
+  </div>
+  <div id="vR" class="view hidden">
+    <div class="rhead"><button class="ib" id="rBack" data-i="back" data-tt="navLib"></button><h2 id="rTitle"></h2><span class="sp"></span><span class="muted" id="rMeta"></span></div>
+    <div id="readerWrap"><article id="reader"></article></div>
+  </div>
+  <div id="vV" class="view hidden">
+    <header class="libhead"><h2 data-t="vocTitle"></h2><span class="sp"></span><span class="muted" id="vocCount"></span></header>
+    <div class="vbar"><div class="vadd"><input id="vocTerm" data-ph="vocTermPh"><button class="primary" id="vocAddBtn" data-t="vocAdd"></button></div><div class="vacts"><button class="ghost" id="vocCsvExp" data-t="csvExp"></button><button class="ghost" id="vocCsvImp" data-t="csvImp"></button></div></div>
+    <div id="vocList" class="vlist"></div>
+    <div id="vocEmpty" class="libempty hidden"><p data-t="vocEmpty"></p><p class="muted" data-t="vocEmptyHint"></p></div>
+  </div>
+  <div id="vP" class="view hidden">
+    <header class="libhead"><h2 data-t="srsTitle"></h2><span class="sp"></span><span class="muted" id="srsCount"></span></header>
+    <div id="srsBox" class="srsbox"></div>
   </div>
 </div>
 <div id="pop" class="pop hidden"></div><div id="alt" class="pop alt hidden"></div><div id="cm" class="pop hidden"></div><div id="trPop" class="pop trpop hidden"></div>
@@ -49,4 +66,4 @@
 <dialog id="dictDlg"></dialog>
 <dialog id="settings"><div class="dh"><h2 data-t="settings"></h2><button class="ib" id="closeSet" data-i="x"></button></div><div id="setBody"></div>
 <div class="dh"><button class="ghost" id="resetAll" data-t="resetAll"></button></div></dialog>
-<script src="renderer.js"></script><script src="editor.js"></script></body></html>
+<script src="renderer.js"></script><script src="editor.js"></script><script src="study.js"></script></body></html>
