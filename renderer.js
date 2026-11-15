@@ -12,8 +12,10 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   practice:'<path d="M3 12a9 9 0 0 1 15-6.7"/><path d="M21 12a9 9 0 0 1-15 6.7"/><path d="M18 2v4h-4M6 22v-4h4"/>',
   pick:'<path d="M4 20h5l10-10a3 3 0 0 0-4-4L5 16z"/><path d="M13 7l4 4"/>',
   back:'<path d="M15 5l-7 7 7 7"/>',
-  // Aufgeschlagenes Buch: eigenes Symbol fuer den Lese-Arbeitsplatz.
-  book:'<path d="M4 5a2 2 0 0 1 2-2h5v18H6a2 2 0 0 1-2-2z"/><path d="M20 5a2 2 0 0 0-2-2h-5v18h5a2 2 0 0 0 2-2z"/>',
+  // Aufgeschlagenes Buch fuer den Lese-Arbeitsplatz. Bewusst ein eigener
+  // Schluessel: `book` ist in editor.js das persoenliche Woerterbuch in der
+  // Statusleiste und wird von dort ueberschrieben.
+  reading:'<path d="M12 6.6C10 5.3 7.6 4.6 4 4.6v13.3c3.6 0 6 .6 8 1.9 2-1.3 4.4-1.9 8-1.9V4.6c-3.6 0-6 .7-8 2z"/><path d="M12 6.6v13.2"/>',
   // Drei einfache Zeichen fuer die Vokabel- und Textleisten: eintragen,
   // ausfuehren (Pfeil nach unten in eine Ablage) und einlesen (Pfeil nach oben).
   plus:'<path d="M12 5v14M5 12h14"/>',
