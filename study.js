@@ -569,7 +569,11 @@ function vocSaveEdit() {
   // zweite Zeile anlegen, die die Abfrage doppelt fragt.
   const dup = ST.vocab.find(v => v.id !== e.id && nrm(v.term) === nrm(term) && samePair(pairOf(v), pairOf(e)));
   if (dup) return vocDlgStatus(t('wordExists'));
+  // Das Lemma war beim Anlegen oft nur eine Kopie des Wortes; dann zieht es
+  // mit. Steht dort eine eigene Grundform, bleibt sie stehen.
+  const oldTerm = e.term;
   e.term = term;
+  if (!e.lemma || nrm(e.lemma) === nrm(oldTerm)) e.lemma = term;
   e.translation = $('#vocTr2').value.trim();
   e.context = $('#vocCtx2').value.trim();
   e.updated = Date.now();
