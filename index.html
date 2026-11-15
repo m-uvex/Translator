@@ -74,6 +74,14 @@
   <label class="txf"><span data-t="txBodyL"></span><textarea id="txBody" data-ph="txBodyPh"></textarea></label>
   <div class="txacts"><button class="ghost" id="txFile"><span data-i="upload"></span><span data-t="txFileL"></span></button><button class="ghost" id="txPaste"><span data-i="copy"></span><span data-t="txPasteL"></span></button><span class="sp"></span><button class="ghost" id="txCancel" data-t="cancel"></button><button class="primary" id="txOk" data-t="txOkL"></button></div>
 </dialog>
+<dialog id="vocDlg">
+  <div class="dh"><h2 data-t="vocEdit"></h2><button class="ib" id="vocClose" data-i="x" data-tt="cancel"></button></div>
+  <label class="vxf"><span data-t="vocTermL"></span><input id="vocTerm2" maxlength="120"></label>
+  <label class="vxf"><span data-t="vocTransL"></span><input id="vocTr2" maxlength="240"></label>
+  <label class="vxf"><span data-t="vocCtxL"></span><textarea id="vocCtx2"></textarea></label>
+  <div id="vocDlgMsg" class="vmsg hidden"></div>
+  <div class="vxacts"><span class="sp"></span><button class="ghost" id="vocCancel" data-t="cancel"></button><button class="primary" id="vocSaveBtn" data-t="save"></button></div>
+</dialog>
 <dialog id="ask"><p id="askText"></p><input id="askIn" class="hidden"><div class="dh"><button class="ghost" id="askNo"></button><button class="primary" id="askYes"></button></div></dialog>
 <dialog id="styleDlg"></dialog>
 <dialog id="sumDlg"></dialog>

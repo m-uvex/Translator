@@ -411,3 +411,15 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
    Übersetzers, weil die in einer anderen Ansicht unsichtbar wäre. */
 .vmsg{font-size:13px;color:var(--muted);padding:0 6px}
 .vmsg.err{color:#c9605a}
+
+/* Vokabel bearbeiten: drei Felder untereinander, Meldung darunter, Knoepfe
+   rechts. Gleiche Feldoptik wie die Einstellungen. */
+#vocDlg{width:min(520px,92vw)}
+#vocDlg .vxf{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+#vocDlg .vxf>span{font-size:13px;color:var(--muted)}
+#vocDlg input,#vocDlg textarea{width:100%;font:inherit;color:var(--text);background:var(--soft);border:0;border-radius:12px;padding:9px 12px;outline:0}
+#vocDlg textarea{height:90px;resize:vertical;line-height:1.5}
+#vocDlg .vmsg{padding:8px 2px 0}
+#vocDlg .vxacts{display:flex;gap:8px;align-items:center;margin-top:14px}
+/* Zwei Knoepfe je Zeile: Bearbeiten links vom Loeschen, beide gleich zurueckhaltend. */
+.vrow{gap:2px}

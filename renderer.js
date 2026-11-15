@@ -107,6 +107,9 @@ const K = {
   readTitle:['Lesetexte','Reading texts'], txEmpty:['Noch keine Lesetexte','No reading texts yet'],
   txEmptyHint:['„Text hinzufügen“ lädt eine eigene Datei, die sich dann lesen lässt.','“Add text” loads your own file, which you can then read.'],
   vocTitle:['Vokabeln','Vocabulary'], vocAdd:['Eintragen','Add'], vocTermPh:['Wort oder Wendung eingeben …','Type a word or phrase …'],
+  // Dialog „Vokabel bearbeiten“.
+  vocEdit:['Vokabel bearbeiten','Edit vocabulary'], vocTermL:['Wort oder Wendung','Word or phrase'],
+  vocTransL:['Übersetzung','Translation'], vocCtxL:['Kontextsatz','Context sentence'],
   vocEmpty:['Noch keine Vokabeln','No vocabulary yet'], vocEmptyHint:['Beim Lesen ein Wort anklicken oder oben eingeben.','Click a word while reading, or type it above.'],
   vocCount:[n => `${n} Vokabeln`, n => `${n} words`], vocabDue:[n => `${n} fällig`, n => `${n} due`],   vocOther:[n => `${n} in anderen Sprachen`, n => `${n} in other languages`],
   learnLang:['Sprache, die du lernst','Language you are learning'], nativeLang:['Sprache, die du schon kennst (Übersetzungsziel)','Language you already know (translation target)'],

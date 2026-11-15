@@ -141,6 +141,7 @@ function vocRow(e, opts) {
       ${masked ? `<div class="vctx">${masked}</div>` : ''}
       <div class="vmeta">${e.textTitle ? esc(e.textTitle) : ''}${e.interval ? ` · ${e.interval} ${LANG === 'de' ? 'Tage' : 'days'}` : ''}${opts && opts.due ? ` · ${esc(e.due || '')}` : ''}</div>
     </div>
+    <button class="rm ed" data-edit="${e.id}" title="${esc(t('edit'))}">${ic('pencil', 13)}</button>
     <button class="rm" data-del="${e.id}" title="${esc(t('remove'))}">${ic('x', 13)}</button>
   </div>`;
 }
@@ -536,6 +537,48 @@ async function addFromSearch() {
   renderVocab();
 }
 
+// ---------- Vokabel bearbeiten ----------
+// Der Dialog aendert nur die drei Texte. Paar, Intervall und Lerndaten bleiben,
+// damit eine Korrektur nicht den Lernstand zuruecksetzt.
+let vocEditId = '';
+
+function vocDlgStatus(text) {
+  const el = $('#vocDlgMsg'); if (!el) return;
+  el.textContent = text || '';
+  el.classList.toggle('hidden', !text);
+  el.classList.toggle('err', !!text);
+}
+
+function vocOpenEdit(id) {
+  const e = ST.vocab.find(v => v.id === id); if (!e) return;
+  vocEditId = id;
+  vocDlgStatus('');
+  $('#vocTerm2').value = e.term || '';
+  $('#vocTr2').value = e.translation || '';
+  $('#vocCtx2').value = e.context || '';
+  $('#vocDlg').showModal();
+  $('#vocTerm2').focus(); $('#vocTerm2').select();
+}
+
+function vocSaveEdit() {
+  const e = ST.vocab.find(v => v.id === vocEditId);
+  if (!e) { $('#vocDlg').close(); return; }
+  const term = $('#vocTerm2').value.trim();
+  if (!term) return vocDlgStatus(t('vocNeedTerm'));
+  // Dasselbe Wort im selben Paar gibt es schon: lieber hier melden als eine
+  // zweite Zeile anlegen, die die Abfrage doppelt fragt.
+  const dup = ST.vocab.find(v => v.id !== e.id && nrm(v.term) === nrm(term) && samePair(pairOf(v), pairOf(e)));
+  if (dup) return vocDlgStatus(t('wordExists'));
+  e.term = term;
+  e.translation = $('#vocTr2').value.trim();
+  e.context = $('#vocCtx2').value.trim();
+  e.updated = Date.now();
+  persist('vocab');
+  renderVocab();
+  $('#vocDlg').close();
+  vocStatus('');
+}
+
 // ---------- Spaced Repetition ----------
 const LADDER = [1, 2, 4, 8, 16, 32, 64, 128, 256];
 const addDays = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
@@ -698,8 +741,16 @@ function wire() {
   $('#vocTerm').addEventListener('input', () => vocStatus(''));
   $('#vocTerm').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addFromSearch(); } });
   $('#vocList').addEventListener('click', e => {
+    const ed = e.target.closest('[data-edit]');
+    if (ed) return vocOpenEdit(ed.dataset.edit);
     const b = e.target.closest('[data-del]');
     if (b) dropVocab(b.dataset.del);
+  });
+  $('#vocClose').onclick = () => $('#vocDlg').close();
+  $('#vocCancel').onclick = () => $('#vocDlg').close();
+  $('#vocSaveBtn').onclick = vocSaveEdit;
+  $('#vocDlg').addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' && ev.target.tagName !== 'TEXTAREA') { ev.preventDefault(); vocSaveEdit(); }
   });
 
   $('#txAdd').onclick = txOpen;
