@@ -132,7 +132,7 @@ const K = {
   , srsReveal:['Übersetzung zeigen','Show translation'], srsShowCtx:['Im Satz','In sentence'],
   srsAgain:['Nochmal','Again'], srsHard:['Schwer','Hard'], srsGood:['Gut','Good'], srsEasy:['Einfach','Easy'],
   // Mastery-Modus: Übersetzung tippen statt nur umdrehen.
-  srsTypeT:['Tippen üben','Practise by typing'], srsTypeIn:['Übersetzung eingeben …','Type the translation …'],
+  srsTypeT:['Übersetzung tippen','Type the translation'], srsTypeIn:['Übersetzung eingeben …','Type the translation …'],
   srsCheck:['Prüfen','Check'], srsRight:['Richtig','Correct'],
   srsWrong:['Leider falsch — richtig ist:','Not quite — the answer is:'],
   srsMastered:['Gemeistert','Mastered'],

@@ -428,6 +428,13 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
    Rückmeldung zur letzten Antwort. */
 .srsinput{display:flex;gap:8px;align-items:center;margin-top:12px}
 .srsinput input{flex:1;min-width:0;font:inherit;color:var(--text);background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:9px 16px;outline:0}
+/* Der Umschalter im Kopf von „Üben“ ist ein runder Knopf wie in einer
+   Segment-Leiste: blauer Kreis beim Zeigen und wenn das Tippen läuft. */
+#srsType{width:34px;height:34px;border-radius:50%}
+#srsType:hover{background:var(--accent-hover);color:var(--on-accent)}
+#srsType.on{background:var(--accent);color:var(--on-accent)}
+#srsType.on:hover{background:var(--accent-hover)}
+
 .srsinput input:focus{border-color:var(--accent)}
 .srsinput .ib.go{background:var(--accent);color:var(--on-accent);width:34px;height:34px;border-radius:50%}
 .srsinput .ib.go:hover{background:var(--accent-hover);color:var(--on-accent)}
