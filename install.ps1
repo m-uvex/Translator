@@ -425,7 +425,7 @@ $btn.Add_Click({
     Log (tr 'copy')
     [void](New-Item -ItemType Directory -Force $script:dir)
     if ((Resolve-Path $script:dir).Path -ne (Resolve-Path $script:src).Path) {
-      foreach ($n in 'main.js','preload.js','index.html','style.css','renderer.js','editor.js','nllb_server.py','package.json','requirements.txt','Uninstall.ps1') { Copy-Item (Join-Path $script:src $n) $script:dir -Force }
+      foreach ($n in 'main.js','preload.js','index.html','style.css','renderer.js','editor.js','study.js','nllb_server.py','package.json','requirements.txt','Uninstall.ps1') { Copy-Item (Join-Path $script:src $n) $script:dir -Force }
       if (Test-Path (Join-Path $script:src 'build')) { Copy-Item (Join-Path $script:src 'build') $script:dir -Recurse -Force }
     }
     Ensure-Electron
