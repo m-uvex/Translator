@@ -141,7 +141,7 @@ const K = {
   srsChars:['Zeichen, die auf deiner Tastatur fehlen','Characters missing on your keyboard'],
   // Modellwahl für Wortübersetzungen (Lesen und Vokabeln).
   studyModelT:['Modell für Wortübersetzungen','Model for word translations'],
-  studyModelAuto:['Standard (Modell der Textbearbeitung)','Default (text editor model)'],
+  studyModelAuto:['Standard (Modell des Übersetzers)','Default (translator model)'],
   pickT:['Wörter auswählen','Pick words'], pickNoPanel:['Erst „Vokabeln neben dem Übersetzer“ in den Einstellungen einschalten.','First enable “Vocabulary beside the translator” in the settings.'],
   wordTr:['Übersetze …','Translating …'], wordErr:['Wort konnte nicht übersetzt werden','Could not translate the word'],
   vocNeedTerm:['Bitte zuerst ein Wort eingeben.','Please enter a word first.'],

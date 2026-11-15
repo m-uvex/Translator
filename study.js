@@ -37,7 +37,8 @@ function persist(which) {
 // Ist gerade ein reines Uebersetzungsmodell (NLLB, TranslateGemma) gewaehlt,
 // wird das Hilfsmodell aus den Einstellungen genommen.
 function studyModel() {
-  // Eigenes Modell fuer Wortuebersetzungen, sonst das des Uebersetzers.
+  // Eigenes Modell fuer Wortuebersetzungen, sonst das des Uebersetzers
+  // (`S.model`, die Leiste im Uebersetzer-Arbeitsplatz).
   if (S.studyModel) return S.studyModel;
   if (!S.model) return '';
   if (window.trIsStudyless && window.trIsStudyless()) return window.trHelperModel() || '';
