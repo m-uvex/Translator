@@ -475,3 +475,8 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .vrow.picked .pickbox{background:var(--accent);border-color:var(--accent)}
 .ib:disabled{opacity:.35;cursor:default}
 .pop .ph{padding:6px 10px 2px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+
+/* Dokumentenablage: der Knopf „In Lesetexte übernehmen“ sitzt links neben dem
+   Kreuz und erscheint wie dieses beim Zeigen auf die Karte. */
+.libcard .rm.to{right:36px;width:24px;height:24px}
+.libcard .rm.to svg{width:12px;height:12px}

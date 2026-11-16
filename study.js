@@ -1126,6 +1126,61 @@ function importTexts(text) {
   window.trStatus(t('txtDone', n));
 }
 
+// ---------- Aus der Dokumentenablage in die Lesetexte ----------
+// Ein Dokument der Ablage laesst sich in die Lese-Bibliothek einer Sprache
+// kopieren; das Original bleibt in der Ablage unberuehrt. Die Kopie traegt das
+// Sprachpaar, damit sie im Lese-Arbeitsplatz des passenden Paares erscheint.
+function htmlToPlain(html) {
+  // Blockenden werden zu Zeilenumbruechen, bevor der Text aus dem DOM kommt.
+  const s = String(html || '')
+    .replace(/<\/(p|h[1-6]|li|blockquote|div|tr|figure|section)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n');
+  const d = document.createElement('div');
+  d.innerHTML = s;
+  return String(d.textContent || '')
+    .replace(/\r/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function libToReading(doc, lang) {
+  const text = htmlToPlain(doc && doc.html);
+  if (!text) return window.trStatus(t('txNeedText'));
+  const src = lang || S.studySrc;
+  // Bekannte Sprache bleibt; ist sie dieselbe wie die gelernte, muss eine
+  // andere her, sonst filtert `inPair` den Text aus jeder Liste heraus.
+  let tgt = S.studyTgt;
+  if (tgt === src) tgt = LANG !== src ? LANG : (src === 'en' ? 'de' : 'en');
+  ST.texts.unshift({
+    id: uid('t'), title: String((doc && doc.name) || t('txUntitled')).slice(0, 200),
+    cat: 'other', text, pos: 0, src, tgt, created: Date.now(), updated: Date.now()
+  });
+  persist('texts');
+  // Auf das Paar der Kopie umstellen, damit der Text gleich in der Leseliste steht.
+  if (src !== S.studySrc || tgt !== S.studyTgt) { S.studySrc = src; S.studyTgt = tgt; save(); pairChanged(); }
+  renderTexts();
+  // In die Leseliste wechseln: dort steht die Kopie sofort sichtbar, waehrend
+  // die Statuszeile des Uebersetzers in der Ablage unsichtbar waere.
+  window.edShowView('txt');
+  window.trStatus(t('libToReadDone', `${langLabel(src)} → ${langLabel(tgt)}`));
+}
+
+// Wird vom Kartenknopf in der Ablage gerufen (editor.js): erst die Sprache
+// waehlen, dann kopieren. Rechnet das Lesen aus, nicht das Paar, damit ein
+// unbekannter Text nicht als gelernte Sprache gilt.
+window.studyLibToReading = async (id, btn) => {
+  let doc = null;
+  try { doc = await window.api.libRead(id); } catch { }
+  if (!doc) return window.trStatus(t('readErr'));
+  const pick = { src: S.studySrc };
+  langPop(btn, 'src', {
+    obj: pick, langs: OLLAMA_LANGS, noAuto: true,
+    pins: () => S.pins.ollama, isSrc: true,
+    done: () => libToReading(doc, pick.src)
+  });
+};
+
 // ---------- Verdrahtung ----------
 function wire() {
   $('#rBack').onclick = () => { savePos(); window.edShowView('txt'); };

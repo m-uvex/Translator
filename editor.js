@@ -974,12 +974,13 @@ async function drawLib() {
   for (const e of items) {
     const card = document.createElement('div');
     card.className = 'libcard'; card.dataset.id = e.id; card.tabIndex = 0;
-    card.innerHTML = `<div class="libprev"></div><div class="libmeta"><div class="libname">${esc(e.name)}</div><div class="libdate">${esc(libDate(e.updated))}</div></div><button class="rm" title="${esc(t('remove'))}">${ic('x', 14)}</button>`;
+    card.innerHTML = `<div class="libprev"></div><div class="libmeta"><div class="libname">${esc(e.name)}</div><div class="libdate">${esc(libDate(e.updated))}</div></div><button class="rm to" title="${esc(t('libToReadT'))}">${ic('reading', 14)}</button><button class="rm" title="${esc(t('remove'))}">${ic('x', 14)}</button>`;
     const doc = document.createElement('div'); doc.className = 'doc'; doc.innerHTML = cleanHtml(e.html);
     card.querySelector('.libprev').append(doc);
     card.onclick = ev => { if (!ev.target.closest('.rm')) libOpen(e.id); };
     card.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); libOpen(e.id); } };
-    card.querySelector('.rm').onclick = ev => { ev.stopPropagation(); libRemove(e.id); };
+    card.querySelector('.rm.to').onclick = ev => { ev.stopPropagation(); if (window.studyLibToReading) window.studyLibToReading(e.id, ev.currentTarget); };
+    card.querySelector('.rm:not(.to)').onclick = ev => { ev.stopPropagation(); libRemove(e.id); };
     grid.append(card);
   }
 }
