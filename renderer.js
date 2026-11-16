@@ -48,7 +48,12 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   funnel:'<path d="M3 5h18l-7 8v6l-4 2v-8z"/>',
   // Liste mit Haken: Mehrfachauswahl der Vokabeln. Bewusst nicht `pick` -
   // das ist der Textmarker des Uebersetzers.
-  checklist:'<path d="M4 7.5l1.8 1.8 3.2-3.3"/><path d="M4 16l1.8 1.8 3.2-3.3"/><path d="M13 7h7M13 16h7"/>' };
+  checklist:'<path d="M4 7.5l1.8 1.8 3.2-3.3"/><path d="M4 16l1.8 1.8 3.2-3.3"/><path d="M13 7h7M13 16h7"/>',
+  // Drei Zeilen und ein Pfeil darunter: vorhandene Woerter bekommen ihre
+  // Uebersetzung nachgetragen. Bewusst nicht `languages` (das ist in der
+  // Schnellleiste des Editors "Auswahl uebersetzen") und nicht `wand` (das
+  // ist dort "Ausdrucksweise").
+  filltr:'<path d="M3 6h8M3 10h8M3 14h5"/><path d="M3 18h12M12.5 15l3 3-3 3"/>' };
 const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 document.querySelectorAll('[data-i]').forEach(e => e.innerHTML = ic(e.dataset.i));

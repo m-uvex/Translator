@@ -1,10 +1,11 @@
 # Erzeugt das Logo der App: build/icon.png (512 px) und build/icon.ico (256 bis 16 px).
 # Aufruf: powershell -NoProfile -ExecutionPolicy Bypass -File build/make-icon.ps1
 #
-# Die beiden Zeichen stehen fuer den Namen der App und ersetzen die Buchstaben
-# anderer Uebersetzer-Symbole: ẞ (Latein, U+1E9E) und Ж (Kyrillisch, U+0416).
-# Sie werden als Vektorpfade gezeichnet und auf gleiche Hoehe gebracht, damit
-# beide optisch gleich schwer wirken.
+# Das Logo ist ein abgerundetes Quadrat in Babyblau mit einem großen Ü in
+# Tintenfarbe: der Anfangsbuchstabe des Namens, wie ihn auch die Verknüpfung
+# traegt. Bewusst keine Buchstabenpaare und keine Symbole aus der Oberflaeche —
+# die stehen dort fuer einzelne Befehle und wuerden als App-Zeichen verwirren.
+# Das Ü bleibt bis 16 px lesbar, weil es nur aus wenigen dicken Strichen besteht.
 param([string]$Root = (Split-Path -Parent $PSScriptRoot))
 
 Add-Type -AssemblyName System.Drawing
@@ -14,17 +15,8 @@ $accentTop = [System.Drawing.Color]::FromArgb(255, 156, 207, 245)
 $accentBottom = [System.Drawing.Color]::FromArgb(255, 126, 189, 238)
 $ink = [System.Drawing.Color]::FromArgb(255, 14, 42, 68)
 
-function Get-GlyphPath([string]$ch) {
-  $path = New-Object System.Drawing.Drawing2D.GraphicsPath
-  $family = New-Object System.Drawing.FontFamily($fontFamily)
-  $fmt = [System.Drawing.StringFormat]::GenericTypographic
-  $path.AddString($ch, $family, [int][System.Drawing.FontStyle]::Bold, 200, (New-Object System.Drawing.PointF(0, 0)), $fmt)
-  $family.Dispose()
-  return $path
-}
-
 function New-LogoBitmap([int]$size) {
-  $bmp = New-Object System.Drawing.Bitmap($size, $size, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+  $bmp = New-Object System.Drawing.Bitmap -ArgumentList $size, $size
   $g = [System.Drawing.Graphics]::FromImage($bmp)
   $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
   $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
@@ -33,59 +25,37 @@ function New-LogoBitmap([int]$size) {
   # Abgerundetes Quadrat: 22 Prozent der Kante, wie die Karten der App.
   $r = $size * 0.22
   $d = 2 * $r
-  $rect = New-Object System.Drawing.RectangleF(0, 0, $size, $size)
+  $rect = New-Object System.Drawing.RectangleF -ArgumentList 0, 0, $size, $size
   $shape = New-Object System.Drawing.Drawing2D.GraphicsPath
   $shape.AddArc($rect.X, $rect.Y, $d, $d, 180, 90)
   $shape.AddArc($rect.Right - $d, $rect.Y, $d, $d, 270, 90)
   $shape.AddArc($rect.Right - $d, $rect.Bottom - $d, $d, $d, 0, 90)
   $shape.AddArc($rect.X, $rect.Bottom - $d, $d, $d, 90, 90)
   $shape.CloseFigure()
-  $brush = New-Object System.Drawing.Drawing2D.LinearGradientBrush($rect, $accentTop, $accentBottom, 90.0)
+  $brush = New-Object System.Drawing.Drawing2D.LinearGradientBrush -ArgumentList $rect, $accentTop, $accentBottom, 90.0
   $g.FillPath($brush, $shape)
 
-  # Beide Zeichen auf dieselbe Hoehe bringen und zusammen zentrieren.
-  $paths = @()
-  foreach ($ch in @([string][char]0x1E9E, [string][char]0x0416)) {
-    $p = Get-GlyphPath $ch
-    $b = $p.GetBounds()
-    if ($b.Height -le 0) { continue }
-    $paths += , @{ Path = $p; Bounds = $b }
-  }
-  if ($paths.Count -eq 0) { throw 'Keine Glyphen gezeichnet - Schrift pruefen.' }
+  # Das Ü als Vektorpfad, auf 54 Prozent der Kante gebracht und mittig gesetzt.
+  # Die Punkte zaehlen zum Pfad, deshalb sitzt das Zeichen damit optisch etwas
+  # ueber der Mitte — das gleicht der Blick aus.
+  $path = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $family = New-Object System.Drawing.FontFamily($fontFamily)
+  $path.AddString([string][char]0x00DC, $family, [int][System.Drawing.FontStyle]::Bold, 200,
+    (New-Object System.Drawing.PointF -ArgumentList 0, 0), [System.Drawing.StringFormat]::GenericTypographic)
+  $family.Dispose()
+  $b = $path.GetBounds()
+  if ($b.Height -le 0) { throw 'Kein Glyph gezeichnet - Schrift pruefen.' }
+  $scale = ($size * 0.54) / $b.Height
+  $m = New-Object System.Drawing.Drawing2D.Matrix
+  $m.Translate(-$b.X, -$b.Y, [System.Drawing.Drawing2D.MatrixOrder]::Append)
+  $m.Scale($scale, $scale, [System.Drawing.Drawing2D.MatrixOrder]::Append)
+  $m.Translate(($size - $b.Width * $scale) / 2, ($size - $b.Height * $scale) / 2,
+    [System.Drawing.Drawing2D.MatrixOrder]::Append)
+  $path.Transform($m)
+  $inkBrush = New-Object System.Drawing.SolidBrush -ArgumentList $ink
+  $g.FillPath($inkBrush, $path)
 
-  # Hoehe so waehlen, dass beide Zeichen zusammen in die Flaeche passen; die
-  # Breite ist hier der Engpass, nicht die Hoehe.
-  $gap = $size * 0.06
-  $aspect = 0
-  foreach ($item in $paths) { $aspect += $item.Bounds.Width / $item.Bounds.Height }
-  $maxWidth = $size * 0.74
-  $target = [Math]::Min($size * 0.42, ($maxWidth - $gap) / $aspect)
-  $scales = @()
-  foreach ($item in $paths) { $scales += , ($target / $item.Bounds.Height) }
-  $total = 0
-  for ($i = 0; $i -lt $paths.Count; $i++) {
-    $total += $paths[$i].Bounds.Width * $scales[$i]
-    if ($i -gt 0) { $total += $gap }
-  }
-
-  $inkBrush = New-Object System.Drawing.SolidBrush($ink)
-  $x = ($size - $total) / 2
-  for ($i = 0; $i -lt $paths.Count; $i++) {
-    $p = $paths[$i].Path
-    $b = $paths[$i].Bounds
-    $s = $scales[$i]
-    $y = ($size - $b.Height * $s) / 2
-    $m = New-Object System.Drawing.Drawing2D.Matrix
-    $m.Translate(-$b.X, -$b.Y, [System.Drawing.Drawing2D.MatrixOrder]::Append)
-    $m.Scale($s, $s, [System.Drawing.Drawing2D.MatrixOrder]::Append)
-    $m.Translate($x, $y, [System.Drawing.Drawing2D.MatrixOrder]::Append)
-    $p.Transform($m)
-    $g.FillPath($inkBrush, $p)
-    $m.Dispose(); $p.Dispose()
-    $x += $b.Width * $s + $gap
-  }
-
-  $inkBrush.Dispose(); $brush.Dispose(); $shape.Dispose(); $g.Dispose()
+  $inkBrush.Dispose(); $m.Dispose(); $path.Dispose(); $brush.Dispose(); $shape.Dispose(); $g.Dispose()
   return $bmp
 }
 

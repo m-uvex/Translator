@@ -6,11 +6,14 @@ Es schreibt beide Dateien:
   icon.png (512x512) fuer Linux
   icon.ico (256, 128, 64, 48, 32, 16 px) fuer Windows
 
-Das Logo zeigt ein abgerundetes Quadrat in Babyblau mit den Zeichen ẞ (Latein)
-und Ж (Kyrillisch) in Tintenfarbe - eine Entsprechung zu den Buchstaben-Symbolen
-anderer Uebersetzer. Die fertigen Dateien liegen versioniert bei; ohne Windows
-muessen sie nicht neu erzeugt werden.
+Das Logo zeigt ein abgerundetes Quadrat in Babyblau mit einem grossen Ue in
+Tintenfarbe: der Anfangsbuchstabe des Namens, wie ihn auch die Verknuepfung
+traegt. Keine Symbole aus der Oberflaeche - die stehen dort fuer einzelne
+Befehle und taugen nicht als App-Zeichen. Die fertigen Dateien liegen
+versioniert bei; ohne Windows muessen sie nicht neu erzeugt werden.
 
 Ein eigenes Icon ersetzt diese Dateien einfach; electron-builder nimmt sie aus
 diesem Ordner. Fehlt icon.ico, baut der Windows-Installer mit dem
-Electron-Standardicon.
+Electron-Standardicon. Wichtig: mit -c.win.signAndEditExecutable=false landet
+das Icon NICHT in der exe, dann zeigt die Desktop-Verknuepfung das
+Electron-Atom; der Windows-Build laeuft deshalb ohne dieses Flag.
