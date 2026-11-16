@@ -61,14 +61,13 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // ist so groß wie die anderen (kein Sonderfall im Raster). Bei "gemischt"
   // steht das weibliche Zeichen links und das männliche rechts, damit dessen
   // Pfeil nach oben rechts ins Freie zeigt und nicht in den anderen Kreis.
-  // Die Marken (Pfeil, Kreuz) sind kraeftiger gezeichnet als die Kreise (2,4 statt
-  // 1,8), der Pfeil ist laenger und sein Kopf 3 Einheiten breit: bei 18 px sind
-  // Pfeil und Kreuz so deutlich zu sehen. Ein gefuellter Pfeilkopf lief dabei zu
-  // einem Fleck zu.
-  gNone:'<circle cx="7" cy="10.4" r="3.2"/><circle cx="17" cy="10.4" r="3.2"/><path d="M2.6 19.6c0-2.4 2-4.2 4.4-4.2s4.4 1.8 4.4 4.2"/><path d="M12.6 19.6c0-2.4 2-4.2 4.4-4.2s4.4 1.8 4.4 4.2"/>',
-  gMixed:'<circle cx="6.6" cy="12" r="3.4"/><path d="M6.6 15.4v4.6M3.8 18.4h5.6" stroke-width="2.4"/><circle cx="17.4" cy="12" r="3.4"/><path d="M19.4 9.8l3-3M19.1 7.6l3.3.8M20.5 10l3.2-2" stroke-width="2.4"/>',
-  gMale:'<circle cx="6.6" cy="12" r="3.4"/><path d="M8.6 9.8l3-3M8.3 7.6l3.3.8M9.7 10l3.2-2" stroke-width="2.4"/><circle cx="17.4" cy="12" r="3.4"/><path d="M19.4 9.8l3-3M19.1 7.6l3.3.8M20.5 10l3.2-2" stroke-width="2.4"/>',
-  gFemale:'<circle cx="6.6" cy="12" r="3.4"/><path d="M6.6 15.4v4.6M3.8 18.4h5.6" stroke-width="2.4"/><circle cx="17.4" cy="12" r="3.4"/><path d="M17.4 15.4v4.6M14.6 18.4h5.6" stroke-width="2.4"/>'
+  // Strich 1,8 wie bei allen anderen Zeichen und alle Koordinaten auf halben
+  // Einheiten — kraeftigere Marken (2,4) oder krumme Werte wirkten bei 18 px
+  // matschig, weil die Striche dann im Antialiasing zerliefen.
+  gNone:'<circle cx="7" cy="10.5" r="3.5"/><circle cx="17" cy="10.5" r="3.5"/><path d="M2.5 19.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5"/><path d="M12.5 19.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5"/>',
+  gMixed:'<circle cx="6.5" cy="12" r="3.5"/><path d="M6.5 15.5v4M4 18.5h5"/><circle cx="17.5" cy="12" r="3.5"/><path d="M19.9 9.6l2.8-2.8M19.6 7.6l3.1.8M20.8 9.9l1.9-3.1"/>',
+  gMale:'<circle cx="6.5" cy="12" r="3.5"/><path d="M8.9 9.6l2.8-2.8M8.6 7.6l3.1.8M9.8 9.9l1.9-3.1"/><circle cx="17.5" cy="12" r="3.5"/><path d="M19.9 9.6l2.8-2.8M19.6 7.6l3.1.8M20.8 9.9l1.9-3.1"/>',
+  gFemale:'<circle cx="6.5" cy="12" r="3.5"/><path d="M6.5 15.5v4M4 18.5h5"/><circle cx="17.5" cy="12" r="3.5"/><path d="M17.5 15.5v4M15 18.5h5"/>'
 };
 const ic = (n, s = 18, sw = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
