@@ -364,13 +364,13 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 /* Abfrage */
 #vP{display:flex;flex-direction:column;padding:12px 12px 12px 0;gap:8px;min-height:0}
 .srsbox{flex:1;display:grid;place-items:center;overflow:auto;min-height:0;padding:8px}
-.srscard{width:min(680px,94%);background:var(--card);border:1px solid var(--line);border-radius:22px;padding:30px 32px;
+.srscard{width:min(680px,94%);background:var(--card);border:1px solid var(--line);border-radius:22px;padding:30px 32px;text-align:center;
   display:flex;flex-direction:column;gap:14px;box-shadow:0 2px 14px #00000012}
 .srsctx{font-size:19px;line-height:1.75}
 .srsblank{color:var(--accent-ink);font-weight:600;letter-spacing:.05em}
 .srsword{font-size:28px;font-weight:600}
 .srsres{font-size:23px;color:var(--accent-ink)}
-.srsbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.srsbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 .srsempty{color:var(--muted);text-align:center;display:flex;flex-direction:column;gap:4px}
 .srsempty p{margin:0}
 @media print{#vR,#vV,#vP,#pickLayer{display:none!important}}
