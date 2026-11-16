@@ -61,13 +61,11 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // ist so groß wie die anderen (kein Sonderfall im Raster). Bei "gemischt"
   // steht das weibliche Zeichen links und das männliche rechts, damit dessen
   // Pfeil nach oben rechts ins Freie zeigt und nicht in den anderen Kreis.
-  // Strich 1,8 wie bei allen anderen Zeichen und alle Koordinaten auf halben
-  // Einheiten — kraeftigere Marken (2,4) oder krumme Werte wirkten bei 18 px
-  // matschig, weil die Striche dann im Antialiasing zerliefen.
-  gNone:'<circle cx="7" cy="10.5" r="3.5"/><circle cx="17" cy="10.5" r="3.5"/><path d="M2.5 19.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5"/><path d="M12.5 19.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5"/>',
-  gMixed:'<circle cx="6.5" cy="12" r="3.5"/><path d="M6.5 15.5v4M4 18.5h5"/><circle cx="17.5" cy="12" r="3.5"/><path d="M19.9 9.6l2.8-2.8M19.6 7.6l3.1.8M20.8 9.9l1.9-3.1"/>',
-  gMale:'<circle cx="6.5" cy="12" r="3.5"/><path d="M8.9 9.6l2.8-2.8M8.6 7.6l3.1.8M9.8 9.9l1.9-3.1"/><circle cx="17.5" cy="12" r="3.5"/><path d="M19.9 9.6l2.8-2.8M19.6 7.6l3.1.8M20.8 9.9l1.9-3.1"/>',
-  gFemale:'<circle cx="6.5" cy="12" r="3.5"/><path d="M6.5 15.5v4M4 18.5h5"/><circle cx="17.5" cy="12" r="3.5"/><path d="M17.5 15.5v4M15 18.5h5"/>'
+  // Strich 1,8 wie bei allen anderen Zeichen, Koordinaten auf halben Einheiten.
+  // Die Geschlechter der Gruppe sind die ganz normalen Zeichen aus der ersten
+  // Reihe; der Knopf ist dafuer eine Pille, in der beide in voller Groesse
+  // stehen. Zwei Zeichen in einem 32er-Kreis wirkten gestaucht ("verstuemmelt").
+  person:'<circle cx="12" cy="7.5" r="3.6"/><path d="M5 19.5c0-3.3 3.1-5.6 7-5.6s7 2.3 7 5.6"/>'
 };
 const ic = (n, s = 18, sw = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -363,9 +361,9 @@ const STY = {
   // nur eine Option (siehe $('#styles').onclick). `unknown` in der ersten Reihe
   // heisst "ohne Angabe" und aendert den Prompt nicht.
   gender:{ h:'l_gender', opts:[['unknown','dash',''],['neutral','nb','Use gender-neutral wording for the addressed person.'],['male','male','The addressed person is male; use matching grammatical forms.'],['female','female','The addressed person is female; use matching grammatical forms.']],
-    sub:{ key:'genderGroup', opts:[['none','gNone',''],['mixed','gMixed','The addressees are several people of mixed genders; use plural forms, and for mixed groups whatever the target language does (often the masculine plural).'],['male','gMale','The addressees are several men; use masculine plural forms.'],['female','gFemale','The addressees are several women; use feminine plural forms.']] } },
+    sub:{ key:'genderGroup', opts:[['none','person,person',''],['mixed','female,male','The addressees are several people of mixed genders; use plural forms, and for mixed groups whatever the target language does (often the masculine plural).'],['male','male,male','The addressees are several men; use masculine plural forms.'],['female','female,female','The addressees are several women; use feminine plural forms.']] } },
   writer:{ h:'l_writer', opts:[['unknown','dash',''],['neutral','nb',''],['male','male',''],['female','female','']],
-    sub:{ key:'writerGroup', opts:[['none','gNone',''],['mixed','gMixed','The text was written by several people of mixed genders; for first-person references use plural forms with whatever gender agreement the target language uses for mixed groups.'],['male','gMale','The text was written by several men; for first-person references use masculine plural forms.'],['female','gFemale','The text was written by several women; for first-person references use feminine plural forms.']] } }
+    sub:{ key:'writerGroup', opts:[['none','person,person',''],['mixed','female,male','The text was written by several people of mixed genders; for first-person references use plural forms with whatever gender agreement the target language uses for mixed groups.'],['male','male,male','The text was written by several men; for first-person references use masculine plural forms.'],['female','female,female','The text was written by several women; for first-person references use feminine plural forms.']] } }
 };
 const D = { url:'http://localhost:11434', nllb:'http://127.0.0.1:8765', model:'', pref:'', theme:'auto', uiLang:'auto', start:'tr', workspace:'both', helper:'', src:'auto', tgt:'en',
   pins:{ ollama:['de','en'], nllb:['deu_Latn','eng_Latn'] }, style:{type:'natural',formal:'standard',gender:'unknown',writer:'unknown',genderGroup:'none',writerGroup:'none'}, uiMode:'icons',
@@ -839,8 +837,10 @@ function drawStyles() {
   const sel = (key, v) => S.style[key] === v && !rest(key, v);
   // Die Strichstärke wächst nicht mit: auf 26 px wirkte 1,8 sonst deutlich
   // dicker als die Zeichen der Personen-Reihe bei 18 px.
+  // o[1] darf mehrere Zeichen nennen ('female,male') — die zweite Reihe zeigt
+  // so zwei Personen in voller Grösse, statt sie in einen Kreis zu quetschen.
   const btn = (key, o, pref, size = 18) => mode === 'icons'
-    ? `<button class="ib${sel(key, o[0]) ? ' on' : ''}" data-k="${key}" data-v="${o[0]}" title="${esc(t(pref + o[0]))}" aria-label="${esc(t(pref + o[0]))}">${ic(o[1], size, 1.8 * 18 / size)}</button>`
+    ? `<button class="ib${o[1].includes(',') ? ' pair' : ''}${sel(key, o[0]) ? ' on' : ''}" data-k="${key}" data-v="${o[0]}" title="${esc(t(pref + o[0]))}" aria-label="${esc(t(pref + o[0]))}">${o[1].split(',').map(n => ic(n, size, 1.8 * 18 / size)).join('')}</button>`
     : `<div class="opt${sel(key, o[0]) ? ' sel' : ''}" data-k="${key}" data-v="${o[0]}"><span class="ck">${sel(key, o[0]) ? ic('check') : ''}</span>${t(pref + o[0])}</div>`;
   $('#styles').innerHTML = `<h3 class="sh">${t('h_style')}</h3>` + Object.entries(STY).map(([k, g]) => {
     const opts = g.opts.map(o => btn(k, o, 'o_')).join('');
