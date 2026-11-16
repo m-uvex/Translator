@@ -45,7 +45,10 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   winRestore:'<rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 16V6a1 1 0 0 1 1-1h10"/>',
   // Lupe und Trichter fuer Suche und Filter der Vokabelliste.
   search:'<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
-  funnel:'<path d="M3 5h18l-7 8v6l-4 2v-8z"/>' };
+  funnel:'<path d="M3 5h18l-7 8v6l-4 2v-8z"/>',
+  // Liste mit Haken: Mehrfachauswahl der Vokabeln. Bewusst nicht `pick` -
+  // das ist der Textmarker des Uebersetzers.
+  checklist:'<path d="M4 7.5l1.8 1.8 3.2-3.3"/><path d="M4 16l1.8 1.8 3.2-3.3"/><path d="M13 7h7M13 16h7"/>' };
 const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 document.querySelectorAll('[data-i]').forEach(e => e.innerHTML = ic(e.dataset.i));
