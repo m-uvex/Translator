@@ -56,14 +56,15 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   filltr:'<path d="M3 6h8M3 10h8M3 14h5"/><path d="M3 18h12M12.5 15l3 3-3 3"/>',
   // Die zweite Zeile unter "Absender*in" und "Empfänger*in" gilt einer Gruppe.
   // Alle vier Zeichen zeigen zwei Personen: zwei Köpfe (ohne Angabe) oder ein
-  // gleich grosses Zeichenpaar auf einer Grundlinie (♂♂, ♀♀, ♂♀). Auf 18 px
-  // waren Paare ein Punktbrei; deshalb ist diese Reihe groesser (26 px Zeichen
-  // in 36 px Knoepfen) und die beiden Zeichen stehen nebeneinander, nicht
-  // versetzt — versetzt wirkte es wie ein Gekritzel.
+  // Zeichenpaar auf einer Grundlinie. Die Kreise berühren sich fast und die
+  // Marken sind kurz; so bleiben die Paare auch bei 18 px lesbar, und die Reihe
+  // ist so groß wie die anderen (kein Sonderfall im Raster). Bei "gemischt"
+  // steht das weibliche Zeichen links und das männliche rechts, damit dessen
+  // Pfeil nach oben rechts ins Freie zeigt und nicht in den anderen Kreis.
   gNone:'<circle cx="7.6" cy="8.6" r="3.2"/><circle cx="16.4" cy="8.6" r="3.2"/><path d="M1.6 19.6c0-3 2.7-5.2 6-5.2s6 2.2 6 5.2M13.8 14.6c3.2 0 5.9 2.1 6.2 5"/>',
-  gMixed:'<circle cx="5.8" cy="13.6" r="3.3"/><path d="M8.1 11.3l3.4-3.4M8.3 7.9h3.2v3.2"/><circle cx="17" cy="11.4" r="3.3"/><path d="M17 14.7v4.6M14.9 16.9h4.2"/>',
-  gMale:'<circle cx="5.6" cy="13.6" r="3.3"/><path d="M7.9 11.3l3.4-3.4M8.1 7.9h3.2v3.2"/><circle cx="16.6" cy="13.6" r="3.3"/><path d="M18.9 11.3l3.4-3.4M19.1 7.9h3.2v3.2"/>',
-  gFemale:'<circle cx="6.4" cy="11.4" r="3.3"/><path d="M6.4 14.7v4.6M4.3 16.9h4.2"/><circle cx="17.2" cy="11.4" r="3.3"/><path d="M17.2 14.7v4.6M15.1 16.9h4.2"/>'
+  gMixed:'<circle cx="6.4" cy="11" r="3.6"/><path d="M6.4 14.6v3.6M4.6 16.4h3.6"/><circle cx="16.6" cy="11" r="3.6"/><path d="M19.2 8.4l3-3M19.4 5.4h2.8v2.8"/>',
+  gMale:'<circle cx="6.2" cy="11" r="3.6"/><path d="M8.8 8.4l3-3M9 5.4h2.8v2.8"/><circle cx="16.4" cy="11" r="3.6"/><path d="M19 8.4l3-3M19.2 5.4h2.8v2.8"/>',
+  gFemale:'<circle cx="6.6" cy="10.6" r="3.6"/><path d="M6.6 14.2v3.8M4.8 16.1h3.6"/><circle cx="16.8" cy="10.6" r="3.6"/><path d="M16.8 14.2v3.8M15 16.1h3.6"/>'
 };
 const ic = (n, s = 18, sw = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -840,9 +841,9 @@ function drawStyles() {
     : `<div class="opt${sel(key, o[0]) ? ' sel' : ''}" data-k="${key}" data-v="${o[0]}"><span class="ck">${sel(key, o[0]) ? ic('check') : ''}</span>${t(pref + o[0])}</div>`;
   $('#styles').innerHTML = `<h3 class="sh">${t('h_style')}</h3>` + Object.entries(STY).map(([k, g]) => {
     const opts = g.opts.map(o => btn(k, o, 'o_')).join('');
-    // Zweite Reihe: eine Gruppe. Sie zeichnet groesser (26 px Zeichen in 36 px
-    // Knoepfen), weil zwei Zeichen auf 18 px nicht zu unterscheiden waren.
-    const sub = g.sub ? `<div class="seg sub">${g.sub.opts.map(o => btn(g.sub.key, o, 'og_', 26)).join('')}</div>` : '';
+    // Zweite Reihe: eine Gruppe. Gleiches Mass wie die erste Reihe (18 px
+    // Zeichen in 32 px Knöpfen), nur ein eigener Abstand nach oben.
+    const sub = g.sub ? `<div class="seg sub">${g.sub.opts.map(o => btn(g.sub.key, o, 'og_')).join('')}</div>` : '';
     return `<div class="sgrp ${mode}"><span class="slab">${t(g.h)}</span>` +
       (mode === 'icons' ? `<div class="seg">${opts}</div>${sub}` : `<div class="list">${opts}</div>`) + '</div>';
   }).join('');
