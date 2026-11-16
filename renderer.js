@@ -66,9 +66,9 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // Pfeil und Kreuz so deutlich zu sehen. Ein gefuellter Pfeilkopf lief dabei zu
   // einem Fleck zu.
   gNone:'<circle cx="7" cy="10.4" r="3.2"/><circle cx="17" cy="10.4" r="3.2"/><path d="M2.6 19.6c0-2.4 2-4.2 4.4-4.2s4.4 1.8 4.4 4.2"/><path d="M12.6 19.6c0-2.4 2-4.2 4.4-4.2s4.4 1.8 4.4 4.2"/>',
-  gMixed:'<circle cx="6.6" cy="12" r="3.4"/><path d="M6.6 15.4v4.6M3.6 18h6" stroke-width="2.4"/><circle cx="17.4" cy="12" r="3.4"/><path d="M19.8 9.6l2.4-2.4M22.2 7.2h-3M22.2 7.2v3" stroke-width="2.4"/>',
-  gMale:'<circle cx="6.6" cy="12" r="3.4"/><path d="M9 9.6l2.4-2.4M11.4 7.2h-3M11.4 7.2v3" stroke-width="2.4"/><circle cx="17.4" cy="12" r="3.4"/><path d="M19.8 9.6l2.4-2.4M22.2 7.2h-3M22.2 7.2v3" stroke-width="2.4"/>',
-  gFemale:'<circle cx="6.6" cy="12" r="3.4"/><path d="M6.6 15.4v4.6M3.6 18h6" stroke-width="2.4"/><circle cx="17.4" cy="12" r="3.4"/><path d="M17.4 15.4v4.6M14.4 18h6" stroke-width="2.4"/>'
+  gMixed:'<circle cx="6.6" cy="12" r="3.4"/><path d="M6.6 15.4v4.6M3.8 18.4h5.6" stroke-width="2.4"/><circle cx="17.4" cy="12" r="3.4"/><path d="M19.4 9.8l3-3M19.1 7.6l3.3.8M20.5 10l3.2-2" stroke-width="2.4"/>',
+  gMale:'<circle cx="6.6" cy="12" r="3.4"/><path d="M8.6 9.8l3-3M8.3 7.6l3.3.8M9.7 10l3.2-2" stroke-width="2.4"/><circle cx="17.4" cy="12" r="3.4"/><path d="M19.4 9.8l3-3M19.1 7.6l3.3.8M20.5 10l3.2-2" stroke-width="2.4"/>',
+  gFemale:'<circle cx="6.6" cy="12" r="3.4"/><path d="M6.6 15.4v4.6M3.8 18.4h5.6" stroke-width="2.4"/><circle cx="17.4" cy="12" r="3.4"/><path d="M17.4 15.4v4.6M14.6 18.4h5.6" stroke-width="2.4"/>'
 };
 const ic = (n, s = 18, sw = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
