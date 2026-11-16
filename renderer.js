@@ -55,8 +55,15 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // ist dort "Ausdrucksweise").
   filltr:'<path d="M3 6h8M3 10h8M3 14h5"/><path d="M3 18h12M12.5 15l3 3-3 3"/>',
   // Die zweite Zeile unter "Absender*in" und "Empfänger*in" gilt einer Gruppe.
-  // Sie traegt keine Zeichen: zwei Geschlechtszeichen nebeneinander waren auf
-  // 18 px nicht zu unterscheiden. Dort stehen kurze Woerter (siehe drawStyles).
+  // Alle vier Zeichen zeigen zwei Personen: zwei Köpfe (ohne Angabe) oder ein
+  // gleich grosses Zeichenpaar auf einer Grundlinie (♂♂, ♀♀, ♂♀). Auf 18 px
+  // waren Paare ein Punktbrei; deshalb ist diese Reihe groesser (26 px Zeichen
+  // in 36 px Knoepfen) und die beiden Zeichen stehen nebeneinander, nicht
+  // versetzt — versetzt wirkte es wie ein Gekritzel.
+  gNone:'<circle cx="7.6" cy="8.6" r="3.2"/><circle cx="16.4" cy="8.6" r="3.2"/><path d="M1.6 19.6c0-3 2.7-5.2 6-5.2s6 2.2 6 5.2M13.8 14.6c3.2 0 5.9 2.1 6.2 5"/>',
+  gMixed:'<circle cx="5.8" cy="13.6" r="3.3"/><path d="M8.1 11.3l3.4-3.4M8.3 7.9h3.2v3.2"/><circle cx="17" cy="11.4" r="3.3"/><path d="M17 14.7v4.6M14.9 16.9h4.2"/>',
+  gMale:'<circle cx="5.6" cy="13.6" r="3.3"/><path d="M7.9 11.3l3.4-3.4M8.1 7.9h3.2v3.2"/><circle cx="16.6" cy="13.6" r="3.3"/><path d="M18.9 11.3l3.4-3.4M19.1 7.9h3.2v3.2"/>',
+  gFemale:'<circle cx="6.4" cy="11.4" r="3.3"/><path d="M6.4 14.7v4.6M4.3 16.9h4.2"/><circle cx="17.2" cy="11.4" r="3.3"/><path d="M17.2 14.7v4.6M15.1 16.9h4.2"/>'
 };
 const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -111,7 +118,6 @@ const K = {
   o_unknown:['Ohne Angabe','Not specified'], o_neutral:['Geschlechtsneutral','Gender-neutral'], o_male:['Männlich','Male'], o_female:['Weiblich','Female'],
   og_none:['Gruppe: ohne Geschlechtsangabe','Group: no gender given'], og_mixed:['Gruppe: gemischt','Group: mixed'],
   og_male:['Gruppe: männlich','Group: male'], og_female:['Gruppe: weiblich','Group: female'],
-  gg_none:['ohne Angabe','not given'], gg_mixed:['gemischt','mixed'], gg_male:['männlich','male'], gg_female:['weiblich','female'],
   s_uiMode:['Seitenleiste','Sidebar'], o_classic:['Klassisch (Text)','Classic (text)'], o_icons:['Zeichen','Icons'],
   imgMax:[n => `Maximal ${n} Bilder möglich.`, n => `Maximum ${n} images.`], imgOpenTip:['Bilder anzeigen','Show images'],
   context:['Zusammenhang','Context'], ctxPh:['z. B. „Text aus einer Bedienungsanleitung für eine Kaffeemaschine“','e.g. “Text from a coffee machine manual”'],
@@ -820,14 +826,14 @@ function drawStyles() {
   // Klassik-Layout vorerst deaktiviert (Nutzerwunsch): immer Symbol-Layout.
   // Zum Reaktivieren wieder S.uiMode === 'icons' ? 'icons' : 'classic' verwenden.
   const mode = 'icons';
-  const btn = (key, o, pref) => mode === 'icons'
-    ? `<button class="ib${S.style[key] === o[0] ? ' on' : ''}" data-k="${key}" data-v="${o[0]}" title="${esc(t(pref + o[0]))}" aria-label="${esc(t(pref + o[0]))}">${ic(o[1], 18)}</button>`
+  const btn = (key, o, pref, size = 18) => mode === 'icons'
+    ? `<button class="ib${S.style[key] === o[0] ? ' on' : ''}" data-k="${key}" data-v="${o[0]}" title="${esc(t(pref + o[0]))}" aria-label="${esc(t(pref + o[0]))}">${ic(o[1], size)}</button>`
     : `<div class="opt${S.style[key] === o[0] ? ' sel' : ''}" data-k="${key}" data-v="${o[0]}"><span class="ck">${S.style[key] === o[0] ? ic('check') : ''}</span>${t(pref + o[0])}</div>`;
   $('#styles').innerHTML = `<h3 class="sh">${t('h_style')}</h3>` + Object.entries(STY).map(([k, g]) => {
     const opts = g.opts.map(o => btn(k, o, 'o_')).join('');
-    // Zweite Reihe: eine Gruppe. Sie traegt kurze Woerter statt Zeichen, weil
-    // zwei Geschlechtszeichen nebeneinander auf 18 px nicht zu lesen sind.
-    const sub = g.sub ? `<div class="seg sub">${g.sub.opts.map(o => `<button class="gchip${S.style[g.sub.key] === o[0] ? ' on' : ''}" data-k="${g.sub.key}" data-v="${o[0]}" title="${esc(t('og_' + o[0]))}" aria-label="${esc(t('og_' + o[0]))}">${t('gg_' + o[0])}</button>`).join('')}</div>` : '';
+    // Zweite Reihe: eine Gruppe. Sie zeichnet groesser (26 px Zeichen in 36 px
+    // Knoepfen), weil zwei Zeichen auf 18 px nicht zu unterscheiden waren.
+    const sub = g.sub ? `<div class="seg sub">${g.sub.opts.map(o => btn(g.sub.key, o, 'og_', 26)).join('')}</div>` : '';
     return `<div class="sgrp ${mode}"><span class="slab">${t(g.h)}</span>` +
       (mode === 'icons' ? `<div class="seg">${opts}</div>${sub}` : `<div class="list">${opts}</div>`) + '</div>';
   }).join('');
