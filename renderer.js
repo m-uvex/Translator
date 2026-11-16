@@ -82,7 +82,7 @@ const K = {
   inputPh:['Text eingeben oder Datei hineinziehen …','Type text or drop a file here …'], attach:['Datei anhängen','Attach file'], translate:['Übersetzen','Translate'],
   copy:['Kopieren','Copy'], copied:['Kopiert','Copied'], copyErr:['Kopieren fehlgeschlagen','Could not copy'],
   // Vokabelliste: Suche, Sortierung, Filter und Mehrfachauswahl.
-  vocSearchT:['Vokabeln durchsuchen','Search words'], vocFindPh:['Wort, Übersetzung oder Satz …','Word, translation or sentence …'], vocFindClear:['Suche leeren','Clear the search'],
+  vocSearchT:['Vokabeln durchsuchen','Search words'], vocFindPh:['Suchen: Wort, Übersetzung, Satz …','Search: word, translation, sentence …'], vocFindClear:['Suche leeren','Clear the search'],
   vocFilterT:['Sortieren und filtern','Sort and filter'], vocSortH:['Sortierung','Sort'], vocSortAz:['A–Z','A–Z'], vocSortZa:['Z–A','Z–A'], vocSortNew:['Neueste zuerst','Newest first'], vocSortDue:['Fälligkeit','Due date'],
   vocFilterH:['Filter','Filter'], vocFAll:['Alle','All'], vocFDue:['Heute fällig','Due today'], vocFOpen:['Noch offen','Still open'], vocFMastered:['Gemeistert','Mastered'], vocFCtx:['Mit Kontextsatz','With a sentence'],
   vocSelectT:['Mehrere auswählen','Select several'], vocSelEnd:['Auswahl beenden','End the selection'], vocSelAll:['Alle auswählen','Select all'], vocSelDel:['Ausgewählte löschen','Delete selected'],
