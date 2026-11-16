@@ -55,13 +55,9 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // ist dort "Ausdrucksweise").
   filltr:'<path d="M3 6h8M3 10h8M3 14h5"/><path d="M3 18h12M12.5 15l3 3-3 3"/>',
   // Die zweite Zeile unter "Absender*in" und "Empfänger*in" gilt einer Gruppe.
-  // Alle Zeichen dort zeigen mehrere Personen: zwei Köpfe für "Gruppe ohne
-  // Geschlechtsangabe", sonst das Geschlechtszeichen doppelt (♂♂, ♀♀) oder
-  // gemischt (♂♀). Doppelt = mehrere, das ist die ganze Regel.
-  gNone:'<circle cx="7.4" cy="8.2" r="3.5"/><circle cx="15.6" cy="6.6" r="2.7"/><path d="M1.8 19.4c0-3 2.5-5.2 5.6-5.2s5.6 2.2 5.6 5.2"/>',
-  gMixed:'<circle cx="10.4" cy="13.6" r="4.1"/><path d="M13.5 10.5l3.4-3.4M13.8 7.1h3.1v3.1"/><circle cx="19.2" cy="8.8" r="2.5"/><path d="M19.2 11.3v3.5M17.4 13.1h3.6"/>',
-  gMale:'<circle cx="10.4" cy="13.6" r="4.1"/><path d="M13.5 10.5l3.4-3.4M13.8 7.1h3.1v3.1"/><circle cx="19" cy="7.4" r="2.5"/><path d="M20.8 5.6l2-2M20.9 3.6h1.9v1.9"/>',
-  gFemale:'<circle cx="10.2" cy="9.4" r="4.1"/><path d="M10.2 13.5v5.2M7.8 16.1h4.8"/><circle cx="19.2" cy="14.6" r="2.5"/><path d="M19.2 17.1v3.4M17.5 18.8h3.4"/>' };
+  // Sie traegt keine Zeichen: zwei Geschlechtszeichen nebeneinander waren auf
+  // 18 px nicht zu unterscheiden. Dort stehen kurze Woerter (siehe drawStyles).
+};
 const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 document.querySelectorAll('[data-i]').forEach(e => e.innerHTML = ic(e.dataset.i));
@@ -115,6 +111,7 @@ const K = {
   o_unknown:['Ohne Angabe','Not specified'], o_neutral:['Geschlechtsneutral','Gender-neutral'], o_male:['Männlich','Male'], o_female:['Weiblich','Female'],
   og_none:['Gruppe: ohne Geschlechtsangabe','Group: no gender given'], og_mixed:['Gruppe: gemischt','Group: mixed'],
   og_male:['Gruppe: männlich','Group: male'], og_female:['Gruppe: weiblich','Group: female'],
+  gg_none:['ohne Angabe','not given'], gg_mixed:['gemischt','mixed'], gg_male:['männlich','male'], gg_female:['weiblich','female'],
   s_uiMode:['Seitenleiste','Sidebar'], o_classic:['Klassisch (Text)','Classic (text)'], o_icons:['Zeichen','Icons'],
   imgMax:[n => `Maximal ${n} Bilder möglich.`, n => `Maximum ${n} images.`], imgOpenTip:['Bilder anzeigen','Show images'],
   context:['Zusammenhang','Context'], ctxPh:['z. B. „Text aus einer Bedienungsanleitung für eine Kaffeemaschine“','e.g. “Text from a coffee machine manual”'],
@@ -828,9 +825,9 @@ function drawStyles() {
     : `<div class="opt${S.style[key] === o[0] ? ' sel' : ''}" data-k="${key}" data-v="${o[0]}"><span class="ck">${S.style[key] === o[0] ? ic('check') : ''}</span>${t(pref + o[0])}</div>`;
   $('#styles').innerHTML = `<h3 class="sh">${t('h_style')}</h3>` + Object.entries(STY).map(([k, g]) => {
     const opts = g.opts.map(o => btn(k, o, 'o_')).join('');
-    // Zweite Reihe: dieselben Optionen, aber mit eigenen Zeichen, die eine
-    // Gruppe zeigen; kein zusaetzliches Zeichen davor.
-    const sub = g.sub ? `<div class="seg sub">${g.sub.opts.map(o => btn(g.sub.key, o, 'og_')).join('')}</div>` : '';
+    // Zweite Reihe: eine Gruppe. Sie traegt kurze Woerter statt Zeichen, weil
+    // zwei Geschlechtszeichen nebeneinander auf 18 px nicht zu lesen sind.
+    const sub = g.sub ? `<div class="seg sub">${g.sub.opts.map(o => `<button class="gchip${S.style[g.sub.key] === o[0] ? ' on' : ''}" data-k="${g.sub.key}" data-v="${o[0]}" title="${esc(t('og_' + o[0]))}" aria-label="${esc(t('og_' + o[0]))}">${t('gg_' + o[0])}</button>`).join('')}</div>` : '';
     return `<div class="sgrp ${mode}"><span class="slab">${t(g.h)}</span>` +
       (mode === 'icons' ? `<div class="seg">${opts}</div>${sub}` : `<div class="list">${opts}</div>`) + '</div>';
   }).join('');
