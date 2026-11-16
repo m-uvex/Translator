@@ -88,10 +88,7 @@ footer{display:flex;align-items:center;gap:8px;padding:8px 12px}.sp{flex:1}.mute
    Pille, weil immer zwei davon darin stehen — nebeneinander in einem 32er-Kreis
    wirkten sie gestaucht. Die dezente Füllung zeigt, dass beide Zeichen zu einem
    Knopf gehören; aktiv wird die Pille accent-farben wie die runden Knöpfe. */
-.sgrp .seg.sub{margin-top:8px}
-.seg .ib.pair{display:flex;align-items:center;justify-content:center;width:auto;min-width:0;height:32px;padding:0 8px;border-radius:999px;gap:3px;border:0;background:var(--soft)}
-.seg .ib.pair:hover{background:var(--accent-hover)}
-.seg .ib.pair.on{background:var(--accent)}
+.sgrp .seg.sub{margin-top:8px}
 .ctx{background:var(--soft);border-radius:var(--r);padding:10px 12px}
 .ctx summary{cursor:pointer;list-style:none;font-weight:600;display:flex;align-items:center;gap:8px}
 .ctx summary::before{content:"";border:5px solid transparent;border-left:7px solid var(--muted);border-right:0;transition:transform .15s}

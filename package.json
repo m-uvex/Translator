@@ -1,6 +1,6 @@
 {
  "name": "uebersetzer",
- "version": "1.15.10",
+ "version": "1.15.11",
  "private": true,
  "description": "Lokaler Übersetzer und Texteditor mit Ollama, NLLB-200 und Omnilingual MT",
  "author": "Janek",
@@ -53,7 +53,12 @@
    "createStartMenuShortcut": true
   },
   "linux": {
-   "target": ["AppImage", "deb", "rpm", "tar.gz"],
+   "target": [
+    "AppImage",
+    "deb",
+    "rpm",
+    "tar.gz"
+   ],
    "executableName": "uebersetzer",
    "category": "Utility",
    "icon": "build/icon.png",
