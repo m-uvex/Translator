@@ -62,13 +62,13 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // steht das weibliche Zeichen links und das männliche rechts, damit dessen
   // Pfeil nach oben rechts ins Freie zeigt und nicht in den anderen Kreis.
   // Die zweite Zeile gilt einer Gruppe: zwei Personen je Knopf, im 32er-Kreis.
-  // Die Marken zeigen nach aussen (Pfeil oben, Kreuz unten), damit sie sich in
-  // der Mitte nicht berühren — vorher stachen sie ineinander und das Zeichen
-  // wirkte verstuemmelt.
+  // Die beiden Pfeile zeigen in dieselbe Richtung (nach rechts oben, wie ♂ in
+  // der ersten Reihe); damit sie sich nicht in den anderen Kreis bohren, sitzt
+  // das linke Zeichen tiefer als das rechte. Kreuz und Pfeil bleiben vollständig.
   gNone:'<circle cx="7" cy="9.5" r="3"/><circle cx="17" cy="9.5" r="3"/><path d="M2.4 19.4c0-2.6 2-4.6 4.6-4.6s4.6 2 4.6 4.6"/><path d="M12.4 19.4c0-2.6 2-4.6 4.6-4.6s4.6 2 4.6 4.6"/>',
-  gMixed:'<circle cx="6.6" cy="12" r="3.6"/><path d="M6.6 15.6v4.2M4.1 18.2h5"/><circle cx="17.4" cy="12" r="3.6"/><path d="M19.9 9.5l2.3-2.3M22.2 7.2h-2.9M22.2 7.2v2.9"/>',
-  gMale:'<circle cx="6.6" cy="12" r="3.6"/><path d="M4.1 9.5l-2.3-2.3M1.8 7.2h2.9M1.8 7.2v2.9"/><circle cx="17.4" cy="12" r="3.6"/><path d="M19.9 9.5l2.3-2.3M22.2 7.2h-2.9M22.2 7.2v2.9"/>',
-  gFemale:'<circle cx="6.6" cy="12" r="3.6"/><path d="M6.6 15.6v4.2M4.1 18.2h5"/><circle cx="17.4" cy="12" r="3.6"/><path d="M17.4 15.6v4.2M14.9 18.2h5"/>'
+  gMixed:'<circle cx="7" cy="11" r="3"/><path d="M7 14v4.2M4.5 16.1h5"/><circle cx="16.4" cy="9" r="3"/><path d="M18.5 6.9l2.6-2.6M21.1 4.3h-2.2M21.1 4.3v2.2"/>',
+  gMale:'<circle cx="6.8" cy="15" r="3"/><path d="M8.9 12.9l2.6-2.6M11.5 10.3h-2.2M11.5 10.3v2.2"/><circle cx="16.4" cy="9" r="3"/><path d="M18.5 6.9l2.6-2.6M21.1 4.3h-2.2M21.1 4.3v2.2"/>',
+  gFemale:'<circle cx="7.2" cy="11.4" r="3"/><path d="M7.2 14.4v4.2M4.7 16.5h5"/><circle cx="15.8" cy="11.4" r="3"/><path d="M15.8 14.4v4.2M13.3 16.5h5"/>'
 };
 const ic = (n, s = 18, sw = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
