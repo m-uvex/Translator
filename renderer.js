@@ -61,10 +61,14 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // ist so groß wie die anderen (kein Sonderfall im Raster). Bei "gemischt"
   // steht das weibliche Zeichen links und das männliche rechts, damit dessen
   // Pfeil nach oben rechts ins Freie zeigt und nicht in den anderen Kreis.
-  gNone:'<circle cx="7.6" cy="8.6" r="3.2"/><circle cx="16.4" cy="8.6" r="3.2"/><path d="M1.6 19.6c0-3 2.7-5.2 6-5.2s6 2.2 6 5.2M13.8 14.6c3.2 0 5.9 2.1 6.2 5"/>',
-  gMixed:'<circle cx="6.4" cy="11" r="3.6"/><path d="M6.4 14.6v3.6M4.6 16.4h3.6"/><circle cx="16.6" cy="11" r="3.6"/><path d="M19.2 8.4l3-3M19.4 5.4h2.8v2.8"/>',
-  gMale:'<circle cx="6.2" cy="11" r="3.6"/><path d="M8.8 8.4l3-3M9 5.4h2.8v2.8"/><circle cx="16.4" cy="11" r="3.6"/><path d="M19 8.4l3-3M19.2 5.4h2.8v2.8"/>',
-  gFemale:'<circle cx="6.6" cy="10.6" r="3.6"/><path d="M6.6 14.2v3.8M4.8 16.1h3.6"/><circle cx="16.8" cy="10.6" r="3.6"/><path d="M16.8 14.2v3.8M15 16.1h3.6"/>'
+  // Die Marken (Pfeil, Kreuz) sind kraeftiger gezeichnet als die Kreise (2,4 statt
+  // 1,8), der Pfeil ist laenger und sein Kopf 3 Einheiten breit: bei 18 px sind
+  // Pfeil und Kreuz so deutlich zu sehen. Ein gefuellter Pfeilkopf lief dabei zu
+  // einem Fleck zu.
+  gNone:'<circle cx="7" cy="10.4" r="3.2"/><circle cx="17" cy="10.4" r="3.2"/><path d="M2.6 19.6c0-2.4 2-4.2 4.4-4.2s4.4 1.8 4.4 4.2"/><path d="M12.6 19.6c0-2.4 2-4.2 4.4-4.2s4.4 1.8 4.4 4.2"/>',
+  gMixed:'<circle cx="6.6" cy="12" r="3.4"/><path d="M6.6 15.4v4.6M3.6 18h6" stroke-width="2.4"/><circle cx="17.4" cy="12" r="3.4"/><path d="M19.8 9.6l2.4-2.4M22.2 7.2h-3M22.2 7.2v3" stroke-width="2.4"/>',
+  gMale:'<circle cx="6.6" cy="12" r="3.4"/><path d="M9 9.6l2.4-2.4M11.4 7.2h-3M11.4 7.2v3" stroke-width="2.4"/><circle cx="17.4" cy="12" r="3.4"/><path d="M19.8 9.6l2.4-2.4M22.2 7.2h-3M22.2 7.2v3" stroke-width="2.4"/>',
+  gFemale:'<circle cx="6.6" cy="12" r="3.4"/><path d="M6.6 15.4v4.6M3.6 18h6" stroke-width="2.4"/><circle cx="17.4" cy="12" r="3.4"/><path d="M17.4 15.4v4.6M14.4 18h6" stroke-width="2.4"/>'
 };
 const ic = (n, s = 18, sw = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
