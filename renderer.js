@@ -65,7 +65,7 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   gMale:'<circle cx="5.6" cy="13.6" r="3.3"/><path d="M7.9 11.3l3.4-3.4M8.1 7.9h3.2v3.2"/><circle cx="16.6" cy="13.6" r="3.3"/><path d="M18.9 11.3l3.4-3.4M19.1 7.9h3.2v3.2"/>',
   gFemale:'<circle cx="6.4" cy="11.4" r="3.3"/><path d="M6.4 14.7v4.6M4.3 16.9h4.2"/><circle cx="17.2" cy="11.4" r="3.3"/><path d="M17.2 14.7v4.6M15.1 16.9h4.2"/>'
 };
-const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
+const ic = (n, s = 18, sw = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 document.querySelectorAll('[data-i]').forEach(e => e.innerHTML = ic(e.dataset.i));
 
@@ -826,9 +826,18 @@ function drawStyles() {
   // Klassik-Layout vorerst deaktiviert (Nutzerwunsch): immer Symbol-Layout.
   // Zum Reaktivieren wieder S.uiMode === 'icons' ? 'icons' : 'classic' verwenden.
   const mode = 'icons';
+  // Der Ruhewert einer Reihe ("ohne Angabe", "Gruppe: ohne Geschlechtsangabe")
+  // ist keine Wahl, sondern das Nichts-Gewählte. Er wird nie markiert, damit
+  // bei "Empfänger*in" und "Absender*in" über beide Reihen hinweg höchstens
+  // ein Knopf leuchtet; gedrückt werden kann er trotzdem (löscht die Wahl).
+  const rest = (key, v) => (key === 'gender' || key === 'writer') ? v === 'unknown'
+    : (key === 'genderGroup' || key === 'writerGroup') ? v === 'none' : false;
+  const sel = (key, v) => S.style[key] === v && !rest(key, v);
+  // Die Strichstärke wächst nicht mit: auf 26 px wirkte 1,8 sonst deutlich
+  // dicker als die Zeichen der Personen-Reihe bei 18 px.
   const btn = (key, o, pref, size = 18) => mode === 'icons'
-    ? `<button class="ib${S.style[key] === o[0] ? ' on' : ''}" data-k="${key}" data-v="${o[0]}" title="${esc(t(pref + o[0]))}" aria-label="${esc(t(pref + o[0]))}">${ic(o[1], size)}</button>`
-    : `<div class="opt${S.style[key] === o[0] ? ' sel' : ''}" data-k="${key}" data-v="${o[0]}"><span class="ck">${S.style[key] === o[0] ? ic('check') : ''}</span>${t(pref + o[0])}</div>`;
+    ? `<button class="ib${sel(key, o[0]) ? ' on' : ''}" data-k="${key}" data-v="${o[0]}" title="${esc(t(pref + o[0]))}" aria-label="${esc(t(pref + o[0]))}">${ic(o[1], size, 1.8 * 18 / size)}</button>`
+    : `<div class="opt${sel(key, o[0]) ? ' sel' : ''}" data-k="${key}" data-v="${o[0]}"><span class="ck">${sel(key, o[0]) ? ic('check') : ''}</span>${t(pref + o[0])}</div>`;
   $('#styles').innerHTML = `<h3 class="sh">${t('h_style')}</h3>` + Object.entries(STY).map(([k, g]) => {
     const opts = g.opts.map(o => btn(k, o, 'o_')).join('');
     // Zweite Reihe: eine Gruppe. Sie zeichnet groesser (26 px Zeichen in 36 px
