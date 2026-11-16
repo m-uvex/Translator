@@ -232,6 +232,11 @@ function renderVocab() {
   const hit = $('#vocNoHit');
   if (hit) hit.classList.toggle('hidden', !(mine.length > 0 && list.length === 0));
   vocSelSync();
+  // Lupe und Trichter zeigen wie die anderen Knoepfe, ob sie gerade wirken.
+  const fb = $('#vocFilterBtn');
+  if (fb) fb.classList.toggle('on', ST.vocFilter !== 'all');
+  const fr = $('#vocFindRow'), sb = $('#vocFindBtn');
+  if (sb) sb.classList.toggle('on', !!fr && !fr.classList.contains('hidden'));
 }
 window.studyVocRender = renderVocab;
 
@@ -1222,6 +1227,7 @@ function wire() {
     const row = $('#vocFindRow');
     const open = row.classList.contains('hidden');
     row.classList.toggle('hidden', !open);
+    $('#vocFindBtn').classList.toggle('on', open);
     if (open) { $('#vocFind').value = ST.vocFind; $('#vocFind').focus(); }
     else { $('#vocFind').value = ''; ST.vocFind = ''; renderVocab(); }
   };

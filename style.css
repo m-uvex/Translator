@@ -433,8 +433,10 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
    Segment-Leiste: blauer Kreis beim Zeigen und wenn das Tippen läuft. */
 #srsType{width:34px;height:34px;border-radius:50%}
 #srsType:hover{background:var(--accent-hover);color:var(--on-accent)}
-#srsType.on{background:var(--accent);color:var(--on-accent)}
-#srsType.on:hover{background:var(--accent-hover)}
+/* Ein Knopf im Kopf einer Liste ist unterlegt, solange seine Sache laeuft:
+   Suche offen, Filter gesetzt, Mehrfachauswahl an, Tippen im Ueben. */
+.libhead .ib.on{background:var(--accent);color:var(--on-accent)}
+.libhead .ib.on:hover{background:var(--accent-hover);color:var(--on-accent)}
 
 .srsinput input:focus{border-color:var(--accent)}
 .srsinput .ib.go{background:var(--accent);color:var(--on-accent);width:34px;height:34px;border-radius:50%}
