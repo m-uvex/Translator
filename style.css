@@ -228,7 +228,8 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
    Markierung bleibt nur als Datenquelle fuer ED.ranges unsichtbar. */
 ::highlight(spell){text-decoration:none;background:none;color:inherit}
 .trpop{position:fixed;z-index:25;padding:12px;min-width:280px}.trrow{display:flex;align-items:center;gap:6px;margin:8px 0}.trrow .lbl{width:78px;font-size:12px;color:var(--muted)}
-.seg{display:flex;gap:2px}.seg .ib{width:32px;height:32px;border-radius:50%}.seg .ib.on{background:var(--accent);color:var(--on-accent)}.seg .ib:hover{background:var(--accent-hover);color:var(--on-accent)}
+/* padding:0 ist nicht kosmetisch: die Standard-Polsterung eines Knopfes (1px 6px) verkleinert den Innenbereich auf 20 px. Ein Zeichen mit 24 px passt dort nicht mehr hinein und wird dann am Anfang ausgerichtet statt mittig — es saß 2 px zu weit rechts im Kreis. */
+.seg{display:flex;gap:2px}.seg .ib{width:32px;height:32px;border-radius:50%;padding:0}.seg .ib.on{background:var(--accent);color:var(--on-accent)}.seg .ib:hover{background:var(--accent-hover);color:var(--on-accent)}
 .trpop .pill{min-width:0;padding:6px 14px}.trpop .go{display:flex;justify-content:flex-end;margin-top:10px}
 .row .acts{display:flex;gap:2px}.row .acts .ib{width:28px;height:28px}.row .ico{display:inline-grid;margin-right:10px;color:var(--muted)}.row .lft{display:flex;align-items:center}.row.hd{cursor:default;color:var(--muted);font-size:12px;padding-bottom:2px}.row.hd:hover{background:none}
 .icg{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}.icg .ib.on{background:var(--accent);color:var(--on-accent)}
