@@ -468,7 +468,7 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 #vocFindRow{margin-top:-4px}
 #vocSelBar{margin-top:-4px;align-items:center}
 #vocSelBar .sp{flex:1}
-.vrow.selmode{cursor:pointer}
+.vrow.selmode{cursor:pointer;gap:10px}
 .vrow.selmode:hover{border-color:var(--accent)}
 .vrow.picked{background:color-mix(in srgb,var(--accent) 16%,transparent);border-color:var(--accent)}
 .pickbox{width:18px;height:18px;margin-top:2px;border:1px solid var(--line);border-radius:50%;background:transparent;display:grid;place-items:center;flex:none;color:var(--on-accent)}
