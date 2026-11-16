@@ -54,10 +54,15 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // Schnellleiste des Editors "Auswahl uebersetzen") und nicht `wand` (das
   // ist dort "Ausdrucksweise").
   filltr:'<path d="M3 6h8M3 10h8M3 14h5"/><path d="M3 18h12M12.5 15l3 3-3 3"/>',
-  // Zwei Personen und zwei verschraenkte Ringe: die zweite Zeile unter
-  // "Absender*in" und "Empfänger*in" gilt einer Gruppe von Personen.
-  people:'<circle cx="9" cy="8.4" r="3.2"/><path d="M3.2 19c0-3.1 2.6-5.3 5.8-5.3s5.8 2.2 5.8 5.3"/><path d="M15.7 5.8a3.2 3.2 0 0 1 0 5.3M17.4 14.1c2 .8 3.4 2.5 3.4 4.9"/>',
-  mixed:'<circle cx="9.4" cy="12" r="4.7"/><circle cx="14.6" cy="12" r="4.7"/>' };
+  // Die zweite Zeile unter "Absender*in" und "Empfänger*in" gilt einer Gruppe.
+  // Jedes Zeichen zeigt deshalb eine Person (Kopf und Schultern links) und
+  // daneben das Zeichen fuer das Geschlecht der Gruppe — so ist auf einen Blick
+  // klar, worin sich die beiden Zeilen unterscheiden.
+  gUnknown:'<circle cx="6.4" cy="7.6" r="2.7"/><path d="M2.4 17.2c0-2.2 1.8-3.8 4-3.8s4 1.6 4 3.8"/><circle cx="17.4" cy="16.4" r="3.7"/><path d="M16.1 15.4a1.4 1.4 0 1 1 2 1.3c-.4.2-.6.6-.6 1M17.4 19.3h.01"/>',
+  gMixed:'<circle cx="6.4" cy="7.6" r="2.7"/><path d="M2.4 17.2c0-2.2 1.8-3.8 4-3.8s4 1.6 4 3.8"/><circle cx="16" cy="16.2" r="2.7"/><circle cx="19.8" cy="16.2" r="2.7"/>',
+  gNeutral:'<circle cx="6.4" cy="7.6" r="2.7"/><path d="M2.4 17.2c0-2.2 1.8-3.8 4-3.8s4 1.6 4 3.8"/><circle cx="17.6" cy="16.6" r="2"/><path d="M17.6 14.6v-3.5M15.9 15.6l-2.7-1.4M19.3 15.6l2.7-1.4"/>',
+  gMale:'<circle cx="6.4" cy="7.6" r="2.7"/><path d="M2.4 17.2c0-2.2 1.8-3.8 4-3.8s4 1.6 4 3.8"/><circle cx="16.8" cy="16.8" r="2.9"/><path d="M18.9 14.7l3.5-3.5M19.2 11.2h3.2v3.2"/>',
+  gFemale:'<circle cx="6.4" cy="7.6" r="2.7"/><path d="M2.4 17.2c0-2.2 1.8-3.8 4-3.8s4 1.6 4 3.8"/><circle cx="17.7" cy="15.2" r="2.9"/><path d="M17.7 18.1v4M16.2 20.1h3"/>' };
 const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 document.querySelectorAll('[data-i]').forEach(e => e.innerHTML = ic(e.dataset.i));
@@ -109,7 +114,6 @@ const K = {
   h_style:['Übersetzungsweise','Translation style'], l_type:['Art','Type'], l_formal:['Ton','Tone'], l_gender:['Empfänger*in','Addressee'], l_writer:['Absender*in','Writer'],
   o_natural:['Natürlich','Natural'], o_literal:['Wörtlich','Literal'], o_standard:['Ohne Vorgabe','Standard'], o_formal:['Formell','Formal'], o_informal:['Ungezwungen','Informal'],
   o_unknown:['Unbekannt','Unknown'], o_neutral:['Nicht festgelegt','Neutral'], o_male:['Männlich','Male'], o_female:['Weiblich','Female'],
-  l_group:['Gruppe von Personen','Group of people'],
   og_unknown:['Gruppe: ohne Angabe','Group: not specified'], og_mixed:['Gruppe: gemischt','Group: mixed'],
   og_neutral:['Gruppe: geschlechtsneutral','Group: gender-neutral'], og_male:['Gruppe: männlich','Group: male'], og_female:['Gruppe: weiblich','Group: female'],
   s_uiMode:['Seitenleiste','Sidebar'], o_classic:['Klassisch (Text)','Classic (text)'], o_icons:['Zeichen','Icons'],
@@ -352,9 +356,9 @@ const STY = {
   // dass mehrere Personen gemeint sind — mit welchem Geschlecht auch immer.
   // `unknown` heisst in beiden Reihen "ohne Angabe" und aendert den Prompt nicht.
   gender:{ h:'l_gender', opts:[['unknown','qmark',''],['neutral','nb','Use gender-neutral wording for the addressed person.'],['male','male','The addressed person is male; use matching grammatical forms.'],['female','female','The addressed person is female; use matching grammatical forms.']],
-    sub:{ key:'genderGroup', opts:[['unknown','qmark',''],['mixed','mixed','The addressees are several people of mixed genders; use plural forms, and for mixed groups whatever the target language does (often the masculine plural).'],['neutral','nb','The addressees are several people; use plural forms and gender-neutral, inclusive wording.'],['male','male','The addressees are several men; use masculine plural forms.'],['female','female','The addressees are several women; use feminine plural forms.']] } },
+    sub:{ key:'genderGroup', opts:[['unknown','gUnknown',''],['mixed','gMixed','The addressees are several people of mixed genders; use plural forms, and for mixed groups whatever the target language does (often the masculine plural).'],['neutral','gNeutral','The addressees are several people; use plural forms and gender-neutral, inclusive wording.'],['male','gMale','The addressees are several men; use masculine plural forms.'],['female','gFemale','The addressees are several women; use feminine plural forms.']] } },
   writer:{ h:'l_writer', opts:[['unknown','qmark',''],['neutral','nb',''],['male','male',''],['female','female','']],
-    sub:{ key:'writerGroup', opts:[['unknown','qmark',''],['mixed','mixed','The text was written by several people of mixed genders; for first-person references use plural forms with whatever gender agreement the target language uses for mixed groups.'],['neutral','nb','The text was written by several people; for first-person references use plural, gender-neutral forms.'],['male','male','The text was written by several men; for first-person references use masculine plural forms.'],['female','female','The text was written by several women; for first-person references use feminine plural forms.']] } }
+    sub:{ key:'writerGroup', opts:[['unknown','gUnknown',''],['mixed','gMixed','The text was written by several people of mixed genders; for first-person references use plural forms with whatever gender agreement the target language uses for mixed groups.'],['neutral','gNeutral','The text was written by several people; for first-person references use plural, gender-neutral forms.'],['male','gMale','The text was written by several men; for first-person references use masculine plural forms.'],['female','gFemale','The text was written by several women; for first-person references use feminine plural forms.']] } }
 };
 const D = { url:'http://localhost:11434', nllb:'http://127.0.0.1:8765', model:'', pref:'', theme:'auto', uiLang:'auto', start:'tr', workspace:'both', helper:'', src:'auto', tgt:'en',
   pins:{ ollama:['de','en'], nllb:['deu_Latn','eng_Latn'] }, style:{type:'natural',formal:'standard',gender:'unknown',writer:'unknown',genderGroup:'unknown',writerGroup:'unknown'}, uiMode:'icons',
@@ -817,12 +821,9 @@ function drawStyles() {
     : `<div class="opt${S.style[key] === o[0] ? ' sel' : ''}" data-k="${key}" data-v="${o[0]}"><span class="ck">${S.style[key] === o[0] ? ic('check') : ''}</span>${t(pref + o[0])}</div>`;
   $('#styles').innerHTML = `<h3 class="sh">${t('h_style')}</h3>` + Object.entries(STY).map(([k, g]) => {
     const opts = g.opts.map(o => btn(k, o, 'o_')).join('');
-    // Zweite Reihe: dieselben Knoepfe fuer eine Gruppe von Personen; das kleine
-    // Zeichen davor sagt, wovon die Reihe handelt.
-    const sub = g.sub
-      ? `<div class="seg sub"><span class="mark" title="${esc(t('l_group'))}">${ic('people', 16)}</span>` +
-        g.sub.opts.map(o => btn(g.sub.key, o, 'og_')).join('') + '</div>'
-      : '';
+    // Zweite Reihe: dieselben Optionen, aber mit eigenen Zeichen, die eine
+    // Gruppe zeigen; kein zusaetzliches Zeichen davor.
+    const sub = g.sub ? `<div class="seg sub">${g.sub.opts.map(o => btn(g.sub.key, o, 'og_')).join('')}</div>` : '';
     return `<div class="sgrp ${mode}"><span class="slab">${t(g.h)}</span>` +
       (mode === 'icons' ? `<div class="seg">${opts}</div>${sub}` : `<div class="list">${opts}</div>`) + '</div>';
   }).join('');
