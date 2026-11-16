@@ -883,7 +883,7 @@ function renderType(box, due) {
   }
   const ctx = e.context ? maskTerm(e.context, e.term) : '';
   const chars = extraChars().map(ch => `<button class="ch" data-ch="${esc(ch)}">${esc(ch)}</button>`).join('');
-  box.innerHTML = `<div class="srscard">
+  box.innerHTML = `<div class="srscard typing">
     ${ctx ? `<div class="srsctx">${ctx}</div>` : ''}
     <div class="srsword">${esc(e.term)}</div>
     <div class="srsinput"><input id="srsIn" autocomplete="off" spellcheck="false" placeholder="${esc(t('srsTypeIn'))}"><button class="ib go" id="srsCheckBtn" title="${esc(t('srsCheck'))}">${ic('check', 18)}</button></div>
@@ -928,13 +928,16 @@ function renderSrs() {
   // Ohne Kontextsatz ist das Wort selbst die Frage; es steht dann schon gross
   // ueber der Loesung, und die kleine Zeile darunter zeigt nur Lemma und
   // Wortart, statt das Wort ein zweites Mal zu nennen.
+  // Manche Wörter kamen ohne Übersetzung herein (etwa aus einer Readlang-Datei,
+  // die nur das Wort kannte); dann sagt die Karte das, statt leer zu bleiben.
+  const sol = [e.article, e.translation].filter(Boolean).join(' ');
   const sub = [e.lemma && e.lemma !== e.term ? esc(e.lemma) : '', e.pos ? esc(e.pos) : ''].filter(Boolean).join(' · ');
   const subLine = !sub ? (ctx ? `<div class="srsctx2 muted">${esc(e.term)}</div>` : '')
     : `<div class="srsctx2 muted">${ctx ? esc(e.term) + ' · ' : ''}${sub}</div>`;
   box.innerHTML = `<div class="srscard">
     ${ctx ? `<div class="srsctx">${ctx}</div>` : ''}
     <div class="srsword">${srsShow || !ctx ? esc(e.term) : ''}</div>
-    ${srsShow ? `<div class="srsres">${e.gender ? `<span class="vg">${genderMark(e)}</span>` : ''}${esc([e.article, e.translation].filter(Boolean).join(' '))}</div>
+    ${srsShow ? `<div class="srsres">${e.gender ? `<span class="vg">${genderMark(e)}</span>` : ''}${sol ? esc(sol) : `<span class="muted">${esc(t('srsNoTr'))}</span>`}</div>
       ${subLine}
       <div class="srsbtns">
         <button class="ghost" data-r="again">${esc(t('srsAgain'))}</button>

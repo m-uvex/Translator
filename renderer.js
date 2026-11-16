@@ -145,6 +145,7 @@ const K = {
   txNoRead:['Datei konnte nicht gelesen werden','Could not read the file'], txDelQ:['Diesen Text samt seinen Vokabeln löschen?','Delete this text and its vocabulary?'],
   srsTitle:['Vokabeln üben','Practice vocabulary'], srsNone:['Nichts fällig.','Nothing due.'], srsDone:['Für heute fertig.','Done for today.']
   , srsReveal:['Übersetzung zeigen','Show translation'], srsShowCtx:['Im Satz','In sentence'],
+  srsNoTr:['Keine Übersetzung hinterlegt','No translation saved'],
   srsAgain:['Nochmal','Again'], srsHard:['Schwer','Hard'], srsGood:['Gut','Good'], srsEasy:['Einfach','Easy'],
   // Mastery-Modus: Übersetzung tippen statt nur umdrehen.
   srsTypeT:['Übersetzung tippen','Type the translation'], srsTypeIn:['Übersetzung eingeben …','Type the translation …'],

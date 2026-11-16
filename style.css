@@ -364,8 +364,9 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 /* Abfrage */
 #vP{display:flex;flex-direction:column;padding:12px 12px 12px 0;gap:8px;min-height:0}
 .srsbox{flex:1;display:grid;place-items:center;overflow:auto;min-height:0;padding:8px}
-.srscard{width:min(680px,94%);background:var(--card);border:1px solid var(--line);border-radius:22px;padding:30px 32px;text-align:center;
-  display:flex;flex-direction:column;gap:14px;box-shadow:0 2px 14px #00000012}
+.srscard{width:min(470px,92%);min-height:320px;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:28px 26px;text-align:center;
+  display:flex;flex-direction:column;justify-content:center;gap:14px;box-shadow:0 2px 14px #00000012}
+.srscard.typing{width:min(560px,92%)}
 .srsctx{font-size:19px;line-height:1.75}
 .srsblank{color:var(--accent-ink);font-weight:600;letter-spacing:.05em}
 .srsword{font-size:28px;font-weight:600}
