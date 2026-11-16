@@ -34,8 +34,9 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   literal:'<path d="M5 9h14M5 15h14"/>',
   qmark:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/>',
   nb:'<circle cx="12" cy="13" r="4"/><path d="M12 9V2M8.5 11 3 8M15.5 11 21 8"/>',
-  male:'<circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/>',
-  female:'<circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 18h6"/>',
+  // Schwerpunkt je Zeichen bei 12/12 (siehe Gruppen-Zeichen unten).
+  male:'<g transform="translate(-0.9 0.93)"><circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/></g>',
+  female:'<g transform="translate(0 0.11)"><circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 18h6"/></g>',
   hat:'<path d="M6 15V6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v9M3 15h18M4 15v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1M6 11h12"/>',
   dash:'<path d="M6 12h12"/>',
   smile:'<circle cx="12" cy="12" r="9"/><path d="M8 14c1 1.5 2.3 2 4 2s3-.5 4-2M9 9.5h.01M15 9.5h.01"/>',
@@ -54,22 +55,21 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // Schnellleiste des Editors "Auswahl uebersetzen") und nicht `wand` (das
   // ist dort "Ausdrucksweise").
   filltr:'<path d="M3 6h8M3 10h8M3 14h5"/><path d="M3 18h12M12.5 15l3 3-3 3"/>',
-  // Die zweite Zeile unter "Absender*in" und "Empfänger*in" gilt einer Gruppe.
-  // Alle vier Zeichen zeigen zwei Personen: zwei Köpfe (ohne Angabe) oder ein
-  // Zeichenpaar auf einer Grundlinie. Die Kreise berühren sich fast und die
-  // Marken sind kurz; so bleiben die Paare auch bei 18 px lesbar, und die Reihe
-  // ist so groß wie die anderen (kein Sonderfall im Raster). Bei "gemischt"
-  // steht das weibliche Zeichen links und das männliche rechts, damit dessen
-  // Pfeil nach oben rechts ins Freie zeigt und nicht in den anderen Kreis.
-  // Die zweite Zeile gilt einer Gruppe: zwei Personen je Knopf, im 32er-Kreis.
+  // Die zweite Zeile unter "Absender*in" und "Empfänger*in" gilt einer Gruppe:
+  // zwei Personen je Knopf, im 32er-Kreis. Bei "gemischt" steht das weibliche
+  // Zeichen links, das männliche rechts.
   // Diese Zeichen werden mit 24 px gezeichnet (statt 18), weil zwei Zeichen
   // sonst zu klein geraten: so stehen beide Pfeile auf einer Höhe, zeigen in
   // dieselbe Richtung und haben trotzdem Platz. Strichstärke bleibt optisch
-  // gleich (ic() rechnet sie mit der Größe herunter).
-  gNone:'<circle cx="7" cy="9.5" r="3"/><circle cx="17" cy="9.5" r="3"/><path d="M2.4 19.4c0-2.6 2-4.6 4.6-4.6s4.6 2 4.6 4.6"/><path d="M12.4 19.4c0-2.6 2-4.6 4.6-4.6s4.6 2 4.6 4.6"/>',
-  gMixed:'<circle cx="6.6" cy="12.5" r="3"/><path d="M6.6 15.5v4.2M4.1 17.6h5"/><circle cx="17.4" cy="12.5" r="3"/><path d="M19.5 10.4l3.4-3.4M22.9 7h-2.4M22.9 7v2.4"/>',
-  gMale:'<circle cx="6.6" cy="12.5" r="3"/><path d="M8.7 10.4l3.4-3.4M12.1 7h-2.4M12.1 7v2.4"/><circle cx="17.4" cy="12.5" r="3"/><path d="M19.5 10.4l3.4-3.4M22.9 7h-2.4M22.9 7v2.4"/>',
-  gFemale:'<circle cx="6.9" cy="11.6" r="3"/><path d="M6.9 14.6v4.2M4.4 16.7h5"/><circle cx="17.1" cy="11.6" r="3"/><path d="M17.1 14.6v4.2M14.6 16.7h5"/>'
+  // gleich (ic() rechnet sie mit der Größe herunter). Alle vier Zeichen sind so
+  // gesetzt, dass ihr Schwerpunkt bei 12/12 liegt: das `<g transform>` je Zeichen
+  // ist die Korrektur aus einer Pixelmessung (Tinten-Schwerpunkt gegen 12/12) —
+  // eine mittige Bounding-Box allein wirkte schief im Highlighter-Kreis, weil
+  // Pfeile oben und Haken unten verschieden viel Tinte tragen.
+  gNone:'<g transform="translate(0 0.37)"><circle cx="7" cy="8.6" r="3"/><circle cx="17" cy="8.6" r="3"/><path d="M2.4 18.5c0-2.6 2-4.6 4.6-4.6s4.6 2 4.6 4.6"/><path d="M12.4 18.5c0-2.6 2-4.6 4.6-4.6s4.6 2 4.6 4.6"/></g>',
+  gMixed:'<g transform="translate(0.55 0.62)"><circle cx="5.4" cy="11.2" r="3"/><path d="M5.4 14.2v4.2M2.9 16.3h5"/><circle cx="16.2" cy="11.2" r="3"/><path d="M18.3 9.1l3.4-3.4M21.7 5.7h-2.4M21.7 5.7v2.4"/></g>',
+  gMale:'<g transform="translate(-0.19 0.18)"><circle cx="5.4" cy="13.3" r="3"/><path d="M7.5 11.1l3.4-3.4M10.9 7.7h-2.4M10.9 7.7v2.4"/><circle cx="16.2" cy="13.3" r="3"/><path d="M18.3 10.7l3.4-3.4M21.7 7.3h-2.4M21.7 7.3v2.4"/></g>',
+  gFemale:'<g transform="translate(0 0.34)"><circle cx="6.9" cy="9.9" r="3"/><path d="M6.9 12.9v4.2M4.4 15h5"/><circle cx="17.1" cy="9.9" r="3"/><path d="M17.1 12.9v4.2M14.6 15h5"/></g>'
 };
 const ic = (n, s = 18, sw = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
