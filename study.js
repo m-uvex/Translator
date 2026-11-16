@@ -925,11 +925,17 @@ function renderSrs() {
   }
   const e = srsQueue[0] || due[0];
   const ctx = e.context ? maskTerm(e.context, e.term) : '';
+  // Ohne Kontextsatz ist das Wort selbst die Frage; es steht dann schon gross
+  // ueber der Loesung, und die kleine Zeile darunter zeigt nur Lemma und
+  // Wortart, statt das Wort ein zweites Mal zu nennen.
+  const sub = [e.lemma && e.lemma !== e.term ? esc(e.lemma) : '', e.pos ? esc(e.pos) : ''].filter(Boolean).join(' · ');
+  const subLine = !sub ? (ctx ? `<div class="srsctx2 muted">${esc(e.term)}</div>` : '')
+    : `<div class="srsctx2 muted">${ctx ? esc(e.term) + ' · ' : ''}${sub}</div>`;
   box.innerHTML = `<div class="srscard">
     ${ctx ? `<div class="srsctx">${ctx}</div>` : ''}
-    <div class="srsword">${esc(srsShow ? e.term : '')}</div>
+    <div class="srsword">${srsShow || !ctx ? esc(e.term) : ''}</div>
     ${srsShow ? `<div class="srsres">${e.gender ? `<span class="vg">${genderMark(e)}</span>` : ''}${esc([e.article, e.translation].filter(Boolean).join(' '))}</div>
-      <div class="srsctx2 muted">${esc(e.term)}${e.lemma && e.lemma !== e.term ? ` · ${esc(e.lemma)}` : ''}${e.pos ? ` · ${esc(e.pos)}` : ''}</div>
+      ${subLine}
       <div class="srsbtns">
         <button class="ghost" data-r="again">${esc(t('srsAgain'))}</button>
         <button class="ghost" data-r="hard">${esc(t('srsHard'))}</button>
