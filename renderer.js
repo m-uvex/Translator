@@ -62,13 +62,14 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // steht das weibliche Zeichen links und das männliche rechts, damit dessen
   // Pfeil nach oben rechts ins Freie zeigt und nicht in den anderen Kreis.
   // Die zweite Zeile gilt einer Gruppe: zwei Personen je Knopf, im 32er-Kreis.
-  // Die beiden Pfeile zeigen in dieselbe Richtung (nach rechts oben, wie ♂ in
-  // der ersten Reihe); damit sie sich nicht in den anderen Kreis bohren, sitzt
-  // das linke Zeichen tiefer als das rechte. Kreuz und Pfeil bleiben vollständig.
+  // Diese Zeichen werden mit 24 px gezeichnet (statt 18), weil zwei Zeichen
+  // sonst zu klein geraten: so stehen beide Pfeile auf einer Höhe, zeigen in
+  // dieselbe Richtung und haben trotzdem Platz. Strichstärke bleibt optisch
+  // gleich (ic() rechnet sie mit der Größe herunter).
   gNone:'<circle cx="7" cy="9.5" r="3"/><circle cx="17" cy="9.5" r="3"/><path d="M2.4 19.4c0-2.6 2-4.6 4.6-4.6s4.6 2 4.6 4.6"/><path d="M12.4 19.4c0-2.6 2-4.6 4.6-4.6s4.6 2 4.6 4.6"/>',
-  gMixed:'<circle cx="7" cy="11" r="3"/><path d="M7 14v4.2M4.5 16.1h5"/><circle cx="16.4" cy="9" r="3"/><path d="M18.5 6.9l2.6-2.6M21.1 4.3h-2.2M21.1 4.3v2.2"/>',
-  gMale:'<circle cx="6.8" cy="15" r="3"/><path d="M8.9 12.9l2.6-2.6M11.5 10.3h-2.2M11.5 10.3v2.2"/><circle cx="16.4" cy="9" r="3"/><path d="M18.5 6.9l2.6-2.6M21.1 4.3h-2.2M21.1 4.3v2.2"/>',
-  gFemale:'<circle cx="7.2" cy="11.4" r="3"/><path d="M7.2 14.4v4.2M4.7 16.5h5"/><circle cx="15.8" cy="11.4" r="3"/><path d="M15.8 14.4v4.2M13.3 16.5h5"/>'
+  gMixed:'<circle cx="6.6" cy="12.5" r="3"/><path d="M6.6 15.5v4.2M4.1 17.6h5"/><circle cx="17.4" cy="12.5" r="3"/><path d="M19.5 10.4l3.4-3.4M22.9 7h-2.4M22.9 7v2.4"/>',
+  gMale:'<circle cx="6.6" cy="12.5" r="3"/><path d="M8.7 10.4l3.4-3.4M12.1 7h-2.4M12.1 7v2.4"/><circle cx="17.4" cy="12.5" r="3"/><path d="M19.5 10.4l3.4-3.4M22.9 7h-2.4M22.9 7v2.4"/>',
+  gFemale:'<circle cx="6.9" cy="11.6" r="3"/><path d="M6.9 14.6v4.2M4.4 16.7h5"/><circle cx="17.1" cy="11.6" r="3"/><path d="M17.1 14.6v4.2M14.6 16.7h5"/>'
 };
 const ic = (n, s = 18, sw = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -838,14 +839,16 @@ function drawStyles() {
   const rest = (key, v) => (key === 'gender' || key === 'writer') ? v === 'unknown'
     : (key === 'genderGroup' || key === 'writerGroup') ? v === 'none' : false;
   const sel = (key, v) => S.style[key] === v && !rest(key, v);
-  const btn = (key, o, pref) => mode === 'icons'
-    ? `<button class="ib${sel(key, o[0]) ? ' on' : ''}" data-k="${key}" data-v="${o[0]}" title="${esc(t(pref + o[0]))}" aria-label="${esc(t(pref + o[0]))}">${ic(o[1], 18)}</button>`
+  // `size` steuert nur die Zeichen-Größe (die Knöpfe bleiben 32 px); die
+  // Strichstärke wird mitgerechnet, damit sie optisch gleich bleibt.
+  const btn = (key, o, pref, size = 18) => mode === 'icons'
+    ? `<button class="ib${sel(key, o[0]) ? ' on' : ''}" data-k="${key}" data-v="${o[0]}" title="${esc(t(pref + o[0]))}" aria-label="${esc(t(pref + o[0]))}">${ic(o[1], size, 1.8 * 18 / size)}</button>`
     : `<div class="opt${sel(key, o[0]) ? ' sel' : ''}" data-k="${key}" data-v="${o[0]}"><span class="ck">${sel(key, o[0]) ? ic('check') : ''}</span>${t(pref + o[0])}</div>`;
   $('#styles').innerHTML = `<h3 class="sh">${t('h_style')}</h3>` + Object.entries(STY).map(([k, g]) => {
     const opts = g.opts.map(o => btn(k, o, 'o_')).join('');
-    // Zweite Reihe: eine Gruppe. Gleiches Mass wie die erste Reihe (18 px
-    // Zeichen in 32 px Knöpfen), nur ein eigener Abstand nach oben.
-    const sub = g.sub ? `<div class="seg sub">${g.sub.opts.map(o => btn(g.sub.key, o, 'og_')).join('')}</div>` : '';
+    // Zweite Reihe: eine Gruppe. Zeichen 24 px (zwei Personen brauchen Platz),
+    // Knopf weiter 32 px, eigener Abstand nach oben.
+    const sub = g.sub ? `<div class="seg sub">${g.sub.opts.map(o => btn(g.sub.key, o, 'og_', 24)).join('')}</div>` : '';
     return `<div class="sgrp ${mode}"><span class="slab">${t(g.h)}</span>` +
       (mode === 'icons' ? `<div class="seg">${opts}</div>${sub}` : `<div class="list">${opts}</div>`) + '</div>';
   }).join('');
