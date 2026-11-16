@@ -48,7 +48,9 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   funnel:'<path d="M3 5h18l-7 8v6l-4 2v-8z"/>',
   // Liste mit Haken: Mehrfachauswahl der Vokabeln. Bewusst nicht `pick` -
   // das ist der Textmarker des Uebersetzers.
-  checklist:'<path d="M4 7.5l1.8 1.8 3.2-3.3"/><path d="M4 16l1.8 1.8 3.2-3.3"/><path d="M13 7h7M13 16h7"/>' };
+  checklist:'<path d="M4 7.5l1.8 1.8 3.2-3.3"/><path d="M4 16l1.8 1.8 3.2-3.3"/><path d="M13 7h7M13 16h7"/>',
+  // Zauberstab: fehlende Uebersetzungen vom Modell nachtragen lassen.
+  wand:'<path d="M4 20l8.5-8.5"/><path d="M15 3.6l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1z"/><path d="M18.6 14.6l.7 1.7 1.7.7-1.7.7-.7 1.7-.7-1.7-1.7-.7 1.7-.7z"/>' };
 const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 document.querySelectorAll('[data-i]').forEach(e => e.innerHTML = ic(e.dataset.i));
@@ -82,7 +84,13 @@ const K = {
   inputPh:['Text eingeben oder Datei hineinziehen …','Type text or drop a file here …'], attach:['Datei anhängen','Attach file'], translate:['Übersetzen','Translate'],
   copy:['Kopieren','Copy'], copied:['Kopiert','Copied'], copyErr:['Kopieren fehlgeschlagen','Could not copy'],
   // Vokabelliste: Suche, Sortierung, Filter und Mehrfachauswahl.
-  vocSearchT:['Vokabeln durchsuchen','Search words'], vocFindPh:['Suchen: Wort, Übersetzung, Satz …','Search: word, translation, sentence …'], vocFindClear:['Suche leeren','Clear the search'],
+  vocSearchT:['Vokabeln durchsuchen','Search words'], vocFindPh:['Suchen: Wort, Übersetzung, Satz …','Search: word, translation, sentence …'],
+  vocFillT:['Fehlende Übersetzungen nachtragen','Fill in missing translations'],
+  vocFillAsk:[n => `${n} ${n === 1 ? 'Vokabel hat' : 'Vokabeln haben'} keine Übersetzung. Vom Modell nachtragen lassen? Jedes Wort geht mit seinem Kontextsatz mit.`, n => `${n} ${n === 1 ? 'word has' : 'words have'} no translation. Let the model fill them in? Each word goes with its example sentence.`],
+  vocFillDo:['Nachtragen','Fill in'],
+  vocFillRun:[(a, b) => `Übersetze ${a} von ${b} …`, (a, b) => `Translating ${a} of ${b} …`],
+  vocFillDone:[(n, f) => f ? `${n} Übersetzungen nachgetragen, ${f} ohne Ergebnis` : `${n} Übersetzungen nachgetragen`, (n, f) => f ? `${n} translations filled in, ${f} without a result` : `${n} translations filled in`],
+  vocFillNone:['Jede Vokabel hat eine Übersetzung','Every word has a translation'], vocFindClear:['Suche leeren','Clear the search'],
   vocFilterT:['Sortieren und filtern','Sort and filter'], vocSortH:['Sortierung','Sort'], vocSortAz:['A–Z','A–Z'], vocSortZa:['Z–A','Z–A'], vocSortNew:['Neueste zuerst','Newest first'], vocSortDue:['Fälligkeit','Due date'],
   vocFilterH:['Filter','Filter'], vocFAll:['Alle','All'], vocFDue:['Heute fällig','Due today'], vocFOpen:['Noch offen','Still open'], vocFMastered:['Gemeistert','Mastered'], vocFCtx:['Mit Kontextsatz','With a sentence'],
   vocSelectT:['Mehrere auswählen','Select several'], vocSelEnd:['Auswahl beenden','End the selection'], vocSelAll:['Alle auswählen','Select all'], vocSelDel:['Ausgewählte löschen','Delete selected'],

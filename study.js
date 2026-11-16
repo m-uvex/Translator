@@ -106,16 +106,18 @@ const samePair = (a, b) => a.src === b.src && a.tgt === b.tgt;
 const inPair = o => samePair(pairOf(o), curPair());
 
 const wordCache = new Map();
-async function translateTerm(term, ctx, pair) {
+async function translateTerm(term, ctx, pair, single) {
   const P = pair || curPair();
-  const key = nrm(term) + '|' + nrm(ctx) + '|' + P.src + '>' + P.tgt;
+  const key = nrm(term) + '|' + nrm(ctx) + '|' + P.src + '>' + P.tgt + (single ? '|one' : '');
   if (wordCache.has(key)) return wordCache.get(key);
   const prompt =
     `Word or phrase: "${term}"\n` +
     (ctx ? `Sentence it appears in: ${ctx}\n` : '') +
     `Translate it from ${langName(P.src)} into ${langName(P.tgt)}, exactly as used in the sentence.\n` +
     'Return JSON with these keys:\n' +
-    '  "translation": the translation (up to three equivalent meanings separated by " / ")\n' +
+    (single
+      ? '  "translation": the one translation that fits this sentence, no alternatives\n'
+      : '  "translation": the translation (up to three equivalent meanings separated by " / ")\n') +
     '  "lemma": the dictionary form\n' +
     '  "pos": part of speech in the target language\n' +
     `  "gender": "m", "f", "n", or "" - grammatical gender of the translation, if ${langName(P.tgt)} marks gender\n` +
@@ -735,6 +737,35 @@ async function addFromSearch() {
   renderVocab();
 }
 
+// Wörter ohne Übersetzung — etwa aus einer Readlang-Datei, die nur das Wort
+// kannte — trägt das Modell nach. Vorher wird gefragt, und jedes Wort geht mit
+// seinem Kontextsatz mit, damit die Übersetzung zur Stelle passt. Nach jedem
+// Eintrag wird gespeichert, damit ein langer Lauf nicht verloren geht.
+async function fillMissingTranslations() {
+  const todo = ST.vocab.filter(e => inPair(e) && !String(e.translation || '').trim());
+  if (!todo.length) { vocStatus(t('vocFillNone')); return; }
+  if (!studyModel()) { vocStatus(t('studyNoModel'), true); return; }
+  if (!await ask(t('vocFillAsk', todo.length), t('vocFillDo'), t('cancel'))) return;
+  let done = 0, fails = 0;
+  for (let i = 0; i < todo.length; i++) {
+    const e = todo[i];
+    vocStatus(t('vocFillRun', i, todo.length));
+    try {
+      // Eine einzige, zum Satz passende Uebersetzung: die Liste braucht keine
+      // Bedeutungsvarianten, sondern den einen Treffer.
+      const r = await translateTerm(e.term, e.context || '', pairOf(e), true);
+      if (!e.translation && r.translation) e.translation = r.translation;
+      if (!e.gender && r.gender) { e.gender = r.gender; e.article = r.article || ''; }
+      if (!e.pos && r.pos) e.pos = r.pos;
+      done++;
+    } catch { fails++; }
+    persist('vocab');
+    if (i % 5 === 4) renderVocab();
+  }
+  renderVocab();
+  vocStatus(t('vocFillDone', done, fails));
+}
+
 // ---------- Vokabel bearbeiten ----------
 // Der Dialog aendert nur die drei Texte. Paar, Intervall und Lerndaten bleiben,
 // damit eine Korrektur nicht den Lernstand zuruecksetzt.
@@ -1273,6 +1304,7 @@ function wire() {
     const r = await window.api.studyImportFile('json');
     if (r) importTexts(r.text);
   };
+  $('#vocFillBtn').onclick = fillMissingTranslations;
   $('#vocCsvExp').onclick = () => window.api.studyExportFile('vokabeln', vocabCsv(), 'csv');
   $('#vocCsvImp').onclick = async () => {
     const r = await window.api.studyImportFile('csv,txt,tsv');
