@@ -460,3 +460,18 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .wchip .spin{width:12px;height:12px;border-width:2px;border-color:color-mix(in srgb,var(--on-accent) 35%,transparent);border-top-color:var(--on-accent)}
 .wchip.err{background:var(--card);color:var(--text);border:1px solid var(--line);cursor:default}
 .wchip.err .spin{display:none}
+
+/* Vokabelliste: Lupe klappt das Suchfeld auf, der Trichter öffnet Sortierung
+   und Filter, der Stift-Knopf schaltet die Mehrfachauswahl ein. In der Auswahl
+   trägt jede Zeile links ein rundes Kästchen und Bearbeiten/Löschen treten
+   zurück, damit ein Klick die Zeile anwählt. */
+#vocFindRow{margin-top:-4px}
+#vocSelBar{margin-top:-4px;align-items:center}
+#vocSelBar .sp{flex:1}
+.vrow.selmode{cursor:pointer}
+.vrow.selmode:hover{border-color:var(--accent)}
+.vrow.picked{background:color-mix(in srgb,var(--accent) 16%,transparent);border-color:var(--accent)}
+.pickbox{width:18px;height:18px;margin-top:2px;border:1px solid var(--line);border-radius:50%;background:transparent;display:grid;place-items:center;flex:none;color:var(--on-accent)}
+.vrow.picked .pickbox{background:var(--accent);border-color:var(--accent)}
+.ib:disabled{opacity:.35;cursor:default}
+.pop .ph{padding:6px 10px 2px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}

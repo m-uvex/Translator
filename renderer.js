@@ -42,7 +42,10 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // Fensterleiste: dieselbe Strichstaerke und Rundung wie die uebrigen Icons.
   // Das Schliessen-Kreuz nutzt bewusst das vorhandene `x`.
   winMin:'<path d="M5 12h14"/>', winMax:'<rect x="5" y="5" width="14" height="14" rx="2"/>',
-  winRestore:'<rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 16V6a1 1 0 0 1 1-1h10"/>' };
+  winRestore:'<rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 16V6a1 1 0 0 1 1-1h10"/>',
+  // Lupe und Trichter fuer Suche und Filter der Vokabelliste.
+  search:'<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+  funnel:'<path d="M3 5h18l-7 8v6l-4 2v-8z"/>' };
 const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 document.querySelectorAll('[data-i]').forEach(e => e.innerHTML = ic(e.dataset.i));
@@ -74,7 +77,14 @@ const K = {
   edit:['Bearbeiten','Edit'], wordExists:['Wort existiert bereits','Word already exists'],
   settings:['Einstellungen','Settings'], swap:['Tauschen','Swap languages'], reloadModels:['Modelle neu laden','Reload models'],
   inputPh:['Text eingeben oder Datei hineinziehen …','Type text or drop a file here …'], attach:['Datei anhängen','Attach file'], translate:['Übersetzen','Translate'],
-  copy:['Kopieren','Copy'], copied:['Kopiert','Copied'], copyErr:['Kopieren fehlgeschlagen','Could not copy'], chars:[n => `${n} Zeichen`, n => `${n} characters`],
+  copy:['Kopieren','Copy'], copied:['Kopiert','Copied'], copyErr:['Kopieren fehlgeschlagen','Could not copy'],
+  // Vokabelliste: Suche, Sortierung, Filter und Mehrfachauswahl.
+  vocSearchT:['Vokabeln durchsuchen','Search words'], vocFindPh:['Wort, Übersetzung oder Satz …','Word, translation or sentence …'], vocFindClear:['Suche leeren','Clear the search'],
+  vocFilterT:['Sortieren und filtern','Sort and filter'], vocSortH:['Sortierung','Sort'], vocSortAz:['A–Z','A–Z'], vocSortZa:['Z–A','Z–A'], vocSortNew:['Neueste zuerst','Newest first'], vocSortDue:['Fälligkeit','Due date'],
+  vocFilterH:['Filter','Filter'], vocFAll:['Alle','All'], vocFDue:['Heute fällig','Due today'], vocFOpen:['Noch offen','Still open'], vocFMastered:['Gemeistert','Mastered'], vocFCtx:['Mit Kontextsatz','With a sentence'],
+  vocSelectT:['Mehrere auswählen','Select several'], vocSelEnd:['Auswahl beenden','End the selection'], vocSelAll:['Alle auswählen','Select all'], vocSelDel:['Ausgewählte löschen','Delete selected'],
+  vocSelN:[n => `${n} ausgewählt`, n => `${n} selected`], vocSelDelQ:[n => n === 1 ? 'Diese Vokabel löschen?' : `${n} Vokabeln löschen?`, n => n === 1 ? 'Delete this word?' : `Delete ${n} words?`],
+  vocNoHit:['Keine Vokabel passt zu Suche und Filter.','No word matches the search and filter'], chars:[n => `${n} Zeichen`, n => `${n} characters`],
   auto:['Sprache erkennen','Detect language'], searchLang:['Sprache suchen …','Search language …'], noHits:['Keine Treffer','No results'], pin:['Anpinnen','Pin'],
   h_style:['Übersetzungsweise','Translation style'], l_type:['Art','Type'], l_formal:['Ton','Tone'], l_gender:['Empfänger*in','Addressee'], l_writer:['Absender*in','Writer'],
   o_natural:['Natürlich','Natural'], o_literal:['Wörtlich','Literal'], o_standard:['Ohne Vorgabe','Standard'], o_formal:['Formell','Formal'], o_informal:['Ungezwungen','Informal'],

@@ -13,6 +13,9 @@
 // =============================================================================
 
 const ST = { texts: [], vocab: [], cur: null, pick: false, chip: null, chipTimer: 0, para: 0 };
+// Suche, Sortierung, Filter und Mehrfachauswahl der Vokabelliste. Nur fuer die
+// Sitzung: nach einem Neustart steht die Liste wieder vollstaendig da.
+ST.vocFind = ''; ST.vocSort = 'due'; ST.vocFilter = 'all'; ST.selMode = false; ST.sel = new Set();
 const V = () => $('#vocList');
 const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const nrm = s => String(s || '').toLocaleLowerCase().trim();
@@ -178,32 +181,147 @@ const genderMark = e => e.gender === 'm' ? 'm' : e.gender === 'f' ? 'f' : e.gend
 
 function vocRow(e, opts) {
   const g = genderMark(e);
+  const picked = ST.selMode && ST.sel.has(e.id);
   const ctx = e.context ? String(e.context) : '';
   const masked = ctx && e.term ? esc(ctx).replace(new RegExp(`(${esc(e.term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'giu'), '<mark>$1</mark>') : '';
-  return `<div class="vrow" data-id="${e.id}">
+  // In der Auswahl traegt die Zeile links ein Kaestchen; Bearbeiten und
+  // Loeschen je Zeile treten zurueck, damit ein Klick die Zeile anwaehlt.
+  const box = ST.selMode ? `<span class="pickbox">${picked ? ic('check', 13) : ''}</span>` : '';
+  const acts = ST.selMode ? '' : `<button class="rm ed" data-edit="${e.id}" title="${esc(t('edit'))}">${ic('pencil', 13)}</button>
+    <button class="rm" data-del="${e.id}" title="${esc(t('remove'))}">${ic('x', 13)}</button>`;
+  return `<div class="vrow${ST.selMode ? ' selmode' : ''}${picked ? ' picked' : ''}" data-id="${e.id}"${ST.selMode ? ` data-sel="${e.id}"` : ''}>
+    ${box}
     <div class="vmain">
       <div class="vterm">${g ? `<span class="vg">${g}</span>` : ''}${esc(e.term)}${isMastered(e) ? `<span class="vok" title="${esc(t('srsMastered'))}">${ic('know', 13)}</span>` : ''}<span class="vtr">${esc(e.translation)}</span></div>
       ${masked ? `<div class="vctx">${masked}</div>` : ''}
       <div class="vmeta">${e.textTitle ? esc(e.textTitle) : ''}${e.interval ? ` · ${e.interval} ${LANG === 'de' ? 'Tage' : 'days'}` : ''}${opts && opts.due ? ` · ${esc(e.due || '')}` : ''}</div>
     </div>
-    <button class="rm ed" data-edit="${e.id}" title="${esc(t('edit'))}">${ic('pencil', 13)}</button>
-    <button class="rm" data-del="${e.id}" title="${esc(t('remove'))}">${ic('x', 13)}</button>
+    ${acts}
   </div>`;
+}
+
+// Was die Liste zeigt: Paar, Filter, Suche und Reihenfolge.
+function vocVisible() {
+  let list = ST.vocab.filter(inPair);
+  const f = ST.vocFilter;
+  if (f === 'due') list = list.filter(e => (e.due || todayISO()) <= todayISO());
+  else if (f === 'mastered') list = list.filter(isMastered);
+  else if (f === 'open') list = list.filter(e => !isMastered(e));
+  else if (f === 'ctx') list = list.filter(e => String(e.context || '').trim());
+  const q = nrm(ST.vocFind);
+  if (q) list = list.filter(e => [e.term, e.translation, e.lemma, e.context, e.textTitle].some(x => nrm(x).includes(q)));
+  const s = ST.vocSort;
+  if (s === 'az') list.sort((a, b) => a.term.localeCompare(b.term, LANG));
+  else if (s === 'za') list.sort((a, b) => b.term.localeCompare(a.term, LANG));
+  else if (s === 'new') list.sort((a, b) => (Number(b.created) || 0) - (Number(a.created) || 0));
+  else list.sort((a, b) => (a.due || '').localeCompare(b.due || '') || a.term.localeCompare(b.term, LANG));
+  return list;
 }
 
 function renderVocab() {
   const box = V(); if (!box) return;
   const mine = ST.vocab.filter(inPair);
-  const q = nrm($('#vocTerm') ? $('#vocTerm').value : '');
-  const list = q ? mine.filter(e => nrm(e.term).includes(q) || nrm(e.translation).includes(q)) : mine.slice();
-  list.sort((a, b) => (a.due || '').localeCompare(b.due || '') || a.term.localeCompare(b.term));
+  const list = vocVisible();
   box.innerHTML = list.map(e => vocRow(e, { due: true })).join('');
   const other = ST.vocab.length - mine.length;
   $('#vocCount').textContent = (mine.length ? t('vocCount', mine.length) : '') + (other > 0 ? ` · ${t('vocOther', other)}` : '');
   $('#vocEmpty').classList.toggle('hidden', mine.length > 0);
   box.classList.toggle('hidden', mine.length === 0);
+  // Filter und Suche duerfen ins Leere laufen; das soll nicht wie "keine
+  // Vokabeln" aussehen.
+  const hit = $('#vocNoHit');
+  if (hit) hit.classList.toggle('hidden', !(mine.length > 0 && list.length === 0));
+  vocSelSync();
 }
 window.studyVocRender = renderVocab;
+
+// ---------- Sortierung, Filter und Mehrfachauswahl ----------
+function vocFilterPop(btn) {
+  closePops();
+  const p = $('#pop');
+  p.innerHTML = '';
+  const head = txt => {
+    const h = document.createElement('div');
+    h.className = 'ph'; h.textContent = txt;
+    p.append(h);
+  };
+  const row = (label, cur, set) => {
+    const r = document.createElement('div');
+    r.className = 'row' + (cur ? ' sel' : '');
+    r.innerHTML = `<span>${esc(label)}</span><span>${cur ? ic('check', 15) : ''}</span>`;
+    r.onclick = () => { set(); closePops(); renderVocab(); };
+    p.append(r);
+  };
+  head(t('vocSortH'));
+  row(t('vocSortAz'), ST.vocSort === 'az', () => { ST.vocSort = 'az'; });
+  row(t('vocSortZa'), ST.vocSort === 'za', () => { ST.vocSort = 'za'; });
+  row(t('vocSortNew'), ST.vocSort === 'new', () => { ST.vocSort = 'new'; });
+  row(t('vocSortDue'), ST.vocSort === 'due', () => { ST.vocSort = 'due'; });
+  head(t('vocFilterH'));
+  row(t('vocFAll'), ST.vocFilter === 'all', () => { ST.vocFilter = 'all'; });
+  row(t('vocFDue'), ST.vocFilter === 'due', () => { ST.vocFilter = 'due'; });
+  row(t('vocFOpen'), ST.vocFilter === 'open', () => { ST.vocFilter = 'open'; });
+  row(t('vocFMastered'), ST.vocFilter === 'mastered', () => { ST.vocFilter = 'mastered'; });
+  row(t('vocFCtx'), ST.vocFilter === 'ctx', () => { ST.vocFilter = 'ctx'; });
+  const r = btn.getBoundingClientRect();
+  Object.assign(p.style, { left: Math.max(8, Math.min(r.left, innerWidth - 300)) + 'px', top: r.bottom + 6 + 'px' });
+  p.classList.remove('hidden');
+}
+
+function vocSelSync() {
+  const btn = $('#vocSelBtn');
+  if (btn) {
+    btn.classList.toggle('on', !!ST.selMode);
+    btn.title = t(ST.selMode ? 'vocSelEnd' : 'vocSelectT');
+  }
+  const bar = $('#vocSelBar');
+  if (bar) bar.classList.toggle('hidden', !ST.selMode);
+  const n = ST.sel.size;
+  const c = $('#vocSelCount'); if (c) c.textContent = n ? t('vocSelN', n) : '';
+  const del = $('#vocSelDelBtn'); if (del) del.disabled = !n;
+  const all = $('#vocSelAllBtn'); if (all) all.disabled = vocVisible().length === 0;
+}
+
+function vocSelMode(on) {
+  ST.selMode = typeof on === 'boolean' ? on : !ST.selMode;
+  if (!ST.selMode) ST.sel.clear();
+  renderVocab();
+}
+
+// Nur die eine Zeile umschalten statt die ganze Liste neu zu bauen: das haelt
+// die Klicks schnell und die uebrigen Zeilen bleiben stehen.
+function vocSelToggle(id) {
+  if (!id) return;
+  const on = !ST.sel.has(id);
+  if (on) ST.sel.add(id); else ST.sel.delete(id);
+  const row = document.querySelector(`#vocList .vrow[data-id="${id}"]`);
+  if (row) {
+    row.classList.toggle('picked', on);
+    const box = row.querySelector('.pickbox');
+    if (box) box.innerHTML = on ? ic('check', 13) : '';
+  }
+  vocSelSync();
+}
+
+function vocSelAll() {
+  const ids = vocVisible().map(e => e.id);
+  if (ids.length && ids.every(id => ST.sel.has(id))) ST.sel.clear();
+  else ids.forEach(id => ST.sel.add(id));
+  renderVocab();
+}
+
+// Mehrere auf einmal loeschen: fragt einmal nach und raeumt dann alle weg.
+async function vocSelDelete() {
+  const n = ST.sel.size;
+  if (!n) return;
+  const ok = await ask(t('vocSelDelQ', n), t('yes'), t('cancel'));
+  if (!ok) return;
+  ST.vocab = ST.vocab.filter(v => !ST.sel.has(v.id));
+  ST.sel.clear();
+  persist('vocab');
+  renderVocab(); renderTexts();
+  if (ST.cur) readerMeta(ST.cur);
+}
 
 // ---------- Auswahlmodus im Uebersetzer ----------
 function pickSync() {
@@ -1031,8 +1149,25 @@ function wire() {
     const ed = e.target.closest('[data-edit]');
     if (ed) return vocOpenEdit(ed.dataset.edit);
     const b = e.target.closest('[data-del]');
-    if (b) dropVocab(b.dataset.del);
+    if (b) return dropVocab(b.dataset.del);
+    const row = e.target.closest('[data-sel]');
+    if (row && ST.selMode) vocSelToggle(row.dataset.sel);
   });
+  // Suche: die Lupe klappt das Feld auf, Tippen filtert sofort.
+  $('#vocFindBtn').onclick = () => {
+    const row = $('#vocFindRow');
+    const open = row.classList.contains('hidden');
+    row.classList.toggle('hidden', !open);
+    if (open) { $('#vocFind').value = ST.vocFind; $('#vocFind').focus(); }
+    else { $('#vocFind').value = ''; ST.vocFind = ''; renderVocab(); }
+  };
+  $('#vocFind').addEventListener('input', () => { ST.vocFind = $('#vocFind').value; renderVocab(); });
+  $('#vocFindClear').onclick = () => { $('#vocFind').value = ''; ST.vocFind = ''; renderVocab(); $('#vocFind').focus(); };
+  $('#vocFilterBtn').onclick = () => vocFilterPop($('#vocFilterBtn'));
+  $('#vocSelBtn').onclick = () => vocSelMode();
+  $('#vocSelAllBtn').onclick = vocSelAll;
+  $('#vocSelDelBtn').onclick = vocSelDelete;
+  $('#vocSelEndBtn').onclick = () => vocSelMode(false);
   $('#vocClose').onclick = () => $('#vocDlg').close();
   $('#vocCancel').onclick = () => $('#vocDlg').close();
   $('#vocSaveBtn').onclick = vocSaveEdit;
