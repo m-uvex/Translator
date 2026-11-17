@@ -349,11 +349,15 @@ const studyDir = () => {
   return d;
 };
 const studyFile = name => path.join(studyDir(), studyNames[name] || 'unbekannt.json');
-// Sicherung: vor jedem Schreiben liegt die vorherige Fassung als .bak daneben,
-// und der letzte nicht-leere Stand wird nie durch einen leeren ueberschrieben.
+// Sicherung: vor jedem Schreiben liegt die vorherige Fassung als .bak daneben.
 // Ein einziger falscher Schreibvorgang hat sonst die ganze Liste geloescht
 // (passiert beim Testen), und ohne Sicherung war sie nicht zurueckzuholen.
+// Die Sicherung wird NICHT aufgefrischt, wenn der neue Stand deutlich kleiner
+// ist als der alte: sonst wuerde ein zweiter Fehlschlag (etwa eine leere Liste,
+// nachdem schon ein Testeintrag in der Hauptdatei steht) die letzte gute
+// Sicherung mit dem bereits kaputten Stand ueberschreiben.
 const studyBak = name => studyFile(name) + '.bak';
+const studyCount = txt => { try { const d = JSON.parse(txt); return Array.isArray(d) ? d.length : -1; } catch { return -1; } };
 ipcMain.handle('study:load', (_e, name) => {
   if (!studyNames[name]) return null;
   for (const f of [studyFile(name), studyBak(name)]) {
@@ -370,10 +374,12 @@ ipcMain.handle('study:save', (_e, name, data) => {
   try {
     let cur = null;
     try { cur = fs.readFileSync(f, 'utf8'); } catch { }
-    // Auch dann sichern, wenn jetzt eine leere Liste geschrieben wird — genau
-    // dieser Fall war der Datenverlust. Eine bereits leere Datei ueberschreibt
-    // die Sicherung nicht, damit sie den letzten echten Stand behaelt.
-    if (cur && cur.trim() && cur.trim() !== '[]') fs.writeFileSync(b, cur, 'utf8');
+    const curN = cur == null ? -1 : studyCount(cur);
+    const nextN = Array.isArray(data) ? data.length : -1;
+    // Geschrieben wird immer, gesichert nur bei einem glaubwuerdigen Umfang:
+    // leere oder auf weniger als die Haelfte geschrumpfte Listen sind der
+    // Fehlerfall, den die Sicherung ueberleben muss.
+    if (curN > 0 && nextN >= 0 && nextN * 2 >= curN) fs.writeFileSync(b, cur, 'utf8');
     fs.writeFileSync(f, JSON.stringify(data), 'utf8');
     return true;
   } catch { return false; }
