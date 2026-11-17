@@ -214,8 +214,8 @@ function vocRow(e, opts) {
   // In der Auswahl traegt die Zeile links ein Kaestchen; Bearbeiten und
   // Loeschen je Zeile treten zurueck, damit ein Klick die Zeile anwaehlt.
   const box = ST.selMode ? `<span class="pickbox">${picked ? ic('check', 13) : ''}</span>` : '';
-  const acts = ST.selMode ? '' : `<button class="rm ed" data-edit="${e.id}" title="${esc(t('edit'))}">${ic('pencil', 13)}</button>
-    <button class="rm" data-del="${e.id}" title="${esc(t('remove'))}">${ic('x', 13)}</button>`;
+  const acts = ST.selMode ? '' : `<button class="rm ed" data-edit="${e.id}" title="${esc(t('edit'))}">${ic('pencil', 15)}</button>
+    <button class="rm" data-del="${e.id}" title="${esc(t('remove'))}">${ic('x', 15)}</button>`;
   return `<div class="vrow${ST.selMode ? ' selmode' : ''}${picked ? ' picked' : ''}" data-id="${e.id}"${ST.selMode ? ` data-sel="${e.id}"` : ''}>
     ${box}
     <div class="vmain">
@@ -312,7 +312,14 @@ function vocSelSync() {
   const c = $('#vocSelCount'); if (c) c.textContent = n ? t('vocSelN', n) : '';
   const del = $('#vocSelDelBtn'); if (del) del.disabled = !n;
   const rp = $('#vocSelRepeatBtn'); if (rp) rp.disabled = !n;
-  const all = $('#vocSelAllBtn'); if (all) all.disabled = vocVisible().length === 0;
+  const all = $('#vocSelAllBtn');
+  if (all) {
+    // Der Knopf schaltet um: alles auswaehlen oder alles abwaehlen. Der Tooltip
+    // sagt, was der naechste Klick tut; vorher stand dort immer "Alle auswaehlen".
+    const ids = vocVisible().map(e => e.id);
+    all.disabled = ids.length === 0;
+    all.title = t(ids.length && ids.every(id => ST.sel.has(id)) ? 'vocSelNone' : 'vocSelAll');
+  }
 }
 
 function vocSelMode(on) {
@@ -1073,13 +1080,15 @@ function startRepeat(ids) {
     .filter(e => e && solutionOf(e));
   if (!cards.length) return window.trStatus(t('repNone'));
   const order = repShuffle(cards.map(e => e.id));
-  rep = { ids: cards.map(e => e.id), queue: order, wrongs: new Map(), seen: new Set(), streak: 0, note: null };
+  clearTimeout(repTimer);
+  rep = { ids: cards.map(e => e.id), queue: order, wrongs: new Map(), seen: new Set(), streak: 0, note: null, lock: false };
   vocSelMode(false);
   window.edShowView('srs');
   renderSrs();
 }
 
 function stopRepeat() {
+  clearTimeout(repTimer);
   rep = null;
   const tg = $('#srsType'); if (tg) tg.classList.remove('hidden');
   renderSrs();
@@ -1100,21 +1109,41 @@ function repReinsert(e) {
   rep.queue.splice(Math.min(Math.max(1, 4 - wrongs), rep.queue.length), 0, e.id);
 }
 
+// Die Rueckmeldung gehoert auf die Karte, die gerade beantwortet wurde. Bei
+// einer richtigen Antwort bleibt die Karte deshalb kurz stehen (rund anderthalb
+// Sekunden, `REP_PAUSE`), zeigt "Richtig" und geht dann von allein weiter;
+// vorher sprang sie sofort um und die Meldung stand auf der naechsten Frage.
+// Ein Fehlversuch bleibt wie bisher stehen, bis derselbe Eintrag getippt ist.
+const REP_PAUSE = 1500;
+let repTimer = null;
 function repCheck() {
-  if (!rep || !rep.queue.length) return;
+  if (!rep || rep.lock || !rep.queue.length) return;
   const e = ST.vocab.find(v => v.id === rep.queue[0]);
   const inp = $('#srsIn');
   if (!e || !inp || !inp.value.trim()) return;
   if (termOk(e, inp.value)) {
     rep.streak += 1;
-    rep.queue.shift();
-    repReinsert(e);
     rep.note = { ok: true, text: t('srsRight') };
+    rep.lock = true;
+    renderSrs();
+    clearTimeout(repTimer);
+    repTimer = setTimeout(repAdvance, REP_PAUSE);
   } else {
     rep.streak = 0;
     rep.wrongs.set(e.id, (rep.wrongs.get(e.id) || 0) + 1);
     rep.note = { ok: false, text: t('srsWrong') + ' ' + e.term, retry: true };
+    renderSrs();
   }
+}
+
+// Karte aus der Schlange nehmen und passend zum Fehlerstand wieder einreihen.
+function repAdvance() {
+  clearTimeout(repTimer); repTimer = null;
+  if (!rep) return;
+  const e = ST.vocab.find(v => v.id === rep.queue[0]);
+  if (e) { rep.queue.shift(); repReinsert(e); }
+  rep.note = null;
+  rep.lock = false;
   renderSrs();
 }
 
@@ -1122,7 +1151,9 @@ function renderRepeat(box) {
   // Entfernte Karten fallen aus der Runde.
   rep.queue = rep.queue.filter(id => ST.vocab.some(v => v.id === id));
   if (!rep.queue.length) { rep = null; renderSrs(); return; }
-  repPickNext();
+  // Waehrend der kurzen Pause nach einer richtigen Antwort bleibt die Karte
+  // stehen; auch das Nachziehen ungesehener Woerter wartet so lange.
+  if (!rep.lock) repPickNext();
   const e = ST.vocab.find(v => v.id === rep.queue[0]);
   rep.seen.add(e.id);
   const P = pairOf(e);
@@ -1133,8 +1164,8 @@ function renderRepeat(box) {
   box.innerHTML = `<div class="srscard typing">
     <div class="replabel muted">${esc(langLabel(P.tgt))} → ${esc(langLabel(P.src))}</div>
     <div class="srsword">${esc(solutionOf(e))}</div>
-    ${chars ? `<div class="charbar above" title="${esc(t('srsChars'))}">${chars}</div>` : ''}
-    <div class="srsinput"><input id="srsIn" autocomplete="off" spellcheck="false" placeholder="${esc(t('repTypeIn'))}"><button class="ib go" id="srsCheckBtn" title="${esc(t('srsCheck'))}">${ic('check', 18)}</button></div>
+    ${chars ? `<div class="charbar above${rep.lock ? ' off' : ''}" title="${esc(t('srsChars'))}">${chars}</div>` : ''}
+    <div class="srsinput${rep.lock ? ' locked' : ''}"><input id="srsIn" autocomplete="off" spellcheck="false"${rep.lock ? ' readonly' : ''} placeholder="${esc(t('repTypeIn'))}"><button class="ib go" id="srsCheckBtn"${rep.lock ? ' disabled' : ''} title="${esc(t('srsCheck'))}">${ic('check', 18)}</button></div>
     ${note}
     <div class="srsendless muted">${esc(t('repEndless'))}</div>
     <div class="srsbtns"><button class="ghost" id="repStop">${esc(t('repStop'))}</button></div>

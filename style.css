@@ -92,7 +92,7 @@ footer{display:flex;align-items:center;gap:8px;padding:8px 12px}.sp{flex:1}.mute
    Pille, weil immer zwei davon darin stehen — nebeneinander in einem 32er-Kreis
    wirkten sie gestaucht. Die dezente Füllung zeigt, dass beide Zeichen zu einem
    Knopf gehören; aktiv wird die Pille accent-farben wie die runden Knöpfe. */
-.sgrp .seg.sub{margin-top:8px}
+.sgrp .seg.sub{margin-top:8px}
 .ctx{background:var(--soft);border-radius:var(--r);padding:10px 12px}
 .ctx summary{cursor:pointer;list-style:none;font-weight:600;display:flex;align-items:center;gap:8px}
 .ctx summary::before{content:"";border:5px solid transparent;border-left:7px solid var(--muted);border-right:0;transition:transform .15s}
@@ -371,7 +371,7 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .vadd .ib.go:hover{background:var(--accent-hover);color:var(--on-accent)}
 .rfootbar .ib{width:34px;height:34px;border-radius:50%}
 .vlist{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:0 4px 16px;min-height:0}
-.vrow{display:flex;gap:8px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.vrow{display:flex;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
 .vmain{flex:1;min-width:0}
 .vterm{display:flex;align-items:center;gap:8px;font-weight:600;flex-wrap:wrap}
 .vtr{font-weight:400;color:var(--accent-ink)}
@@ -379,7 +379,9 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .vctx{color:var(--muted);font-size:13px;line-height:1.5;margin-top:3px}
 .vctx mark{background:none;color:var(--accent-ink);font-weight:600}
 .vmeta{color:var(--muted);font-size:12px;margin-top:4px}
-.vrow .rm{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:var(--muted);opacity:.5;flex:none}
+/* 28 px statt 24, und ohne Innenpolster: die geerbte Knopf-Polsterung (1px 6px)
+   schob das Zeichen aus der Mitte des Kreises. */
+.vrow .rm{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;padding:0;line-height:0;color:var(--muted);opacity:.55;flex:none}
 .vrow:hover .rm{opacity:1}
 .vrow .rm:hover{background:var(--soft);color:var(--text)}
 /* Abfrage */
@@ -485,6 +487,10 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 /* In der Endlos-Runde steht die Leiste ueber dem Eingabefeld: der Abstand
    gehoert dann nach unten, oben schliesst sie direkt an die Frage an. */
 .charbar.above{margin:0 0 10px;justify-content:center}
+/* Kurze Pause nach einer richtigen Antwort: Feld und Zeichen sind so lange
+   gesperrt, damit die Rueckmeldung auf der beantworteten Karte stehen bleibt. */
+.srsinput.locked input{opacity:.55}
+.charbar.off{opacity:.45;pointer-events:none}
 .charbar .ch{font:inherit;line-height:1;min-width:34px;height:32px;padding:0 10px;border-radius:999px;background:var(--soft);border:1px solid var(--line);color:var(--text);cursor:pointer}
 .charbar .ch:hover{border-color:var(--accent);color:var(--accent-ink)}
 

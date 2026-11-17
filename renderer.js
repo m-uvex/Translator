@@ -3,6 +3,9 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // Stoppschild als reine Linie (Achteck) im Stil der uebrigen Icons, ohne
   // Fuellung und ohne eigene Farbe. Bewusst kein Quadrat (Kamera-Optik).
   stop:'<path d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86z"/>', star:'<path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-3-5.5 3 1-6.2L3 9.6l6.2-.9z"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>', check:'<path d="M5 12l5 5 9-10"/>',
+  // "Alle auswaehlen": ein gesetztes Kaestchen, dahinter ein zweites. Das
+  // einfache Haekchen sah in der Auswahlleiste nach "bestaetigen" aus.
+  checkAll:'<rect x="3" y="3" width="13" height="13" rx="3.4"/><path d="M6.1 9.9l2.4 2.4 4.7-5.1"/><path d="M20.4 8.2v9.2a3 3 0 0 1-3 3H8.2"/>',
   eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', bulb:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
   languages:'<path d="M4 6h9M8.5 4v2M6 6c.8 3 3 5.5 6 7M12 6c-.8 3-3 5.5-6 7M13 20l4-9 4 9M14.5 17h5"/>', doc:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',
   library:'<path d="m16 6 4 14M12 6v14M8 8v12M4 4v16"/>',
@@ -116,7 +119,7 @@ const K = {
   vocFillNone:['Jede Vokabel hat eine Übersetzung','Every word has a translation'], vocFindClear:['Suche leeren','Clear the search'],
   vocFilterT:['Sortieren und filtern','Sort and filter'], vocSortH:['Sortierung','Sort'], vocSortAz:['A–Z','A–Z'], vocSortZa:['Z–A','Z–A'], vocSortNew:['Neueste zuerst','Newest first'], vocSortDue:['Fälligkeit','Due date'],
   vocFilterH:['Filter','Filter'], vocFAll:['Alle','All'], vocFDue:['Heute fällig','Due today'], vocFOpen:['Noch offen','Still open'], vocFMastered:['Gemeistert','Mastered'], vocFCtx:['Mit Kontextsatz','With a sentence'],
-  vocSelectT:['Mehrere auswählen','Select several'], vocSelEnd:['Auswahl beenden','End the selection'], vocSelAll:['Alle auswählen','Select all'], vocSelDel:['Ausgewählte löschen','Delete selected'],
+  vocSelectT:['Mehrere auswählen','Select several'], vocSelEnd:['Auswahl beenden','End the selection'], vocSelAll:['Alle auswählen','Select all'], vocSelNone:['Alle abwählen','Deselect all'], vocSelDel:['Ausgewählte löschen','Delete selected'],
   vocSelN:[n => `${n} ausgewählt`, n => `${n} selected`], vocSelDelQ:[n => n === 1 ? 'Diese Vokabel löschen?' : `${n} Vokabeln löschen?`, n => n === 1 ? 'Delete this word?' : `Delete ${n} words?`],
   vocNoHit:['Keine Vokabel passt zu Suche und Filter.','No word matches the search and filter'],
   libToReadT:['In Lesetexte übernehmen','Copy to reading texts'],
