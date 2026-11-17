@@ -457,8 +457,11 @@ function renderTexts() {
     const card = document.createElement('div');
     card.className = 'libcard txtcard'; card.dataset.tx = tx.id; card.tabIndex = 0;
     const excerpt = String(tx.text || '').slice(0, 420);
-    card.innerHTML = `<div class="libprev"><div class="doc">${esc(excerpt)}</div><span class="txbadge">${esc(catLabel(tx.cat))}</span></div>
-      <div class="libmeta"><div class="libname">${esc(tx.title)}</div><div class="libdate">${esc(langLabel(tx.src))} → ${esc(langLabel(tx.tgt))} · ${esc(t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length))}</div></div>
+    // Die Textart steht im Kopf der Karte bei Titel und Sprachpaar – dort sucht
+    // man sie. Unten links in der Vorschau war sie kaum zu lesen und wurde
+    // ohnehin uebersehen.
+    card.innerHTML = `<div class="libprev"><div class="doc">${esc(excerpt)}</div></div>
+      <div class="libmeta"><span class="txbadge">${esc(catLabel(tx.cat))}</span><div class="libname">${esc(tx.title)}</div><div class="libdate">${esc(langLabel(tx.src))} → ${esc(langLabel(tx.tgt))} · ${esc(t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length))}</div></div>
       <button class="rm ed" title="${esc(t('edit'))}">${ic('pencil', 13)}</button>
       <button class="rm" title="${esc(t('remove'))}">${ic('x', 14)}</button>`;
     card.onclick = ev => { if (!ev.target.closest('.rm')) openText(tx.id); };

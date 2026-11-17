@@ -366,10 +366,9 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .rend{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center}
 .rendbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 /* Textkarten in der Ablage */
-/* Textart liegt unten links im Vorschaufeld. Oben rechts sitzen die Knoepfe
-   (Stift, Kreuz) und deckten die Pille halb zu. Der untere Rand ist durch den
-   Verlauf der Vorschau ohnehin ruhig, und z-index haelt sie darueber. */
-.txbadge{position:absolute;bottom:10px;left:10px;z-index:3;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:11px;color:var(--accent-ink)}
+/* Textart steht im Kopf der Karte, direkt ueber dem Titel: dort schaut man
+   zuerst hin. Eine Pille im Vorschaufeld wurde uebersehen und war zu klein. */
+.txbadge{align-self:flex-start;display:inline-block;margin:0 0 3px;background:color-mix(in srgb,var(--accent) 18%,var(--card));border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600;line-height:1.5;color:var(--text);white-space:nowrap}
 .txtcard .libprev .doc{white-space:pre-wrap}
 .rfootbar{display:flex;align-items:center;gap:8px;padding:0 6px;flex-wrap:wrap}
 .rfootbar .tsel{max-width:200px}

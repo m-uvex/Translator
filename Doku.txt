@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.36 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.37 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -945,3 +945,11 @@ Zog man mit gedrückter Maustaste über die Optionsspalte des Übersetzers, wurd
 `style.css` setzt deshalb `user-select:none` (mit `-webkit-`-Variante) für die Menü- und Beschriftungstexte der Spalte: `.side summary`, `.side h3`, `.side .sh`, `.side .slab`, `.side .seg`, `.side .opt`, `.side .set b`, `.side label` und `.side button`. Eingabefelder bleiben ausdrücklich markierbar – `.side textarea`, `.side input` und `.side select` setzen `user-select:text`. Der Platzhalter unter „Zusammenhang“ verschwand dadurch ebenfalls aus der Auswahl, weil ein Ziehen auf einer nicht markierbaren Zeile keine Auswahl mehr beginnt. Die Regeln gelten nur innerhalb der Optionsspalte `#vT .side`; Editor, Lesetexte, Vokabellisten und Dialoge sind unberührt.
 
 Geprüft in eigenem `--user-data-dir` über CDP: `getComputedStyle` meldet für `summary`, die Stil-Überschrift, einen Segment-Knopf und den Glossar-Knopf `user-select: none`, für das Feld `#ctx` weiterhin `text`. Eine per Range über den Inhalt der Zeile „Zusammenhang“ gelegte Auswahl ergibt die Länge 0, während im Feld `#ctx` die Zeichen 4 bis 12 („Beispiel“) normal markiert werden können.
+
+## 70. Textart der Lesetexte sitzt im Kartenkopf (1.15.37)
+
+Die Pille mit der Textart stand seit 1.15.34 unten links im Vorschaufeld. Dort wirkte sie deplatziert: Sie lag auf dem ausgeblendeten Text, war mit 11 px klein, und wer eine Karte ansieht, schaut zuerst auf Titel und Sprachpaar – nicht in die Ecke der Vorschau. Sie steht jetzt im Kopf der Karte (`.libmeta`), als erstes Element direkt über dem Titel, und ist damit dort, wo der Blick ohnehin zuerst hin geht.
+
+`renderTexts()` in `study.js` setzt das `<span class="txbadge">` deshalb nicht mehr in `.libprev`, sondern als erstes Kind von `.libmeta` vor `.libname`. In `style.css` ist `.txbadge` keine absolute Pille mehr, sondern ein Inline-Element in der Spalte (`position:static`, `align-self:flex-start`), damit sie ihre natürliche Breite behält und der Titel darunter normal umbricht. Lesbarer wurde sie über Größe und Kontrast: 12 px statt 11 px, `font-weight:600`, Fläche aus 18 % Akzent über der Kartenfarbe (`color-mix`), Rand aus 45 % Akzent, Schrift in `var(--text)` statt in der blassen Akzentfarbe. `white-space:nowrap` hält „Textbearbeitung“ in einer Zeile.
+
+Geprüft in eigenem `--user-data-dir` über CDP in beiden Themes: Die Pille hängt an `.libmeta`, ist deren erstes Kind und endet oberhalb des Titels; `position` ist `static`, Schrift 12 px bei Gewicht 600, Größe 72 × 22 px, und sie liegt vollständig innerhalb der Karte. Im hellen Theme steht `rgb(29, 29, 31)` auf hellem Blau (`color(srgb 0.93 0.966 0.993)`), im dunklen `rgb(236, 236, 236)` auf dunklem Blau (`color(srgb 0.17 0.225 0.264)`) – beides deutlich besser lesbar als die bisherige 11-px-Pille auf der Vorschau.
