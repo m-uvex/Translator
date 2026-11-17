@@ -1148,19 +1148,35 @@ function readlangDelim(text) {
   return '';
 }
 
+// Nennt ein Feld das Wort (gebeugt, mit Artikel davor)? Dann ist es der Satz,
+// aus dem das Wort stammt, und keine Uebersetzung. Ohne diese Pruefung landet
+// bei einer Zeile ohne Markierung der ganze Satz als Entsprechung im Eintrag.
+function sentenceOf(field, term) {
+  if (String(field).split(/\s+/).length < 2) return false;
+  const core = (String(term).toLowerCase().match(/[\p{L}]+/gu) || []).pop() || '';
+  if (core.length < 3) return false;
+  const esc = core.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp('(^|[^\\p{L}])' + esc + '([^\\p{L}]|$)', 'iu').test(field);
+}
+
 // Listet die Vokabeln einer Readlang-Textdatei; null, wenn es keine ist.
 function readlangWords(text) {
   const delim = readlangDelim(text);
   if (!delim) return null;
   const lines = String(text).replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').split('\n').filter(l => l.trim());
   const isFreq = s => /^\d+(?:[.,]\d+)?$/.test(s);
+  // Readlang schreibt in die Frequenzspalte auch „undefined“, wenn es keine
+  // Frequenz gibt. Das Feld ist kurz und wurde deshalb zum „Wort“: Die echte
+  // Vokabel wurde zur Uebersetzung, und alle betroffenen Zeilen fielen auf
+  // einen einzigen Eintrag „undefined“ zusammen.
+  const isMeta = s => /^(?:undefined|null|nan)$/i.test(s);
   const out = [], seen = new Map();
   for (const line of lines) {
     const fields = line.split(delim).map(x => x.trim()).filter(Boolean);
     if (!fields.length) continue;
     let ctx = '', bracket = '', words = [];
     for (const f of fields) {
-      if (isFreq(f)) continue;
+      if (isFreq(f) || isMeta(f)) continue;
       const m = f.match(RL_MARK);
       if (m && !ctx) { ctx = f; bracket = (m[1] || m[2] || '').trim(); continue; }
       if (f === 'No context') continue;
@@ -1168,10 +1184,18 @@ function readlangWords(text) {
     }
     if (!words.length) continue;
     const term = words.slice().sort((a, b) => a.length - b.length)[0];
+    let rest = words.filter(w => w !== term);
+    // Ohne Markierung steht in der Kontextspalte der Satz selbst (etwa
+    // „Tenemos un perro pequeño.“); er nennt das Wort und ist kein Equivalent.
+    if (!ctx) {
+      const i = rest.findIndex(w => sentenceOf(w, term));
+      if (i >= 0) { ctx = rest[i]; rest = rest.slice(0, i).concat(rest.slice(i + 1)); }
+    }
     let translation = bracket;
-    // „Kontext mit Originalwort“ stellt das Wort selbst in die Klammern.
-    if (translation && nrm(translation) === nrm(term)) translation = '';
-    if (!translation && words.length > 1) translation = words.find(w => w !== term) || '';
+    // „Kontext mit Originalwort“ stellt genau das Wort in die Klammern; eine
+    // reine Gross-/Kleinschreibung („[[Miguel]]“ zu „miguel“) bleibt erhalten.
+    if (translation && translation === term) translation = '';
+    if (!translation && rest.length) translation = rest[0] || '';
     let context = '';
     if (ctx) {
       // Die Klammern durch das Wort ersetzen ergibt den Satz, wie er im Text stand.
