@@ -454,19 +454,33 @@ function renderTexts() {
   const mine = ST.texts.filter(inPair);
   const other = ST.texts.length - mine.length;
   for (const tx of mine) {
+    // Eine Kurzgeschichte entsteht erst im Hintergrund: Solange sie geschrieben
+    // wird (pending 1), steht die Vorgabe in der Vorschau und der Zustand an der
+    // Stelle der Textart. Nach einem Fehler (pending -1) schreibt ein Klick auf
+    // die Karte neu.
+    const state = Number(tx.pending) || 0;
     const card = document.createElement('div');
-    card.className = 'libcard txtcard'; card.dataset.tx = tx.id; card.tabIndex = 0;
-    const excerpt = String(tx.text || '').slice(0, 420);
+    card.className = 'libcard txtcard' + (state ? ' pending' : '') + (state < 0 ? ' failed' : ''); card.dataset.tx = tx.id; card.tabIndex = 0;
+    const excerpt = String(state ? (tx.brief || '') : (tx.text || '')).slice(0, 420);
     // Die Textart steht im Kopf der Karte bei Titel und Sprachpaar – dort sucht
     // man sie. Unten links in der Vorschau war sie kaum zu lesen und wurde
     // ohnehin uebersehen.
+    const badge = state > 0 ? `<span class="txbadge work"><span class="spin"></span>${esc(t('stWorking'))}</span>`
+      : state < 0 ? `<span class="txbadge bad">${esc(t('stFailed'))}</span>`
+      : `<span class="txbadge">${esc(catLabel(tx.cat))}</span>`;
+    const sub = state < 0 ? t('stRetry') : t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length);
     card.innerHTML = `<div class="libprev"><div class="doc">${esc(excerpt)}</div></div>
-      <div class="libmeta"><span class="txbadge">${esc(catLabel(tx.cat))}</span><div class="libname">${esc(tx.title)}</div><div class="libdate">${esc(langLabel(tx.src))} → ${esc(langLabel(tx.tgt))} · ${esc(t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length))}</div></div>
-      <button class="rm ed" title="${esc(t('edit'))}">${ic('pencil', 13)}</button>
+      <div class="libmeta">${badge}<div class="libname">${esc(tx.title)}</div><div class="libdate">${esc(langLabel(tx.src))} → ${esc(langLabel(tx.tgt))} · ${esc(sub)}</div></div>
+      ${state ? '' : `<button class="rm ed" title="${esc(t('edit'))}">${ic('pencil', 13)}</button>`}
       <button class="rm" title="${esc(t('remove'))}">${ic('x', 14)}</button>`;
-    card.onclick = ev => { if (!ev.target.closest('.rm')) openText(tx.id); };
-    card.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openText(tx.id); } };
-    card.querySelector('.rm.ed').onclick = ev => { ev.stopPropagation(); txEdit(tx.id); };
+    card.onclick = ev => {
+      if (ev.target.closest('.rm') || state > 0) return;
+      if (state < 0) return storyGenerate(tx.id);
+      openText(tx.id);
+    };
+    card.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); card.click(); } };
+    const edBtn = card.querySelector('.rm.ed');
+    if (edBtn) edBtn.onclick = ev => { ev.stopPropagation(); txEdit(tx.id); };
     card.querySelector('.rm:not(.ed)').onclick = ev => { ev.stopPropagation(); dropText(tx.id); };
     frag.append(card);
   }
@@ -475,6 +489,7 @@ function renderTexts() {
   if (hint) hint.textContent = other > 0 ? t('vocOther', other) : '';
   const empty = $('#txtEmpty');
   if (empty) empty.classList.toggle('hidden', mine.length > 0);
+  renderStoryBtn();
 }
 window.studyTextsRender = renderTexts;
 
@@ -584,7 +599,8 @@ function dropText(id) {
 // ---------- Leseoberflaeche ----------
 function openText(id) {
   ST.cur = ST.texts.find(x => x.id === id) || null;
-  if (!ST.cur) return;
+  // Eine Geschichte, die noch geschrieben wird, hat keinen Text zum Lesen.
+  if (!ST.cur || Number(ST.cur.pending)) return;
   // `showView` liegt in der IIFE von editor.js; nach aussen reicht sie nur als
   // window.edShowView - der direkte Name ist hier nicht sichtbar.
   window.edShowView('read');
@@ -1574,8 +1590,286 @@ window.studyLibToReading = async (id, btn) => {
   });
 };
 
+// ---------- Kurzgeschichten ----------
+// Der Generator baut aus einem Lueckentext und einigen Woertern eine Vorgabe und
+// laesst ein Schreibmodell daraus eine kurze Geschichte in der gelernten Sprache
+// schreiben. Damit die Wartezeit nicht im Dialog haengt, legt der Start sofort
+// einen Lesetext mit `pending` an: Die Bibliothek zeigt ihn als „wird
+// geschrieben“, und sobald das Modell antwortet, steht dort eine normale Karte
+// mit Titel und Text.
+
+// Wortarten des Lueckentexts. Alle Luecken greifen auf denselben Vorrat je Art
+// zu (ein Nomen-Vorrat, ein Verb-Vorrat ...), damit sich Woerter frei
+// kombinieren lassen. Die vier Symbole sind eigens fuer diese Arten gezeichnet.
+const WPOS = [['noun', 'posNoun', 'stPosNoun'], ['verb', 'posVerb', 'stPosVerb'], ['adj', 'posAdj', 'stPosAdj'], ['adv', 'posAdv', 'stPosAdv']];
+const STORY_TPL = {
+  de: 'Es war einmal ___ . Jeden Tag ___ . Am Ende ___ .',
+  en: 'Once upon a time there was ___ . Every day ___ . In the end ___ .',
+  nl: 'Er was eens ___ . Elke dag ___ . Uiteindelijk ___ .',
+  es: 'Había una vez ___ . Cada día ___ . Al final ___ .',
+  tr: 'Bir zamanlar ___ vardı. Her gün ___ . Sonunda ___ .',
+  ar: 'كان يا ما كان ___ . كل يوم ___ . وفي النهاية ___ .'
+};
+const storyTpl = () => String(S.storyTemplate || '').trim() || STORY_TPL[LANG] || STORY_TPL.en;
+const escA = s => esc(s).replace(/"/g, '&quot;');
+
+// Schreibmodell: eigene Wahl, sonst das des Texteditors, sonst das Hilfsmodell -
+// dieselbe Reihenfolge wie im Editor (`writeModel`).
+function storyModels() { return Object.keys(caps).filter(n => caps[n].includes('completion') && !/translategemma/i.test(n)); }
+function storyModel() {
+  const gens = storyModels();
+  if (S.storyModel && gens.includes(S.storyModel)) return S.storyModel;
+  if (S.edWrite && gens.includes(S.edWrite)) return S.edWrite;
+  return window.trHelperModel() || gens[0] || '';
+}
+function renderStoryModel() {
+  const b = $('#stModel'); if (!b) return;
+  b.innerHTML = ic('cpu');
+  b.title = `${t('storyModelT')}: ${storyModel() || '—'}`;
+}
+// Auswahl wie im Editor: eine Ueberschrift „Schreibmodell“ und die allgemeinen
+// Modelle. Die erste Zeile gibt die Wahl wieder frei (dann gilt das Modell des
+// Editors).
+function storyModelPop(btn) {
+  closePops();
+  const p = $('#pop'); p.innerHTML = '';
+  const head = document.createElement('div'); head.className = 'row hd'; head.textContent = t('writeModel'); p.append(head);
+  const row = (label, value, cur) => {
+    const r = document.createElement('div');
+    r.className = 'row' + (cur ? ' sel' : '');
+    r.innerHTML = `<span>${esc(label)}</span><span>${cur ? ic('check', 15) : ''}</span>`;
+    r.onclick = () => { S.storyModel = value; save(); renderStoryModel(); closePops(); };
+    p.append(r);
+  };
+  const gens = storyModels();
+  row(t('autoModel'), '', !S.storyModel || !gens.includes(S.storyModel));
+  if (!gens.length) { const r = document.createElement('div'); r.className = 'row hd'; r.textContent = t('stNoModel'); p.append(r); }
+  gens.forEach(n => row(n, n, !!S.storyModel && n === S.storyModel));
+  const r = btn.getBoundingClientRect();
+  Object.assign(p.style, { left: Math.max(8, Math.min(r.left, innerWidth - 300)) + 'px', top: r.bottom + 6 + 'px' });
+  p.classList.remove('hidden');
+}
+
+// Wortvorrat je Sprache: einmal vom Modell geholt und in den Einstellungen
+// abgelegt (`S.storyPools`), damit die Pillen beim naechsten Mal sofort stehen.
+function storyPoolsCached(lang) {
+  const c = (S.storyPools || {})[lang];
+  return c && Object.values(c).some(a => Array.isArray(a) && a.length) ? c : null;
+}
+async function storyPools(lang, fresh) {
+  if (!fresh) { const c = storyPoolsCached(lang); if (c) return c; }
+  const mdl = storyModel();
+  if (!mdl) throw new Error('nomodel');
+  const out = await window.trChat([
+    { role: 'system', content: 'You collect vocabulary for language learners. Reply with JSON only.' },
+    { role: 'user', content: `Give me six common everyday words in ${langName(lang)} for each of these word types: noun, verb, adjective, adverb. Keep them short, in the base form, without articles or explanations. Reply as JSON: {"noun":["..."],"verb":["..."],"adjective":["..."],"adverb":["..."]}` }
+  ], { model: mdl, format: 'json' });
+  let j = {};
+  try { j = JSON.parse(out); } catch { j = {}; }
+  const clean = a => (Array.isArray(a) ? a : []).map(w => String(w || '').trim()).filter(Boolean).slice(0, 6);
+  const pools = { noun: clean(j.noun), verb: clean(j.verb), adj: clean(j.adjective || j.adj), adv: clean(j.adverb || j.adv) };
+  if (!pools.noun.length && !pools.verb.length && !pools.adj.length && !pools.adv.length) throw new Error('empty');
+  S.storyPools = S.storyPools || {};
+  S.storyPools[lang] = pools; save();
+  return pools;
+}
+
+// Die Wortoptionen stehen in einem eigenen, leicht abgesetzten Bereich neben dem
+// Lueckentext: je Wortart eine Zeile mit ihren Pillen. Links im Pill steht das
+// Zeichen der Wortart.
+function drawStoryPools(pools) {
+  const box = $('#stPools'); if (!box) return;
+  box.innerHTML = WPOS.map(([k, icon, key]) => {
+    const words = (pools && pools[k]) || [];
+    if (!words.length) return '';
+    return `<div class="ppos">${ic(icon, 14)}<span>${esc(t(key))}</span></div><div class="prow">` +
+      words.map(w => `<button type="button" class="wpill" data-pos="${k}" data-w="${escA(w)}">${ic(icon, 13)}<span>${esc(w)}</span></button>`).join('') + '</div>';
+  }).join('');
+  box.querySelectorAll('.wpill').forEach(b => { b.onclick = () => storyInsert(b.dataset.w, b.dataset.pos); });
+}
+
+let storyPick = [];
+const storyGaps = v => (String(v).match(/___/g) || []).length;
+// Setzt Pillen-Woerter wieder zu Luecken zurueck: von hinten nach vorn, weil die
+// eingefuegten Woerter den Text verlaengern.
+function storyUnfill(v) {
+  let s = String(v);
+  for (const p of [...storyPick].reverse()) {
+    const i = s.lastIndexOf(p.w);
+    if (i >= 0) s = s.slice(0, i) + '___' + s.slice(i + p.w.length);
+  }
+  return s;
+}
+function storySync() {
+  const ta = $('#stCloze'), c = $('#stCount'), go = $('#stGo');
+  if (!ta) return;
+  const left = storyGaps(ta.value);
+  if (c) c.textContent = t('stFill', storyPick.length, storyPick.length + left);
+  if (go) go.disabled = !String(ta.value).replace(/_/g, '').trim();
+}
+function storyInsert(word, pos) {
+  const ta = $('#stCloze'); if (!ta || !word) return;
+  const v = ta.value, i = v.indexOf('___');
+  ta.value = i < 0 ? (v.trim() ? v.trim() + ' ' : '') + word : (v.slice(0, i) + word + v.slice(i + 3));
+  storyPick.push({ w: word, pos });
+  storySync();
+  ta.focus();
+}
+
+async function loadStoryPools(fresh) {
+  const msg = $('#stMsg');
+  drawStoryPools(storyPoolsCached(S.studySrc));
+  if (msg) { msg.textContent = t('stPoolWait'); msg.classList.remove('hidden', 'err'); }
+  try {
+    const pools = await storyPools(S.studySrc, fresh);
+    drawStoryPools(pools);
+    if (msg) { msg.textContent = ''; msg.classList.add('hidden'); }
+  } catch (e) {
+    if (msg) {
+      msg.textContent = String(e && e.message) === 'nomodel' ? t('stNoModel') : t('stPoolErr');
+      msg.classList.remove('hidden'); msg.classList.add('err');
+    }
+  }
+}
+
+function storyOpen() {
+  if (!S.storyOn) return;
+  const d = $('#stDlg'); if (!d) return;
+  storyPick = [];
+  $('#stCloze').value = storyTpl();
+  drawStoryPools(storyPoolsCached(S.studySrc));
+  const msg = $('#stMsg'); if (msg) { msg.textContent = ''; msg.classList.add('hidden'); }
+  storySync();
+  renderStoryModel();
+  d.showModal();
+  $('#stCloze').focus();
+  loadStoryPools(false);
+}
+
+// Die Karte in der Bibliothek, solange geschrieben wird. Fußt auf denselben
+// Feldern wie jeder Lesetext; `pending` steuert nur die Darstellung.
+function storyStart() {
+  const ta = $('#stCloze'); if (!ta) return;
+  const filled = String(ta.value || '').trim();
+  if (!filled.replace(/_/g, '').trim()) return window.trStatus(t('txNeedText'));
+  const msg = $('#stMsg');
+  if (!storyModel()) {
+    if (msg) { msg.textContent = t('stNoModel'); msg.classList.remove('hidden'); msg.classList.add('err'); }
+    return;
+  }
+  const by = {};
+  for (const p of storyPick) (by[p.pos] = by[p.pos] || new Set()).add(p.w);
+  const words = WPOS.filter(([k]) => by[k] && by[k].size).map(([k]) => `${k} (${[...by[k]].join(', ')})`).join('; ');
+  S.storyTemplate = storyUnfill(filled); save();
+  const tx = {
+    id: uid('t'), title: t('stUntitled'), cat: 'story', text: '', pos: 0,
+    src: S.studySrc, tgt: S.studyTgt, created: Date.now(), updated: Date.now(),
+    pending: 1, brief: filled, words
+  };
+  ST.texts.unshift(tx);
+  persist('texts');
+  storyPick = [];
+  renderTexts();
+  $('#stDlg').close();
+  window.trStatus(t('stQueued'));
+  storyGenerate(tx.id);
+}
+
+async function storyGenerate(id) {
+  const tx = ST.texts.find(x => x.id === id); if (!tx) return;
+  tx.pending = 1;
+  persist('texts'); renderTexts();
+  const lang = tx.src;
+  try {
+    const mdl = storyModel();
+    if (!mdl) throw new Error('nomodel');
+    const out = await window.trChat([
+      { role: 'system', content: 'You write short stories for language learners. Reply with JSON only, without markdown or explanations.' },
+      { role: 'user', content: `Write a short story in ${langName(lang)}. Language code: ${lang}.\n` +
+        `- Length: about 120 to 180 words.\n` +
+        `- Simple, natural sentences with everyday vocabulary, one or two paragraphs.\n` +
+        `- Work the following words in where they fit, inflected as the grammar needs: ${tx.words || '(none)'}\n` +
+        `- The learner filled in this text as an outline; follow its ideas loosely and in this order:\n"""\n${tx.brief || ''}\n"""\n` +
+        `Reply as JSON: {"title": "a short title in ${langName(lang)}", "story": "the story"}` }
+    ], { model: mdl, format: 'json' });
+    let title = '', story = '';
+    try {
+      const j = JSON.parse(out);
+      title = String(j.title || '').trim();
+      story = String(j.story || j.text || '').trim();
+    } catch { story = String(out || '').trim(); }
+    if (!story) throw new Error('empty');
+    if (!title) title = story.split(/[.!?\n]/)[0];
+    tx.title = (title || t('stUntitled')).replace(/\s+/g, ' ').slice(0, 120).trim();
+    tx.text = story.replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim();
+    tx.pending = 0;
+  } catch {
+    tx.pending = -1;
+  }
+  tx.updated = Date.now();
+  persist('texts'); renderTexts();
+  if (ST.cur && ST.cur.id === tx.id && !Number(tx.pending)) drawReader();
+  if (!Number(tx.pending)) window.trStatus(t('stDone', tx.title));
+}
+
+// Der Knopf in der Lesebibliothek gehoert zum Generator: ausgeschaltet ist er weg.
+function renderStoryBtn() {
+  const b = $('#txStory'); if (!b) return;
+  b.classList.toggle('hidden', !S.storyOn);
+}
+window.studyStorySync = renderStoryBtn;
+
+// Texte des Generators in allen sechs Sprachen. Sie werden hier nachgetragen,
+// weil Renderer und Editor geladen sind, wenn dieses Skript laeuft.
+const STORY_STR = {
+  storyT: ['Kurzgeschichte schreiben', 'Write a short story', 'Kort verhaal schrijven', 'Escribir un relato corto', 'Kısa hikâye yaz', 'كتابة قصة قصيرة'],
+  storyH: ['Kurzgeschichte', 'Short story', 'Kort verhaal', 'Relato corto', 'Kısa hikâye', 'قصة قصيرة'],
+  storyModelT: ['Schreibmodell für Kurzgeschichten', 'Writing model for short stories', 'Schrijfmodel voor korte verhalen', 'Modelo de escritura para relatos', 'Kısa hikâye yazma modeli', 'نموذج كتابة القصص'],
+  stClozeL: ['Lückentext', 'Cloze text', 'Invultekst', 'Texto con huecos', 'Boşluklu metin', 'نص بفراغات'],
+  stClozePh: ['Vorgabe mit ___ als Lücke', 'Outline with ___ for a gap', 'Opzet met ___ als gat', 'Esquema con ___ como hueco', '___ bir boşluktur', 'استخدم ___ مكان الفراغ'],
+  stHint: ['Ein Klick auf ein Wort füllt die nächste Lücke. Der Lückentext gibt vor, worum es geht.',
+    'Click a word to fill the next gap. The cloze text sets what the story is about.',
+    'Klik op een woord om het volgende gat te vullen. De invultekst bepaalt waar het verhaal over gaat.',
+    'Haz clic en una palabra para rellenar el siguiente hueco. El texto marca de qué trata el relato.',
+    'Bir kelimeye tıkla, sonraki boşluğu doldursun. Metin hikâyenin konusunu belirler.',
+    'انقر على كلمة لملء الفراغ التالي. النص يحدد موضوع القصة.'],
+  stPoolL: ['Wörter', 'Words', 'Woorden', 'Palabras', 'Kelimeler', 'الكلمات'],
+  stPoolReload: ['Wörter neu vorschlagen', 'Suggest new words', 'Nieuwe woorden voorstellen', 'Proponer palabras nuevas', 'Yeni kelimeler öner', 'اقتراح كلمات جديدة'],
+  stPoolWait: ['Wörter werden gesucht …', 'Looking for words …', 'Woorden worden gezocht …', 'Buscando palabras …', 'Kelimeler aranıyor …', 'يجري البحث عن كلمات …'],
+  stPoolErr: ['Die Wörter konnten nicht geholt werden.', 'The words could not be fetched.', 'De woorden konden niet worden opgehaald.', 'No se pudieron obtener las palabras.', 'Kelimeler alınamadı.', 'تعذر جلب الكلمات.'],
+  stFill: [(n, all) => `${n} von ${all} Lücken gefüllt`, (n, all) => `${n} of ${all} gaps filled`, (n, all) => `${n} van ${all} gaten gevuld`,
+    (n, all) => `${n} de ${all} huecos rellenos`, (n, all) => `${all} boşluktan ${n} tanesi dolu`, (n, all) => `${n} من ${all} فراغات مملوءة`],
+  stClear: ['Lücken leeren', 'Clear gaps', 'Gaten leegmaken', 'Vaciar huecos', 'Boşlukları temizle', 'إفراغ الفراغات'],
+  stGo: ['Schreiben', 'Write', 'Schrijven', 'Escribir', 'Yaz', 'اكتب'],
+  stQueued: ['Kurzgeschichte wird geschrieben …', 'Writing the short story …', 'Het korte verhaal wordt geschreven …', 'Escribiendo el relato …', 'Kısa hikâye yazılıyor …', 'يجري كتابة القصة …'],
+  stWorking: ['Wird geschrieben …', 'Writing …', 'Wordt geschreven …', 'Escribiendo …', 'Yazılıyor …', 'يجري الكتابة …'],
+  stFailed: ['Nicht fertig geschrieben', 'Not finished', 'Niet afgemaakt', 'Sin terminar', 'Tamamlanmadı', 'لم تكتمل'],
+  stRetry: ['Klicken: noch einmal versuchen', 'Click to try again', 'Klik om het opnieuw te proberen', 'Haz clic para reintentar', 'Yeniden denemek için tıkla', 'انقر للمحاولة مجدداً'],
+  stDone: [x => `Kurzgeschichte fertig: ${x}`, x => `Short story finished: ${x}`, x => `Kort verhaal klaar: ${x}`, x => `Relato terminado: ${x}`, x => `Kısa hikâye hazır: ${x}`, x => `اكتملت القصة: ${x}`],
+  stNoModel: ['Kein Schreibmodell gefunden.', 'No writing model found.', 'Geen schrijfmodel gevonden.', 'No se encontró modelo de escritura.', 'Yazma modeli bulunamadı.', 'لم يتم العثور على نموذج كتابة.'],
+  stUntitled: ['Kurzgeschichte', 'Short story', 'Kort verhaal', 'Relato corto', 'Kısa hikâye', 'قصة قصيرة'],
+  s_story: ['Kurzgeschichten-Generator', 'Short story generator', 'Korteverhalengenerator', 'Generador de relatos', 'Kısa hikâye üreticisi', 'مولّد القصص القصيرة'],
+  s_storyModel: ['Schreibmodell für Kurzgeschichten', 'Writing model for short stories', 'Schrijfmodel voor korte verhalen', 'Modelo de escritura para relatos', 'Kısa hikâye yazma modeli', 'نموذج كتابة القصص'],
+  stPosNoun: ['Nomen', 'Nouns', 'Zelfstandige naamwoorden', 'Sustantivos', 'İsimler', 'الأسماء'],
+  stPosVerb: ['Verben', 'Verbs', 'Werkwoorden', 'Verbos', 'Fiiller', 'الأفعال'],
+  stPosAdj: ['Adjektive', 'Adjectives', 'Bijvoeglijke naamwoorden', 'Adjetivos', 'Sıfatlar', 'الصفات'],
+  stPosAdv: ['Adverbien', 'Adverbs', 'Bijwoorden', 'Adverbios', 'Zarflar', 'الظروف']
+};
+for (const [k, v] of Object.entries(STORY_STR)) {
+  window.K[k] = [v[0], v[1]];
+  window.NL[k] = v[2]; window.ES[k] = v[3]; window.TR[k] = v[4]; window.AR[k] = v[5];
+}
+
 // ---------- Verdrahtung ----------
 function wire() {
+  $('#txStory').onclick = storyOpen;
+  $('#stClose').onclick = () => $('#stDlg').close();
+  $('#stCancel').onclick = () => $('#stDlg').close();
+  $('#stGo').onclick = storyStart;
+  $('#stClear').onclick = () => { const ta = $('#stCloze'); ta.value = storyTpl(); storyPick = []; storySync(); ta.focus(); };
+  $('#stPoolReload').onclick = () => loadStoryPools(true);
+  $('#stModel').onclick = () => storyModelPop($('#stModel'));
+  $('#stCloze').addEventListener('input', storySync);
   $('#rBack').onclick = () => { savePos(); window.edShowView('txt'); };
   const wrap = $('#readerWrap');
   if (wrap) wrap.addEventListener('scroll', () => { clearTimeout(ST.posTimer); ST.posTimer = setTimeout(savePos, 600); });
@@ -1694,6 +1988,10 @@ function wire() {
     const t = cleanTranslation(v.translation);
     if (t !== v.translation) v.translation = t;
   }
+  // Eine Geschichte, die beim Beenden noch geschrieben wurde, kann nicht
+  // weiterlaufen: sie steht als Fehler in der Liste und laesst sich dort mit
+  // einem Klick neu schreiben.
+  for (const x of ST.texts) if (Number(x.pending) === 1) x.pending = -1;
   save();
   persist('texts'); persist('vocab');
   fillCats();

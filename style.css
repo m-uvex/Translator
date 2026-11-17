@@ -93,7 +93,7 @@ footer{display:flex;align-items:center;gap:8px;padding:8px 12px}.sp{flex:1}.mute
    Pille, weil immer zwei davon darin stehen — nebeneinander in einem 32er-Kreis
    wirkten sie gestaucht. Die dezente Füllung zeigt, dass beide Zeichen zu einem
    Knopf gehören; aktiv wird die Pille accent-farben wie die runden Knöpfe. */
-.sgrp .seg.sub{margin-top:8px}
+.sgrp .seg.sub{margin-top:8px}
 .ctx{background:var(--soft);border-radius:var(--r);padding:10px 12px}
 .ctx summary{cursor:pointer;list-style:none;font-weight:600;display:flex;align-items:center;gap:8px}
 /* Menue- und Beschriftungstexte in der Seitenleiste sind keine Inhalte: ein
@@ -547,3 +547,37 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .libcard .rm.to + .rm.ed{right:64px}
 .libname .librename{width:100%;font:inherit;font-weight:600;line-height:1.3;padding:2px 5px;border:1px solid var(--accent);border-radius:7px;background:var(--bg);color:var(--text);outline:0}
 .libcard .rm.to svg{width:12px;height:12px}
+
+/* Kurzgeschichten-Dialog: links der Lückentext, rechts die Wortvorräte in einem
+   eigenen, leicht abgesetzten Bereich. Jede Wortart hat dort ihre Zeile, links
+   im Pill steht ihr Zeichen. */
+#stDlg{width:min(940px,94vw)}
+#stDlg .stbody{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-top:14px;align-items:stretch}
+#stDlg .stmain{display:flex;flex-direction:column;gap:6px;min-width:0}
+#stDlg .stmain>span{font-size:13px;color:var(--muted)}
+#stDlg textarea{width:100%;flex:1;min-height:190px;font:inherit;line-height:1.6;color:var(--text);background:var(--soft);border:0;border-radius:14px;padding:12px 14px;outline:0;resize:vertical}
+#stDlg textarea:focus{box-shadow:inset 0 0 0 1px var(--accent)}
+#stDlg .sthint{margin:0;font-size:12px;line-height:1.5}
+.stpool{background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:8px 12px 12px;max-height:340px;overflow:auto}
+.stpoolhead{display:flex;align-items:center;gap:6px;position:sticky;top:0;background:var(--soft);padding:2px 0 6px;z-index:1}
+.stpoolhead b{font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+.stpoolhead .ib{width:26px;height:26px;margin-left:auto;border-radius:50%}
+.ppos{display:flex;align-items:center;gap:6px;margin:9px 0 5px;font-size:12px;color:var(--muted)}
+.ppos svg{flex:none;color:var(--accent-ink)}
+.prow{display:flex;flex-wrap:wrap;gap:6px}
+.wpill{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:13px;line-height:1.3;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 11px 3px 9px;cursor:pointer}
+.wpill svg{flex:none;color:var(--accent-ink)}
+.wpill:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card))}
+.stpoolmsg{padding:6px 2px 0}
+#stDlg .stacts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+#stDlg .stacts .sp{flex:1}
+@media (max-width:720px){#stDlg .stbody{grid-template-columns:1fr}.stpool{max-height:220px}}
+
+/* Karte einer Kurzgeschichte, die noch geschrieben wird: die Vorgabe steht
+   blass in der Vorschau, an der Stelle der Textart dreht sich ein Ring. */
+.txtcard.pending{cursor:default}
+.txtcard.pending .libprev .doc{opacity:.42}
+.txtcard.failed .libprev .doc{opacity:.6}
+.txbadge.work{display:inline-flex;align-items:center;gap:6px}
+.txbadge.work .spin{width:11px;height:11px;border-width:2px}
+.txbadge.bad{background:color-mix(in srgb,#c9605a 16%,var(--card));border-color:color-mix(in srgb,#c9605a 45%,var(--line))}
