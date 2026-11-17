@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.51 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.53 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1133,3 +1133,10 @@ Gemessen in eigenem Profil über CDP mit „Das Hausx ist schön.“: vor der An
 **Gespeichert** werden nur die Basistöne in `S.edMark` und `S.edInk` (Vorgabe Amber `#f5ae39` und `#ac6e00`), geschrieben mit `save()` neben den übrigen Editor-Optionen. Sie stehen bewusst nicht in `FIELDS`, „Alles zurücksetzen“ lässt sie also stehen — wie die übrigen Editor-Einstellungen.
 
 Geprüft in eigenem `--user-data-dir` über CDP mit echten Klicks: beide Knöpfe vorhanden und mit Symbol, Marker setzt `background-color: rgba(245,174,57,0.5)` in die Auswahl, Schriftfarbe setzt `color: rgb(0,130,195)`, die Palette hat 12 Kreise in 4 Spalten und 3 Zeilen (`border-radius: 50%`), genau ein Kreis trägt den Ring, ein Klick auf einen anderen Kreis schreibt den Ton nach `localStorage` und schließt die Palette, der Balken im Knopf folgt der Wahl. Wellen-Test siehe oben. Palette und gefärbter Text in hellem und dunklem Modus als Screenshots angesehen.
+## 84. Neues Textmarker-Symbol, keine Farbe am Werkzeugknopf (1.15.53)
+
+**Der Farbbalken am Knopf ist weg.** Die aktive Farbe lag als `box-shadow: inset 0 -3px 0 0 …` unten im runden Knopf und bog sich mit der Rundung zu einem Ring — das war unruhig und sah nach einem zweiten Rand aus. Beide Werkzeugknöpfe sind jetzt einfarbig wie alle anderen Symbole der Leiste. Wo die aktive Farbe steht, zeigt die Palette selbst: der gewählte Kreis trägt weiter den doppelten Ring. Nach dem Wählen schließt die Palette; welcher Ton aktiv ist, sieht man also erst beim nächsten Öffnen. Dafür bleiben die Knöpfe ruhig, und der Tooltip nennt weiter den Rechtsklick („Textmarker (Rechtsklick: Farbe wählen)“).
+
+**Neues Marker-Symbol.** Der alte Umriss war ein Stift: schmaler, schräger Körper, kleine Spitze, darunter ein Strich. Der Strich ist entfallen, der Körper ist kürzer und deutlich dicker, die Spitze eine breite Keilform (Viereck, das den Körper fortsetzt). Damit liest das Symbol auch mit 16 px als Marker und nicht als Stift — geprüft in hellem und dunklem Modus und in einer 3-fachen Vergrößerung. Das A der Schriftfarbe behält seine Grundlinie, die jetzt ebenfalls einfarbig ist.
+
+Geprüft in der installierten App über CDP: kein `box-shadow` mehr an beiden Knöpfen, je drei Pfade im Symbol, die Palette unverändert (12 Kreise, 4 Spalten, 3 Reihen, ein Ring). Symbol und Leiste in beiden Themen als Screenshot angesehen; Marker und Schriftfarbe selbst wurden dabei nicht neu gesetzt (dafür hat sich am Farbauftrag nichts geändert).

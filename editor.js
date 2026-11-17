@@ -19,10 +19,12 @@ Object.assign(IC, {
   undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>', redo:'<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>',
   bold:'<path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/>', italic:'<path d="M14 5h-4M14 19h-4M15 5l-6 14"/>', underline:'<path d="M7 4v7a5 5 0 0 0 10 0V4M5 20h14"/>',
   strike:'<path d="M5 12h14M16 7a4 4 0 0 0-4-2c-2.5 0-4 1.2-4 3 0 4 8 2.5 8 7 0 1.8-1.7 3-4.2 3a4.6 4.6 0 0 1-4.3-2.5"/>',
-  // Textmarker: schraeger Stift mit Spitze und der Strich, den er zieht.
-  marker:'<path d="M8.6 15.2 15.4 5.2a2.3 2.3 0 0 1 3.6 2.6l-6.8 10"/><path d="M8.6 15.2 5.6 16.8 7.2 19.8l3.2-.8z"/><path d="M3.8 20.8h16.4"/>',
-  // Schriftfarbe: ein A mit farbiger Grundlinie.
-  textColor:'<path d="M6.4 14.8 11.8 4.4l5.4 10.4"/><path d="M8.2 11.8h7.2"/><path d="M4.4 20.6h15.2"/>',
+  // Textmarker: kurzer, dicker Koerper mit breiter, keilfoermiger Spitze -
+  // dicker als ein Stift, damit er auch mit 16 px als Marker liest. Bewusst
+  // ohne Farbe: die aktive Farbe zeigt die Palette, nicht der Knopf.
+  marker:'<path d="M4.6 15.6 12.2 2.6a3.6 3.6 0 0 1 5.6 4.4l-8.2 11.4z"/><path d="M4.6 15.6 10.2 19.4 7.6 22.6 2 18.8z"/>',
+  // Schriftfarbe: ein A mit Grundlinie.
+  textColor:'<path d="M6.8 14.4 12 4.4l5.2 10"/><path d="M8.6 11.4h6.8"/><path d="M4.8 20.4h14.4"/>',
   ul:'<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>', ol:'<path d="M10 6h10M10 12h10M10 18h10M4 5l1-.5V9M4 14h2l-2 3h2"/>',
   quote:'<path d="M6 8c-1.5 1-2 2.5-2 4v4h5v-5H6.5M15 8c-1.5 1-2 2.5-2 4v4h5v-5h-2.5"/>',
   alignL:'<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>', alignC:'<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>', alignR:'<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>', alignJ:'<path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>',
@@ -807,13 +809,8 @@ const colPop = document.createElement('div');
 colPop.id = 'colPop'; colPop.className = 'pop colpop hidden';
 document.body.appendChild(colPop);
 let colPopKind = 'mark';
-// Die aktive Farbe steht als schmaler Balken unten im Werkzeugknopf.
-function paintSwatches() {
-  [['hl', 'mark'], ['ink', 'ink']].forEach(([k, kind]) => {
-    const b = tb.querySelector(`[data-tt="${k}"]`); if (!b) return;
-    b.style.boxShadow = `inset 0 -3px 0 0 ${toneCss(kind, toneCur(kind))}`;
-  });
-}
+// Die aktive Farbe steht nur in der Palette (Ring um den gewaehlten Kreis).
+// Die Werkzeugknoepfe bleiben einfarbig: kein Balken, kein Ring am Knopf.
 function colorPop(kind, btn) {
   if (!btn) return;
   colPopKind = kind;
@@ -823,7 +820,7 @@ function colorPop(kind, btn) {
     b.onmousedown = e => e.preventDefault();
     b.onclick = () => {
       if (colPopKind === 'mark') S.edMark = b.dataset.hex; else S.edInk = b.dataset.hex;
-      save(); paintSwatches();
+      save();
       colPop.querySelectorAll('.csw').forEach(x => x.classList.toggle('on', x === b));
       colPop.classList.add('hidden');
     };
@@ -893,7 +890,6 @@ function renderTb() {
     const b = tb.querySelector(`[data-tt="${k}"]`); if (!b) return;
     b.oncontextmenu = ev => { ev.preventDefault(); colorPop(kind, b); };
   });
-  paintSwatches();
 }
 function updTb() {
   // Nur auswerten, wenn die Auswahl in der Seite liegt. Steht sie in einem
