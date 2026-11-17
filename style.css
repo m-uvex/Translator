@@ -536,11 +536,13 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
    der aktiven Lücke in einem eigenen, leicht abgesetzten Bereich. */
 #stDlg{width:min(880px,94vw)}
 #stDlg .stbody{display:grid;grid-template-columns:1.05fr .95fr;gap:16px;margin-top:14px;align-items:start}
-#stDlg .stmain{display:flex;flex-direction:column;gap:8px;min-width:0}
-#stDlg .stmain>span{font-size:13px;color:var(--muted)}
+#stDlg .stmain{display:flex;flex-direction:column;gap:10px;min-width:0}
 /* Der Lückentext: ruhiger Kasten, größere Schrift, die Lücken als Pillen im
    Fließtext. Leer gestrichelt mit der Bezeichnung, gefüllt mit Zeichen und Wort. */
-.stframe{background:var(--soft);border-radius:16px;padding:18px 20px;font-size:17px;line-height:2.1;color:var(--text);min-height:150px}
+.stframe{background:var(--soft);border-radius:16px;padding:12px 20px 18px;font-size:17px;line-height:2.1;color:var(--text);min-height:150px}
+/* Beschriftung der Vorgabe steht wie „Figur“ im Kartenkopf gegenueber: gleiche
+   Groesse, gleiche Farbe - so beginnen beide Karten auf derselben Hoehe. */
+.stframehead{font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
 .stslot{font:inherit;font-size:15px;line-height:1.4;display:inline-flex;align-items:center;gap:5px;margin:0 1px;padding:2px 11px 2px 9px;border-radius:999px;border:1px dashed color-mix(in srgb,var(--accent) 55%,var(--line));background:transparent;color:var(--accent-ink);cursor:pointer;vertical-align:baseline}
 .stslot .ph{color:var(--muted)}
 .stslot:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
@@ -549,7 +551,12 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .stslot.on{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}
 #stDlg .sthint{margin:0;font-size:12px;line-height:1.5}
 /* Laenge der Geschichte: drei kleine Pillen, die gewaehlte ist gefuellt. */
-.stlen{display:flex;align-items:center;gap:8px;margin-top:4px}
+/* Hinweis, Laengenwahl und Zaehler stehen zusammen auf einer Zeile unter der
+   Vorgabe; die Knoepfe sitzen allein in der Fusszeile. */
+.stfoot{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.stfoot .sp{flex:1;min-width:8px}
+.stfoot #stCount{font-size:12px}
+.stlen{display:flex;align-items:center;gap:8px}
 .stlen>span{font-size:13px;color:var(--muted)}
 .stsegs{display:flex;gap:3px;background:var(--soft);border-radius:999px;padding:3px}
 .stseg{font:inherit;font-size:12.5px;line-height:1.4;color:var(--muted);background:transparent;border:0;border-radius:999px;padding:4px 13px;cursor:pointer}
@@ -568,7 +575,7 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .wpill.taken{opacity:.45;cursor:default;border-color:var(--line);background:var(--card);color:var(--text)}
 .wpill.taken svg{color:var(--muted)}
 .stpoolmsg{padding:8px 2px 0}
-#stDlg .stacts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+#stDlg .stacts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:16px}
 #stDlg .stacts .sp{flex:1}
 @media (max-width:720px){#stDlg .stbody{grid-template-columns:1fr}.stpool{max-height:240px}}
 

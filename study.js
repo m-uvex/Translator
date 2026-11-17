@@ -1710,6 +1710,12 @@ function storyModel() {
 function drawStoryCloze() {
   const box = $('#stCloze'); if (!box) return;
   box.innerHTML = '';
+  // Die Beschriftung steht in der Karte, damit ihre Oberkante mit der
+  // Wortliste rechts auf einer Hoehe liegt.
+  const cap = document.createElement('div');
+  cap.className = 'stframehead';
+  cap.textContent = t('stFrameL');
+  box.append(cap);
   for (const part of storyFrame()) {
     if (typeof part === 'string') { box.append(part); continue; }
     const d = slotDef(part.s); if (!d) continue;

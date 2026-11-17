@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.45 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.46 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1067,3 +1067,11 @@ Damit sind Auswahlmenüs ganz entfallen: `drawSettings()` baut für alle aufzäh
 Geprüft in eigenem `--user-data-dir` über CDP: alle Einstellungszeilen haben Beschriftung und Pillen (oder ein Eingabefeld), keine Reste von `.row-set`, keine `<select>` mehr; die Arbeitsplatz-Zeile hat kein `[data-r]`; keine Zeile „Schreibmodell“ mehr in den Einstellungen; Klicks setzen Werte richtig (Thema dunkel/hell, Start, Ja/Nein, Sprache) und markieren genau die gewählten Pillen; im Kopfmenü des Lese-Arbeitsplatzes stehen weiter beide Abschnitte („Modell für Wortübersetzungen“, „Schreibmodell“) mit den allgemeinen Modellen. Einstellungen als Screenshot angesehen.
 
 Beim Aus- und Einschalten des Generators frischt `renderStoryBtn()` jetzt auch den Tooltip des Modellknopfes auf (`renderStudyModel()`), damit dort kein Schreibmodell mehr steht, solange es keine Geschichten gibt. (1.15.45)
+
+## 78. Dialog der Kurzgeschichte: Karten auf einer Höhe, drei Zeilen unter der Vorgabe (1.15.46)
+
+**Beide Karten beginnen auf derselben Höhe.** Die Beschriftung „Vorgabe“ stand als eigener Text über der linken Karte, während die Wortliste rechts schon oben im Raster anfing — die linke Karte hing dadurch rund 25 px tiefer. Die Beschriftung sitzt jetzt in der Karte selbst (`drawStoryCloze()` baut sie als `.stframehead`), mit derselben Größe, Farbe und Versalien wie der Kopf der Wortliste (`.stpoolhead b`). Damit sind beide Karten die ersten Kinder der Rasterzeile und ihre Oberkanten liegen genau gleich; die Füllung der Karte ist oben von 18 auf 12 px gesetzt, damit auch die beiden Beschriftungen fast auf einer Linie stehen.
+
+**Hinweis, Längenwahl und Zähler stehen zusammen.** Der Zähler („5 von 5 Lücken gefüllt“) war das dritte Element links unten in der Fußzeile und wirkte dort verloren. Er sitzt jetzt in einer Zeile unter der Vorgabe: links der Hinweis, darunter die Längenwahl „Kurz · Mittel · Lang“, rechts außen am Kartenrand der Zähler (`.stfoot` mit `.sp` als Dehnung). Die Fußzeile enthält nur noch die drei Knöpfe. Abstände in der linken Spalte einheitlich 10 px (`.stmain{gap:10px}`), innerhalb der Zeile 12 px.
+
+Geprüft in eigenem `--user-data-dir` über CDP mit gemessenen Rechtecken: Oberkante von Vorgabe und Wortliste gleich (Differenz 0 px), Beschriftung „Vorgabe“ in der Karte vorhanden, Zähler rechtsbündig auf derselben Kante wie die Karte und nicht mehr in der Fußzeile, Hinweis 10 px über der Längenzeile. Dialog als Screenshot angesehen.
