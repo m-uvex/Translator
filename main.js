@@ -349,13 +349,34 @@ const studyDir = () => {
   return d;
 };
 const studyFile = name => path.join(studyDir(), studyNames[name] || 'unbekannt.json');
+// Sicherung: vor jedem Schreiben liegt die vorherige Fassung als .bak daneben,
+// und der letzte nicht-leere Stand wird nie durch einen leeren ueberschrieben.
+// Ein einziger falscher Schreibvorgang hat sonst die ganze Liste geloescht
+// (passiert beim Testen), und ohne Sicherung war sie nicht zurueckzuholen.
+const studyBak = name => studyFile(name) + '.bak';
 ipcMain.handle('study:load', (_e, name) => {
   if (!studyNames[name]) return null;
-  try { return JSON.parse(fs.readFileSync(studyFile(name), 'utf8')); } catch { return null; }
+  for (const f of [studyFile(name), studyBak(name)]) {
+    try {
+      const d = JSON.parse(fs.readFileSync(f, 'utf8'));
+      if (Array.isArray(d)) return d;
+    } catch { }
+  }
+  return null;
 });
 ipcMain.handle('study:save', (_e, name, data) => {
   if (!studyNames[name]) return false;
-  try { fs.writeFileSync(studyFile(name), JSON.stringify(data), 'utf8'); return true; } catch { return false; }
+  const f = studyFile(name), b = studyBak(name);
+  try {
+    let cur = null;
+    try { cur = fs.readFileSync(f, 'utf8'); } catch { }
+    // Auch dann sichern, wenn jetzt eine leere Liste geschrieben wird — genau
+    // dieser Fall war der Datenverlust. Eine bereits leere Datei ueberschreibt
+    // die Sicherung nicht, damit sie den letzten echten Stand behaelt.
+    if (cur && cur.trim() && cur.trim() !== '[]') fs.writeFileSync(b, cur, 'utf8');
+    fs.writeFileSync(f, JSON.stringify(data), 'utf8');
+    return true;
+  } catch { return false; }
 });
 // Eine Datei auswaehlen und ihren Text zurueckgeben (eigene Texte hochladen).
 ipcMain.handle('study:importText', async () => {
