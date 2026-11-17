@@ -1738,30 +1738,34 @@ function showView(v) {
   if (v === 'tr' && window.trAlignSide) window.trAlignSide();
 }
 // Die Leiste kennt drei Gruppen: Uebersetzer, Textbearbeitung mit Ablage,
-// Lernen (Lesen, Vokabeln, Ueben). Eine Gruppe erscheint und verschwindet als
-// Ganzes - wie es Editor und Ablage schon immer zusammen getan haben.
-const allowedViews = w => w === 'tr' ? ['tr']
-  : w === 'ed' ? ['ed', 'lib']
-  : w === 'study' ? ['txt', 'read', 'voc', 'srs']
-  : ['tr', 'ed', 'lib', 'txt', 'read', 'voc', 'srs'];
+// Lernen (Lesen, Vokabeln, Ueben). Jede Gruppe laesst sich einzeln ein- und
+// ausblenden (`S.workspace` ist eine Liste wie 'tr,study'); alles andere ist
+// eine Kombination davon.
+const wsOn = g => wsList().includes(g);
+const allowedViews = () => [
+  ...(wsOn('tr') ? ['tr'] : []),
+  ...(wsOn('ed') ? ['ed', 'lib'] : []),
+  ...(wsOn('study') ? ['txt', 'read', 'voc', 'srs'] : [])
+];
+// Erste Ansicht, die noch sichtbar ist – fuer Rueckfall und Rueckweg.
+const homeView = () => (wsOn('tr') ? 'tr' : wsOn('ed') ? 'ed' : 'txt');
 
 function applyWorkspace() {
-  const w = S.workspace || 'both';
-  const showStudy = w === 'both' || w === 'study';
-  $('#nvTr').classList.toggle('hidden', w !== 'both' && w !== 'tr');
-  $('#nvEd').classList.toggle('hidden', w !== 'both');
-  // Die Bibliothek gehoert zur Textbearbeitung: ohne sie verschwindet auch ihr
-  // Rail-Icon, mit ihr stehen beide Symbole zusammen da (nvLib schaltet um).
-  $('#nvLib').classList.toggle('hidden', !(w === 'both' || w === 'ed'));
-  for (const id of ['nvTxt', 'nvVoc', 'nvSrs']) $('#' + id).classList.toggle('hidden', !showStudy);
-  const ok = allowedViews(w);
-  if (!ok.includes(S.view)) showView(w === 'study' ? 'voc' : w);
+  const ed = wsOn('ed'), study = wsOn('study');
+  $('#nvTr').classList.toggle('hidden', !wsOn('tr'));
+  // Editor und Ablage gehoeren zusammen und erscheinen beide, sobald die Gruppe
+  // sichtbar ist (frueher blieb in „Nur Textbearbeitung“ nur die Ablage uebrig).
+  $('#nvEd').classList.toggle('hidden', !ed);
+  $('#nvLib').classList.toggle('hidden', !ed);
+  for (const id of ['nvTxt', 'nvVoc', 'nvSrs']) $('#' + id).classList.toggle('hidden', !study);
+  const ok = allowedViews();
+  if (!ok.includes(S.view)) showView(study ? 'voc' : ed ? 'ed' : 'tr');
 }
 $('#nvTr').onclick = () => showView('tr'); $('#nvEd').onclick = () => showView('ed');
 $('#nvLib').onclick = () => showView(S.view === 'lib' ? 'ed' : 'lib');
-// Zurueck geht es in den Uebersetzer, ausser im Lern-Arbeitsplatz: dort gibt
-// es ihn nicht, also zur Leseliste.
-const railBack = () => (S.workspace === 'study' ? 'txt' : 'tr');
+// Zurueck geht es zum ersten sichtbaren Arbeitsplatz (Uebersetzer, sonst
+// Textbearbeitung, sonst Lernen).
+const railBack = () => homeView();
 $('#nvTxt').onclick = () => showView(S.view === 'txt' || S.view === 'read' ? railBack() : 'txt');
 $('#nvVoc').onclick = () => showView(S.view === 'voc' ? railBack() : 'voc');
 $('#nvSrs').onclick = () => showView(S.view === 'srs' ? railBack() : 'srs');
@@ -1770,10 +1774,11 @@ window.edModels = () => { fixEdLangs(); renderTb(); };
 window.edWorkspace = applyWorkspace;
 window.edShowView = showView;
 const startView = () => {
-  const w = S.workspace || 'both';
-  const v = S.start === 'last' ? (S.view || 'tr') : (S.start || 'tr');
-  // Beim Start nur eine Ansicht zeigen, die zur gewaehlten Gruppe gehoert.
-  if (!allowedViews(w).includes(v)) return w === 'study' ? 'voc' : (w === 'ed' ? 'ed' : 'tr');
+  // 'study' oeffnet die Leseliste, die uebrigen Werte sind Ansichten.
+  const v = S.start === 'last' ? (S.view || 'tr') : S.start === 'study' ? 'txt' : (S.start || 'tr');
+  // Beim Start nur eine Ansicht zeigen, die zu den sichtbaren Gruppen gehoert.
+  const ok = allowedViews();
+  if (!ok.includes(v)) return homeView();
   return v === 'lib' ? 'ed' : (v === 'read' ? 'txt' : v);
 };
 if (window.api?.onRequestClose) {

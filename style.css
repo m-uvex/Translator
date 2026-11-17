@@ -133,6 +133,14 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
 [dir="rtl"] .set.row-set select{text-align:left;text-align-last:left;padding-right:12px;padding-left:26px;background-position:left 8px center}
 [dir="rtl"] .set.row-set select option{text-align:right}
 .set .ib{width:32px;height:32px}
+/* Mehrfachauswahl der sichtbaren Arbeitsplaetze: je Gruppe ein Knopf mit
+   Kaestchen, im Stil der Vokabel-Auswahl (runder Haken auf Akzentfarbe). */
+.wsc{display:flex;flex-wrap:wrap;gap:6px}
+.wsopt{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13px;color:var(--text);background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 7px;cursor:pointer;transition:border-color .15s,background .15s}
+.wsopt:hover{border-color:var(--accent)}
+.wsopt .ck{width:18px;height:18px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;flex:none;color:transparent}
+.wsopt.on{background:color-mix(in srgb,var(--accent) 16%,transparent);border-color:var(--accent)}
+.wsopt.on .ck{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 #llmOnly{display:flex;flex-direction:column;gap:10px}
 .plain .w{cursor:text}.plain .w:hover{background:none;color:inherit}
 .mrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.mrow button:disabled{opacity:.5}

@@ -154,9 +154,9 @@ const K = {
   s_helper:['Modell für Ersatzwörter (bei TranslateGemma/NLLB)','Model for word alternatives (for TranslateGemma/NLLB)'], s_sys:['System-Anweisung','System prompt'],
   s_temp:['Temperatur (niedriger = beständiger)','Temperature (lower = more consistent)'], s_ctx:['Kontextlänge (num_ctx)','Context length (num_ctx)'],
   s_groupGeneral:['Allgemein','General'], s_groupConn:['Verbindungen','Connections'], s_groupTrans:['Übersetzung','Translation'],
-  startTr:['Übersetzer öffnen','Open translator'], startEd:['Textbearbeitung öffnen','Open text editor'], startLast:['Zuletzt verwendetes öffnen','Open last used'],
-  wsBoth:['Alle','All'], wsTr:['Nur Übersetzer','Translator only'], wsEd:['Nur Textbearbeitung','Text editor only'],
-  wsStudy:['Nur Lernen','Study only'],
+  startTr:['Übersetzer öffnen','Open translator'], startEd:['Textbearbeitung öffnen','Open text editor'], startStudy:['Lernen öffnen','Open study'], startLast:['Zuletzt verwendetes öffnen','Open last used'],
+  // Namen der Arbeitsplatz-Gruppen fuer die Kaestchen in den Einstellungen.
+  wsTr:['Übersetzer','Translator'], wsEd:['Textbearbeitung','Text editor'], wsStudy:['Lernen','Study'],
   navVoc:['Vokabeln','Vocabulary'], navSrs:['Üben','Practice'], navTxt:['Lesen','Reading'],
   readTitle:['Lesetexte','Reading texts'], txEmpty:['Noch keine Lesetexte','No reading texts yet'],
   txEmptyHint:['„Text hinzufügen“ lädt eine eigene Datei, die sich dann lesen lässt.','“Add text” loads your own file, which you can then read.'],
@@ -239,7 +239,7 @@ const NL = {
   s_url:'Ollama-adres', s_nllb:'Adres van NLLB-server', s_ui:'Weergavetaal', s_theme:'Thema', s_start:'Openen bij starten', s_workspace:'Zichtbare werkplekken',
   s_helper:'Model voor woordalternatieven (bij TranslateGemma/NLLB)', s_sys:'Systeemprompt', s_temp:'Temperatuur (lager = consistenter)', s_ctx:'Contextlengte (num_ctx)',
   s_groupGeneral:'Algemeen', s_groupConn:'Verbindingen', s_groupTrans:'Vertaling',
-  startTr:'Vertaler openen', startEd:'Tekstbewerking openen', startLast:'Laatst gebruikte openen', wsBoth:'Alle', wsTr:'Alleen vertaler', wsEd:'Alleen tekstbewerking', wsStudy:'Alleen leren',
+  startTr:'Vertaler openen', startEd:'Tekstbewerking openen', startLast:'Laatst gebruikte openen', wsTr:'Vertaler', wsEd:'Tekstbewerking', wsStudy:'Leren',
   reset:'Herstellen', resetAll:'Alles herstellen', autoSys:'Automatisch (systeem)', autoO:'Automatisch', autoModel:'Automatisch', light:'Licht', dark:'Donker',
   nllbH:'NLLB-200', mInst:'Geïnstalleerd', mNot:'Niet geïnstalleerd', mLoad:p => `Downloaden … ${p} %`, mErr:e => `Fout: ${e}`, bDl:'Downloaden', bDel:'Verwijderen', bBusy:'Bezig …',
   serverDown:'De vertaalserver is niet bereikbaar. Die wordt door de installatiewizard (Installieren.bat) geïnstalleerd en start met de app.',
@@ -264,7 +264,7 @@ const ES = {
   s_url:'Dirección de Ollama', s_nllb:'Dirección del servidor NLLB', s_ui:'Idioma de visualización', s_theme:'Tema', s_start:'Abrir al inicio', s_workspace:'Espacios visibles',
   s_helper:'Modelo para alternativas de palabras (TranslateGemma/NLLB)', s_sys:'Prompt del sistema', s_temp:'Temperatura (menor = más consistente)', s_ctx:'Longitud de contexto (num_ctx)',
   s_groupGeneral:'General', s_groupConn:'Conexiones', s_groupTrans:'Traducción', s_groupFeatures:'Ajustes adicionales',
-  startTr:'Abrir traductor', startEd:'Abrir editor', startLast:'Abrir último usado', wsBoth:'Todos', wsTr:'Solo traductor', wsEd:'Solo editor', wsStudy:'Solo aprendizaje',
+  startTr:'Abrir traductor', startEd:'Abrir editor', startLast:'Abrir último usado', wsTr:'Traductor', wsEd:'Editor', wsStudy:'Aprendizaje',
   reset:'Restablecer', resetAll:'Restablecer todo', autoSys:'Automático (sistema)', autoO:'Automático', autoModel:'Automático', light:'Claro', dark:'Oscuro',
   nllbH:'NLLB-200', mInst:'Instalado', mNot:'No instalado', mLoad:p => `Descargando … ${p} %`, mErr:e => `Error: ${e}`, bDl:'Descargar', bDel:'Eliminar', bBusy:'Descargando …',
   serverDown:'El servidor de traducción no está disponible. Se instala con el asistente y se inicia con la app.',
@@ -291,7 +291,7 @@ const TR = {
   s_url:'Ollama adresi', s_nllb:'NLLB sunucu adresi', s_ui:'Arayüz dili', s_theme:'Tema', s_start:'Başlangıçta aç', s_workspace:'Görünür çalışma alanları',
   s_helper:'Kelime alternatifleri modeli (TranslateGemma/NLLB için)', s_sys:'Sistem komutu', s_temp:'Sıcaklık (düşük = daha tutarlı)', s_ctx:'Bağlam uzunluğu (num_ctx)',
   s_groupGeneral:'Genel', s_groupConn:'Bağlantılar', s_groupTrans:'Çeviri', s_groupFeatures:'Ek ayarlar',
-  startTr:'Çevirmeni aç', startEd:'Metin düzenleyiciyi aç', startLast:'Son kullanılanı aç', wsBoth:'Tümü', wsTr:'Yalnızca çevirmen', wsEd:'Yalnızca editör', wsStudy:'Yalnızca öğrenme',
+  startTr:'Çevirmeni aç', startEd:'Metin düzenleyiciyi aç', startLast:'Son kullanılanı aç', wsTr:'Çevirmen', wsEd:'Editör', wsStudy:'Öğrenme',
   reset:'Sıfırla', resetAll:'Tümünü sıfırla', autoSys:'Otomatik (sistem)', autoO:'Otomatik', autoModel:'Otomatik', light:'Açık', dark:'Koyu',
   nllbH:'NLLB-200', mInst:'Yüklü', mNot:'Yüklü değil', mLoad:p => `İndiriliyor … %${p}`, mErr:e => `Hata: ${e}`, bDl:'İndir', bDel:'Sil', bBusy:'İndiriliyor …',
   serverDown:'Çeviri sunucusuna ulaşılamıyor. Kurulum sihirbazı ile kurulur ve uygulamayla birlikte başlar.',
@@ -318,7 +318,7 @@ const AR = {
   s_url:'عنوان Ollama', s_nllb:'عنوان خادم NLLB', s_ui:'لغة الواجهة', s_theme:'المظهر', s_start:'الفتح عند البدء', s_workspace:'مساحات العمل المرئية',
   s_helper:'نموذج بدائل الكلمات (مع TranslateGemma/NLLB)', s_sys:'توجيه النظام', s_temp:'درجة الحرارة (أقل = أكثر دقة)', s_ctx:'طول السياق (num_ctx)',
   s_groupGeneral:'عام', s_groupConn:'الاتصالات', s_groupTrans:'الترجمة', s_groupFeatures:'إعدادات إضافية',
-  startTr:'فتح المترجم', startEd:'فتح المحرر', startLast:'فتح آخر مستخدم', wsBoth:'الكل', wsTr:'المترجم فقط', wsEd:'المحرر فقط', wsStudy:'التعلّم فقط',
+  startTr:'فتح المترجم', startEd:'فتح المحرر', startLast:'فتح آخر مستخدم', wsTr:'المترجم', wsEd:'المحرر', wsStudy:'التعلّم',
   reset:'إعادة تعيين', resetAll:'إعادة تعيين الكل', autoSys:'تلقائي (النظام)', autoO:'تلقائي', autoModel:'تلقائي', light:'فاتح', dark:'داكن',
   nllbH:'NLLB-200', mInst:'مثبت', mNot:'غير مثبت', mLoad:p => `جاري التنزيل … ${p} %`, mErr:e => `خطأ: ${e}`, bDl:'تنزيل', bDel:'حذف', bBusy:'جاري التنزيل …',
   serverDown:'خادم الترجمة غير متاح. يتم تثبيته عبر المعالج ويعمل مع التطبيق.',
@@ -388,7 +388,7 @@ const STY = {
   writer:{ h:'l_writer', opts:[['unknown','dash',''],['neutral','nb','the text is written by a gender-neutral author: avoid gendered first-person forms and rephrase where the language forces a choice.'],['male','male','the text is written by one man speaking in the first person: use masculine forms for first-person references (I, we, and any adjective or participle agreeing with the speaker).'],['female','female','the text is written by one woman speaking in the first person: use feminine forms for first-person references (I, we, and any adjective or participle agreeing with the speaker).']],
     sub:{ key:'writerGroup', opts:[['none','gNone',''],['mixed','gMixed','the text is written by several people of mixed genders: use first-person plural forms, and where a noun or adjective names the group, use the gender-inclusive wording that is usual in the target language (in German for example "Kolleg*innen" or "Kollegen und Kolleginnen"), never a form that names only one gender.'],['male','gMale','the text is written by several men: use masculine forms for all first-person plural references.'],['female','gFemale','the text is written by several women: use feminine forms for all first-person plural references.']] } }
 };
-const D = { url:'http://localhost:11434', nllb:'http://127.0.0.1:8765', model:'', pref:'', theme:'auto', uiLang:'auto', start:'tr', workspace:'both', helper:'', src:'auto', tgt:'en',
+const D = { url:'http://localhost:11434', nllb:'http://127.0.0.1:8765', model:'', pref:'', theme:'auto', uiLang:'auto', start:'tr', workspace:'tr,ed,study', helper:'', src:'auto', tgt:'en',
   pins:{ ollama:['de','en'], nllb:['deu_Latn','eng_Latn'] }, style:{type:'natural',formal:'standard',gender:'unknown',writer:'unknown',genderGroup:'none',writerGroup:'none'}, uiMode:'icons',
   gloss:[], ctxt:'', temp:0.3, numctx:4096, bootModel:true, profanityFilter:true, profanityStyle:'stars', edMarkdown:false, edSpellAnim:true, edSpellAnimDefault:false, autoCopy:false, autoCopyTyped:false,
   csvSrs:true, srsType:false, studySrc:'', studyTgt:'', studyModel:'',
@@ -409,7 +409,13 @@ for (const [main, grp] of [['gender', 'genderGroup'], ['writer', 'writerGroup']]
 // Update unerwartet nur noch getippte Texte kopiert bekommt.
 delete S.autoCopyPaste;
 if (!S.pref) S.pref = S.model;
+// Sichtbare Arbeitsplaetze: frueher genau eine Gruppe ('both' | 'tr' | 'ed' |
+// 'study'), jetzt eine Liste in einem Feld ('tr,ed,study'). Alte Werte werden
+// beim Start umgeschrieben, und mindestens eine Gruppe bleibt immer sichtbar.
+const WS_ALL = 'tr,ed,study';
+const wsList = () => [...new Set(String(S.workspace || WS_ALL).split(',').filter(k => ['tr', 'ed', 'study'].includes(k)))];
 const save = () => localStorage.setItem('s', JSON.stringify(S));
+if (!wsList().length || S.workspace !== wsList().join(',')) { S.workspace = wsList().length ? wsList().join(',') : WS_ALL; save(); }
 // Migration: Symbol-Layout und dynamisches Markdown sind die neuen Standardwerte;
 // bestehende Installationen uebernehmen sie einmalig (Flag verhindert spaetere Ueberschreibung).
 if (!S.uiDefaults) { S.uiMode = 'icons'; S.edMarkdown = false; S.uiDefaults = true; save(); }
@@ -1133,7 +1139,7 @@ $('#refresh').onclick = async () => {
   try { await loadModels(); } finally { $('#refresh').classList.remove('spinning'); }
 };
 
-const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['start','s_start','start'],['workspace','s_workspace','workspace'],
+const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['start','s_start','start'],['workspace','s_workspace','workspaces'],
   // Klassik-Layout vorerst deaktiviert (Nutzerwunsch): Symbol-Layout ist fest.
   // Zum Reaktivieren ['uiMode','s_uiMode','uiMode'] hier wieder aufnehmen.
   ['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['profanityStyle','s_profanityStyle','profanityStyle'],['edMarkdown','s_mdMode','bool'],['edSpellAnim','s_spellAnim','bool'],['autoCopy','s_autoCopy','bool'],['autoCopyTyped','s_autoCopyTyped','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['csvSrs','s_csvSrs','bool'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number']];
@@ -1143,8 +1149,7 @@ function drawSettings() {
   const lists = k =>
     k === 'uiLang' ? [['auto', t('autoO')], ['de','Deutsch'], ['en','English'], ['nl','Nederlands'], ['es','Español'], ['tr','Türkçe'], ['ar','العربية']] :
     k === 'theme' ? [['auto', t('autoSys')], ['light', t('light')], ['dark', t('dark')]] :
-    k === 'start' ? [['tr', t('startTr')], ['ed', t('startEd')], ['last', t('startLast')]] :
-    k === 'workspace' ? [['both', t('wsBoth')], ['tr', t('wsTr')], ['ed', t('wsEd')], ['study', t('wsStudy')]] :
+    k === 'start' ? [['tr', t('startTr')], ['ed', t('startEd')], ['study', t('startStudy')], ['last', t('startLast')]] :
     // Klassik-Layout vorerst deaktiviert (Nutzerwunsch).
     // k === 'uiMode' ? [['classic', t('o_classic')], ['icons', t('o_icons')]] :
     k === 'profanityStyle' ? [['stars', t('o_stars')], ['symbols', t('o_symbols')]] :
@@ -1152,7 +1157,15 @@ function drawSettings() {
   // Zuruecksetzen ist ein reiner Icon-Button; der Name erscheint nur als Tooltip.
   // Das Icon wird direkt eingesetzt, weil reicon() nur im Editor-Scope existiert.
   const rst = k => `<button class="ib" data-r="${k}" data-tt="reset">${ic('refresh', 16)}</button>`;
+  // Die Arbeitsplaetze sind eine Mehrfachauswahl: Jede Gruppe ist ein Knopf mit
+  // Kaestchen im Stil der Vokabel-Auswahl (runder Haken auf Akzentfarbe).
+  const wsField = (k, l) => {
+    const on = wsList();
+    const item = g => `<button type="button" class="wsopt${on.includes(g) ? ' on' : ''}" data-ws="${g}"><span class="ck">${ic('check', 13)}</span>${esc(t(g === 'tr' ? 'wsTr' : g === 'ed' ? 'wsEd' : 'wsStudy'))}</button>`;
+    return `<div class="set"><div class="top"><b>${t(l)}</b>${rst(k)}</div><div class="wsc">${['tr', 'ed', 'study'].map(item).join('')}</div></div>`;
+  };
   const field = ([k, l, ty]) => {
+    if (ty === 'workspaces') return wsField(k, l);
     if (ty === 'bool' || lists(k)) {
       const bool = ty === 'bool';
       const list = bool ? [['1', t('on')], ['0', t('off')]] : lists(k);
@@ -1194,6 +1207,18 @@ $('#setBody').addEventListener('input', e => {
 $('#setBody').addEventListener('change', e => { if (e.target.dataset.k === 'url' || e.target.dataset.k === 'nllb') { retries = 0; loadModels(); } });
 $('#setBody').onclick = e => {
   const act = e.target.closest('[data-act]'); if (act) return mtAction(act);
+  const wsBtn = e.target.closest('[data-ws]');
+  if (wsBtn) {
+    const g = wsBtn.dataset.ws, on = wsList();
+    const next = on.includes(g) ? on.filter(x => x !== g) : [...on, g];
+    // Die letzte Gruppe laesst sich nicht abwaehlen: ohne sie waere die Leiste leer.
+    if (next.length) {
+      S.workspace = next.join(','); save();
+      if (window.edWorkspace) window.edWorkspace();
+      drawSettings();
+    }
+    return;
+  }
   const k = e.target.closest('[data-r]')?.dataset.r; if (!k) return;
   S[k] = D[k]; save(); if (k === 'theme') applyTheme(); if (k === 'uiLang') renderAll(); if (k === 'uiMode') drawStyles(); if (k === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (k === 'workspace' && window.edWorkspace) window.edWorkspace();
   drawSettings(); if (k === 'url' || k === 'nllb') { retries = 0; loadModels(); }
