@@ -145,7 +145,14 @@ X('accept','Übernehmen','Accept','Overnemen','Aceptar','Kabul et','قبول'); 
 X('acceptAll','Alle verbleibenden übernehmen','Accept all remaining','Alle resterende overnemen','Aceptar todo lo restante','Kalanların tümünü kabul et','قبول جميع المتبقي');
 X('pagebreak','Seitenumbruch','Page break','Pagina-einde','Salto de página','Sayfa sonu','فاصل صفحة');
 
-S.ed = Object.assign({ src:'auto', tgt:'en', formal:'standard', wGender:'unknown', aGender:'unknown' }, S.ed || {});
+S.ed = Object.assign({ src:'auto', tgt:'en', formal:'standard', wGender:'unknown', aGender:'unknown', wGroup:'none', aGroup:'none' }, S.ed || {});
+// Wie in der Stil-Karte des Uebersetzers: Eine Gruppenangabe (Plural) und die
+// Einzelangabe derselben Person schliessen sich aus, und ein gespeicherter
+// Stand, der beides traegt, wird auf einen der beiden zurueckgefuehrt.
+for (const [main, grp] of [['wGender', 'wGroup'], ['aGender', 'aGroup']]) {
+  if (!['none', 'mixed', 'male', 'female'].includes(S.ed[grp])) S.ed[grp] = 'none';
+  if (S.ed[grp] !== 'none') S.ed[main] = 'unknown';
+}
 S.edStyles = S.edStyles || []; S.edWrite = S.edWrite || ''; S.edTrans = S.edTrans || ''; S.dictLang = S.dictLang || ''; if (S.edSpell === undefined) S.edSpell = true;
 if (S.edSpellAnim === undefined) S.edSpellAnim = true;
 // Einmalige Migration: Die schlaengelnden Wellen sind jetzt Standard. Wer die
@@ -629,13 +636,22 @@ function styleDlg(ex) {
 }
 
 const GEN = [['unknown','qmark'],['neutral','nb'],['male','male'],['female','female']], FORM = [['formal','hat'],['standard','dash'],['informal','smile']];
+// Zweite Reihe je Person, genau wie in der Stil-Karte des Uebersetzers: mehrere
+// Menschen statt einer Person. Die Ruhewerte ('unknown', 'none') sind keine
+// Wahl und leuchten nie.
+const GRP = [['none','gNone'],['mixed','gMixed'],['male','gMale'],['female','gFemale']];
+const edRest = (k, v) => (k === 'wGender' || k === 'aGender') ? v === 'unknown' : v === 'none';
 function transPop(btn) {
   closePops(); const sn = snapSel(); if (!sn) return; const tp = $('#trPop'); fixEdLangs();
-  const seg = (key, list, lab) => `<div class="trrow"><span class="lbl">${t(lab)}</span><div class="seg">${list.map(([v, i]) => `<button class="ib${S.ed[key] === v ? ' on' : ''}" data-k="${key}" data-v="${v}" title="${t('o_' + v)}">${ic(i, 18)}</button>`).join('')}</div></div>`;
+  const seg = (key, list, lab) => `<div class="trrow"><span class="lbl">${t(lab)}</span><div class="seg">${list.map(([v, i]) => `<button class="ib${S.ed[key] === v && !edRest(key, v) ? ' on' : ''}" data-k="${key}" data-v="${v}" title="${t('o_' + v)}">${ic(i, 18)}</button>`).join('')}</div></div>`;
+  const row = (key, list, pref, size) => `<div class="seg${pref === 'og_' ? ' sub' : ''}">` + list.map(([v, i]) =>
+    `<button class="ib${S.ed[key] === v && !edRest(key, v) ? ' on' : ''}" data-k="${key}" data-v="${v}" title="${esc(t(pref + v))}">${ic(i, size, 1.8 * 18 / size)}</button>`).join('') + '</div>';
+  // Eine Person, zwei Reihen: sie/er (bzw. genderneutral) und die Gruppe.
+  const person = (key, sub, lab) => `<div class="trrow people"><span class="lbl">${t(lab)}</span><div class="tpseg">${row(key, GEN, 'o_', 18)}${row(sub, GRP, 'og_', 24)}</div></div>`;
   const draw = () => {
     const eng = edEngine();
     tp.innerHTML = `<div class="trrow"><button class="pill" id="tpSrc">${esc(langLabel(S.ed.src))}</button><span class="muted">${ic('arrowR', 16)}</span><button class="pill" id="tpTgt">${esc(langLabel(S.ed.tgt))}</button></div>` +
-      (eng === 'llm' ? seg('formal', FORM, 'lblForm') + seg('wGender', GEN, 'lblWriter') + seg('aGender', GEN, 'lblAddr') : '') +
+      (eng === 'llm' ? seg('formal', FORM, 'lblForm') + person('wGender', 'wGroup', 'lblWriter') + person('aGender', 'aGroup', 'lblAddr') : '') +
       `<div class="go"><button class="primary" id="tpGo">${t('translate')}</button></div>`;
     const lp = (id, key) => {
       $(id).onclick = e => {
@@ -646,7 +662,15 @@ function transPop(btn) {
     lp('#tpSrc', 'src'); lp('#tpTgt', 'tgt');
     $('#tpGo').onclick = () => { tp.classList.add('hidden'); runTrans(sn); };
   };
-  tp.onclick = e => { const b = e.target.closest('[data-k]'); if (b) { S.ed[b.dataset.k] = b.dataset.v; save(); draw(); } };
+  tp.onclick = e => {
+    const b = e.target.closest('[data-k]'); if (!b) return;
+    const k = b.dataset.k; S.ed[k] = b.dataset.v;
+    // Beide Reihen einer Person sind eine einzige Angabe: die jeweils andere
+    // wird geloescht, sonst stuenden sich Einzel- und Gruppenregel im Weg.
+    const pair = { aGender:'aGroup', aGroup:'aGender', wGender:'wGroup', wGroup:'wGender' }[k];
+    if (pair) S.ed[pair] = (k === 'aGender' || k === 'wGender') ? 'none' : 'unknown';
+    save(); draw();
+  };
   draw();
   const r = btn.getBoundingClientRect(); Object.assign(tp.style, { left:Math.min(r.left, innerWidth - 330) + 'px', top:r.bottom + 6 + 'px' }); tp.classList.remove('hidden');
 }
@@ -659,7 +683,11 @@ async function runTrans(sn) {
     ED.writing = true;
     try { document.execCommand('insertHTML', false, `<span class="ai-processing">${esc(sn.text).replace(/\n/g, '<br>')}</span>`); } finally { ED.writing = false; }
     const wrapper = page.querySelector('.ai-processing');
-    const result = await translateCore(sn.text, { model:tm, src:S.ed.src, tgt:S.ed.tgt, style:{ type:'natural', formal:S.ed.formal, gender:S.ed.aGender }, writer:S.ed.wGender });
+    // Alle vier Angaben zu den beteiligten Personen gehen als Stil mit; die
+    // Regeln dazu baut `peopleBlock()` aus `style`, ein eigenes `writer`-Feld
+    // wuerde dort nicht gelesen (der Absender ging vorher deshalb verloren).
+    const style = { type:'natural', formal:S.ed.formal, gender:S.ed.aGender, genderGroup:S.ed.aGroup, writer:S.ed.wGender, writerGroup:S.ed.wGroup };
+    const result = await translateCore(sn.text, { model:tm, src:S.ed.src, tgt:S.ed.tgt, style });
     if (ED.cancelled) {
       if (wrapper) { const r2 = document.createRange(); r2.selectNode(wrapper); replaceRange(r2, sn.text); }
       return;
