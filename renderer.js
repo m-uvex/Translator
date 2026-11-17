@@ -1254,10 +1254,9 @@ $('#refresh').onclick = async () => {
 const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['start','s_start','start'],['workspace','s_workspace','workspaces'],
   // Klassik-Layout vorerst deaktiviert (Nutzerwunsch): Symbol-Layout ist fest.
   // Zum Reaktivieren ['uiMode','s_uiMode','uiMode'] hier wieder aufnehmen.
-  ['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['profanityStyle','s_profanityStyle','profanityStyle'],['edMarkdown','s_mdMode','bool'],['edSpellAnim','s_spellAnim','bool'],['autoCopy','s_autoCopy','bool'],['autoCopyTyped','s_autoCopyTyped','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['csvSrs','s_csvSrs','bool'],['storyOn','s_story','bool'],['storyModel','s_storyModel','storyModel'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number']];
-const GROUPS = [['s_groupGeneral',['uiLang','theme','start','workspace']],['s_groupStudy',['csvSrs','storyOn','storyModel']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
+  ['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['profanityStyle','s_profanityStyle','profanityStyle'],['edMarkdown','s_mdMode','bool'],['edSpellAnim','s_spellAnim','bool'],['autoCopy','s_autoCopy','bool'],['autoCopyTyped','s_autoCopyTyped','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['csvSrs','s_csvSrs','bool'],['storyOn','s_story','bool'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number']];
+const GROUPS = [['s_groupGeneral',['uiLang','theme','start','workspace']],['s_groupStudy',['csvSrs','storyOn']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
 function drawSettings() {
-  const sel = (k, o, bool) => `<select data-k="${k}"${bool ? ' data-bool="1"' : ''}>${o.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
   const lists = k =>
     k === 'uiLang' ? [['auto', t('autoO')], ['de','Deutsch'], ['en','English'], ['nl','Nederlands'], ['es','Español'], ['tr','Türkçe'], ['ar','العربية']] :
     k === 'theme' ? [['auto', t('autoSys')], ['light', t('light')], ['dark', t('dark')]] :
@@ -1265,28 +1264,30 @@ function drawSettings() {
     // Klassik-Layout vorerst deaktiviert (Nutzerwunsch).
     // k === 'uiMode' ? [['classic', t('o_classic')], ['icons', t('o_icons')]] :
     k === 'profanityStyle' ? [['stars', t('o_stars')], ['symbols', t('o_symbols')]] :
-    k === 'helper' ? [['', t('autoModel')], ...Object.keys(caps).filter(n => caps[n].includes('completion') && !isTg(n)).map(n => [n, n])] :
-    // Schreibmodell der Kurzgeschichten: dieselbe Liste wie beim Editor, ohne
-    // reine Uebersetzungsmodelle (die schreiben keine Geschichten).
-    k === 'storyModel' ? [['', t('autoModel')], ...Object.keys(caps).filter(n => caps[n].includes('completion') && !isTg(n)).map(n => [n, n])] : null;
+    k === 'helper' ? [['', t('autoModel')], ...Object.keys(caps).filter(n => caps[n].includes('completion') && !isTg(n)).map(n => [n, n])] : null;
   // Zuruecksetzen ist ein reiner Icon-Button; der Name erscheint nur als Tooltip.
   // Das Icon wird direkt eingesetzt, weil reicon() nur im Editor-Scope existiert.
   const rst = k => `<button class="ib" data-r="${k}" data-tt="reset">${ic('refresh', 16)}</button>`;
-  // Die Arbeitsplaetze sind eine Mehrfachauswahl: Jede Gruppe ist ein Knopf mit
-  // Kaestchen im Stil der Vokabel-Auswahl (runder Haken auf Akzentfarbe).
-  const wsField = (k, l) => {
-    const on = wsList();
-    const item = g => `<button type="button" class="wsopt${on.includes(g) ? ' on' : ''}" data-ws="${g}"><span class="ck">${ic('check', 13)}</span>${esc(t(g === 'tr' ? 'wsTr' : g === 'ed' ? 'wsEd' : 'wsStudy'))}</button>`;
-    return `<div class="set"><div class="top"><b>${t(l)}</b>${rst(k)}</div><div class="wsc">${['tr', 'ed', 'study'].map(item).join('')}</div></div>`;
+  // Jede Wahl ist eine Pille mit Kaestchen - derselbe Stil wie bei den sichtbaren
+  // Arbeitsplaetzen. Damit sind alle Felder gleich gebaut: Beschriftung oben
+  // links, Zuruecksetzen oben rechts, die Wahl darunter.
+  const chips = (k, opts, bool) => {
+    const cur = bool ? (S[k] ? '1' : '0') : String(S[k] ?? '');
+    return `<div class="wsc">` + opts.map(([v, l]) =>
+      `<button type="button" class="wsopt${cur === String(v) ? ' on' : ''}" data-setkey="${k}" data-setval="${v}"${bool ? ' data-bool="1"' : ''}><span class="ck">${ic('check', 13)}</span>${esc(l)}</button>`).join('') + '</div>';
   };
   const field = ([k, l, ty]) => {
-    if (ty === 'workspaces') return wsField(k, l);
-    if (ty === 'bool' || lists(k)) {
-      const bool = ty === 'bool';
-      const list = bool ? [['1', t('on')], ['0', t('off')]] : lists(k);
-      return `<div class="set row-set"><b>${t(l)}</b><span class="ctl">${sel(k, list, bool)}${rst(k)}</span></div>`;
+    // Bei den Arbeitsplaetzen fehlt das Zuruecksetzen bewusst: die Auswahl ist
+    // die Einstellung, ein Standard waere hier nur eine zweite Wahl daneben.
+    const top = `<div class="top"><b>${t(l)}</b>${ty === 'workspaces' ? '' : rst(k)}</div>`;
+    if (ty === 'workspaces') {
+      const on = wsList();
+      const item = g => `<button type="button" class="wsopt${on.includes(g) ? ' on' : ''}" data-ws="${g}"><span class="ck">${ic('check', 13)}</span>${esc(t(g === 'tr' ? 'wsTr' : g === 'ed' ? 'wsEd' : 'wsStudy'))}</button>`;
+      return `<div class="set">${top}<div class="wsc">${['tr', 'ed', 'study'].map(item).join('')}</div></div>`;
     }
-    return `<div class="set"><div class="top"><b>${t(l)}</b>${rst(k)}</div>` +
+    if (ty === 'bool') return `<div class="set">${top}${chips(k, [['1', t('on')], ['0', t('off')]], true)}</div>`;
+    if (lists(k)) return `<div class="set">${top}${chips(k, lists(k))}</div>`;
+    return `<div class="set">${top}` +
       (ty === 'area' ? `<textarea data-k="${k}"></textarea>` :
        `<input data-k="${k}" type="${ty}" step="${k === 'temp' ? 0.1 : 256}">`) + '</div>';
   };
@@ -1332,6 +1333,17 @@ $('#setBody').onclick = e => {
       if (window.edWorkspace) window.edWorkspace();
       drawSettings();
     }
+    return;
+  }
+  const pick = e.target.closest('[data-setkey]');
+  if (pick) {
+    const key = pick.dataset.setkey;
+    const ty = FIELDS.find(f => f[0] === key)?.[2];
+    let v = pick.dataset.setval;
+    v = pick.dataset.bool ? v === '1' : ty === 'number' ? +v : v;
+    S[key] = v; save();
+    if (key === 'theme') applyTheme(); if (key === 'uiLang') renderAll(); if (key === 'uiMode') drawStyles(); if (key === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (key === 'workspace' && window.edWorkspace) window.edWorkspace(); if (key === 'storyOn' && window.studyStorySync) window.studyStorySync();
+    drawSettings();
     return;
   }
   const k = e.target.closest('[data-r]')?.dataset.r; if (!k) return;

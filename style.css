@@ -121,25 +121,9 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
 .set{margin:10px 0}.set .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .set input,.set textarea,.set select{width:100%;font:inherit;color:var(--text);background:var(--soft);border:0;border-radius:12px;padding:9px 12px;outline:0}
 .set textarea{height:150px;resize:vertical}
-/* Einstellungen mit Auswahlfeld: Titel links, Menue rechts, Zuruecksetzen-Icon ganz rechts */
-.set.row-set{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px;margin:6px 0}
-.set.row-set>b{flex:1 1 auto;min-width:0;font-weight:600}
-.set.row-set .ctl{display:flex;align-items:center;gap:2px;flex:none;margin-inline-start:auto}
-/* Breite richtet sich ausschliesslich nach der laengsten Option (kein min/max),
-   damit Optionstexte niemals abgeschnitten werden (ausdruecklicher Nutzerwunsch).
-   Eigener Pfeil wie bei .tsel: nur so laesst sich der Text direkt an den Pfeil
-   ruecken; der native Pfeil reserviert einen festen, nicht beeinflussbaren Abstand.
-   text-align gilt fuer den geschlossenen Wert, option{text-align} haelt die
-   ausgeklappte Liste linksbuendig (sonst waere sie ebenfalls rechtsbuendig). */
-.set.row-set select{appearance:none;-webkit-appearance:none;width:auto;min-width:0;max-width:none;flex:none;text-align:right;text-align-last:right;padding-right:26px;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none' stroke='%236e6e73' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1l4 4 4-4'/></svg>");
-  background-repeat:no-repeat;background-position:right 8px center;background-size:10px 6px}
-.set.row-set select option{text-align:left}
-[dir="rtl"] .set.row-set select{text-align:left;text-align-last:left;padding-right:12px;padding-left:26px;background-position:left 8px center}
-[dir="rtl"] .set.row-set select option{text-align:right}
 .set .ib{width:32px;height:32px}
-/* Mehrfachauswahl der sichtbaren Arbeitsplaetze: je Gruppe ein Knopf mit
-   Kaestchen, im Stil der Vokabel-Auswahl (runder Haken auf Akzentfarbe). */
+/* Auswahlpillen der Einstellungen, auch fuer die sichtbaren Arbeitsplaetze:
+   je Moeglichkeit ein Knopf mit Kaestchen (runder Haken auf Akzentfarbe). */
 .wsc{display:flex;flex-wrap:wrap;gap:6px}
 .wsopt{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13px;color:var(--text);background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 7px;cursor:pointer;transition:border-color .15s,background .15s}
 .wsopt:hover{border-color:var(--accent)}

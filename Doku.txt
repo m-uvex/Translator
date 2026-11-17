@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.43 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.45 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1049,3 +1049,21 @@ Geprüft in eigenem `--user-data-dir` über CDP: Beschriftung „Länge“, Knö
 **Doppelte Wörter sind gesperrt.** `storyTaken()` prüft beim Zeichnen der Wortliste, ob dasselbe Wort schon in einer anderen Lücke steht; solche Pillen erscheinen blass, mit `disabled` und ohne Klick (`storyPickWord` prüft zusätzlich). Damit kann „Dann kommt ein Brief an. Dazu kommt: ein Brief.“ nicht mehr entstehen — der Satz „kommt ein Brief an“ ist seit 1.15.41 ohnehin nicht mehr in der Handlung, und künftige Überschneidungen werden so abgefangen.
 
 Geprüft in eigenem `--user-data-dir` über CDP: alle fünf Lücken zeichnen je 10 Pillen, jede mit einem Symbol und ohne fehlende Zeichen; mit einem künstlich eingefügten doppelten Eintrag („kommt ein Brief an“ bei gewähltem Gegenstand „ein Brief“) ist die Pille gesperrt und ein Klick darauf ändert die Wahl nicht; ein normaler Durchlauf (Drache, Schloss, Eule, wenig Zeit, Buch) ergibt „Eine Kurzgeschichte über einen Drachen, die in einem alten Schloss spielt. Mit dabei: eine Eule. Dann bleibt nur noch wenig Zeit. Dazu kommt: ein Buch.“ und gibt den Schreibknopf frei. Die Symbole wurden in 72, 22 und 16 px am Bildschirm geprüft, der Dialog zusätzlich als Screenshot.
+
+## 77. Einstellungen einheitlich, Schreibmodell nur am Lese-Arbeitsplatz (1.15.44)
+
+**Schreibmodell nicht mehr doppelt.** Die Auswahl stand seit 1.15.40 an zwei Stellen: im Kopfmenü des Lese-Arbeitsplatzes (unter dem CPU-Symbol, Abschnitt „Schreibmodell“, nur bei eingeschaltetem Generator) und zusätzlich in den Einstellungen. Der Eintrag in den Einstellungen ist entfallen — `storyModel` fehlt jetzt in `FIELDS`, `GROUPS` und `lists()`, ebenso die Texte `s_storyModel`. Die Wahl bleibt, wo sie hingehört: im Kopfmenü neben dem Modell für Wortübersetzungen, wie beim Texteditor-Arbeitsplatz.
+
+**Ein Stil für alle Felder.** Vorher hatte jede Art von Einstellung eine eigene Form: Auswahlfelder saßen als Menü rechts am Rand mit dem Zurücksetzen-Icon daneben, Text- und Zahlenfelder standen mit ihrer Beschriftung über dem Feld, die sichtbaren Arbeitsplätze hatten Pillen. Jetzt ist jedes Feld gleich gebaut:
+
+- Beschriftung **oben links**, Zurücksetzen-Icon **oben rechts**,
+- darunter die Wahl als **Pillen mit Kästchen** (derselbe Stil wie bei den sichtbaren Arbeitsplätzen): aktiv = Akzentfarbe im Kästchen und getönter Rand, inaktiv = ruhiger Rand,
+- Text- und Zahlenfelder bleiben Eingabefelder, ebenfalls unter der Beschriftung beginnend.
+
+Damit sind Auswahlmenüs ganz entfallen: `drawSettings()` baut für alle aufzählbaren Felder `chips()` (Sprache, Thema, Start, Ja/Nein-Schalter, Profanitäts-Stil, Hilfsmodell) und hängt sie in `.wsc` wie die Arbeitsplatz-Pillen. Der Klick läuft über `[data-setkey]`/`[data-setval]` und übernimmt die bisherigen Folgeschritte (Theme, Sprache, Arbeitsplätze, Generator). Die toten Regeln für `.row-set` und `.ctl` in `style.css` sind gelöscht.
+
+**Kein Zurücksetzen bei den Arbeitsplätzen.** Dort fehlt der Icon-Knopf jetzt bewusst: die Auswahl ist die Einstellung, ein „Standard wiederherstellen“ wäre nur eine zweite Wahl daneben.
+
+Geprüft in eigenem `--user-data-dir` über CDP: alle Einstellungszeilen haben Beschriftung und Pillen (oder ein Eingabefeld), keine Reste von `.row-set`, keine `<select>` mehr; die Arbeitsplatz-Zeile hat kein `[data-r]`; keine Zeile „Schreibmodell“ mehr in den Einstellungen; Klicks setzen Werte richtig (Thema dunkel/hell, Start, Ja/Nein, Sprache) und markieren genau die gewählten Pillen; im Kopfmenü des Lese-Arbeitsplatzes stehen weiter beide Abschnitte („Modell für Wortübersetzungen“, „Schreibmodell“) mit den allgemeinen Modellen. Einstellungen als Screenshot angesehen.
+
+Beim Aus- und Einschalten des Generators frischt `renderStoryBtn()` jetzt auch den Tooltip des Modellknopfes auf (`renderStudyModel()`), damit dort kein Schreibmodell mehr steht, solange es keine Geschichten gibt. (1.15.45)

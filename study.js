@@ -1865,9 +1865,12 @@ async function storyGenerate(id) {
 }
 
 // Der Knopf in der Lesebibliothek gehoert zum Generator: ausgeschaltet ist er weg.
+// Der Modellknopf im Kopf nennt das Schreibmodell nur im Tooltip, solange der
+// Generator laeuft - deshalb hier gleich mit auffrischen.
 function renderStoryBtn() {
   const b = $('#txStory'); if (!b) return;
   b.classList.toggle('hidden', !S.storyOn);
+  renderStudyModel();
 }
 window.studyStorySync = renderStoryBtn;
 
@@ -1900,8 +1903,7 @@ const STORY_STR = {
   stDone: [x => `Kurzgeschichte fertig: ${x}`, x => `Short story finished: ${x}`, x => `Kort verhaal klaar: ${x}`, x => `Relato terminado: ${x}`, x => `Kısa hikâye hazır: ${x}`, x => `اكتملت القصة: ${x}`],
   stNoModel: ['Kein Schreibmodell gefunden.', 'No writing model found.', 'Geen schrijfmodel gevonden.', 'No se encontró modelo de escritura.', 'Yazma modeli bulunamadı.', 'لم يتم العثور على نموذج كتابة.'],
   stUntitled: ['Kurzgeschichte', 'Short story', 'Kort verhaal', 'Relato corto', 'Kısa hikâye', 'قصة قصيرة'],
-  s_story: ['Kurzgeschichten-Generator', 'Short story generator', 'Korteverhalengenerator', 'Generador de relatos', 'Kısa hikâye üreticisi', 'مولّد القصص القصيرة'],
-  s_storyModel: ['Schreibmodell für Kurzgeschichten', 'Writing model for short stories', 'Schrijfmodel voor korte verhalen', 'Modelo de escritura para relatos', 'Kısa hikâye yazma modeli', 'نموذج كتابة القصص']
+  s_story: ['Kurzgeschichten-Generator', 'Short story generator', 'Korteverhalengenerator', 'Generador de relatos', 'Kısa hikâye üreticisi', 'مولّد القصص القصيرة']
 };
 for (const [k, v] of Object.entries(STORY_STR)) {
   window.K[k] = [v[0], v[1]];
