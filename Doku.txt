@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.33 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.34 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -917,3 +917,11 @@ Geprüft in eigenem `--user-data-dir` über CDP: `#vocSelAllBtn` trug `data-i="c
 In den Karten der Dokumentenablage und der Lesetexte (beide `.libcard`) stand der Stift zum Bearbeiten als heller Kreis mit blauem Zeichen da, während „In Lesetexte übernehmen“ und das Kreuz daneben dunkle Kreise mit hellem Zeichen waren – nebeneinander wirkten sie wie zwei verschiedene Familien. Ursache war die Regel `.libcard .rm.ed`, die `background:var(--card)`, `color:var(--accent-ink)` und `border-color:var(--line)` setzte. Sie behält nur ihre Geometrie (24 px, Position 36 px, in der Ablage 64 px wegen des Knopfes „In Lesetexte übernehmen“) und übernimmt die Farben der Grundregel `.libcard .rm`: `var(--text)` als Fläche, `var(--bg)` als Zeichen, `var(--card)` als Rand. Damit sitzen alle Knöpfe einer Karte in derselben Farbe, und der Stift bleibt an derselben Stelle.
 
 Geprüft in eigenem `--user-data-dir` über CDP: In einer Textkarte (`.libcard.txtcard`) haben `.rm.ed` und `.rm` dieselbe Hintergrundfarbe und dieselbe Zeichenfarbe (im hellen Theme `rgb(29, 29, 31)` als Fläche und `rgb(247, 247, 248)` als Zeichen, im dunklen Theme umgekehrt `rgb(236, 236, 236)` auf `rgb(23, 23, 23)`); in einer nachgebauten Ablagekarte mit drei Knöpfen (`.to`, `.ed`, Kreuz) stimmen alle drei überein, und die Positionen 8/36/64 px sind unverändert.
+
+## 67. Textart der Lesetexte sitzt unten links in der Vorschau (1.15.34)
+
+Die Pille mit der Textart (`.txbadge`, z. B. „Sonstiges“) stand in den Lesetext-Karten oben rechts (`top:10px; right:10px`) – also genau dort, wo die Knöpfe der Karte liegen: `.libcard .rm` sitzt auf `top:8px; right:8px` (Kreuz) und in den Lesetexten auf `right:36px` (Stift). Dadurch lag die Pille halb unter dem Stift und war nur noch als angeschnittenes Wort zu lesen.
+
+Verschoben wurde deshalb nur die Pille, nicht die Knöpfe: `.txbadge` sitzt jetzt unten links im Vorschaufeld (`bottom:10px; left:10px`). Der untere Rand der Vorschau ist durch den Verlauf `.libprev::after` ohnehin ruhig, und `z-index:3` hält die Pille darüber – ohne ihn würde das nach dem Inhalt gezeichnete `::after` sie überdecken. Weil die Knöpfe unverändert bleiben, ändert sich in der Dokumentenablage nichts; beide Listen zeigen ihre Knöpfe weiter an derselben Stelle (Kreuz bei 8 px, Stift bei 36 px, in der Ablage zusätzlich „In Lesetexte übernehmen“ bei 36 px und der Stift bei 64 px).
+
+Geprüft in eigenem `--user-data-dir` über CDP mit einer Textkarte: Die Pille misst 66 × 22 px und liegt bei 10/136 im 168 px hohen Vorschaufeld, die beiden Knöpfe sitzen bei x = 166 und 196, y = 8; die Rechtecke überschneiden sich nicht, und die Pille bleibt vollständig im Vorschaufeld.
