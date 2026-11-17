@@ -555,7 +555,7 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
    Vorgabe; die Knoepfe sitzen allein in der Fusszeile. */
 .stfoot{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .stfoot .sp{flex:1;min-width:8px}
-.stfoot #stCount{font-size:12px}
+#stDlg .stacts #stCount{font-size:12px}
 .stlen{display:flex;align-items:center;gap:8px}
 .stlen>span{font-size:13px;color:var(--muted)}
 .stsegs{display:flex;gap:3px;background:var(--soft);border-radius:999px;padding:3px}

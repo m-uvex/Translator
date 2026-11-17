@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.47 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.48 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1093,3 +1093,10 @@ Geprüft in eigenem `--user-data-dir` über CDP mit gemessenen Rechtecken: Oberk
 **Regel für alle Zeichen.** Große Formen, wenige Linien: höchstens fünf Pfade je Zeichen, keine Taste-Striche, keine Details unter einem Pixel. Kleine Punkte (Augen, Pupillen, Grifflöcher) sind gefüllt (`fill="currentColor" stroke="none"`), weil ein Ring mit 0,8 px Radius bei 16 px zu einem grauen Fleck wird. Alle Zeichen liegen im selben 24er-Raster und werden über `ic(name, 16)` in die Pille gesetzt, sodass die Strichstärke mitskaliert.
 
 Geprüft: alle 50 Zeichen in einer Übersicht bei 64, 24 und 18 px angesehen und die schwachen nachgezeichnet; in der installierten App über CDP alle fünf Lücken durchgeschaltet (je 10 Pillen, je ein Symbol, keins leer, Symbolbreite 16 px) und der Dialog als Screenshot geprüft.
+## 80. Zähler unten links in der Fußzeile (1.15.48)
+
+**Der Zähler steht wieder unten links.** Nach Abschnitt 78 saß „3 von 5 Lücken gefüllt“ rechts außen am Kartenrand, in derselben Zeile wie die Längenwahl. Er sitzt jetzt unten links in der Fußzeile des Dialogs, auf einer Linie mit den drei Knöpfen und bündig mit der linken Kante von Vorgabe und Längenwahl (`#stCount` ist das erste Kind von `.stacts`, danach folgt der Dehner `.sp`). Die Zeile unter der Vorgabe enthält damit nur noch die Längenwahl „Kurz · Mittel · Lang“.
+
+**Markup und Stil.** In `index.html` ist `#stCount` aus `.stfoot` in `.stacts` gewandert (vor den Knöpfen); `.stfoot` enthält nur noch `.stlen`. Die Schriftgrößen-Regel heißt entsprechend `#stDlg .stacts #stCount` statt `.stfoot #stCount`. `storySync()` bleibt unverändert — es schreibt weiter nur den Text in `#stCount`.
+
+Geprüft in eigenem `--user-data-dir` über CDP, nachdem drei Lücken gefüllt waren: Text „3 von 5 Lücken gefüllt“, Zähler im Fußbereich (`closest('.stacts')`), linke Kante 221 px = linke Kante der Vorgabe-Karte, Knopfreihe 587 bis 626 px, Zähler mittig darin; „Schreiben“ blieb bei drei Lücken gesperrt. Dialog als Screenshot angesehen.
