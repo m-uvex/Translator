@@ -325,6 +325,11 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
    dem Eingabefeld. Sie zeigt den Text als einzelne Woerter. */
 #pickLayer{position:absolute;inset:0;z-index:3;background:var(--card);border-radius:var(--r);padding:18px 20px 64px;
   overflow:auto;white-space:pre-wrap;font-size:17px;line-height:1.5;color:var(--text);cursor:text}
+/* Der Fuss des Eingabefelds bleibt ueber der Auswahlebene. Vorher deckte die
+   Ebene Klammer, Mauszeiger und Uebersetzen-Knopf zu: die beiden Symbole unten
+   links verschwanden, und der Auswahlmodus liess sich nicht mehr beenden. */
+#drop footer{position:relative;z-index:5}
+.pickhint{color:var(--muted);cursor:text}
 #pickBtn.on{background:var(--accent);color:var(--on-accent)}
 #pickBtn.on:hover{background:var(--accent-hover)}
 /* Leseoberflaeche */

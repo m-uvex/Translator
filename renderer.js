@@ -191,7 +191,7 @@ const K = {
   // Modellwahl für Wortübersetzungen (Lesen und Vokabeln).
   studyModelT:['Modell für Wortübersetzungen','Model for word translations'],
   studyModelAuto:['Standard (Modell des Übersetzers)','Default (translator model)'],
-  pickT:['Wörter auswählen','Pick words'], pickNoPanel:['Erst „Vokabeln neben dem Übersetzer“ in den Einstellungen einschalten.','First enable “Vocabulary beside the translator” in the settings.'],
+  pickT:['Wörter auswählen','Pick words'], pickHint:['Text eingeben oder einfügen, dann Wörter antippen','Type or paste text, then tap words'], pickNoPanel:['Erst „Vokabeln neben dem Übersetzer“ in den Einstellungen einschalten.','First enable “Vocabulary beside the translator” in the settings.'],
   wordTr:['Übersetze …','Translating …'], wordErr:['Wort konnte nicht übersetzt werden','Could not translate the word'],
   vocNeedTerm:['Bitte zuerst ein Wort eingeben.','Please enter a word first.'],
   studyNoModel:['Für Wortübersetzungen wird ein allgemeines Ollama-Modell gebraucht (z. B. gemma3:4b).','Word translations need a general Ollama model (e.g. gemma3:4b).'],

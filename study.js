@@ -375,6 +375,15 @@ function drawPickLayer() {
   const layer = $('#pickLayer'), ta = $('#input');
   layer.innerHTML = '';
   const txt = ta.value;
+  // Ohne Text zeigt die Ebene sonst eine leere weisse Flaeche: kein Hinweis,
+  // was hier zu tun ist, und der Knopf unten war nicht mehr zu sehen.
+  if (!txt.trim()) {
+    const h = document.createElement('span');
+    h.className = 'pickhint';
+    h.textContent = t('pickHint');
+    layer.append(h);
+    return;
+  }
   const RE = /([\p{L}\p{M}]+(?:['’\-][\p{L}\p{M}]+)*)/gu;
   let last = 0, m;
   while ((m = RE.exec(txt))) {
@@ -1379,7 +1388,16 @@ function wire() {
   bindPicking($('#reader'), '.rw');
   bindPicking($('#pickLayer'), '.w');
 
-  $('#pickBtn').onclick = () => { ST.pick = !ST.pick; pickSync(); };
+  $('#pickBtn').onclick = () => {
+    ST.pick = !ST.pick;
+    pickSync();
+    // Der Modus legt eine Ebene ueber das Textfeld; ohne Fokus im Feld laesst
+    // sich danach nichts mehr tippen.
+    if (ST.pick && S.view === 'tr') $('#input').focus();
+  };
+  // Klick neben die Woerter setzt wieder ins Textfeld, damit Tippen im
+  // Auswahlmodus weitergeht (die Ebene liegt ueber dem Feld).
+  $('#pickLayer').addEventListener('click', e => { if (!e.target.closest('.w')) $('#input').focus(); });
   document.querySelectorAll('[data-study-model]').forEach(b => { b.onclick = () => studyModelPop(b); });
   // Nach dem Laden der Modelle (auch beim Nachladen) die Pille auffrischen.
   const edModelsBase = window.edModels;
