@@ -564,6 +564,13 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .stslot.filled svg{flex:none;color:var(--accent-ink)}
 .stslot.on{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}
 #stDlg .sthint{margin:0;font-size:12px;line-height:1.5}
+/* Laenge der Geschichte: drei kleine Pillen, die gewaehlte ist gefuellt. */
+.stlen{display:flex;align-items:center;gap:8px;margin-top:4px}
+.stlen>span{font-size:13px;color:var(--muted)}
+.stsegs{display:flex;gap:3px;background:var(--soft);border-radius:999px;padding:3px}
+.stseg{font:inherit;font-size:12.5px;line-height:1.4;color:var(--muted);background:transparent;border:0;border-radius:999px;padding:4px 13px;cursor:pointer}
+.stseg:hover{color:var(--text)}
+.stseg.on{background:var(--accent);color:var(--on-accent)}
 .stpool{background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:10px 12px 12px;max-height:330px;overflow:auto}
 .stpoolhead{display:flex;align-items:center;gap:6px;padding:0 0 8px}
 .stpoolhead b{font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}

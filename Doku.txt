@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.41 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.42 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1022,3 +1022,17 @@ Geprüft in eigenem `--user-data-dir` über CDP mit gestelltem `window.trChat`: 
 Dazu kamen fünf Symbole im selben Strichstil: `sgWarn` (Dreieck mit Ausrufezeichen), `sgTwist` (Pfeil, der umkehrt), `sgClock` (Uhr), `sgChat` (zwei Sprechblasen) und `sgSparkle` (zwei Funken). `sgFire`, `sgWand` und `sgFlag` gehörten nur zu den alten Wendungen und sind entfallen; `sgStorm`, `sgTreasure`, `sgDoor`, `sgFootprints` und `sgRiddle` bleiben im Einsatz. Alle 50 `sg*`-Symbole sind weiterhin vergeben, keines doppelt für dieselbe Lücke und keines ohne Verwendung.
 
 **Geprüft** in eigenem `--user-data-dir` über CDP: zehn Pillen mit je einem Symbol, jede Wendung einmal eingesetzt und der erzeugte Satz gelesen („Dann gibt es ein Missverständnis.“), Reihenfolge der Lücken Figur 10 → Schauplatz 10 → Begleiter 10 → Handlung 10 → Gegenstand 10, Satz „Eine Kurzgeschichte über eine Ritterin, die unter Wasser spielt. Mit dabei: eine Eule. Dann gibt es ein Missverständnis. Dazu kommt: ein Kompass.“, in der Zielsprache Englisch erscheinen die englischen Wörter („a knight“, „under water“, …), Start schreibt die Geschichte (`recipe` endet auf „Object: a compass“) und die Karte wird fertig. Die neuen Symbole wurden in 96, 24 und 18 px am Bildschirm geprüft.
+
+## 75. Länge der Kurzgeschichte wählbar (1.15.42)
+
+**Kurz, mittel oder lang.** Der Dialog hat unter dem Hinweis eine Reihe mit drei Pillen und der Beschriftung „Länge“. Die gewählte Pille ist gefüllt, die Wahl steht in `S.storyLen` und gilt für die nächste Geschichte; Vorgabe ist **mittel**, weil die bisherigen Texte vielen zu knapp waren.
+
+| Wahl | Wörter | Absätze |
+| --- | --- | --- |
+| Kurz | 120–180 | 2–3 |
+| Mittel | 250–350 | 3–5 |
+| Lang | 450–650 | 6–9 |
+
+Die Zahlen stehen in `ST_LEN`; daraus baut der Prompt seine Zeile `- Length: about … words in … short paragraphs; keep sentences short and the vocabulary everyday.` Der Satz zur einfachen Sprache gilt damit bei jeder Länge, nicht nur beim kurzen Text. Die Wahl wird als `len` an der Karte gespeichert (`tx.len`), ein erneuter Versuch nach einem Fehlschlag schreibt also dieselbe Länge. Der Dialogknopf `#stLen` (drei `.stseg`) ist im Lese-Arbeitsplatz verdrahtet; `drawStoryLen()` hebt die aktive Pille samt `aria-pressed` hervor und läuft beim Öffnen des Dialogs mit.
+
+Geprüft in eigenem `--user-data-dir` über CDP: Beschriftung „Länge“, Knöpfe „Kurz · Mittel · Lang“, ohne gespeicherte Wahl ist „Mittel“ aktiv; nach Klick auf jede der drei Pillen steht die Wahl in `S.storyLen`, landet als `len` an der Karte und der Prompt trägt die passende Zeile („about 120 to 180 words in 2 to 3 short paragraphs“, „about 250 to 350 words in 3 to 5 …“, „about 450 to 650 words in 6 to 9 …“), alle drei Geschichten werden fertig geschrieben. Der Dialog wurde als Screenshot angesehen.

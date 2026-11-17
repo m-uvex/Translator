@@ -1686,6 +1686,10 @@ const ST_FRAME = {
 };
 // Bezeichnungen der Luecken in der englischen Vorgabe fuer das Modell.
 const ST_RECIPE = { fig: 'Main character', place: 'Setting', mate: 'Companion', turn: 'What happens', item: 'Object' };
+// Laenge der Geschichte: Wortzahl und Absaetze, die das Modell anstreben soll.
+// Kurz ist die fruehere Fassung; mittel und lang geben dem Text mehr Raum.
+const ST_LEN = { short: [120, 180, 2, 3], mid: [250, 350, 3, 5], long: [450, 650, 6, 9] };
+const storyLen = () => ST_LEN[S.storyLen] ? S.storyLen : 'mid';
 const storyFrame = () => ST_FRAME[LANG] || ST_FRAME.en;
 const slotDef = k => ST_SLOTS.find(s => s[0] === k);
 const wordCol = () => S.studyTgt === 'de' ? 0 : 1;
@@ -1749,6 +1753,16 @@ function storyPickWord(k, i) {
   drawStoryCloze(); drawStoryPicks();
 }
 
+// Die gewaehlte Laenge hervorheben; sie gilt fuer die naechste Geschichte.
+function drawStoryLen() {
+  const cur = storyLen();
+  document.querySelectorAll('#stLen .stseg').forEach(b => {
+    const on = b.dataset.len === cur;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+}
+
 // Zaehler und Schreibknopf: erst wenn jede Luecke belegt ist, geht es los.
 function storySync() {
   const c = $('#stCount'), go = $('#stGo');
@@ -1770,6 +1784,7 @@ function storyOpen() {
   const msg = $('#stMsg'); if (msg) { msg.textContent = ''; msg.classList.add('hidden', 'err'); }
   drawStoryCloze();
   drawStoryPicks();
+  drawStoryLen();
   d.showModal();
   // Der Fokus liegt auf der ersten Lücke: Enter oeffnet gleich ihre Wortliste,
   // und der Modellknopf traegt keinen Fokusrahmen beim Aufgehen.
@@ -1791,7 +1806,7 @@ function storyStart() {
   const tx = {
     id: uid('t'), title: t('stUntitled'), cat: 'story', text: '', pos: 0,
     src: S.studySrc, tgt: S.studyTgt, created: Date.now(), updated: Date.now(),
-    pending: 1, brief: storySentence(), recipe
+    pending: 1, brief: storySentence(), recipe, len: storyLen()
   };
   ST.texts.unshift(tx);
   persist('texts');
@@ -1810,11 +1825,12 @@ async function storyGenerate(id) {
   try {
     const mdl = storyModel();
     if (!mdl) throw new Error('nomodel');
+    const [lo, hi, p1, p2] = ST_LEN[tx.len] || ST_LEN.mid;
     const out = await window.trChat([
       { role: 'system', content: 'You write short stories for language learners. Reply with JSON only, without markdown or explanations.' },
       { role: 'user', content:         `Write a short story in ${langName(lang)}. Language code: ${lang}.\n` +
         `- Write the whole story in ${langName(lang)}; the recipe below is in English only as a guide.\n` +
-        `- Length: about 120 to 180 words, simple sentences, everyday vocabulary, one or two paragraphs.\n` +
+        `- Length: about ${lo} to ${hi} words in ${p1} to ${p2} short paragraphs; keep sentences short and the vocabulary everyday.\n` +
         `- Follow this recipe and keep the main character, the setting and the object as given.\n${tx.recipe || '- (your choice)'}\n` +
         `- Surprise the reader with the ending; do not give it away early.\n` +
         `- Give the story a fitting title in ${langName(lang)}.\n` +
@@ -1861,6 +1877,10 @@ const STORY_STR = {
   stSlotTurn: ['Handlung', 'What happens', 'Wat gebeurt er', 'Qué pasa', 'Ne oluyor', 'ما الذي يحدث'],
   stSlotItem: ['Gegenstand', 'Object', 'Voorwerp', 'Objeto', 'Nesne', 'الشيء'],
   stHint: ['Wähle zu jeder Lücke ein Wort.', 'Pick a word for every gap.', 'Kies bij elk gat een woord.', 'Elige una palabra para cada hueco.', 'Her boşluk için bir kelime seç.', 'اختر كلمة لكل فراغ.'],
+  stLenL: ['Länge', 'Length', 'Lengte', 'Longitud', 'Uzunluk', 'الطول'],
+  stLenShort: ['Kurz', 'Short', 'Kort', 'Corto', 'Kısa', 'قصيرة'],
+  stLenMid: ['Mittel', 'Medium', 'Middel', 'Medio', 'Orta', 'متوسطة'],
+  stLenLong: ['Lang', 'Long', 'Lang', 'Largo', 'Uzun', 'طويلة'],
   stFill: [(n, all) => `${n} von ${all} Lücken gefüllt`, (n, all) => `${n} of ${all} gaps filled`, (n, all) => `${n} van ${all} gaten gevuld`,
     (n, all) => `${n} de ${all} huecos rellenos`, (n, all) => `${all} boşluktan ${n} tanesi dolu`, (n, all) => `${n} من ${all} فراغات مملوءة`],
   stClear: ['Auswahl leeren', 'Clear choices', 'Keuzes wissen', 'Borrar elección', 'Seçimi temizle', 'إفراغ الاختيار'],
@@ -1887,6 +1907,9 @@ function wire() {
   $('#stCancel').onclick = () => $('#stDlg').close();
   $('#stGo').onclick = storyStart;
   $('#stClear').onclick = () => { storySel = {}; storySlot = ST_SLOTS[0][0]; drawStoryCloze(); drawStoryPicks(); };
+  document.querySelectorAll('#stLen .stseg').forEach(b => {
+    b.onclick = () => { S.storyLen = b.dataset.len; save(); drawStoryLen(); };
+  });
   $('#rBack').onclick = () => { savePos(); window.edShowView('txt'); };
   const wrap = $('#readerWrap');
   if (wrap) wrap.addEventListener('scroll', () => { clearTimeout(ST.posTimer); ST.posTimer = setTimeout(savePos, 600); });
