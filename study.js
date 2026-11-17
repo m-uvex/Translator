@@ -180,6 +180,15 @@ function dropVocab(id) {
 }
 
 const genderMark = e => e.gender === 'm' ? 'm' : e.gender === 'f' ? 'f' : e.gender === 'n' ? 'n' : '';
+// Loesung mit Artikel, aber nie doppelt: steht der Artikel schon in der
+// Uebersetzung (aeltere Eintraege, oder wer ihn frueher mitgetippt hat), wird
+// er nicht noch einmal davorgesetzt.
+function solutionOf(e) {
+  const tr = String(e.translation || '').trim(), a = String(e.article || '').trim();
+  if (!tr) return '';
+  if (a && nrm(tr).startsWith(nrm(a) + ' ')) return tr;
+  return [a, tr].filter(Boolean).join(' ');
+}
 
 function vocRow(e, opts) {
   const g = genderMark(e);
@@ -789,6 +798,35 @@ function vocOpenEdit(id) {
   $('#vocTerm2').focus(); $('#vocTerm2').select();
 }
 
+// Bestimmte Artikel der Zielsprachen mit dem Genus, das sie anzeigen. Die Karte
+// setzt `e.article` selbst vor die Uebersetzung; tippt jemand den Artikel mit
+// ins Feld („das Adresszeichen“), stand er danach doppelt da („die das
+// Adresszeichen“), und das alte Genus blieb stehen. Deshalb loest das
+// Speichern einen fuehrenden Artikel ab und uebernimmt ihn.
+const ARTICLES = {
+  de: [['der', 'm'], ['die', 'f'], ['das', 'n']],
+  es: [['el', 'm'], ['la', 'f'], ['los', 'm'], ['las', 'f']],
+  fr: [['le', 'm'], ['la', 'f'], ['les', ''], ["l'", '']],
+  it: [['il', 'm'], ['lo', 'm'], ['la', 'f'], ['i', 'm'], ['gli', 'm'], ['le', 'f']],
+  pt: [['o', 'm'], ['a', 'f'], ['os', 'm'], ['as', 'f']],
+  nl: [['de', ''], ['het', 'n']],
+  sv: [['en', ''], ['ett', 'n']],
+  da: [['en', ''], ['et', 'n']], nb: [['en', ''], ['et', 'n']], nn: [['en', ''], ['et', 'n']]
+};
+// Zerlegt „das Adresszeichen“ in Artikel und Rest. Ohne Treffer bleibt alles,
+// wie es getippt wurde; ein Artikel allein (ohne Rest) wird nie abgetrennt.
+function splitArticle(tr, tgt, cur) {
+  const text = String(tr || '').trim();
+  const i = text.search(/\s/);
+  if (i < 0) return { translation: text, article: '', gender: '' };
+  const head = text.slice(0, i), rest = text.slice(i + 1).trim();
+  if (!rest) return { translation: text, article: '', gender: '' };
+  const low = head.toLocaleLowerCase(), c = nrm(cur);
+  const known = (ARTICLES[tgt] || []).find(a => a[0] === low);
+  if (!known && !(c && c === low)) return { translation: text, article: '', gender: '' };
+  return { translation: rest, article: head, gender: known ? known[1] : '' };
+}
+
 function vocSaveEdit() {
   const e = ST.vocab.find(v => v.id === vocEditId);
   if (!e) { $('#vocDlg').close(); return; }
@@ -803,7 +841,12 @@ function vocSaveEdit() {
   const oldTerm = e.term;
   e.term = term;
   if (!e.lemma || nrm(e.lemma) === nrm(oldTerm)) e.lemma = term;
-  e.translation = $('#vocTr2').value.trim();
+  // Getippter Artikel wandert in `article` (und setzt das Genus mit), damit die
+  // Karte ihn nicht ein zweites Mal davorsetzt.
+  const tgt = (pairOf(e) || {}).tgt || '';
+  const sp = splitArticle($('#vocTr2').value, tgt, e.article);
+  e.translation = sp.translation;
+  if (sp.article) { e.article = sp.article; if (sp.gender) e.gender = sp.gender; }
   e.context = $('#vocCtx2').value.trim();
   e.updated = Date.now();
   persist('vocab');
@@ -902,7 +945,7 @@ function typeCheck() {
     // Falsch: Wort nach hinten, Meisterschaft zuruecksetzen, Loesung zeigen.
     e.mastery = 0;
     rate(e, 'again');
-    srsNote = { ok: false, text: t('srsWrong') + ' ' + [e.article, e.translation].filter(Boolean).join(' ') };
+    srsNote = { ok: false, text: t('srsWrong') + ' ' + solutionOf(e) };
     typeQueue.push(typeQueue.shift());
   }
   persist('vocab');
@@ -969,7 +1012,7 @@ function renderSrs() {
   // Wortart, statt das Wort ein zweites Mal zu nennen.
   // Manche Wörter kamen ohne Übersetzung herein (etwa aus einer Readlang-Datei,
   // die nur das Wort kannte); dann sagt die Karte das, statt leer zu bleiben.
-  const sol = [e.article, e.translation].filter(Boolean).join(' ');
+  const sol = solutionOf(e);
   const sub = [e.lemma && e.lemma !== e.term ? esc(e.lemma) : '', e.pos ? esc(e.pos) : ''].filter(Boolean).join(' · ');
   const subLine = !sub ? (ctx ? `<div class="srsctx2 muted">${esc(e.term)}</div>` : '')
     : `<div class="srsctx2 muted">${ctx ? esc(e.term) + ' · ' : ''}${sub}</div>`;
