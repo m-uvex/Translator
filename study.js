@@ -1728,6 +1728,12 @@ function drawStoryCloze() {
   storySync();
 }
 
+// Jedes Wort nur einmal: Steht es schon in einer anderen Luecke, ist es hier
+// gesperrt - sonst entsteht „Dann kommt ein Brief an. Dazu kommt: ein Brief.“
+function storyTaken(k, o) {
+  return ST_SLOTS.some(([key]) => key !== k && storySel[key] && storySel[key][1] === o[1]);
+}
+
 // Die Wortoptionen der aktiven Luecke: Pillen mit dem Zeichen des Wortes, in der
 // Reihenfolge der Liste - nichts wird umsortiert.
 function drawStoryPicks() {
@@ -1736,9 +1742,10 @@ function drawStoryPicks() {
   head.textContent = t(d[1]);
   // Kein `data-i` fuer den Index: das ist in dieser App die Icon-Angabe, ein
   // spaeterer Icon-Durchlauf wuerde den Pilleninhalt damit ueberschreiben.
-  box.innerHTML = d[2].map((o, i) =>
-    `<button type="button" class="wpill${storySel[d[0]] === o ? ' on' : ''}" data-opt="${i}">${ic(o[2], 16)}<span>${esc(o[wordCol()])}</span></button>`
-  ).join('');
+  box.innerHTML = d[2].map((o, i) => {
+    const taken = storyTaken(d[0], o);
+    return `<button type="button" class="wpill${storySel[d[0]] === o ? ' on' : ''}${taken ? ' taken' : ''}" data-opt="${i}"${taken ? ' disabled' : ''}>${ic(o[2], 16)}<span>${esc(o[wordCol()])}</span></button>`;
+  }).join('');
   box.querySelectorAll('.wpill').forEach((b, i) => { b.onclick = () => storyPickWord(d[0], i); });
 }
 
@@ -1746,6 +1753,7 @@ function drawStoryPicks() {
 // Reihe nach durchkommt.
 function storyPickWord(k, i) {
   const d = slotDef(k); if (!d || !d[2][i]) return;
+  if (storyTaken(k, d[2][i])) return;
   storySel[k] = d[2][i];
   const order = ST_SLOTS.map(s => s[0]);
   const rest = order.slice(order.indexOf(k) + 1).concat(order.slice(0, order.indexOf(k)));

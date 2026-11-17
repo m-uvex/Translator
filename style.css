@@ -580,6 +580,9 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .wpill:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card))}
 .wpill.on{border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
 .wpill.on svg{color:var(--on-accent)}
+/* Wort steckt schon in einer anderen Luecke: sichtbar, aber nicht waehlbar. */
+.wpill.taken{opacity:.45;cursor:default;border-color:var(--line);background:var(--card);color:var(--text)}
+.wpill.taken svg{color:var(--muted)}
 .stpoolmsg{padding:8px 2px 0}
 #stDlg .stacts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px}
 #stDlg .stacts .sp{flex:1}

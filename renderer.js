@@ -83,35 +83,45 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // Zeichen (Cowboy -> Hut, Wueste -> Kaktus, Pirat -> Totenkopf ...), damit die
   // Pillen ohne Lesen erkennbar sind. Alle Zeichen sind im selben Raster
   // gezeichnet: 24x24, Strichstaerke ueber ic() skaliert, runde Enden.
-  sgPirate:'<path d="M12 3a7 7 0 0 0-7 7c0 2.3 1.1 3.9 2.4 4.9V18h9.2v-3.1c1.3-1 2.4-2.6 2.4-4.9a7 7 0 0 0-7-7z"/><circle cx="9.4" cy="10.4" r="1.2"/><circle cx="14.6" cy="10.4" r="1.2"/><path d="M10.4 14.6h3.2"/>',
+  // Pirat: Schaedel mit Augenklappe, Band darueber und Zaehnen.
+  sgPirate:'<path d="M12 3.6a6.6 6.6 0 0 1 6.6 6.6c0 2.3-1 3.8-2.4 4.8v2.2a1.6 1.6 0 0 1-1.6 1.6H9.4a1.6 1.6 0 0 1-1.6-1.6v-2.2C6.4 14 5.4 12.5 5.4 10.2A6.6 6.6 0 0 1 12 3.6z"/><circle cx="9.2" cy="10.2" r="1.1"/><circle cx="14.4" cy="9.8" r="1.7"/><path d="M12.9 9.6 18.4 7.4M13.1 10.4 8.8 12.6"/><path d="M10.4 14.6v1.8M13.6 14.6v1.8"/>',
   // Cowboy-Hut: eingedrueckte Krone, breite Krempe mit Kante.
-  sgCowboy:'<path d="M7.8 15.2c0-3.8 1.4-7 4.2-7s4.2 3.2 4.2 7"/><path d="M12 8.6v6.4"/><path d="M3.4 15.2c2.8 2 14.4 2 17.2 0"/><path d="M3.4 15.2c0 1.6 3.9 2.8 8.6 2.8s8.6-1.2 8.6-2.8"/>',
+  // Cowboyhut: Krone mit Delle, Band und breite Krempe.
+  sgCowboy:'<path d="M7.4 5.8c1.6 1.2 3 1.6 4.6 1.6s3-.4 4.6-1.6c1 1.4 1.4 3 1.4 4.6v3.8H6V10.4c0-1.6.4-3.2 1.4-4.6z"/><path d="M6 11.4h12"/><path d="M3.4 14.2c.6-1.4 3.9-2.2 8.6-2.2s7.9.8 8.6 2.2c-.2 1.8-3.8 3.2-8.6 3.2s-8.4-1.4-8.6-3.2z"/>',
   // Ritterhelm: Glocke, Visierschlitz und Nasenschutz.
-  sgKnight:'<path d="M5.4 13.2a6.6 6.6 0 0 1 13.2 0v3a2.2 2.2 0 0 1-2.2 2.2H7.6a2.2 2.2 0 0 1-2.2-2.2z"/><path d="M5.4 12.6h13.2"/><path d="M12 12.6v5.8"/><path d="M9.3 15.2h1.4M13.3 15.2h1.4"/><path d="M12 6.6V4.4c1.7 0 2.8 1 3 2.6"/>',
-  sgAstro:'<circle cx="12" cy="10.8" r="6.6"/><path d="M7.4 9.6a4.7 4.7 0 0 1 9.2 0"/><path d="M7.8 17.2v3h8.4v-3"/>',
+  // Ritterin: Schild mit Kreuz.
+  sgKnight:'<path d="M12 2.8 19.2 5.4v6.8c0 4.6-3 8-7.2 9.2-4.2-1.2-7.2-4.6-7.2-9.2V5.4z"/><path d="M12 7.2v8.6M8.8 10.8h6.4"/>',
+  // Astronaut: runder Helm mit Visierfenster, Anzugschultern und Antenne.
+  sgAstro:'<circle cx="12" cy="9.2" r="5.6"/><path d="M8.8 9.2c0-2 1.4-3.4 3.2-3.4s3.2 1.4 3.2 3.4-1.4 3.4-3.2 3.4-3.2-1.4-3.2-3.4z"/><path d="M4.8 20.4v-2a4.4 4.4 0 0 1 4.4-4.4h5.6a4.4 4.4 0 0 1 4.4 4.4v2"/><path d="M12 3.6V2"/>',
   // Hexenhut: schraeger Kegel mit Knick und Krempe, dazu das Hutband.
-  sgWitch:'<path d="M3.2 18.4c0-.7 3.9-1.2 8.8-1.2s8.8.5 8.8 1.2-3.9 1.3-8.8 1.3-8.8-.6-8.8-1.3z"/><path d="M6.8 17.8 11.2 5.4c.3-.9 1.5-.8 1.7.1l2 12.3z"/><path d="M8.6 13.4h5.4"/>',
-  // Detektiv: ein Fingerabdruck aus drei Bogen und einem Grundstrich.
-  sgDetective:'<path d="M7.4 19.4a8.2 8.2 0 1 1 9.2 0"/><path d="M9.2 16.8a5.6 5.6 0 1 1 5.6 0"/><path d="M10.8 14.2a2.8 2.8 0 1 1 2.4 0"/><path d="M8.8 19.4v-1.8M15.2 19.4v-1.8"/>',
-  // Drache: Kopf im Profil mit drei Hoernern, Auge und Schnauze.
-  sgDragon:'<path d="M4.6 11.6c0-3.6 3.3-6.4 7.4-6.4s7.4 2.8 7.4 6.4c0 2.6-1.6 4.8-3.8 5.8v2.4a1.6 1.6 0 0 1-1.6 1.6H10a1.4 1.4 0 0 1-1.4-1.4v-2.6c-2.2-1-4-3.2-4-5.8z"/><path d="M6.8 5.8 5 2.6l3.4 1.4M17.2 5.8 19 2.6l-3.4 1.4"/><path d="M4.6 11.4 2.6 12M19.4 11.4l2 .6"/><circle cx="9.6" cy="10.6" r="1"/><circle cx="14.4" cy="10.6" r="1"/><path d="M10.2 14.6h3.6M11 16.4h2"/>',
+  // Hexenhut: gebogener Kegel mit Knick, Krempe und Hutband.
+  sgWitch:'<path d="M2.8 18.6c3.2-1.2 15.2-1.2 18.4 0"/><path d="M7.4 17.8 12.4 8.2l1.4-3.4 1.4 2.4 1.2 10.6"/><path d="M8.4 14.4h7"/>',
+  // Detektiv: Hut mit breiter Krempe und Lupe darunter.
+  sgDetective:'<path d="M4.8 11.4c0-4.4 3.2-7.6 7.2-7.6s7.2 3.2 7.2 7.6"/><path d="M2.8 11.4h18.4"/><path d="M9.6 4.6 8.8 2.6M14.4 4.6l.8-2"/><circle cx="9.6" cy="16.6" r="3.2"/><path d="M11.9 18.9 14.8 21.8"/>',
+  // Drache: kantiger Kopf mit Horn, Auge, Rueckstacheln und langem Maul.
+  sgDragon:'<path d="M3.4 10.4 6 5.4l5-1.2 4.6 1.8 1.8 3.4-1.6 3.4-4 1.2-5 .2z"/><path d="M10.8 4.4 12.4 1.6l1.8 3.4"/><circle cx="11.8" cy="8.2" r=".9"/><path d="M16.2 7.6 21.4 6.4l-1.8 3.6-2.6.6"/><path d="M17.4 10.2 14.4 12.2M5.2 13.4l-1.6 3.2M8 14.4l-.6 3.2"/>',
   sgRobot:'<rect x="4" y="7.2" width="16" height="11.6" rx="3"/><circle cx="9" cy="12.2" r="1.2"/><circle cx="15" cy="12.2" r="1.2"/><path d="M9.6 16.2h4.8M12 7.2V4.4"/><circle cx="12" cy="3.2" r="1.1"/>',
   sgDesert:'<path d="M12 4.2v15.4"/><path d="M12 10.4c-2.2 0-3.5 1.4-3.5 3.5v2.2"/><path d="M12 13.4c2.2 0 3.5-1.4 3.5-3.5V7.6"/><path d="M8.4 19.6h7.2"/>',
   sgMoon:'<path d="M15.4 3.4a8.6 8.6 0 1 0 5 13.4 9.2 9.2 0 0 1-5-13.4z"/><circle cx="9.6" cy="11" r="1"/><circle cx="12.2" cy="16" r="1"/>',
-  sgForest:'<path d="M7.6 3.6 11.8 10H3.4z"/><path d="M7.6 7.8 12 14.6H3.2z"/><path d="M7.6 14.6v5.8"/><path d="M17 8.4l3.2 5.2h-6.4z"/><path d="M17 12.6v7.8"/>',
+  // Wald: zwei Nadelbaeume mit Stamm und Boden.
+  sgForest:'<path d="M6.4 3.4 10.4 10H2.4z"/><path d="M6.4 7.6 10.8 14.4H2z"/><path d="M6.4 14.4v5"/><path d="M16.4 6.2 20 12h-7.2z"/><path d="M16.4 12v7.4"/><path d="M2 19.4h20"/>',
   // Insel: Palme mit gebogenem Stamm, drei Wedeln und Wasser ringsum.
-  sgIsland:'<path d="M3.4 20.2c2-1.2 3.8-1.2 5.8 0M14.8 20.2c2-1.2 3.8-1.2 5.8 0"/><path d="M10.4 20.2c-.4-3.4.2-6.2 1.8-8.6"/><path d="M12.2 11.6C9.4 9.8 6.6 10.2 5 12M12.2 11.6c2.6-2 5.4-1.8 7 0M12.2 11.6c-.2-2.8 1-4.8 3-5.4"/>',
-  // Schloss: zwei Tuerme mit Zinnen, Mauer dazwischen und rundem Tor.
-  sgCastle:'<path d="M3.4 20.6V8.6h4.2v12"/><path d="M16.4 20.6V8.6h4.2v12"/><path d="M7.6 20.6V12.4h8.8v8.2"/><path d="M3.4 8.6v-2h1.5v1.4h1.4V6.6h1.3v2"/><path d="M16.4 8.6v-2h1.5v1.4h1.4V6.6h1.3v2"/><path d="M9.8 20.6v-4.2a2.2 2.2 0 0 1 4.4 0v4.2"/><path d="M10.6 9.6h2.8v2.2h-2.8z"/>',
+  // Insel: Sandhuegel mit Palme und Wasserlinie.
+  sgIsland:'<path d="M4.4 19.4c1.6-2.2 4-3.4 7.4-3.4s5.8 1.2 7.4 3.4"/><path d="M11.4 15.8c-.4-3.2 0-5.6 1.4-7.6"/><path d="M12.8 8.2c-2.4-1.6-4.8-1.2-6.2.6M12.8 8.2c2.2-1.6 4.6-1.4 6 .4M12.8 8.2c0-2.2 1-3.8 2.6-4.4"/><path d="M2.6 20.6h18.8"/>',
+  // Schloss: zwei Tuerme mit Spitzdach, Mauer dazwischen und rundem Tor.
+  sgCastle:'<path d="M2.6 20.4V9.6l2.9-3.6 2.9 3.6v10.8"/><path d="M15.6 20.4V9.6l2.9-3.6 2.9 3.6v10.8"/><path d="M8.4 20.4V12.6h7.2v7.8"/><path d="M10.6 20.4v-3.6a1.4 1.4 0 0 1 2.8 0v3.6"/><path d="M8.4 15h7.2M9 8.6h6M10.2 10.6h3.6"/>',
   sgCity:'<path d="M3 20.8h18"/><path d="M5 20.8V10.4h4v10.4"/><path d="M11 20.8V5.2h5v15.6"/><path d="M18 20.8v-7.2h2v7.2"/><path d="M7 13.2h.01M7 16.4h.01M13 9h.01M13 12.2h.01M13 15.4h.01"/>',
-  // Papagei: runder Kopf mit Hakenchnabel, Koerper und zwei Schwanzfedern.
-  sgParrot:'<circle cx="13" cy="8.6" r="4.4"/><path d="M16.6 6.2l3.4 1.6-3.2 1.6"/><circle cx="13.6" cy="8.2" r=".9"/><path d="M10 12.4c-2.6 1.4-4 3.6-3.8 6.2.1 1.1 1 1.8 2.2 1.8 2.2 0 3.9-1.7 4.8-4.4"/><path d="M8.4 19.6 6.6 22M10.6 19.4l.4 2.6"/>',
-  // Hufeisen: Bogen mit zwei Enden und Nagelloechern.
-  sgHorse:'<path d="M6.8 20.6V12a5.2 5.2 0 0 1 10.4 0v8.6"/><path d="M4.4 20.6h4.4M15.2 20.6h4.4"/><circle cx="9" cy="8.6" r=".7"/><circle cx="12" cy="7.6" r=".7"/><circle cx="15" cy="8.6" r=".7"/>',
-  sgCat:'<path d="M6.2 4.4 5.8 10"/><path d="M17.8 4.4 18.2 10"/><path d="M12 4.6a7 7 0 0 0-7 6.8c0 4 3.1 7.2 7 7.2s7-3.2 7-7.2a7 7 0 0 0-7-6.8z"/><path d="M9.6 11.4h.01M14.4 11.4h.01M10.8 14.8c.8.7 1.6.7 2.4 0"/>',
-  sgDog:'<circle cx="7.4" cy="7.6" r="2"/><circle cx="16.6" cy="7.6" r="2"/><circle cx="4.6" cy="12.6" r="2"/><circle cx="19.4" cy="12.6" r="2"/><path d="M12 10.6c3 0 5.6 2.5 5.6 5.2 0 2-1.6 3.4-3.6 3.4-.9 0-1.3-.4-2-.4s-1.1.4-2 .4c-2 0-3.6-1.4-3.6-3.4 0-2.7 2.6-5.2 5.6-5.2z"/>',
+  // Papagei: Kopf mit grossem Hakenchnabel, Auge und Federschopf.
+  sgParrot:'<circle cx="11.4" cy="11.4" r="5.8"/><path d="M16.2 8.2c2.4.2 4 1.8 4 3.8 0 1.6-1.2 2.8-2.6 3.4l-1.6-1.2"/><circle cx="10.4" cy="10.4" r=".9"/><path d="M8.4 5.6 6.8 3.4M10.8 4.6l-.4-2.2M13.6 5.4l1.6-2"/>',
+  // Pferd: Hufeisen mit doppelter Kontur und Nagelloechern.
+  sgHorse:'<path d="M4.4 20.4V11.6a7.6 7.6 0 0 1 15.2 0v8.8"/><path d="M7.6 20.4v-8.8a4.4 4.4 0 0 1 8.8 0v8.8"/><path d="M4.4 20.4h3.2M16.4 20.4h3.2"/><circle cx="8.8" cy="8.6" r=".7"/><circle cx="15.2" cy="8.6" r=".7"/><circle cx="8.6" cy="13.2" r=".7"/><circle cx="15.4" cy="13.2" r=".7"/>',
+  // Katze: Kopf mit spitzen Ohren, Schnurrhaaren und Maul.
+  sgCat:'<path d="M6.4 4.4 5.6 10.4M17.6 4.4l.8 6"/><circle cx="12" cy="12.2" r="6.6"/><path d="M9.6 11.4h.01M14.4 11.4h.01"/><path d="M10.4 14.8c1 .8 2.2.8 3.2 0"/><path d="M6.2 12.6 2.6 11.8M6.2 14.4 3 15.2M17.8 12.6l3.6-.8M17.8 14.4l3.2.8"/>',
+  // Hund: Kopf mit Haengeohren, Nase und Leckerzunge.
+  sgDog:'<circle cx="12" cy="11.4" r="6"/><path d="M6.6 7.4c-1.6 1-2.4 3-2 5.2.3 1.8 1.4 2.8 2.4 2.8"/><path d="M17.4 7.4c1.6 1 2.4 3 2 5.2-.3 1.8-1.4 2.8-2.4 2.8"/><circle cx="9.8" cy="10.6" r=".9"/><circle cx="14.2" cy="10.6" r=".9"/><path d="M10.6 14.6c1 .8 1.8.8 2.8 0"/><path d="M12 13.2v1.4"/>',
   sgGiant:'<circle cx="9.6" cy="4.6" r="2.4"/><path d="M9.6 7v7"/><path d="M5.6 10 9.6 8.6 13.6 10"/><path d="M9.6 14 6.6 20.6M9.6 14l3 6.6"/><circle cx="19" cy="15.6" r="1.3"/><path d="M19 16.9v2.9M17.4 18.2h3.2M19 19.8l-1.1 1.7M19 19.8l1.1 1.7"/>',
-  sgGhost:'<path d="M5.4 20.4V10a6.6 6.6 0 0 1 13.2 0v10.4l-2.2-1.6-2.2 1.6-2.2-1.6-2.2 1.6z"/><path d="M9.4 10h.01M14.6 10h.01"/>',
+  // Gespenst: Kopf mit Wellensaum, Augen und Mund.
+  sgGhost:'<path d="M5.4 20.6V10.2a6.6 6.6 0 0 1 13.2 0v10.4l-2.2-1.8-2.2 1.8-2.2-1.8-2.2 1.8z"/><circle cx="9.6" cy="10.2" r="1"/><circle cx="14.4" cy="10.2" r="1"/><path d="M10.6 13.8c.9.8 1.9.8 2.8 0"/>',
   sgStorm:'<path d="M7 15.4a4 4 0 0 1 .6-8 5.6 5.6 0 0 1 10.3 1.6A3.4 3.4 0 0 1 17 15.8"/><path d="M12.6 12.4 10 16.6h3.2l-1.6 4"/>',
   // Schatztruhe: Deckel mit Griff, Band und Schluesselloch.
   sgTreasure:'<path d="M3.6 20.4v-8h16.8v8z"/><path d="M3.6 12.4a8.4 8.4 0 0 1 16.8 0"/><path d="M3.6 12.4h16.8"/><path d="M6.6 12.6v7.6M17.4 12.6v7.6"/><path d="M10.8 12.4h2.4v3.4h-2.4z"/><circle cx="12" cy="13.6" r=".5"/>',
@@ -123,24 +133,31 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // Anker fuer die Seefahrerin.
   sgAnchor:'<circle cx="12" cy="4.8" r="1.9"/><path d="M12 6.7v13.7"/><path d="M7.8 9.6h8.4"/><path d="M4.8 13.4c0 4.2 3.2 7.2 7.2 7.2s7.2-3 7.2-7.2"/><path d="M4.8 13.4l2.6 1.1M19.2 13.4l-2.6 1.1"/>',
   sgCompass:'<circle cx="12" cy="12" r="8.4"/><path d="m15 9-1.8 4.2L9 15l1.8-4.2z"/>',
-  sgKey:'<circle cx="8" cy="8" r="3.6"/><path d="m10.6 10.6 8.2 8.2"/><path d="M15.4 15.4l-2 2 2 2"/>',
+  // Schluessel: runder Griff mit Loch, Schaft und zwei Baerten.
+  sgKey:'<circle cx="8.4" cy="8.4" r="4"/><circle cx="8.4" cy="8.4" r="1.2"/><path d="M11.2 11.2 19.4 19.4"/><path d="M15.8 15.8l-2 2M18 18l-2 2"/>',
   // Meer fuer „unter Wasser“: zwei Wellen und Luftblasen.
-  sgSea:'<path d="M3.4 12.8c1.8-1.8 3.6-1.8 5.4 0s3.6 1.8 5.4 0 3.6-1.8 5.2 0"/><path d="M3.4 17.6c1.8-1.8 3.6-1.8 5.4 0s3.6 1.8 5.4 0 3.6-1.8 5.2 0"/><circle cx="9" cy="7.4" r=".9"/><circle cx="13" cy="5.6" r=".7"/>',
+  // Meer fuer „unter Wasser“: zwei Wellen und ein Fisch darueber.
+  sgSea:'<path d="M2.6 14.6c1.8-1.8 3.6-1.8 5.4 0s3.6 1.8 5.4 0 3.6-1.8 5.4 0 1.9 1.6 2.6 1.2"/><path d="M2.6 19.4c1.8-1.8 3.6-1.8 5.4 0s3.6 1.8 5.4 0 3.6-1.8 5.4 0 1.9 1.6 2.6 1.2"/><path d="M6.6 6.4c2.2-1.8 5.4-1.6 7.2.6-1.8 2.2-5 2.4-7.2.6l-2.8 1.6V4.8z"/><circle cx="12" cy="5.6" r=".6"/>',
   // Berge mit Schneekappe.
-  sgMountains:'<path d="M2.8 19.6h18.4"/><path d="M3.6 19.6 9 7.8l3.4 7"/><path d="M9 7.8 10.8 3.8l7 15.8"/><path d="M6.8 12.2l2.2-1.6 2.2 1.6"/>',
-  // Dschungel: grosses Blatt mit Mittelrippe.
-  sgLeaf:'<path d="M20.4 3.6C10.8 4.8 5 9.8 4.4 18.8c8.6.4 13.8-5.6 16-15.2z"/><path d="M4.8 19.6C8.2 15 12.2 11.2 17.4 8.4"/>',
+  // Berge: zwei Gipfel mit Schneegrenze und Bodenlinie.
+  sgMountains:'<path d="M2.4 19.6 9 5.6l6.6 14"/><path d="M12.8 19.6 16.8 10.8l4.8 8.8"/><path d="M6.2 11.6 9 13.6l2.8-2"/><path d="M2.4 19.6h19.2"/>',
+  // Dschungel: Staengel mit zwei grossen Blaettern.
+  sgLeaf:'<path d="M11.8 21V9"/><path d="M11.4 13.4C7.4 13.6 4.4 11 4 6.6c4.4-.4 7.6 2.2 7.4 6.8z"/><path d="M12.2 10.4c-.2-3.6 2.4-6.2 6.4-6.4.4 4-2.2 6.6-6.4 6.4z"/>',
   // Bauernhof: Scheune mit Satteldach und Tor.
-  sgBarn:'<path d="M3.4 20.4V9.8L12 4.4l8.6 5.4v10.6z"/><path d="M3.4 9.8h17.2"/><path d="M8.4 20.4v-6.8h7.2v6.8"/><path d="M8.4 13.6 15.6 20.4M15.6 13.6 8.4 20.4"/>',
+  // Bauernhof: Scheune mit Dachfirst, Tor und Luke.
+  sgBarn:'<path d="M2.8 20.4V10.2L12 4.2l9.2 6v10.2z"/><path d="M2.8 10.2h18.4"/><path d="M8.6 20.4v-6.8h6.8v6.8"/><path d="M8.6 13.6 15.4 20.4M15.4 13.6 8.6 20.4"/><path d="M10.6 6.8h2.8v2.6h-2.8z"/>',
   // Wolf: Kopf mit spitzen Ohren, Augen und Schnauze.
   // Baer: runde Ohren, runde Schnauze.
-  sgBear:'<circle cx="7" cy="7.2" r="2.7"/><circle cx="17" cy="7.2" r="2.7"/><circle cx="12" cy="13" r="6.4"/><circle cx="9.7" cy="11.8" r=".9"/><circle cx="14.3" cy="11.8" r=".9"/><path d="M12 14.2v1.4"/><path d="M10.2 16.6c1.1.9 2.5.9 3.6 0"/>',
+  // Baer: runde Ohren, runde Schnauze, Nase und Mund.
+  sgBear:'<circle cx="6.6" cy="6.8" r="2.6"/><circle cx="17.4" cy="6.8" r="2.6"/><circle cx="12" cy="12.4" r="6.6"/><circle cx="9.6" cy="11" r=".9"/><circle cx="14.4" cy="11" r=".9"/><path d="M12 12.6v1.6"/><path d="M9.8 15.8c1.4 1.2 3 1.2 4.4 0"/>',
   // Maus: Kopf mit grossen runden Ohren und Schnurrhaaren.
   sgMouse:'<circle cx="12" cy="14.4" r="5.2"/><circle cx="6.8" cy="7.8" r="2.8"/><circle cx="17.2" cy="7.8" r="2.8"/><circle cx="9.8" cy="13.4" r=".9"/><circle cx="14.2" cy="13.4" r=".9"/><path d="M12 15.8c.5.4 1 .4 1.5 0"/><path d="M6.6 15.4 3.8 14.8M6.6 17.2 4.2 17.8M17.4 15.4l2.8-.6M17.4 17.2l2.4.6"/>',
   // Frosch: Kopf mit Augen oben und breitem Maul.
-  sgFrog:'<circle cx="8.4" cy="8.8" r="2.3"/><circle cx="15.6" cy="8.8" r="2.3"/><path d="M4.6 14.8c0-2.4 3.2-4.2 7.4-4.2s7.4 1.8 7.4 4.2c0 3.4-3.2 5.8-7.4 5.8s-7.4-2.4-7.4-5.8z"/><path d="M8 17.6c1.2.9 2.4 1.3 4 1.3s2.8-.4 4-1.3"/>',
+  // Frosch: Augen oben, breites Maul, zwei Vorderfuesse.
+  sgFrog:'<circle cx="7.8" cy="8.2" r="2.6"/><circle cx="16.2" cy="8.2" r="2.6"/><circle cx="7.8" cy="8.2" r=".7"/><circle cx="16.2" cy="8.2" r=".7"/><path d="M4.4 13.4c0-2.4 3.4-4 7.6-4s7.6 1.6 7.6 4c0 2.6-1.6 4.6-4 5.4l.6 2.4M8.4 18.8l.6-2.4c-2.4-.8-4.6-2.8-4.6-5.4z"/><path d="M8.8 16.4c1.2.6 2 .8 3.2.8s2-.2 3.2-.8"/>',
   // Eule: Kopf mit Federohren, grossen Augen und Schnabel.
-  sgOwl:'<path d="M5.6 8.6 4.6 4.2l4 2.2c2-.8 4.4-.8 6.8 0l4-2.2-1 4.4"/><path d="M12 6.4c-3.8 0-6.6 2.8-6.6 6.6 0 4 2.8 6.8 6.6 6.8s6.6-2.8 6.6-6.8c0-3.8-2.8-6.6-6.6-6.6z"/><circle cx="9.4" cy="12" r="1.4"/><circle cx="14.6" cy="12" r="1.4"/><path d="M12 13.6l-1 1.8h2z"/>',
+  // Eule: Federohren, grosse Augenringe, Schnabel.
+  sgOwl:'<path d="M5.4 8 4.4 3.6l4 2.2c2.2-.8 4.4-.8 6.6 0l4-2.2-1 4.4"/><path d="M12 6.2c-3.8 0-6.6 2.8-6.6 6.6 0 4 2.8 6.8 6.6 6.8s6.6-2.8 6.6-6.8c0-3.8-2.8-6.6-6.6-6.6z"/><circle cx="9.4" cy="11.8" r="2.2"/><circle cx="14.6" cy="11.8" r="2.2"/><path d="M12 14.2l-1.2 2h2.4z"/>',
   // Warnung: Dreieck mit Ausrufezeichen fuer „geht etwas schief“.
   sgWarn:'<path d="M12 4 21.2 19.8H2.8z"/><path d="M12 10.2v4.2"/><path d="M12 17.2h.01"/>',
   // Wendung: ein Pfeil, der umkehrt - „kommt alles anders als gedacht“.
@@ -150,17 +167,18 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // Zwei Sprechblasen: „gibt es ein Missverstaendnis“.
   sgChat:'<path d="M3.4 5.4h9.4v6.4H8l-3 2.4v-2.4H3.4z"/><path d="M16.8 10h3.8v6.4h-1.4v2.4l-3-2.4h-5.4"/>',
   // Funkeln: „geschieht etwas Wunderbares“.
-  sgSparkle:'<path d="M11.4 3.6l1.8 4.6 4.6 1.8-4.6 1.8-1.8 4.6-1.8-4.6L5 10l4.6-1.8z"/><path d="M17.6 15.4l.9 2.2 2.2.9-2.2.9-.9 2.2-.9-2.2-2.2-.9 2.2-.9z"/>',
+  // Funkeln: grosser Stern mit zwei kleinen daneben.
+  sgSparkle:'<path d="M9.8 3.4 12 8.8l5.4 2.2-5.4 2.2-2.2 5.4-2.2-5.4L2.2 11l5.4-2.2z"/><path d="M17.8 14.4l1 2.2 2.2 1-2.2 1-1 2.2-1-2.2-2.2-1 2.2-1z"/><path d="M17.4 3.4l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z"/>',
   // Raetsel: Fragezeichen im Kreis.
   sgRiddle:'<circle cx="12" cy="12" r="8.6"/><path d="M9.6 9.6a2.6 2.6 0 1 1 3.7 2.4c-.7.3-1.1 1-1.1 1.8v.4"/><path d="M12.2 17.2h.01"/>',
   // Brief: Umschlag mit Klappe.
   sgLetter:'<rect x="3" y="5.8" width="18" height="12.8" rx="2"/><path d="m3.8 7.2 8.2 5.8 8.2-5.8"/>',
-  // Handspiegel.
-  sgMirror:'<ellipse cx="12" cy="9" rx="5.4" ry="6.2"/><path d="M9.4 5.6a5 5 0 0 0-1.4 3.6"/><path d="M12 15.2v4.2"/><path d="M9.6 20.4h4.8"/><circle cx="12" cy="20.4" r="1"/>',
-  // Laterne mit Flamme.
-  sgLantern:'<path d="M9.4 3.6h5.2"/><path d="M12 3.6V5"/><rect x="7.4" y="5.2" width="9.2" height="11.8" rx="2.4"/><path d="M9.6 20.4h4.8"/><path d="M11 20.4v-3.4h2v3.4"/><path d="M12 8.6c1 1.2 1.6 1.8 1.6 2.8a1.6 1.6 0 0 1-3.2 0c0-1 .6-1.6 1.6-2.8z"/>',
-  // Buch mit Rueckgrat und zwei Zeilen.
-  sgBook:'<path d="M4.4 5.4A2 2 0 0 1 6.4 3.4h12.2v17.2H6.4a2 2 0 0 0-0 4H18.6"/><path d="M4.4 5.4v15.2"/><path d="M8.4 7.8h7M8.4 11.2h7"/>',
+  // Handspiegel: runder Rahmen mit Spiegelglas, Griff und Fuss.
+  sgMirror:'<circle cx="12" cy="9.2" r="6.2"/><circle cx="12" cy="9.2" r="3.8"/><path d="M9.2 6.2 7.6 8.8"/><path d="M12 15.4v3.4"/><path d="M10 20.6h4"/>',
+  // Laterne: Buegel, Dach, Glas mit Flamme und Sockel.
+  sgLantern:'<path d="M9.6 3.4h4.8"/><path d="M12 3.4v1.8"/><path d="M7.4 5.2h9.2l1 3.2v7.6l-1.2 3.2H7.6l-1.2-3.2V8.4z"/><path d="M6.4 8.4h11.2"/><path d="M12 9.6c1.3 1.5 1.9 2.3 1.9 3.3a1.9 1.9 0 0 1-3.8 0c0-1 .6-1.8 1.9-3.3z"/><path d="M9.8 19.2v1.4h4.4v-1.4"/>',
+  // Buch: aufgeschlagen, zwei Seiten mit Bund.
+  sgBook:'<path d="M12 6.6C10 5 7.2 4.6 4.2 5.2v12.8c3-.6 5.8-.2 7.8 1.4 2-1.6 4.8-2 7.8-1.4V5.2c-3-.6-5.8-.2-7.8 1.4z"/><path d="M12 6.6v12.8"/><path d="M6.8 8.6c1.4-.2 2.6 0 3.6.4M6.8 11.6c1.4-.2 2.6 0 3.6.4"/>',
   // Amulett an einer Kette.
   sgAmulet:'<path d="M7 3.4a6.6 6.6 0 0 0 10 0"/><path d="M12 3.6v3.2"/><path d="M12 6.8 18.4 12 12 21 5.6 12z"/><path d="M5.6 12h12.8M12 6.8 9.4 12l2.6 9 2.6-9"/>',
   // Floete: Roehre mit drei Griffiochern.
