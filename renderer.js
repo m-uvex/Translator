@@ -364,10 +364,16 @@ const STY = {
   // Gruppe von Personen. Beide Reihen zusammen sind eine Angabe: es gilt immer
   // nur eine Option (siehe $('#styles').onclick). `unknown` in der ersten Reihe
   // heisst "ohne Angabe" und aendert den Prompt nicht.
-  gender:{ h:'l_gender', opts:[['unknown','dash',''],['neutral','nb','Use gender-neutral wording for the addressed person.'],['male','male','The addressed person is male; use matching grammatical forms.'],['female','female','The addressed person is female; use matching grammatical forms.']],
-    sub:{ key:'genderGroup', opts:[['none','gNone',''],['mixed','gMixed','The addressees are several people of mixed genders; use plural forms, and for mixed groups whatever the target language does (often the masculine plural).'],['male','gMale','The addressees are several men; use masculine plural forms.'],['female','gFemale','The addressees are several women; use feminine plural forms.']] } },
-  writer:{ h:'l_writer', opts:[['unknown','dash',''],['neutral','nb',''],['male','male',''],['female','female','']],
-    sub:{ key:'writerGroup', opts:[['none','gNone',''],['mixed','gMixed','The text was written by several people of mixed genders; for first-person references use plural forms with whatever gender agreement the target language uses for mixed groups.'],['male','gMale','The text was written by several men; for first-person references use masculine plural forms.'],['female','gFemale','The text was written by several women; for first-person references use feminine plural forms.']] } }
+  // Die Saetze der beiden Geschlechts-Gruppen werden NICHT in den Stil-Satz
+  // eingehaengt, sondern von `peopleBlock` zu einem eigenen Regelblock gebuendelt,
+  // der direkt vor dem Text und zusaetzlich im System-Prompt steht. Im Fliesstext
+  // gingen sie unter (kleine Modelle uebersahen sie und uebersetzten weiter mit
+  // der maennlichen Form). Jeder Satz beginnt klein, weil `peopleBlock` das Label
+  // "Recipients:" bzw. "Writer:" davorsetzt.
+  gender:{ h:'l_gender', opts:[['unknown','dash',''],['neutral','nb','the addressed person must stay gender-neutral: avoid gendered nouns, adjectives and participles for them and rephrase where the language forces a choice.'],['male','male','the addressed person is one man: use masculine forms for everything that refers to him (pronouns, nouns, adjectives, participles).'],['female','female','the addressed person is one woman: use feminine forms for everything that refers to her (pronouns, nouns, adjectives, participles).']],
+    sub:{ key:'genderGroup', opts:[['none','gNone',''],['mixed','gMixed','several people of mixed genders are addressed: use plural forms, and for the mixed group whatever the target language usually does (German normally the masculine plural).'],['male','gMale','several men are addressed: use masculine plural forms for everything that refers to them (pronouns, nouns, adjectives, participles).'],['female','gFemale','several women are addressed: use feminine plural forms for everything that refers to them (pronouns, nouns, adjectives, participles) instead of the masculine or default forms.']] } },
+  writer:{ h:'l_writer', opts:[['unknown','dash',''],['neutral','nb','the text is written by a gender-neutral author: avoid gendered first-person forms and rephrase where the language forces a choice.'],['male','male','the text is written by one man speaking in the first person: use masculine forms for first-person references (I, we, and any adjective or participle agreeing with the speaker).'],['female','female','the text is written by one woman speaking in the first person: use feminine forms for first-person references (I, we, and any adjective or participle agreeing with the speaker).']],
+    sub:{ key:'writerGroup', opts:[['none','gNone',''],['mixed','gMixed','the text is written by several people of mixed genders: use first-person plural forms, and for the mixed group whatever the target language usually does.'],['male','gMale','the text is written by several men: use masculine forms for all first-person plural references.'],['female','gFemale','the text is written by several women: use feminine forms for all first-person plural references.']] } }
 };
 const D = { url:'http://localhost:11434', nllb:'http://127.0.0.1:8765', model:'', pref:'', theme:'auto', uiLang:'auto', start:'tr', workspace:'both', helper:'', src:'auto', tgt:'en',
   pins:{ ollama:['de','en'], nllb:['deu_Latn','eng_Latn'] }, style:{type:'natural',formal:'standard',gender:'unknown',writer:'unknown',genderGroup:'none',writerGroup:'none'}, uiMode:'icons',
@@ -648,19 +654,41 @@ function ask(text, yes, no) {
 
 const engineOf = m => /^nllb:/.test(m) ? 'nllb' : /^omt:/.test(m) ? 'omt' : isTg(m) ? 'tg' : 'llm';
 const stripStars = (out, src) => (src.includes('**') ? out : out.replace(/\*\*/g, ''));
+// Saetze zu Geschlecht und Zahl der beteiligten Personen, als Stichpunkte.
+// Sie kommen aus `STY` (gender/writer, beide Reihen) und sind immer nur dann
+// vorhanden, wenn der Nutzer etwas gewaehlt hat — die Ruhewerte tragen ''.
+function peopleRules(o) {
+  const st = o.style || {}, out = [];
+  for (const [k, label] of [['gender', 'Recipients'], ['writer', 'Writer']]) {
+    const g = STY[k];
+    const main = g.opts.find(x => x[0] === st[k]);
+    const sub = g.sub && g.sub.opts.find(x => x[0] === st[g.sub.key]);
+    if (main && main[2]) out.push(`- ${label}: ${main[2]}`);
+    if (sub && sub[2]) out.push(`- ${label}: ${sub[2]}`);
+  }
+  return out;
+}
+// Eigener Block statt Beiwerk im Stilsatz: kleine Modelle uebersehen eine Regel,
+// die zwischen "Translate naturally" und dem Glossar untergeht. Der Block steht
+// deshalb direkt vor `<text>` und zusaetzlich im System-Prompt (translateCore).
+function peopleBlock(o) {
+  const r = peopleRules(o);
+  if (!r.length) return '';
+  return 'Rules for gender and number of the people involved. They are mandatory, they take precedence over the default wording, and they apply to every word that refers to these people — pronouns, nouns, adjectives and participles:\n' + r.join('\n');
+}
 function userPromptFor(text, o) {
-  const st = Object.keys(STY).map(k => {
+  // gender/writer liefern ihren Text ueber peopleBlock und nicht als Stilsatz.
+  const st = Object.keys(STY).filter(k => k !== 'gender' && k !== 'writer').map(k => {
     const g = STY[k].opts.find(x => x[0] === o.style[k]);
-    const sub = STY[k].sub && STY[k].sub.opts.find(x => x[0] === o.style[STY[k].sub.key]);
-    return [(g ? g[2] : ''), (sub ? sub[2] : '')].filter(Boolean).join(' ');
+    return g ? g[2] : '';
   }).filter(Boolean).join(' ');
   const c = (o.ctxt || '').trim(), gl = (o.gloss || []).filter(g => g.s.trim() && g.t.trim());
   const from = o.src === 'auto' ? '' : `from ${engName(o.src)} `;
-  const w = { male:'male', female:'female', neutral:'gender-neutral' }[o.writer];
-  return `Translate ${from}into ${engName(o.tgt)}. ${st}` + (w ? ` The writer is ${w}; use matching grammatical forms for first-person references.` : '') +
-    (gl.length ? `\nGlossary (always use exactly these translations for the listed terms):\n` + gl.map(g => `- "${g.s.trim()}" → "${g.t.trim()}"`).join('\n') : '') +
-    (c ? `\nBackground context from the user (do not translate it): ${c}` : '') +
-    (o.images?.length ? '\nAlso translate any text visible in the attached image(s).' : '') + (text ? `\n\n<text>\n${text}\n</text>` : '');
+  const pb = peopleBlock(o);
+  return `Translate ${from}into ${engName(o.tgt)}. ${st}` + (pb ? `\n\n${pb}` : '') +
+    (gl.length ? `\n\nGlossary (always use exactly these translations for the listed terms):\n` + gl.map(g => `- "${g.s.trim()}" → "${g.t.trim()}"`).join('\n') : '') +
+    (c ? `\n\nBackground context from the user (do not translate it): ${c}` : '') +
+    (o.images?.length ? '\n\nAlso translate any text visible in the attached image(s).' : '') + (text ? `\n\n<text>\n${text}\n</text>` : '');
 }
 const tgPrompt = (x, sc = S.src, tc = S.tgt) => { const a = engName(sc), b = engName(tc); return `You are a professional ${a} (${sc}) to ${b} (${tc}) translator. Your goal is to accurately convey the meaning and nuances of the original ${a} text while adhering to ${b} grammar, vocabulary, and cultural sensitivities.\nProduce only the ${b} translation, without any additional explanations or commentary. Please translate the following ${a} text into ${b}:\n\n\n${x}`; };
 function helperModel() {
@@ -684,7 +712,10 @@ async function translateCore(text, o) {
   if (eng === 'tg') return fin(await chat([{ role:'user', content:tgPrompt(text, o.src, o.tgt) }], opt));
   const msg = { role:'user', content:userPromptFor(text, o) };
   if (o.images?.length) msg.images = o.images.map(i => i.b64);
-  return fin(await chat([{ role:'system', content:S.sys }, msg], opt));
+  // Die Geschlechts-Regeln wiederholt auch im System-Prompt: die Gewichtung dort
+  // ist bei kleinen Modellen spuerbar hoeher als im Fliesstext der User-Nachricht.
+  const pb = peopleBlock(o);
+  return fin(await chat([{ role:'system', content: pb ? S.sys + '\n\n' + pb : S.sys }, msg], opt));
 }
 // Der Stopp-Knopf erscheint ausschliesslich waehrend eines Laufs. Er ist ein
 // reiner Icon-Button (Stoppschild ohne Schrift) und sitzt neben dem Kopieren-Icon.
