@@ -467,6 +467,10 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .srsnote{margin-top:10px;font-size:14px;line-height:1.45}
 .srsnote.ok{color:var(--accent-ink)}
 .srsnote.bad{color:#c9605a}
+/* Endlos-Runde: die Sprache ueber der Frage, der Hinweis unter dem Feld. */
+.replabel{font-size:12px;letter-spacing:.02em}
+.repretry{margin-top:4px;font-size:13px;color:var(--muted)}
+.srsendless{margin-top:14px;font-size:12px}
 /* Gemeisterte Vokabeln tragen in der Liste den Haken. */
 .vok{display:inline-grid;color:var(--accent-ink);margin-left:6px;vertical-align:middle}
 

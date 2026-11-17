@@ -311,6 +311,7 @@ function vocSelSync() {
   const n = ST.sel.size;
   const c = $('#vocSelCount'); if (c) c.textContent = n ? t('vocSelN', n) : '';
   const del = $('#vocSelDelBtn'); if (del) del.disabled = !n;
+  const rp = $('#vocSelRepeatBtn'); if (rp) rp.disabled = !n;
   const all = $('#vocSelAllBtn'); if (all) all.disabled = vocVisible().length === 0;
 }
 
@@ -1003,6 +1004,127 @@ function answerOk(e, typed) {
 
 let typeQueue = [], srsNote = null;
 
+// ---------- Endlos-Runde („Repeat“) ----------
+// Eine Auswahl wird so lange abgefragt, bis der Nutzer aufhoert. Gefragt ist
+// die Uebersetzung, getippt wird das Wort in der gelernten Sprache. Die Karten
+// laufen in einer Schlange: richtig -> ein paar Karten spaeter wieder, falsch
+// -> die Karte bleibt stehen, die Loesung ist zu sehen und muss erneut getippt
+// werden. Je oefter eine Karte danebenging, desto kuerzer kommt sie zurueck.
+// Faelligkeit und Meisterschaft bleiben unberuehrt: das ist eine Uebung, kein
+// Lernstand.
+let rep = null;
+
+function repShuffle(list) {
+  const a = list.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Tastaturhilfen fuer die gelernte Sprache: ? statt ¿, ! statt ¡, n statt ñ.
+// Akzente duerfen fehlen, Satzzeichen stoeren nicht, Gross-/Kleinschreibung
+// und doppelte Leerzeichen auch nicht - geprueft wird die Schreibweise.
+const repNorm = s => nrm(String(s || ''))
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[¿?¡!.,;:'"…()\[\]{}]/g, '')
+  .replace(/\s+/g, ' ')
+  .trim();
+function termOk(e, typed) {
+  const got = repNorm(typed);
+  if (!got) return false;
+  return [e.term, e.lemma].map(repNorm).filter(Boolean).includes(got);
+}
+
+function startRepeat(ids) {
+  const cards = (ids || [])
+    .map(id => ST.vocab.find(v => v.id === id))
+    .filter(e => e && solutionOf(e));
+  if (!cards.length) return window.trStatus(t('repNone'));
+  const order = repShuffle(cards.map(e => e.id));
+  rep = { ids: cards.map(e => e.id), queue: order, wrongs: new Map(), seen: new Set(), streak: 0, note: null };
+  vocSelMode(false);
+  window.edShowView('srs');
+  renderSrs();
+}
+
+function stopRepeat() {
+  rep = null;
+  const tg = $('#srsType'); if (tg) tg.classList.remove('hidden');
+  renderSrs();
+}
+
+// Bei einer Serie von mehr als fuenf richtigen Antworten kommt ein Wort nach
+// vorn, das in dieser Runde noch nicht dran war.
+function repPickNext() {
+  if (!rep || rep.queue.length < 2 || rep.streak <= 5) return;
+  const i = rep.queue.findIndex(id => !rep.seen.has(id));
+  if (i > 0) { const [id] = rep.queue.splice(i, 1); rep.queue.unshift(id); }
+}
+
+// Wieder einreihen: ohne Fehler fuenf Karten spaeter, mit jedem Fehlversuch
+// eine Karte frueher, spaetestens direkt hinter die naechste Karte.
+function repReinsert(e) {
+  const wrongs = rep.wrongs.get(e.id) || 0;
+  rep.queue.splice(Math.min(Math.max(1, 4 - wrongs), rep.queue.length), 0, e.id);
+}
+
+function repCheck() {
+  if (!rep || !rep.queue.length) return;
+  const e = ST.vocab.find(v => v.id === rep.queue[0]);
+  const inp = $('#srsIn');
+  if (!e || !inp || !inp.value.trim()) return;
+  if (termOk(e, inp.value)) {
+    rep.streak += 1;
+    rep.queue.shift();
+    repReinsert(e);
+    rep.note = { ok: true, text: t('srsRight') };
+  } else {
+    rep.streak = 0;
+    rep.wrongs.set(e.id, (rep.wrongs.get(e.id) || 0) + 1);
+    rep.note = { ok: false, text: t('srsWrong') + ' ' + e.term, retry: true };
+  }
+  renderSrs();
+}
+
+function renderRepeat(box) {
+  // Entfernte Karten fallen aus der Runde.
+  rep.queue = rep.queue.filter(id => ST.vocab.some(v => v.id === id));
+  if (!rep.queue.length) { rep = null; renderSrs(); return; }
+  repPickNext();
+  const e = ST.vocab.find(v => v.id === rep.queue[0]);
+  rep.seen.add(e.id);
+  const P = pairOf(e);
+  const chars = ['á', 'é', 'í', 'ó', 'ú', 'ñ', '¿', '¡']
+    .map(ch => `<button class="ch" data-ch="${esc(ch)}">${esc(ch)}</button>`).join('');
+  const note = rep.note
+    ? `<div class="srsnote ${rep.note.ok ? 'ok' : 'bad'}">${esc(rep.note.text)}${rep.note.retry ? `<div class="repretry muted">${esc(t('repAgain'))}</div>` : ''}</div>`
+    : '';
+  box.innerHTML = `<div class="srscard typing">
+    <div class="replabel muted">${esc(langLabel(P.tgt))} → ${esc(langLabel(P.src))}</div>
+    <div class="srsword">${esc(solutionOf(e))}</div>
+    <div class="srsinput"><input id="srsIn" autocomplete="off" spellcheck="false" placeholder="${esc(t('repTypeIn'))}"><button class="ib go" id="srsCheckBtn" title="${esc(t('srsCheck'))}">${ic('check', 18)}</button></div>
+    ${chars ? `<div class="charbar" title="${esc(t('srsChars'))}">${chars}</div>` : ''}
+    ${note}
+    <div class="srsendless muted">${esc(t('repEndless'))}</div>
+    <div class="srsbtns"><button class="ghost" id="repStop">${esc(t('repStop'))}</button></div>
+  </div>`;
+  const inp = box.querySelector('#srsIn');
+  if (inp) {
+    inp.addEventListener('keydown', ev => {
+      if (ev.key === 'Enter') { ev.preventDefault(); repCheck(); }
+      else if (ev.key === 'Escape') { ev.preventDefault(); stopRepeat(); }
+    });
+    inp.focus();
+  }
+  const btn = box.querySelector('#srsCheckBtn');
+  if (btn) btn.onclick = repCheck;
+  box.querySelectorAll('.ch').forEach(b => b.onclick = () => srsInsertChar(b.dataset.ch));
+  const st = box.querySelector('#repStop');
+  if (st) st.onclick = stopRepeat;
+}
+
 function typeFill() {
   const due = ST.vocab.filter(e => inPair(e) && !isMastered(e) && (e.due || todayISO()) <= todayISO());
   const ids = new Set(due.map(e => e.id));
@@ -1074,9 +1196,18 @@ function srsInsertChar(ch) {
 
 function renderSrs() {
   const box = $('#srsBox'); if (!box) return;
+  // Die Endlos-Runde hat ihre eigene Anzeige: kein Faelligkeitszaehler, kein
+  // Umschalter fuer den Tipp-Modus.
+  if (rep) {
+    const tg0 = $('#srsType');
+    if (tg0) { tg0.classList.add('hidden'); tg0.classList.remove('on'); }
+    $('#srsCount').textContent = t('repStreak', rep.streak);
+    return renderRepeat(box);
+  }
   const due = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO());
   $('#srsCount').textContent = due.length ? t('vocabDue', due.length) : '';
-  const tg = $('#srsType'); if (tg) tg.classList.toggle('on', !!S.srsType);
+  const tg = $('#srsType');
+  if (tg) { tg.classList.remove('hidden'); tg.classList.toggle('on', !!S.srsType); }
   if (S.srsType) return renderType(box, due);
   srsQueue = srsQueue.filter(inPair);
   if (!due.length) {
@@ -1430,6 +1561,7 @@ function wire() {
   $('#vocFilterBtn').onclick = () => vocFilterPop($('#vocFilterBtn'));
   $('#vocSelBtn').onclick = () => vocSelMode();
   $('#vocSelAllBtn').onclick = vocSelAll;
+  $('#vocSelRepeatBtn').onclick = () => startRepeat([...ST.sel]);
   $('#vocSelDelBtn').onclick = vocSelDelete;
   $('#vocSelEndBtn').onclick = () => vocSelMode(false);
   $('#vocClose').onclick = () => $('#vocDlg').close();

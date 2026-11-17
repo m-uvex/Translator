@@ -176,6 +176,13 @@ const K = {
   txClipEmpty:['Die Zwischenablage enthält keinen Text.','The clipboard holds no text.'],
   txUntitled:['Ohne Titel','Untitled'], txtAdded:['Text hinzugefügt','Text added'],
   txNoRead:['Datei konnte nicht gelesen werden','Could not read the file'], txDelQ:['Diesen Text samt seinen Vokabeln löschen?','Delete this text and its vocabulary?'],
+  // Endlos-Runde aus einer Auswahl: Karteikarten ohne Ende, bis man aufhört.
+  repStartT:['Endlos üben','Practice endlessly'], repStop:['Beenden','Stop'],
+  repEndless:['Läuft weiter, bis du auf Beenden drückst.','Keeps going until you press stop.'],
+  repAgain:['Bitte noch einmal eintippen.','Please type it again.'],
+  repTypeIn:['Wort eintippen …','Type the word …'],
+  repStreak:[n => `Serie ${n}`, n => `Streak ${n}`],
+  repNone:['In der Auswahl steht keine Karte mit Übersetzung.','The selection has no card with a translation.'],
   srsTitle:['Vokabeln üben','Practice vocabulary'], srsNone:['Nichts fällig.','Nothing due.'], srsDone:['Für heute fertig.','Done for today.']
   , srsReveal:['Übersetzung zeigen','Show translation'], srsShowCtx:['Im Satz','In sentence'],
   srsNoTr:['Keine Übersetzung hinterlegt','No translation saved'],
