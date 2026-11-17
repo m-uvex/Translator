@@ -55,32 +55,36 @@ function renderStudyModel() {
   const eff = studyModel();
   document.querySelectorAll('[data-study-model]').forEach(b => {
     b.innerHTML = ic('cpu');
-    b.title = `${t('studyModelT')}: ${eff || '—'}`;
+    b.title = `${t('studyModelT')}: ${eff || '—'}` + (S.storyOn ? `\n${t('storyModelT')}: ${storyModel() || '—'}` : '');
   });
 }
 
-// Auswahl wie beim Editor: dieselbe Liste, nur ohne Schreibmodell - hier wird
-// ausschliesslich uebersetzt. Die erste Zeile stellt auf das Uebersetzer-Modell
-// zurueck.
+// Modellwahl des Lese-Arbeitsplatzes. Oben, womit Woerter uebersetzt werden;
+// darunter - nur wenn der Kurzgeschichten-Generator an ist - das Schreibmodell
+// fuer die Geschichten. Dieselbe Aufteilung wie im Texteditor.
 function studyModelPop(btn) {
   closePops();
   const p = $('#pop');
   p.innerHTML = '';
-  const row = (label, value, cur, icons) => {
+  const head = k => { const h = document.createElement('div'); h.className = 'row hd'; h.textContent = t(k); p.append(h); };
+  const row = (label, value, cur, icons, apply) => {
     const r = document.createElement('div');
     r.className = 'row' + (cur ? ' sel' : '');
     r.innerHTML = `<span>${esc(label)}</span><span>${icons || ''}</span>`;
-    r.onclick = () => {
-      S.studyModel = value;
-      save();
-      wordCache.clear();
-      renderStudyModel();
-      closePops();
-    };
+    r.onclick = () => { apply(); save(); closePops(); };
     p.append(r);
   };
-  row(t('studyModelAuto'), '', !S.studyModel, '');
-  for (const o of MODEL_OPTS) row(o.label, o.value, o.value === S.studyModel, modelIcons(o));
+  const setWord = v => { S.studyModel = v; wordCache.clear(); renderStudyModel(); };
+  head('studyModelT');
+  row(t('studyModelAuto'), '', !S.studyModel, '', () => setWord(''));
+  for (const o of MODEL_OPTS) row(o.label, o.value, o.value === S.studyModel, modelIcons(o), () => setWord(o.value));
+  if (S.storyOn) {
+    p.append(document.createElement('hr'));
+    head('writeModel');
+    const gens = storyModels();
+    row(t('storyModelAuto'), '', !S.storyModel || !gens.includes(S.storyModel), '', () => { S.storyModel = ''; });
+    gens.forEach(n => row(n, n, !!S.storyModel && n === S.storyModel, '', () => { S.storyModel = n; }));
+  }
   const r = btn.getBoundingClientRect();
   Object.assign(p.style, { left: Math.max(8, Math.min(r.left, innerWidth - 320)) + 'px', top: r.bottom + 6 + 'px' });
   p.classList.remove('hidden');
@@ -1613,7 +1617,9 @@ const ST_SLOTS = [
     ['eine Hexe', 'a witch', 'sgWitch'],
     ['einen Detektiv', 'a detective', 'sgDetective'],
     ['einen Drachen', 'a dragon', 'sgDragon'],
-    ['einen Roboter', 'a robot', 'sgRobot']
+    ['einen Roboter', 'a robot', 'sgRobot'],
+    ['eine Prinzessin', 'a princess', 'sgCrown'],
+    ['eine Seefahrerin', 'a sailor', 'sgAnchor']
   ]],
   ['place', 'stSlotPlace', [
     ['in der Wüste', 'in the desert', 'sgDesert'],
@@ -1621,7 +1627,11 @@ const ST_SLOTS = [
     ['im tiefen Wald', 'in a deep forest', 'sgForest'],
     ['auf einer Insel', 'on an island', 'sgIsland'],
     ['in einem alten Schloss', 'in an old castle', 'sgCastle'],
-    ['in der Großstadt', 'in a big city', 'sgCity']
+    ['in der Großstadt', 'in a big city', 'sgCity'],
+    ['unter Wasser', 'under water', 'sgSea'],
+    ['in den Bergen', 'in the mountains', 'sgMountains'],
+    ['im Dschungel', 'in the jungle', 'sgLeaf'],
+    ['auf einem Bauernhof', 'on a farm', 'sgBarn']
   ]],
   ['mate', 'stSlotMate', [
     ['ein Papagei', 'a parrot', 'sgParrot'],
@@ -1629,7 +1639,11 @@ const ST_SLOTS = [
     ['eine Katze', 'a cat', 'sgCat'],
     ['ein Hund', 'a dog', 'sgDog'],
     ['ein Riese', 'a giant', 'sgGiant'],
-    ['ein Gespenst', 'a ghost', 'sgGhost']
+    ['ein Gespenst', 'a ghost', 'sgGhost'],
+    ['ein Bär', 'a bear', 'sgBear'],
+    ['eine Maus', 'a mouse', 'sgMouse'],
+    ['ein Frosch', 'a frog', 'sgFrog'],
+    ['eine Eule', 'an owl', 'sgOwl']
   ]],
   ['turn', 'stSlotTurn', [
     ['zieht ein Sturm auf', 'a storm comes up', 'sgStorm'],
@@ -1637,15 +1651,25 @@ const ST_SLOTS = [
     ['ist eine Tür verschlossen', 'a door is locked', 'sgDoor'],
     ['taucht eine alte Karte auf', 'an old map turns up', 'sgMap'],
     ['sind plötzlich Spuren im Sand', 'suddenly there are tracks in the sand', 'sgFootprints'],
-    ['geht ein Zauber schief', 'a spell goes wrong', 'sgWand']
+    ['geht ein Zauber schief', 'a spell goes wrong', 'sgWand'],
+    ['brennt ein Feuer', 'a fire breaks out', 'sgFire'],
+    ['gibt es ein Rätsel', 'there is a riddle to solve', 'sgRiddle'],
+    ['beginnt ein Wettlauf', 'a race begins', 'sgFlag'],
+    ['kommt ein Brief an', 'a letter arrives', 'sgLetter']
   ]],
-  ['end', 'stSlotEnd', [
-    ['wird gefeiert', 'there is a party', 'sgParty'],
-    ['geht es nach Hause', 'everyone goes home', 'sgHome'],
-    ['beginnt eine Reise', 'a journey begins', 'sgCompass'],
-    ['bleibt ein Geheimnis', 'a secret stays a secret', 'sgKey'],
-    ['gewinnt die Freundschaft', 'friendship wins', 'sgTrophy'],
-    ['geht die Sonne auf', 'the sun rises', 'sgSunrise']
+  // Der Schluss bleibt offen: den schreibt das Modell, damit die Geschichte
+  // beim Lesen ueberrascht. Statt seiner waehlt man einen Gegenstand.
+  ['item', 'stSlotItem', [
+    ['ein Schlüssel', 'a key', 'sgKey'],
+    ['ein Brief', 'a letter', 'sgLetter'],
+    ['eine Landkarte', 'a map', 'sgMap'],
+    ['ein Spiegel', 'a mirror', 'sgMirror'],
+    ['eine Laterne', 'a lantern', 'sgLantern'],
+    ['ein Buch', 'a book', 'sgBook'],
+    ['ein Amulett', 'an amulet', 'sgAmulet'],
+    ['eine Flöte', 'a flute', 'sgFlute'],
+    ['ein Kompass', 'a compass', 'sgCompass'],
+    ['ein Schwert', 'a sword', 'sgSword']
   ]]
 ];
 // Der sichtbare Lueckentext: Textstuecke und Luecken im Wechsel. Ausformuliert
@@ -1654,11 +1678,11 @@ const ST_SLOTS = [
 // Luecken stehen als Objekte im Rahmen (`{ s: 'fig' }`), damit sie nicht mit
 // Textstuecken verwechselt werden.
 const ST_FRAME = {
-  de: ['Eine Kurzgeschichte über ', { s: 'fig' }, ', die ', { s: 'place' }, ' spielt. Mit dabei: ', { s: 'mate' }, '. Dann ', { s: 'turn' }, '. Am Ende ', { s: 'end' }, '.'],
-  en: ['A short story about ', { s: 'fig' }, ', set ', { s: 'place' }, '. Along for the ride: ', { s: 'mate' }, '. Then ', { s: 'turn' }, '. In the end ', { s: 'end' }, '.']
+  de: ['Eine Kurzgeschichte über ', { s: 'fig' }, ', die ', { s: 'place' }, ' spielt. Mit dabei: ', { s: 'mate' }, '. Dann ', { s: 'turn' }, '. Dazu kommt: ', { s: 'item' }, '.'],
+  en: ['A short story about ', { s: 'fig' }, ', set ', { s: 'place' }, '. Along for the ride: ', { s: 'mate' }, '. Then ', { s: 'turn' }, '. And then there is: ', { s: 'item' }, '.']
 };
 // Bezeichnungen der Luecken in der englischen Vorgabe fuer das Modell.
-const ST_RECIPE = { fig: 'Main character', place: 'Setting', mate: 'Companion', turn: 'What happens', end: 'Ending' };
+const ST_RECIPE = { fig: 'Main character', place: 'Setting', mate: 'Companion', turn: 'What happens', item: 'Object' };
 const storyFrame = () => ST_FRAME[LANG] || ST_FRAME.en;
 const slotDef = k => ST_SLOTS.find(s => s[0] === k);
 const wordCol = () => S.studyTgt === 'de' ? 0 : 1;
@@ -1673,34 +1697,6 @@ function storyModel() {
   if (S.edWrite && gens.includes(S.edWrite)) return S.edWrite;
   return window.trHelperModel() || gens[0] || '';
 }
-function renderStoryModel() {
-  const b = $('#stModel'); if (!b) return;
-  b.innerHTML = ic('cpu');
-  b.title = `${t('storyModelT')}: ${storyModel() || '—'}`;
-}
-// Auswahl wie im Editor: eine Ueberschrift „Schreibmodell“ und die allgemeinen
-// Modelle. Die erste Zeile gibt die Wahl wieder frei (dann gilt das Modell des
-// Editors).
-function storyModelPop(btn) {
-  closePops();
-  const p = $('#pop'); p.innerHTML = '';
-  const head = document.createElement('div'); head.className = 'row hd'; head.textContent = t('writeModel'); p.append(head);
-  const row = (label, value, cur) => {
-    const r = document.createElement('div');
-    r.className = 'row' + (cur ? ' sel' : '');
-    r.innerHTML = `<span>${esc(label)}</span><span>${cur ? ic('check', 15) : ''}</span>`;
-    r.onclick = () => { S.storyModel = value; save(); renderStoryModel(); closePops(); };
-    p.append(r);
-  };
-  const gens = storyModels();
-  row(t('autoModel'), '', !S.storyModel || !gens.includes(S.storyModel));
-  if (!gens.length) { const r = document.createElement('div'); r.className = 'row hd'; r.textContent = t('stNoModel'); p.append(r); }
-  gens.forEach(n => row(n, n, !!S.storyModel && n === S.storyModel));
-  const r = btn.getBoundingClientRect();
-  Object.assign(p.style, { left: Math.max(8, Math.min(r.left, innerWidth - 300)) + 'px', top: r.bottom + 6 + 'px' });
-  p.classList.remove('hidden');
-}
-
 // Der Lueckentext im Dialog: Textstuecke und Luecken im Wechsel. Eine Luecke ist
 // entweder leer (gestrichelt, mit ihrer Bezeichnung) oder gefuellt (Zeichen und
 // Wort). Ein Klick macht die Luecke aktiv; rechts stehen dann ihre Woerter.
@@ -1771,7 +1767,6 @@ function storyOpen() {
   const msg = $('#stMsg'); if (msg) { msg.textContent = ''; msg.classList.add('hidden', 'err'); }
   drawStoryCloze();
   drawStoryPicks();
-  renderStoryModel();
   d.showModal();
   // Der Fokus liegt auf der ersten Lücke: Enter oeffnet gleich ihre Wortliste,
   // und der Modellknopf traegt keinen Fokusrahmen beim Aufgehen.
@@ -1817,7 +1812,8 @@ async function storyGenerate(id) {
       { role: 'user', content:         `Write a short story in ${langName(lang)}. Language code: ${lang}.\n` +
         `- Write the whole story in ${langName(lang)}; the recipe below is in English only as a guide.\n` +
         `- Length: about 120 to 180 words, simple sentences, everyday vocabulary, one or two paragraphs.\n` +
-        `- Follow this recipe, keep the main character, the setting and the ending as given:\n${tx.recipe || '- (your choice)'}\n` +
+        `- Follow this recipe and keep the main character, the setting and the object as given.\n${tx.recipe || '- (your choice)'}\n` +
+        `- Surprise the reader with the ending; do not give it away early.\n` +
         `- Give the story a fitting title in ${langName(lang)}.\n` +
         `Reply as JSON: {"title": "...", "story": "..."}` }
     ], { model: mdl, format: 'json' });
@@ -1854,18 +1850,14 @@ const STORY_STR = {
   storyT: ['Kurzgeschichte schreiben', 'Write a short story', 'Kort verhaal schrijven', 'Escribir un relato corto', 'Kısa hikâye yaz', 'كتابة قصة قصيرة'],
   storyH: ['Kurzgeschichte', 'Short story', 'Kort verhaal', 'Relato corto', 'Kısa hikâye', 'قصة قصيرة'],
   storyModelT: ['Schreibmodell für Kurzgeschichten', 'Writing model for short stories', 'Schrijfmodel voor korte verhalen', 'Modelo de escritura para relatos', 'Kısa hikâye yazma modeli', 'نموذج كتابة القصص'],
+  storyModelAuto: ['Standard (Schreibmodell des Editors)', 'Default (editor writing model)', 'Standaard (schrijfmodel van de editor)', 'Predeterminado (modelo del editor)', 'Varsayılan (düzenleyicinin yazma modeli)', 'افتراضي (نموذج المحرر)'],
   stFrameL: ['Vorgabe', 'Recipe', 'Opzet', 'Guion', 'Tarif', 'الوصفة'],
   stSlotFig: ['Figur', 'Main character', 'Hoofdpersoon', 'Protagonista', 'Ana karakter', 'الشخصية الرئيسية'],
   stSlotPlace: ['Schauplatz', 'Setting', 'Plaats', 'Lugar', 'Mekân', 'المكان'],
   stSlotMate: ['Begleiter', 'Companion', 'Metgezel', 'Acompañante', 'Yol arkadaşı', 'الرفيق'],
   stSlotTurn: ['Handlung', 'What happens', 'Wat gebeurt er', 'Qué pasa', 'Ne oluyor', 'ما الذي يحدث'],
-  stSlotEnd: ['Schluss', 'Ending', 'Einde', 'Final', 'Son', 'النهاية'],
-  stHint: ['Wähle zu jeder Lücke ein Wort. Die Vorgabe geht auf Englisch an das Modell, die Geschichte entsteht in der gelernten Sprache.',
-    'Pick a word for every gap. The recipe goes to the model in English; the story is written in the language you are learning.',
-    'Kies bij elk gat een woord. Het opzet gaat in het Engels naar het model, het verhaal wordt in de leertaal geschreven.',
-    'Elige una palabra para cada hueco. El guion va al modelo en inglés y el relato se escribe en el idioma que aprendes.',
-    'Her boşluk için bir kelime seç. Tarif modele İngilizce gider, hikâye öğrendiğin dilde yazılır.',
-    'اختر كلمة لكل فراغ. تذهب الوصفة إلى النموذج بالإنجليزية وتُكتب القصة باللغة التي تتعلمها.'],
+  stSlotItem: ['Gegenstand', 'Object', 'Voorwerp', 'Objeto', 'Nesne', 'الشيء'],
+  stHint: ['Wähle zu jeder Lücke ein Wort.', 'Pick a word for every gap.', 'Kies bij elk gat een woord.', 'Elige una palabra para cada hueco.', 'Her boşluk için bir kelime seç.', 'اختر كلمة لكل فراغ.'],
   stFill: [(n, all) => `${n} von ${all} Lücken gefüllt`, (n, all) => `${n} of ${all} gaps filled`, (n, all) => `${n} van ${all} gaten gevuld`,
     (n, all) => `${n} de ${all} huecos rellenos`, (n, all) => `${all} boşluktan ${n} tanesi dolu`, (n, all) => `${n} من ${all} فراغات مملوءة`],
   stClear: ['Auswahl leeren', 'Clear choices', 'Keuzes wissen', 'Borrar elección', 'Seçimi temizle', 'إفراغ الاختيار'],
@@ -1892,7 +1884,6 @@ function wire() {
   $('#stCancel').onclick = () => $('#stDlg').close();
   $('#stGo').onclick = storyStart;
   $('#stClear').onclick = () => { storySel = {}; storySlot = ST_SLOTS[0][0]; drawStoryCloze(); drawStoryPicks(); };
-  $('#stModel').onclick = () => storyModelPop($('#stModel'));
   $('#rBack').onclick = () => { savePos(); window.edShowView('txt'); };
   const wrap = $('#readerWrap');
   if (wrap) wrap.addEventListener('scroll', () => { clearTimeout(ST.posTimer); ST.posTimer = setTimeout(savePos, 600); });
