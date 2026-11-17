@@ -166,7 +166,7 @@ const K = {
   learnLang:['Sprache, die du lernst','Language you are learning'], nativeLang:['Sprache, die du schon kennst (Übersetzungsziel)','Language you already know (translation target)'],
   pairHint:['Sprachenpaar gilt für Vokabeln und Üben','Language pair applies to vocabulary and practice'],
   csvExp:['CSV exportieren','Export CSV'], csvImp:['Vokabeln aus CSV oder Readlang importieren','Import words from CSV or Readlang'], txtExp:['Texte exportieren','Export texts'], txtImp:['Texte importieren','Import texts'],
-  txAdd:['Text hinzufügen','Add text'],
+  txAdd:['Text hinzufügen','Add text'], txEditH:['Text bearbeiten','Edit text'], txSave:['Speichern','Save'], txSaved:['Text geändert','Text updated'],
   // Dialog „Text hinzufügen“: Titel, Textart, Text und die beiden Quellen.
   txTitleL:['Titel','Title'], txCatL:['Textart','Type'], txBodyL:['Text','Text'],
   txTitlePh:['Wird beim Wählen einer Datei vorbelegt','Filled in when you choose a file'],
@@ -197,7 +197,7 @@ const K = {
   studyNoModel:['Für Wortübersetzungen wird ein allgemeines Ollama-Modell gebraucht (z. B. gemma3:4b).','Word translations need a general Ollama model (e.g. gemma3:4b).'],
   csvDone:[n => n === 1 ? '1 Vokabel übernommen' : `${n} Vokabeln übernommen`, n => `${n} words imported`], csvErr:['CSV konnte nicht gelesen werden','Could not read the CSV'],
   txtDone:[n => `${n} Texte übernommen`, n => `${n} texts imported`], txtErr:['Datei konnte nicht gelesen werden','Could not read the file'],
-  readEnd:['Ende des Textes','End of text'], readToVoc:['Zu den Vokabeln','To vocabulary'], readToLib:['Zum Lese-Arbeitsplatz','To the reading workspace'],
+  readEnd:['Ende des Textes','End of text'], readToVoc:['Zu den Vokabeln','To vocabulary'], readToLib:['Zum Lesearbeitsplatz','To the reading workspace'],
   s_csvSrs:['Lernstände in Export-Dateien schreiben','Include practice state in exported files'],
   s_groupStudy:['Lesen und Vokabeln','Reading and vocabulary'],
   reset:['Zurücksetzen','Reset'], resetAll:['Alles zurücksetzen','Reset all'], autoSys:['Automatisch (System)','Automatic (system)'], autoO:['Automatisch','Automatic'], autoModel:['Automatisch','Automatic'], light:['Hell','Light'], dark:['Dunkel','Dark'],

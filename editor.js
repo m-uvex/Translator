@@ -92,6 +92,8 @@ X('libEmptyHint','Speichern Sie ein Dokument im Texteditor, um es in der Ablage 
 X('libSave','In der Ablage speichern','Save to tray','In de lade opslaan','Guardar en la bandeja','Tepsiye kaydet','حفظ في الدرج');
 X('libSaved','In der Ablage gespeichert','Saved to tray','Opgeslagen in de lade','Guardado en la bandeja','Tepsiye kaydedildi','تم الحفظ في الدرج');
 X('libDeleteQ','Dieses Dokument aus der Ablage entfernen?','Remove this document from the tray?','Dit document uit de lade verwijderen?','¿Quitar este documento de la bandeja?','Bu belge tepside kaldırılsın mı?','إزالة هذا المستند من الدرج؟');
+X('libRenameT','Name des Dokuments','Document name','Naam van het document','Nombre del documento','Belge adı','اسم المستند');
+X('libRenamed','Name geändert','Name changed','Naam gewijzigd','Nombre cambiado','Ad değiştirildi','تم تغيير الاسم');
 X('libUntitled','Dokument','Document','Document','Documento','Belge','مستند');
 X('libCount', n => `${n} Dokumente`, n => `${n} documents`, n => `${n} documenten`, n => `${n} documentos`, n => `${n} belge`, n => `${n} مستندات`);
 // Sitzungsliste im Editor: Schalter in der Statusleiste, Karten mit Vorschau,
@@ -924,12 +926,16 @@ function docName() {
 async function libUpsert() {
   if (!page.textContent.trim()) return null;
   ED.docId = ED.docId || ('d' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+  // Ein in der Ablage vergebener Name hat Vorrang vor der Ueberschrift, sonst
+  // wuerde das naechste Speichern die Umbenennung wieder ueberschreiben.
+  const cur0 = currentDocEntry();
+  const name = (cur0 && cur0.renamed && cur0.name) || docName();
   try {
-    const m = await window.api.libSave({ id: ED.docId, name: docName(), html: page.innerHTML });
+    const m = await window.api.libSave({ id: ED.docId, name, html: page.innerHTML });
     if (m && m.id) {
       ED.docId = m.id;
       const cur = currentDocEntry();
-      if (cur) { cur.id = m.id; cur.name = m.name || docName(); cur.html = page.innerHTML; cur.savedHtml = page.innerHTML; }
+      if (cur) { cur.id = m.id; cur.name = m.name || name; cur.html = page.innerHTML; cur.savedHtml = page.innerHTML; }
       try { localStorage.setItem('edDocId', m.id); } catch {}
     }
     return m;
@@ -974,16 +980,57 @@ async function drawLib() {
   for (const e of items) {
     const card = document.createElement('div');
     card.className = 'libcard'; card.dataset.id = e.id; card.tabIndex = 0;
-    card.innerHTML = `<div class="libprev"></div><div class="libmeta"><div class="libname">${esc(e.name)}</div><div class="libdate">${esc(libDate(e.updated))}</div></div><button class="rm to" title="${esc(t('libToReadT'))}">${ic('reading', 14)}</button><button class="rm" title="${esc(t('remove'))}">${ic('x', 14)}</button>`;
+    card.innerHTML = `<div class="libprev"></div><div class="libmeta"><div class="libname">${esc(e.name)}</div><div class="libdate">${esc(libDate(e.updated))}</div></div><button class="rm to" title="${esc(t('libToReadT'))}">${ic('reading', 14)}</button><button class="rm ed" title="${esc(t('edit'))}">${ic('pencil', 14)}</button><button class="rm" title="${esc(t('remove'))}">${ic('x', 14)}</button>`;
     const doc = document.createElement('div'); doc.className = 'doc'; doc.innerHTML = cleanHtml(e.html);
     card.querySelector('.libprev').append(doc);
     card.onclick = ev => { if (!ev.target.closest('.rm')) libOpen(e.id); };
     card.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); libOpen(e.id); } };
     card.querySelector('.rm.to').onclick = ev => { ev.stopPropagation(); if (window.studyLibToReading) window.studyLibToReading(e.id, ev.currentTarget); };
-    card.querySelector('.rm:not(.to)').onclick = ev => { ev.stopPropagation(); libRemove(e.id); };
+    card.querySelector('.rm.ed').onclick = ev => { ev.stopPropagation(); libRename(e, card); };
+    card.querySelector('.rm:not(.to):not(.ed)').onclick = ev => { ev.stopPropagation(); libRemove(e.id); };
     grid.append(card);
   }
 }
+// Umbenennen direkt in der Karte: der Name wird zum Eingabefeld, Enter oder
+// ein Klick daneben speichert, Escape bricht ab. Geaendert wird nur der Name in
+// der Metadatendatei; der Inhalt des Dokuments bleibt, wie er ist.
+function libRename(e, card) {
+  const nameEl = card.querySelector('.libname');
+  if (!nameEl || card.dataset.renaming) return;
+  card.dataset.renaming = '1';
+  const inp = document.createElement('input');
+  inp.className = 'librename';
+  inp.value = e.name || '';
+  inp.maxLength = 120;
+  inp.setAttribute('aria-label', t('libRenameT'));
+  nameEl.textContent = '';
+  nameEl.append(inp);
+  inp.focus(); inp.select();
+  let done = false;
+  const finish = async keep => {
+    if (done) return;
+    done = true;
+    const v = inp.value.trim();
+    delete card.dataset.renaming;
+    if (!keep || !v || v === e.name) { await drawLib(); return; }
+    try { await window.api.libSave({ id: e.id, name: v, html: e.html }); } catch { }
+    // Ist das Dokument gerade offen, merkt sich die Sitzung den neuen Namen
+    // und behaelt ihn auch beim naechsten Speichern aus dem Editor.
+    const open = ED.docs.find(d => d.id === e.id);
+    if (open) { open.name = v; open.renamed = true; }
+    await drawLib();
+    edStatus(t('libRenamed'));
+  };
+  inp.onclick = ev => ev.stopPropagation();
+  inp.onmousedown = ev => ev.stopPropagation();
+  inp.onkeydown = ev => {
+    ev.stopPropagation();
+    if (ev.key === 'Enter') { ev.preventDefault(); finish(true); }
+    else if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
+  };
+  inp.onblur = () => finish(true);
+}
+
 async function libOpen(id) {
   // Ist das Dokument bereits in dieser Sitzung offen, wird die Sitzungsfassung
   // gezeigt; sonst wuerde ein erneutes Oeffnen ungespeicherte Aenderungen
@@ -996,7 +1043,12 @@ async function libOpen(id) {
   const clean = cleanHtml(e.html);
   setDoc(clean, id);
   const cur = currentDocEntry();
-  if (cur) cur.savedHtml = clean;
+  // Ein in der Ablage vergebener Name gilt weiter, auch wenn die Ueberschrift
+  // im Dokument anders lautet.
+  if (cur) {
+    cur.savedHtml = clean;
+    if (e.name && e.name !== docName()) { cur.name = e.name; cur.renamed = true; }
+  }
   showView('ed');
 }
 async function libRemove(id) {

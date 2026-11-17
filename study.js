@@ -442,10 +442,12 @@ function renderTexts() {
     const excerpt = String(tx.text || '').slice(0, 420);
     card.innerHTML = `<div class="libprev"><div class="doc">${esc(excerpt)}</div><span class="txbadge">${esc(catLabel(tx.cat))}</span></div>
       <div class="libmeta"><div class="libname">${esc(tx.title)}</div><div class="libdate">${esc(langLabel(tx.src))} → ${esc(langLabel(tx.tgt))} · ${esc(t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length))}</div></div>
+      <button class="rm ed" title="${esc(t('edit'))}">${ic('pencil', 13)}</button>
       <button class="rm" title="${esc(t('remove'))}">${ic('x', 14)}</button>`;
     card.onclick = ev => { if (!ev.target.closest('.rm')) openText(tx.id); };
     card.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openText(tx.id); } };
-    card.querySelector('.rm').onclick = ev => { ev.stopPropagation(); dropText(tx.id); };
+    card.querySelector('.rm.ed').onclick = ev => { ev.stopPropagation(); txEdit(tx.id); };
+    card.querySelector('.rm:not(.ed)').onclick = ev => { ev.stopPropagation(); dropText(tx.id); };
     frag.append(card);
   }
   grid.prepend(frag);
@@ -466,15 +468,43 @@ function fillCats() {
 // (eingefuegt, aus der Zwischenablage oder aus einer Datei), den Titel und die
 // Textart. Der Titel wird beim Waehlen einer Datei vorbelegt, solange der
 // Nutzer ihn nicht selbst angefasst hat.
-let txAutoTitle = '';
+let txAutoTitle = '', txEditId = null;
+
+// Derselbe Dialog legt an und bearbeitet. Im Bearbeiten-Modus heissen
+// Ueberschrift und Knopf anders, damit der Klick sagt, was er tut.
+function txMode(edit) {
+  const d = $('#txDlg'); if (!d) return;
+  const h = d.querySelector('.dh h2');
+  if (h) { h.dataset.t = edit ? 'txEditH' : 'txAdd'; h.textContent = t(edit ? 'txEditH' : 'txAdd'); }
+  const ok = $('#txOk');
+  if (ok) { ok.dataset.t = edit ? 'txSave' : 'txOkL'; ok.textContent = t(edit ? 'txSave' : 'txOkL'); }
+}
 
 function txOpen() {
   const d = $('#txDlg'); if (!d) return;
+  txEditId = null;
   $('#txTitle').value = ''; $('#txBody').value = '';
   txAutoTitle = '';
   const cat = $('#txCat'); if (cat) cat.value = 'other';
+  txMode(false);
   d.showModal();
   $('#txBody').focus();
+}
+
+// Bearbeiten eines Lesetexts: Titel, Textart und der ganze Text stehen im
+// selben Dialog wie beim Anlegen, nur vorbefuellt.
+function txEdit(id) {
+  const tx = ST.texts.find(x => x.id === id); if (!tx) return;
+  const d = $('#txDlg'); if (!d) return;
+  txEditId = id;
+  txAutoTitle = '';
+  $('#txTitle').value = tx.title || '';
+  $('#txBody').value = tx.text || '';
+  const cat = $('#txCat'); if (cat) cat.value = tx.cat || 'other';
+  txMode(true);
+  d.showModal();
+  $('#txTitle').focus();
+  $('#txTitle').select();
 }
 
 function txSuggestTitle(title) {
@@ -498,6 +528,21 @@ function txAdd() {
   if (!text) return window.trStatus(t('txNeedText'));
   const title = ($('#txTitle').value || '').trim() || t('txUntitled');
   const cat = ($('#txCat') && $('#txCat').value) || 'other';
+  // Bearbeiten: derselbe Text bleibt es, nur Titel, Art und Inhalt aendern
+  // sich; die Vokabeln haengen an der ID und bleiben erhalten.
+  if (txEditId) {
+    const id = txEditId; txEditId = null;
+    const tx = ST.texts.find(x => x.id === id);
+    if (tx) {
+      tx.title = title; tx.cat = cat; tx.text = text;
+      tx.pos = 0; tx.updated = Date.now();
+      persist('texts');
+      renderTexts();
+      if (ST.cur && ST.cur.id === tx.id) drawReader();
+    }
+    if (d) d.close();
+    return window.trStatus(t('txSaved'));
+  }
   ST.texts.unshift({ id: uid('t'), title, cat, text, pos: 0, src: S.studySrc, tgt: S.studyTgt, created: Date.now(), updated: Date.now() });
   persist('texts');
   renderTexts();

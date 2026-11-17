@@ -495,4 +495,10 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 /* Dokumentenablage: der Knopf „In Lesetexte übernehmen“ sitzt links neben dem
    Kreuz und erscheint wie dieses beim Zeigen auf die Karte. */
 .libcard .rm.to{right:36px;width:24px;height:24px}
+/* Stift zum Umbenennen: in den Lesetexten direkt neben dem Kreuz, in der
+   Ablage links davon (dort sitzt rechts schon „In Lesetexte übernehmen“). */
+.libcard .rm.ed{right:36px;width:24px;height:24px;background:var(--card);color:var(--accent-ink);border-color:var(--line)}
+.libcard .rm.ed svg{width:12px;height:12px}
+.libcard .rm.to + .rm.ed{right:64px}
+.libname .librename{width:100%;font:inherit;font-weight:600;line-height:1.3;padding:2px 5px;border:1px solid var(--accent);border-radius:7px;background:var(--bg);color:var(--text);outline:0}
 .libcard .rm.to svg{width:12px;height:12px}
