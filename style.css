@@ -587,3 +587,6 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .txbadge.work{display:inline-flex;align-items:center;gap:6px}
 .txbadge.work .spin{width:11px;height:11px;border-width:2px}
 .txbadge.bad{background:color-mix(in srgb,#c9605a 16%,var(--card));border-color:color-mix(in srgb,#c9605a 45%,var(--line))}
+/* Abstand zwischen letzter Einstellung und dem Knopf "Alles zuruecksetzen":
+   ohne ihn klebte der Knopf mit 0 px an der Notiz unter NLLB-200. */
+#settings #setBody + .dh{margin-top:16px}

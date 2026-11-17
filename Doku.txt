@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.49 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.50 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1111,3 +1111,10 @@ Geprüft in eigenem `--user-data-dir` über CDP, nachdem drei Lücken gefüllt w
 **Was gleich bleibt.** Die zehn Wörter je Lücke, ihre Reihenfolge, die Symbole, die Rezept-Zeilen für das Modell (`ST_RECIPE`: Main character, Setting, Companion, What happens, Object) und die Längenwahl sind unverändert. Geändert sind nur die beiden Rahmensätze (`ST_FRAME`) und zwei Kommentare, die noch „Dann“ nannten.
 
 Geprüft in eigenem `--user-data-dir` über CDP: alle fünf Lücken gefüllt ergibt „Eine Kurzgeschichte über einen Piraten, die in der Wüste spielt. Mit dabei: ein Papagei. Doch dann geht etwas schief. Am Ende taucht ein Schlüssel auf.“, der Zähler steht auf „5 von 5 Lücken gefüllt“ und „Schreiben“ ist frei; der englische Rahmen ergibt „A short story about …, set …. Along for the ride: …. But then …. In the end, … appears.“
+## 82. Abstand vor „Alles zurücksetzen“ (1.15.50)
+
+**Der Knopf klebte an der Notiz.** Unter der Überschrift „NLLB-200“ steht die Meldung „Der Übersetzungs-Server ist nicht erreichbar …“, und direkt darunter begann der Knopf „Alles zurücksetzen“ — gemessener Abstand: 0 px. Ursache ist der Aufbau des Dialogs: `#setBody` endet mit `#mtBox`, der Knopf steht in einem eigenen `.dh` daneben, und `.dh` hat keine eigene Marge. Bei erreichbarem Server fällt das nicht auf, weil die Modellzeilen darüber Luft lassen; bei der Fehlermeldung sitzt der Text ohne Abstand am Knopf.
+
+**Regel.** `#settings #setBody + .dh{margin-top:16px}` in `style.css` gibt der Knopfzeile 16 px Abstand zur letzten Zeile darüber. Die Regel trifft nur die Fußzeile der Einstellungen (Geschwister direkt nach `#setBody`), nicht den Kopf mit dem Kreuz, und sie gilt unabhängig davon, ob unter NLLB-200 eine Notiz oder die Modellliste steht.
+
+Geprüft in eigenem `--user-data-dir` über CDP mit absichtlich unerreichbarer NLLB-Adresse (`http://127.0.0.1:9`): Abstand Notiz zu Knopf 16 px statt 0 px, Knopf vollständig sichtbar (Unterkante 738 px bei Dialogunterkante 759 px), Dialog bis zum Ende gescrollt und als Screenshot angesehen.
