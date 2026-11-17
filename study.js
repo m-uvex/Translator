@@ -1645,17 +1645,20 @@ const ST_SLOTS = [
     ['ein Frosch', 'a frog', 'sgFrog'],
     ['eine Eule', 'an owl', 'sgOwl']
   ]],
+  // Die Handlung bleibt bewusst allgemein: Jede Wendung muss nach „Dann“ mit
+  // jeder Figur, jedem Schauplatz und jedem Begleiter funktionieren, ohne Ort,
+  // Jahreszeit oder Zauberei vorauszusetzen.
   ['turn', 'stSlotTurn', [
+    ['geht etwas schief', 'something goes wrong', 'sgWarn'],
+    ['kommt alles anders als gedacht', 'everything turns out differently', 'sgTwist'],
+    ['ist der Weg versperrt', 'the way is blocked', 'sgDoor'],
+    ['bleibt nur noch wenig Zeit', 'there is little time left', 'sgClock'],
+    ['wird etwas Wichtiges gefunden', 'something important is found', 'sgTreasure'],
+    ['kommt jemand Fremdes dazu', 'a stranger joins in', 'sgFootprints'],
+    ['muss ein Rätsel gelöst werden', 'a riddle must be solved', 'sgRiddle'],
+    ['gibt es ein Missverständnis', 'there is a misunderstanding', 'sgChat'],
     ['zieht ein Sturm auf', 'a storm comes up', 'sgStorm'],
-    ['wird ein Schatz gefunden', 'a treasure is found', 'sgTreasure'],
-    ['ist eine Tür verschlossen', 'a door is locked', 'sgDoor'],
-    ['taucht eine alte Karte auf', 'an old map turns up', 'sgMap'],
-    ['sind plötzlich Spuren im Sand', 'suddenly there are tracks in the sand', 'sgFootprints'],
-    ['geht ein Zauber schief', 'a spell goes wrong', 'sgWand'],
-    ['brennt ein Feuer', 'a fire breaks out', 'sgFire'],
-    ['gibt es ein Rätsel', 'there is a riddle to solve', 'sgRiddle'],
-    ['beginnt ein Wettlauf', 'a race begins', 'sgFlag'],
-    ['kommt ein Brief an', 'a letter arrives', 'sgLetter']
+    ['geschieht etwas Wunderbares', 'something wonderful happens', 'sgSparkle']
   ]],
   // Der Schluss bleibt offen: den schreibt das Modell, damit die Geschichte
   // beim Lesen ueberrascht. Statt seiner waehlt man einen Gegenstand.

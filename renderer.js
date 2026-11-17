@@ -118,7 +118,6 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   sgDoor:'<rect x="5" y="3.6" width="12" height="17" rx="1.6"/><circle cx="13.4" cy="11" r="1.4"/><path d="M13.4 12.4v3"/>',
   sgMap:'<path d="M3 6.4 9 4l6 2.4 6-2.4v13.2L15 19.6 9 17.2 3 19.6z"/><path d="M9 4v13.2M15 6.4v13.2"/>',
   sgFootprints:'<path d="M7 4.2c1.6 0 2.7 1.4 2.7 3.2 0 1.6-1.1 2.9-2.7 2.9s-2.7-1.3-2.7-2.9C4.3 5.6 5.4 4.2 7 4.2z"/><path d="M4.6 11.4h4.8v2.2a2.4 2.4 0 0 1-4.8 0z"/><path d="M17 9.4c1.6 0 2.7 1.4 2.7 3.2 0 1.6-1.1 2.9-2.7 2.9s-2.7-1.3-2.7-2.9c0-1.8 1.1-3.2 2.7-3.2z"/><path d="M14.6 16.6h4.8v2.2a2.4 2.4 0 0 1-4.8 0z"/>',
-  sgWand:'<path d="M3.6 20.4 14.8 9.2"/><path d="M17.6 3.4l.9 2 2 .9-2 .9-.9 2-.9-2-2-.9 2-.9z"/><path d="M6.6 7.8l.7 1.5 1.5.7-1.5.7-.7 1.5-.7-1.5-1.5-.7 1.5-.7z"/>',
   // Krone fuer die Prinzessin: drei Zacken auf geschwungenem Band.
   sgCrown:'<path d="M4 18.2h16"/><path d="M4.4 18.2 3.6 7.4l4.4 3.4L12 5.2l4 5.6 4.4-3.4-.8 10.8z"/><circle cx="12" cy="13.4" r=".8"/>',
   // Anker fuer die Seefahrerin.
@@ -142,12 +141,18 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   sgFrog:'<circle cx="8.4" cy="8.8" r="2.3"/><circle cx="15.6" cy="8.8" r="2.3"/><path d="M4.6 14.8c0-2.4 3.2-4.2 7.4-4.2s7.4 1.8 7.4 4.2c0 3.4-3.2 5.8-7.4 5.8s-7.4-2.4-7.4-5.8z"/><path d="M8 17.6c1.2.9 2.4 1.3 4 1.3s2.8-.4 4-1.3"/>',
   // Eule: Kopf mit Federohren, grossen Augen und Schnabel.
   sgOwl:'<path d="M5.6 8.6 4.6 4.2l4 2.2c2-.8 4.4-.8 6.8 0l4-2.2-1 4.4"/><path d="M12 6.4c-3.8 0-6.6 2.8-6.6 6.6 0 4 2.8 6.8 6.6 6.8s6.6-2.8 6.6-6.8c0-3.8-2.8-6.6-6.6-6.6z"/><circle cx="9.4" cy="12" r="1.4"/><circle cx="14.6" cy="12" r="1.4"/><path d="M12 13.6l-1 1.8h2z"/>',
-  // Feuer fuer „brennt ein Feuer“.
-  sgFire:'<path d="M12 3.2c3 4 5 5.8 5 9.2a5 5 0 0 1-10 0c0-2 1-3.4 2-4.6.4 1.4 1 2.2 1.8 2.6C11.6 8 12 5.4 12 3.2z"/>',
+  // Warnung: Dreieck mit Ausrufezeichen fuer „geht etwas schief“.
+  sgWarn:'<path d="M12 4 21.2 19.8H2.8z"/><path d="M12 10.2v4.2"/><path d="M12 17.2h.01"/>',
+  // Wendung: ein Pfeil, der umkehrt - „kommt alles anders als gedacht“.
+  sgTwist:'<path d="M18.6 6.4H9.6a4.6 4.6 0 0 0 0 9.2h9"/><path d="M15.4 12.4l3.2 3.2-3.2 3.2"/>',
+  // Uhr: „bleibt nur noch wenig Zeit“.
+  sgClock:'<circle cx="12" cy="12" r="8.6"/><path d="M12 7.2V12l3.4 2.2"/>',
+  // Zwei Sprechblasen: „gibt es ein Missverstaendnis“.
+  sgChat:'<path d="M3.4 5.4h9.4v6.4H8l-3 2.4v-2.4H3.4z"/><path d="M16.8 10h3.8v6.4h-1.4v2.4l-3-2.4h-5.4"/>',
+  // Funkeln: „geschieht etwas Wunderbares“.
+  sgSparkle:'<path d="M11.4 3.6l1.8 4.6 4.6 1.8-4.6 1.8-1.8 4.6-1.8-4.6L5 10l4.6-1.8z"/><path d="M17.6 15.4l.9 2.2 2.2.9-2.2.9-.9 2.2-.9-2.2-2.2-.9 2.2-.9z"/>',
   // Raetsel: Fragezeichen im Kreis.
   sgRiddle:'<circle cx="12" cy="12" r="8.6"/><path d="M9.6 9.6a2.6 2.6 0 1 1 3.7 2.4c-.7.3-1.1 1-1.1 1.8v.4"/><path d="M12.2 17.2h.01"/>',
-  // Wettlauf: Fahne am Mast.
-  sgFlag:'<path d="M6 3.6v17"/><path d="M6 4.8h11.2l-2.4 3.6 2.4 3.6H6z"/>',
   // Brief: Umschlag mit Klappe.
   sgLetter:'<rect x="3" y="5.8" width="18" height="12.8" rx="2"/><path d="m3.8 7.2 8.2 5.8 8.2-5.8"/>',
   // Handspiegel.

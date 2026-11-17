@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.40 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.41 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1003,3 +1003,22 @@ Geprüft in eigenem `--user-data-dir` über CDP mit gestelltem `window.trChat`: 
 **Modellwahl im Lese-Arbeitsplatz.** Der Modellknopf im Dialog ist entfernt (`#stModel`, `renderStoryModel()`, `storyModelPop()`). Die Wahl liegt jetzt im Kopfmenü der Lesebibliothek, wo auch das Modell für Wortübersetzungen sitzt: `studyModelPop` zeigt zuerst die Überschrift „Modell für Wortübersetzungen“ mit dem bisherigen Inhalt und darunter, durch eine Linie getrennt, „Schreibmodell“ mit „Standard (Schreibmodell des Editors)“ und den allgemeinen Modellen. Der zweite Abschnitt erscheint nur, wenn der Generator an ist — ausgeschaltet fehlt er, und der Knopf in der Bibliothek verschwindet ohnehin. Der Tooltip des Knopfes nennt beide Modelle, solange der Generator läuft. In den Einstellungen bleibt die Auswahl zusätzlich stehen.
 
 Geprüft in eigenem `--user-data-dir` über CDP mit gestelltem `window.trChat`: Dialog ohne Modellknopf, Hinweis „Wähle zu jeder Lücke ein Wort.“, fünf Lücken mit 10 Pillen je Lücke, Reihenfolge der Lücken Figur → Schauplatz → Begleiter → Handlung → Gegenstand, fertiger Satz „Eine Kurzgeschichte über einen Piraten, die in der Wüste spielt. Mit dabei: ein Papagei. Dann zieht ein Sturm auf. Dazu kommt: ein Spiegel.“; Kopfmenü im Lesearbeitsplatz enthält beide Überschriften („Modell für Wortübersetzungen“ und „Schreibmodell“), mit ausgeschaltetem Generator nur die erste; Start legt `pending: 1` an, die `recipe` endet auf „Object: a letter“, der Prompt enthält die Anweisung zum überraschenden Schluss, danach steht die fertige Karte mit Titel und Text. Die Symbolübersicht wurde am Bildschirm in drei Größen geprüft; Dialog und Bibliothekskarte zusätzlich als Screenshot.
+
+## 74. Handlung flexibel gemacht, neue Symbole (1.15.41)
+
+**Die Handlung passt jetzt zu jeder Wahl.** Die zehn Wendungen der vierten Lücke setzten vorher einen Ort, eine Zeit oder Zauberei voraus — „sind plötzlich Spuren im Sand“ funktionierte nur in der Wüste, „brennt ein Feuer“ nicht unter Wasser, „geht ein Zauber schief“ nur mit Hexe oder Drache. Sie sind durch Wendungen ersetzt, die nach „Dann“ mit jeder Figur, jedem Schauplatz und jedem Begleiter tragen:
+
+- geht etwas schief
+- kommt alles anders als gedacht
+- ist der Weg versperrt
+- bleibt nur noch wenig Zeit
+- wird etwas Wichtiges gefunden
+- kommt jemand Fremdes dazu
+- muss ein Rätsel gelöst werden
+- gibt es ein Missverständnis
+- zieht ein Sturm auf
+- geschieht etwas Wunderbares
+
+Dazu kamen fünf Symbole im selben Strichstil: `sgWarn` (Dreieck mit Ausrufezeichen), `sgTwist` (Pfeil, der umkehrt), `sgClock` (Uhr), `sgChat` (zwei Sprechblasen) und `sgSparkle` (zwei Funken). `sgFire`, `sgWand` und `sgFlag` gehörten nur zu den alten Wendungen und sind entfallen; `sgStorm`, `sgTreasure`, `sgDoor`, `sgFootprints` und `sgRiddle` bleiben im Einsatz. Alle 50 `sg*`-Symbole sind weiterhin vergeben, keines doppelt für dieselbe Lücke und keines ohne Verwendung.
+
+**Geprüft** in eigenem `--user-data-dir` über CDP: zehn Pillen mit je einem Symbol, jede Wendung einmal eingesetzt und der erzeugte Satz gelesen („Dann gibt es ein Missverständnis.“), Reihenfolge der Lücken Figur 10 → Schauplatz 10 → Begleiter 10 → Handlung 10 → Gegenstand 10, Satz „Eine Kurzgeschichte über eine Ritterin, die unter Wasser spielt. Mit dabei: eine Eule. Dann gibt es ein Missverständnis. Dazu kommt: ein Kompass.“, in der Zielsprache Englisch erscheinen die englischen Wörter („a knight“, „under water“, …), Start schreibt die Geschichte (`recipe` endet auf „Object: a compass“) und die Karte wird fertig. Die neuen Symbole wurden in 96, 24 und 18 px am Bildschirm geprüft.
