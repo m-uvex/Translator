@@ -81,13 +81,13 @@
   <div class="dh"><h2 data-t="storyH"></h2><button class="ib" id="stModel" data-tt="storyModelT"></button><button class="ib" id="stClose" data-i="x" data-tt="cancel"></button></div>
   <div class="stbody">
     <div class="stmain">
-      <span data-t="stClozeL"></span>
-      <textarea id="stCloze" data-ph="stClozePh" spellcheck="false"></textarea>
+      <span data-t="stFrameL"></span>
+      <div id="stCloze" class="stframe"></div>
       <p class="muted sthint" data-t="stHint"></p>
     </div>
     <aside class="stpool">
-      <div class="stpoolhead"><b data-t="stPoolL"></b><button class="ib" id="stPoolReload" data-i="refresh" data-tt="stPoolReload"></button></div>
-      <div id="stPools"></div>
+      <div class="stpoolhead"><b id="stPickHead"></b></div>
+      <div id="stPicks" class="stpicks"></div>
       <div id="stMsg" class="vmsg stpoolmsg hidden"></div>
     </aside>
   </div>

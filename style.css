@@ -548,30 +548,35 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .libname .librename{width:100%;font:inherit;font-weight:600;line-height:1.3;padding:2px 5px;border:1px solid var(--accent);border-radius:7px;background:var(--bg);color:var(--text);outline:0}
 .libcard .rm.to svg{width:12px;height:12px}
 
-/* Kurzgeschichten-Dialog: links der Lückentext, rechts die Wortvorräte in einem
-   eigenen, leicht abgesetzten Bereich. Jede Wortart hat dort ihre Zeile, links
-   im Pill steht ihr Zeichen. */
-#stDlg{width:min(940px,94vw)}
-#stDlg .stbody{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-top:14px;align-items:stretch}
-#stDlg .stmain{display:flex;flex-direction:column;gap:6px;min-width:0}
+/* Kurzgeschichten-Dialog: links die Vorgabe als Lückentext, rechts die Wörter
+   der aktiven Lücke in einem eigenen, leicht abgesetzten Bereich. */
+#stDlg{width:min(880px,94vw)}
+#stDlg .stbody{display:grid;grid-template-columns:1.05fr .95fr;gap:16px;margin-top:14px;align-items:start}
+#stDlg .stmain{display:flex;flex-direction:column;gap:8px;min-width:0}
 #stDlg .stmain>span{font-size:13px;color:var(--muted)}
-#stDlg textarea{width:100%;flex:1;min-height:190px;font:inherit;line-height:1.6;color:var(--text);background:var(--soft);border:0;border-radius:14px;padding:12px 14px;outline:0;resize:vertical}
-#stDlg textarea:focus{box-shadow:inset 0 0 0 1px var(--accent)}
+/* Der Lückentext: ruhiger Kasten, größere Schrift, die Lücken als Pillen im
+   Fließtext. Leer gestrichelt mit der Bezeichnung, gefüllt mit Zeichen und Wort. */
+.stframe{background:var(--soft);border-radius:16px;padding:18px 20px;font-size:17px;line-height:2.1;color:var(--text);min-height:150px}
+.stslot{font:inherit;font-size:15px;line-height:1.4;display:inline-flex;align-items:center;gap:5px;margin:0 1px;padding:2px 11px 2px 9px;border-radius:999px;border:1px dashed color-mix(in srgb,var(--accent) 55%,var(--line));background:transparent;color:var(--accent-ink);cursor:pointer;vertical-align:baseline}
+.stslot .ph{color:var(--muted)}
+.stslot:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.stslot.filled{border-style:solid;background:var(--card);color:var(--text);font-weight:600}
+.stslot.filled svg{flex:none;color:var(--accent-ink)}
+.stslot.on{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}
 #stDlg .sthint{margin:0;font-size:12px;line-height:1.5}
-.stpool{background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:8px 12px 12px;max-height:340px;overflow:auto}
-.stpoolhead{display:flex;align-items:center;gap:6px;position:sticky;top:0;background:var(--soft);padding:2px 0 6px;z-index:1}
+.stpool{background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:10px 12px 12px;max-height:330px;overflow:auto}
+.stpoolhead{display:flex;align-items:center;gap:6px;padding:0 0 8px}
 .stpoolhead b{font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
-.stpoolhead .ib{width:26px;height:26px;margin-left:auto;border-radius:50%}
-.ppos{display:flex;align-items:center;gap:6px;margin:9px 0 5px;font-size:12px;color:var(--muted)}
-.ppos svg{flex:none;color:var(--accent-ink)}
-.prow{display:flex;flex-wrap:wrap;gap:6px}
-.wpill{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:13px;line-height:1.3;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 11px 3px 9px;cursor:pointer}
+.stpicks{display:flex;flex-wrap:wrap;gap:7px}
+.wpill{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:13.5px;line-height:1.3;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 9px;cursor:pointer}
 .wpill svg{flex:none;color:var(--accent-ink)}
 .wpill:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card))}
-.stpoolmsg{padding:6px 2px 0}
+.wpill.on{border-color:var(--accent);background:var(--accent);color:var(--on-accent)}
+.wpill.on svg{color:var(--on-accent)}
+.stpoolmsg{padding:8px 2px 0}
 #stDlg .stacts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px}
 #stDlg .stacts .sp{flex:1}
-@media (max-width:720px){#stDlg .stbody{grid-template-columns:1fr}.stpool{max-height:220px}}
+@media (max-width:720px){#stDlg .stbody{grid-template-columns:1fr}.stpool{max-height:240px}}
 
 /* Karte einer Kurzgeschichte, die noch geschrieben wird: die Vorgabe steht
    blass in der Vorschau, an der Stelle der Textart dreht sich ein Ring. */
