@@ -10,7 +10,10 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // Textmarker fuer den Auswahlmodus im Uebersetzer.
   vocab:'<rect x="3" y="7" width="13" height="14" rx="2"/><path d="M7 4h10a3 3 0 0 1 3 3v10"/>',
   practice:'<path d="M3 12a9 9 0 0 1 15-6.7"/><path d="M21 12a9 9 0 0 1-15 6.7"/><path d="M18 2v4h-4M6 22v-4h4"/>',
-  pick:'<path d="M4 20h5l10-10a3 3 0 0 0-4-4L5 16z"/><path d="M13 7l4 4"/>',
+  // Auswahl-Modus des Übersetzers: ein Mauszeiger statt des Stifts. Der Stift
+  // liest sich als „bearbeiten“, hier wird aber ein Wort im Text angetippt; der
+  // Zeiger sagt das ohne Tooltip. (Der Stift gehört jetzt den Karteikarten.)
+  pick:'<path d="M6 3l12 9-5.4 1 2.6 6-2.4 1-2.6-6L6 18z"/>',
   back:'<path d="M15 5l-7 7 7 7"/>',
   // Sprachenpaar: Doktorhut fuer die gelernte, Haken im Kreis fuer die schon
   // bekannte Sprache. Beide sitzen in den Pillen ueber Vokabeln, Ueben und

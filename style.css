@@ -379,6 +379,12 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .srsword{font-size:28px;font-weight:600}
 .srsres{font-size:23px;color:var(--accent-ink)}
 .srsbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+/* Stift über der Bewertungsreihe: die aufgedeckte Karte lässt sich vor der
+   Bewertung korrigieren. Leise gehalten, damit die vier Bewertungen die
+   Handlung bleiben. */
+.srseditrow{display:flex;justify-content:center;margin-top:10px}
+.srsedit{width:32px;height:32px;border-radius:50%;color:var(--muted);padding:0}
+.srsedit:hover{background:var(--soft);color:var(--text)}
 .srsempty{color:var(--muted);text-align:center;display:flex;flex-direction:column;gap:4px}
 .srsempty p{margin:0}
 @media print{#vR,#vV,#vP,#pickLayer{display:none!important}}

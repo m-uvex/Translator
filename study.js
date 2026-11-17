@@ -808,6 +808,9 @@ function vocSaveEdit() {
   e.updated = Date.now();
   persist('vocab');
   renderVocab();
+  // Steht die Karte gerade aufgedeckt im Üben, soll die korrigierte Übersetzung
+  // sofort dort stehen (srsShow bleibt gesetzt, die Karte bleibt also offen).
+  if (S.view === 'srs') renderSrs();
   $('#vocDlg').close();
   vocStatus('');
 }
@@ -975,6 +978,7 @@ function renderSrs() {
     <div class="srsword">${srsShow || !ctx ? esc(e.term) : ''}</div>
     ${srsShow ? `<div class="srsres">${e.gender ? `<span class="vg">${genderMark(e)}</span>` : ''}${sol ? esc(sol) : `<span class="muted">${esc(t('srsNoTr'))}</span>`}</div>
       ${subLine}
+      <div class="srseditrow"><button class="ib srsedit" id="srsEdit" title="${esc(t('edit'))}" aria-label="${esc(t('edit'))}">${ic('pencil', 16)}</button></div>
       <div class="srsbtns">
         <button class="ghost" data-r="again">${esc(t('srsAgain'))}</button>
         <button class="ghost" data-r="hard">${esc(t('srsHard'))}</button>
@@ -985,6 +989,11 @@ function renderSrs() {
   </div>`;
   const rv = box.querySelector('#srsReveal');
   if (rv) rv.onclick = () => { srsShow = true; renderSrs(); };
+  // Die aufgedeckte Karte lässt sich korrigieren, bevor bewertet wird: falsche
+  // oder fehlende Übersetzung tippt man hier nach, ohne die Runde zu verlassen.
+  // Der Stift ist derselbe wie in der Vokabelliste (#vocDlg, vocOpenEdit).
+  const ed = box.querySelector('#srsEdit');
+  if (ed) ed.onclick = () => vocOpenEdit(e.id);
   box.querySelectorAll('[data-r]').forEach(b => b.onclick = () => {
     rate(e, b.dataset.r);
     srsShow = false;
