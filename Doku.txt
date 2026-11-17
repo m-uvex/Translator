@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.48 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.49 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1100,3 +1100,14 @@ Geprüft: alle 50 Zeichen in einer Übersicht bei 64, 24 und 18 px angesehen und
 **Markup und Stil.** In `index.html` ist `#stCount` aus `.stfoot` in `.stacts` gewandert (vor den Knöpfen); `.stfoot` enthält nur noch `.stlen`. Die Schriftgrößen-Regel heißt entsprechend `#stDlg .stacts #stCount` statt `.stfoot #stCount`. `storySync()` bleibt unverändert — es schreibt weiter nur den Text in `#stCount`.
 
 Geprüft in eigenem `--user-data-dir` über CDP, nachdem drei Lücken gefüllt waren: Text „3 von 5 Lücken gefüllt“, Zähler im Fußbereich (`closest('.stacts')`), linke Kante 221 px = linke Kante der Vorgabe-Karte, Knopfreihe 587 bis 626 px, Zähler mittig darin; „Schreiben“ blieb bei drei Lücken gesperrt. Dialog als Screenshot angesehen.
+## 81. Vorgabe liest sich wie eine Geschichte (1.15.49)
+
+**„Dazu kommt“ ist weg.** Der letzte Satz der Vorgabe hieß „Dazu kommt: ein Schlüssel.“ Das war keine Erzählung, sondern eine Aufzählung — Doppelpunkt, dann ein Gegenstand ohne Verb. Jetzt steht dort „Am Ende taucht ein Schlüssel auf.“ Der Gegenstand ist damit Subjekt des Satzes, und weil `taucht … auf` den Nominativ verlangt, passen beide Geschlechter der Liste ohne Umformung: „ein Schlüssel“, „eine Landkarte“, „ein Amulett“, „eine Flöte“.
+
+**„Dann“ wurde zu „Doch dann“.** Der vorletzte Satz begann nur mit „Dann“ und hing dadurch an der Aufzählung davor statt an der Geschichte: „Mit dabei: ein Papagei. Dann geht etwas schief.“ Mit „Doch dann“ bekommt der Satz die Wendung, die die Lücke meint, und trägt mit allen zehn Wendungen: „Doch dann bleibt nur noch wenig Zeit.“, „Doch dann zieht ein Sturm auf.“, „Doch dann kommt alles anders als gedacht.“
+
+**Englisch gleich gebaut.** `ST_FRAME.en` heißt jetzt „But then ⟨Handlung⟩. In the end, ⟨Gegenstand⟩ appears.“ statt „Then … And then there is: …“.
+
+**Was gleich bleibt.** Die zehn Wörter je Lücke, ihre Reihenfolge, die Symbole, die Rezept-Zeilen für das Modell (`ST_RECIPE`: Main character, Setting, Companion, What happens, Object) und die Längenwahl sind unverändert. Geändert sind nur die beiden Rahmensätze (`ST_FRAME`) und zwei Kommentare, die noch „Dann“ nannten.
+
+Geprüft in eigenem `--user-data-dir` über CDP: alle fünf Lücken gefüllt ergibt „Eine Kurzgeschichte über einen Piraten, die in der Wüste spielt. Mit dabei: ein Papagei. Doch dann geht etwas schief. Am Ende taucht ein Schlüssel auf.“, der Zähler steht auf „5 von 5 Lücken gefüllt“ und „Schreiben“ ist frei; der englische Rahmen ergibt „A short story about …, set …. Along for the ride: …. But then …. In the end, … appears.“

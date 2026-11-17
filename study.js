@@ -1645,9 +1645,9 @@ const ST_SLOTS = [
     ['ein Frosch', 'a frog', 'sgFrog'],
     ['eine Eule', 'an owl', 'sgOwl']
   ]],
-  // Die Handlung bleibt bewusst allgemein: Jede Wendung muss nach „Dann“ mit
-  // jeder Figur, jedem Schauplatz und jedem Begleiter funktionieren, ohne Ort,
-  // Jahreszeit oder Zauberei vorauszusetzen.
+  // Die Handlung bleibt bewusst allgemein: Jede Wendung muss nach „Doch dann“
+  // mit jeder Figur, jedem Schauplatz und jedem Begleiter funktionieren, ohne
+  // Ort, Jahreszeit oder Zauberei vorauszusetzen.
   ['turn', 'stSlotTurn', [
     ['geht etwas schief', 'something goes wrong', 'sgWarn'],
     ['kommt alles anders als gedacht', 'everything turns out differently', 'sgTwist'],
@@ -1681,8 +1681,8 @@ const ST_SLOTS = [
 // Luecken stehen als Objekte im Rahmen (`{ s: 'fig' }`), damit sie nicht mit
 // Textstuecken verwechselt werden.
 const ST_FRAME = {
-  de: ['Eine Kurzgeschichte über ', { s: 'fig' }, ', die ', { s: 'place' }, ' spielt. Mit dabei: ', { s: 'mate' }, '. Dann ', { s: 'turn' }, '. Dazu kommt: ', { s: 'item' }, '.'],
-  en: ['A short story about ', { s: 'fig' }, ', set ', { s: 'place' }, '. Along for the ride: ', { s: 'mate' }, '. Then ', { s: 'turn' }, '. And then there is: ', { s: 'item' }, '.']
+  de: ['Eine Kurzgeschichte über ', { s: 'fig' }, ', die ', { s: 'place' }, ' spielt. Mit dabei: ', { s: 'mate' }, '. Doch dann ', { s: 'turn' }, '. Am Ende taucht ', { s: 'item' }, ' auf.'],
+  en: ['A short story about ', { s: 'fig' }, ', set ', { s: 'place' }, '. Along for the ride: ', { s: 'mate' }, '. But then ', { s: 'turn' }, '. In the end, ', { s: 'item' }, ' appears.']
 };
 // Bezeichnungen der Luecken in der englischen Vorgabe fuer das Modell.
 const ST_RECIPE = { fig: 'Main character', place: 'Setting', mate: 'Companion', turn: 'What happens', item: 'Object' };
@@ -1735,7 +1735,8 @@ function drawStoryCloze() {
 }
 
 // Jedes Wort nur einmal: Steht es schon in einer anderen Luecke, ist es hier
-// gesperrt - sonst entsteht „Dann kommt ein Brief an. Dazu kommt: ein Brief.“
+// gesperrt - sonst entsteht „Doch dann kommt ein Brief an. Am Ende taucht ein
+// Brief auf.“
 function storyTaken(k, o) {
   return ST_SLOTS.some(([key]) => key !== k && storySel[key] && storySel[key][1] === o[1]);
 }
