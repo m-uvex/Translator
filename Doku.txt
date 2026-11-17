@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.53 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.54 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1140,3 +1140,10 @@ Geprüft in eigenem `--user-data-dir` über CDP mit echten Klicks: beide Knöpfe
 **Neues Marker-Symbol.** Der alte Umriss war ein Stift: schmaler, schräger Körper, kleine Spitze, darunter ein Strich. Der Strich ist entfallen, der Körper ist kürzer und deutlich dicker, die Spitze eine breite Keilform (Viereck, das den Körper fortsetzt). Damit liest das Symbol auch mit 16 px als Marker und nicht als Stift — geprüft in hellem und dunklem Modus und in einer 3-fachen Vergrößerung. Das A der Schriftfarbe behält seine Grundlinie, die jetzt ebenfalls einfarbig ist.
 
 Geprüft in der installierten App über CDP: kein `box-shadow` mehr an beiden Knöpfen, je drei Pfade im Symbol, die Palette unverändert (12 Kreise, 4 Spalten, 3 Reihen, ein Ring). Symbol und Leiste in beiden Themen als Screenshot angesehen; Marker und Schriftfarbe selbst wurden dabei nicht neu gesetzt (dafür hat sich am Farbauftrag nichts geändert).
+## 85. Marker-Symbol ohne Stempel-Anmutung (1.15.54)
+
+Der Marker aus 1.15.53 hatte einen kurzen, sehr dicken Koerper und eine breite Spitze, deren Unterkante waagerecht stand — mit dem schmalen Knopf darueber sah das wie ein Stempel aus. Neu ist ein laengerer Koerper (Keil 3,2 breit, Spitze flacher) mit einer Spitze, die schraeg nach links unten zeigt, und darunter der kurze, dicke Strich, den der Marker zieht. Der Strich ist der Unterschied zu Stift und Stempel: er zeigt die Taetigkeit, nicht nur den Gegenstand — und er sitzt innen im Symbol, nicht als farbiger Balken am Knopf.
+
+Verglichen wurden vor dem Einbau mehrere Kandidaten auf einem Testblatt in 16, 18 und 44 px in hellem und dunklem Modus (Lucide-Highlighter, senkrechter Marker, offene duenne Spitze, dicker Keil mit und ohne Strich). Durchgesetzt hat sich der dicke Keil mit kurzem Strich, weil er mit 18 px — der Groesse in der Leiste — noch als Marker und nicht als Stift liest.
+
+Geprueft in der installierten App: Symbol mit 3 Pfaden, kein `box-shadow` am Knopf, Leiste in beiden Themen als 3-fach vergroesserter Screenshot angesehen. Am Farbauftrag und an der Palette hat sich nichts geaendert.
