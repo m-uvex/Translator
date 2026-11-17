@@ -106,6 +106,22 @@ const samePair = (a, b) => a.src === b.src && a.tgt === b.tgt;
 const inPair = o => samePair(pairOf(o), curPair());
 
 const wordCache = new Map();
+
+// Das Modell haengt gern dieselbe Bedeutung mehrfach an ("Minuten / Minuten /
+// Minuten"). Doppelte Teile fallen weg, damit sie nicht im Eintrag landen; ein
+// echter Unterschied wie "der See / die See" bleibt stehen.
+function cleanTranslation(tr) {
+  const parts = String(tr || '').split(/\s*\/\s*/).map(s => s.trim()).filter(Boolean);
+  const out = [], seen = new Set();
+  for (const p of parts) {
+    const k = nrm(p);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(p);
+  }
+  return out.join(' / ');
+}
+
 async function translateTerm(term, ctx, pair, single) {
   const P = pair || curPair();
   const key = nrm(term) + '|' + nrm(ctx) + '|' + P.src + '>' + P.tgt + (single ? '|one' : '');
@@ -117,14 +133,14 @@ async function translateTerm(term, ctx, pair, single) {
     'Return JSON with these keys:\n' +
     (single
       ? '  "translation": the one translation that fits this sentence, no alternatives\n'
-      : '  "translation": the translation (up to three equivalent meanings separated by " / ")\n') +
+      : '  "translation": the translation (up to three equivalent meanings separated by " / ", each different - never the same word twice)\n') +
     '  "lemma": the dictionary form\n' +
     '  "pos": part of speech in the target language\n' +
     `  "gender": "m", "f", "n", or "" - grammatical gender of the translation, if ${langName(P.tgt)} marks gender\n` +
     '  "article": the definite article of the translation if the target language has one, otherwise ""';
   const j = await llmJson(prompt);
   const r = {
-    translation: String(j.translation || '').trim(),
+    translation: cleanTranslation(String(j.translation || '').trim()),
     lemma: String(j.lemma || term).trim(),
     pos: String(j.pos || '').trim(),
     gender: String(j.gender || '').trim(),
@@ -613,14 +629,22 @@ function showChip(anchor, text, onClick, opts) {
 function removeWithChip(spans, entry) {
   spans.forEach(s => s.classList.add('gone'));
   const c = ST.chip; ST.chip = null;
-  if (c) c.classList.add('going');
+  // Die Blase blendet aus und ist danach weg; vorher blieb sie fuenf Sekunden
+  // halbdurchsichtig ueber dem Text stehen.
+  if (c) { c.classList.add('going'); setTimeout(() => c.remove(), 600); }
   clearTimeout(ST.chipTimer);
   ST.chipTimer = setTimeout(() => {
-    if (c) c.remove();
     spans.forEach(s => s.classList.remove('gone'));
     if (entry) dropVocab(entry.id);
   }, 5000);
 }
+
+// Die Blase gehoert zum sichtbaren Fenster und zum Text, ueber dem sie steht:
+// beim Wechsel in ein anderes Fenster, beim Minimieren und beim Scrollen
+// verschwindet sie sofort, statt ueber fremdem Text haengen zu bleiben.
+window.addEventListener('blur', () => killChip());
+document.addEventListener('visibilitychange', () => { if (document.hidden) killChip(); });
+window.addEventListener('scroll', () => killChip(), true);
 
 // Aus welchem Paar eine angetippte Stelle uebersetzt wird: im Lesen aus dem
 // geoeffneten Text, im Uebersetzer aus dessen Sprachen. Steht der Uebersetzer
@@ -1407,6 +1431,11 @@ function wire() {
   if (S.studySrc === S.studyTgt) S.studyTgt = S.studySrc === 'en' ? 'de' : 'en';
   for (const tx of ST.texts) if (!tx.src) { tx.src = S.studySrc; tx.tgt = S.studyTgt; }
   for (const v of ST.vocab) if (!v.src) { v.src = S.studySrc; v.tgt = S.studyTgt; }
+  // Fruehere Laeufe haben die Wiederholung schon eingetragen; einmal aufraeumen.
+  for (const v of ST.vocab) if (v.translation) {
+    const t = cleanTranslation(v.translation);
+    if (t !== v.translation) v.translation = t;
+  }
   save();
   persist('texts'); persist('vocab');
   fillCats();
