@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.54 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.55 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1147,3 +1147,12 @@ Der Marker aus 1.15.53 hatte einen kurzen, sehr dicken Koerper und eine breite S
 Verglichen wurden vor dem Einbau mehrere Kandidaten auf einem Testblatt in 16, 18 und 44 px in hellem und dunklem Modus (Lucide-Highlighter, senkrechter Marker, offene duenne Spitze, dicker Keil mit und ohne Strich). Durchgesetzt hat sich der dicke Keil mit kurzem Strich, weil er mit 18 px — der Groesse in der Leiste — noch als Marker und nicht als Stift liest.
 
 Geprueft in der installierten App: Symbol mit 3 Pfaden, kein `box-shadow` am Knopf, Leiste in beiden Themen als 3-fach vergroesserter Screenshot angesehen. Am Farbauftrag und an der Palette hat sich nichts geaendert.
+## 86. Die Flöte steht schräg und ist keine Flasche mehr (1.15.55)
+
+Die Flöte aus Abschnitt 79 war senkrecht gezeichnet: Mundstück oben, Rohr, unten der ausgestellte Schalltrichter. In der Pillenreihe bei 16 px las sich das als Flasche — und stand direkt neben der Laterne, die dieselbe Silhouette hat (Körper mit Absatz, unten breiter). Zwei Flaschen nebeneinander, nur eine davon eine Laterne.
+
+**Neu: die Blockflöte liegt schräg.** Derselbe Aufbau um 38° um die Mitte gedreht (`rotate(-38 12 12)`, wie beim Spiegel): Schnabel oben rechts, darunter das Fenster, drei gefüllte Grifflöcher, unten links der Trichter. Schräg gestellt trifft sie keine der senkrechten Figuren mehr, und die Lage passt zu den anderen schrägen Gegenständen (Amulett, Schwert).
+
+**Was vorher verworfen wurde.** Vor der Entscheidung standen fünf Fassungen im echten Pillenmaß (16 px, neben Laterne und Kompass, hell und dunkel): senkrechte Blockflöte mit Schnabel und Fenster (weiter flaschenartig), Rohr ohne Trichter (sieht aus wie ein Thermometer), Querflöte als schräges Rohr mit Grifflöchern (zu dünn, liest sich als Stift), Panflöte aus fünf Röhren mit zwei Bindebändern (wirkt wie ein Balkendiagramm). Die schräge Blockflöte war die einzige, die in der Reihe als eigenes Ding erkennbar blieb.
+
+Geprüft in der installierten App: Dialog der Kurzgeschichte geöffnet, Gegenstands-Lücke gewählt, die zehn Pillen in hellem und dunklem Modus als Screenshot angesehen; die Flöte hat das gedrehte Symbol und sitzt in der Reihe zwischen Amulett und Kompass. Der übrige Symbolsatz ist unverändert.

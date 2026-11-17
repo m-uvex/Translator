@@ -179,8 +179,10 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   sgBook:'<path d="M12 6.6C10 5 7.2 4.6 4.2 5.2v12.8c3-.6 5.8-.2 7.8 1.4 2-1.6 4.8-2 7.8-1.4V5.2c-3-.6-5.8-.2-7.8 1.4z"/><path d="M12 6.6v12.8"/><path d="M6.8 8.6c1.4-.2 2.6 0 3.6.4M6.8 11.6c1.4-.2 2.6 0 3.6.4"/>',
   // Amulett an einer Kette.
   sgAmulet:'<path d="M7 3.4a6.6 6.6 0 0 0 10 0"/><path d="M12 3.6v3.2"/><path d="M12 6.8 18.4 12 12 21 5.6 12z"/><path d="M5.6 12h12.8M12 6.8 9.4 12l2.6 9 2.6-9"/>',
-  // Floete: quer gehaltene Roehre mit drei Griffloechern.
-  sgFlute:'<path d="M9.6 3.2h4.8v3.2h-.4v9.8l3.2 4.4H6.8l3.2-4.4V6.4h-.4z"/><circle cx="12" cy="8.4" r=".9"/><circle cx="12" cy="11.4" r=".9"/><circle cx="12" cy="14.4" r=".9"/>',
+  // Floete: Blockfloete schraeg gehalten - Schnabel oben rechts, Fenster,
+  // drei Griffloecher, Schalltrichter unten links. Schraeg, weil sie senkrecht
+  // wie eine Flasche neben der Laterne stand; so ist sie nicht zu verwechseln.
+  sgFlute:'<g transform="rotate(-38 12 12)"><path d="M9.4 2.8h5.2l-.8 3.2h-3.6z"/><path d="M10.4 6h3.2v9.6l2.4 5H8l2.4-5z"/><circle cx="12" cy="10.6" r=".7" fill="currentColor" stroke="none"/><circle cx="12" cy="12.6" r=".7" fill="currentColor" stroke="none"/><circle cx="12" cy="14.6" r=".7" fill="currentColor" stroke="none"/></g>',
   // Kompass: runde Dose mit Nadel.
   sgCompass:'<circle cx="12" cy="12" r="8.4"/><path d="m15 9-1.8 4.2L9 15l1.8-4.2z"/>',
   // Schwert mit Griff und Parierstange.
