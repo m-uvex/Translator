@@ -59,6 +59,7 @@ footer{display:flex;align-items:center;gap:8px;padding:8px 12px}.sp{flex:1}.mute
 .side{padding:20px 16px;overflow:auto;display:flex;flex-direction:column;gap:10px}
 .side h3{margin:10px 0 4px;font-size:17px}
 .side label{display:block;color:var(--muted);font-size:13px;margin:10px 4px 6px}
+.side textarea,.side input,.side select{-webkit-user-select:text;user-select:text}
 .list{background:var(--soft);border-radius:var(--r);padding:4px}
 .opt{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:14px;cursor:pointer}
 .opt+.opt{border-top:1px solid var(--line);border-radius:0}.opt.sel{color:var(--accent-ink)}
@@ -92,9 +93,13 @@ footer{display:flex;align-items:center;gap:8px;padding:8px 12px}.sp{flex:1}.mute
    Pille, weil immer zwei davon darin stehen — nebeneinander in einem 32er-Kreis
    wirkten sie gestaucht. Die dezente Füllung zeigt, dass beide Zeichen zu einem
    Knopf gehören; aktiv wird die Pille accent-farben wie die runden Knöpfe. */
-.sgrp .seg.sub{margin-top:8px}
+.sgrp .seg.sub{margin-top:8px}
 .ctx{background:var(--soft);border-radius:var(--r);padding:10px 12px}
 .ctx summary{cursor:pointer;list-style:none;font-weight:600;display:flex;align-items:center;gap:8px}
+/* Menue- und Beschriftungstexte in der Seitenleiste sind keine Inhalte: ein
+   Ziehen ueber die Leiste hinterliess sonst eine blaue Auswahl auf „Zusammenhang“
+   und dem Platzhalter darunter. Eingabefelder bleiben markierbar. */
+.side summary,.side h3,.side .sh,.side .slab,.side .seg,.side .opt,.side .set b,.side label,.side button{-webkit-user-select:none;user-select:none}
 .ctx summary::before{content:"";border:5px solid transparent;border-left:7px solid var(--muted);border-right:0;transition:transform .15s}
 .ctx[open] summary::before{transform:rotate(90deg)}
 .ctx textarea{width:100%;height:110px;font-size:14px;padding:10px 0 0}

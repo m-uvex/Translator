@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.35 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.36 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -937,3 +937,11 @@ In `editor.js` hängen `allowedViews()`, `applyWorkspace()`, `homeView()`, `rail
 Das Startmenü hatte für die Lernansichten keinen Eintrag; es bietet jetzt „Übersetzer öffnen“, „Textbearbeitung öffnen“, **„Lernen öffnen“** (`startStudy`) und „Zuletzt verwendetes öffnen“. `startView()` übersetzt `study` in die Leseliste (`txt`), weil „Lernen“ eine Gruppe und keine einzelne Ansicht ist, und fällt auf `homeView()` zurück, wenn die gewählte Ansicht zu keiner sichtbaren Gruppe gehört. Der neue Schlüssel `startStudy` steht in Deutsch und Englisch; die übrigen vier Sprachen fallen wie bei anderen neuen Schlüsseln auf Englisch zurück.
 
 Geprüft in eigenem `--user-data-dir` über CDP: Nach dem Start stand `S.workspace` auf `tr,ed,study`, die Einstellungen zeigten drei Kästchen („Übersetzer“, „Textbearbeitung“, „Lernen“), alle an. Ein Klick auf „Textbearbeitung“ ergab `tr,study`, und die Symbole für Editor und Ablage verschwanden, während Übersetzer, Lesen, Vokabeln und Üben sichtbar blieben; ein Klick auf „Lernen“ ergab `tr`. Der Versuch, auch „Übersetzer“ abzuwählen, wurde verworfen (`tr` blieb stehen). Das Startmenü enthielt vier Einträge mit „Lernen öffnen“ an dritter Stelle; mit `start = 'study'` und `workspace = 'tr,study'` öffnete ein Neuladen die Leseliste (`S.view = 'txt'`) und zeigte nur die Symbole von Übersetzer und Lernen.
+
+## 69. Menütexte der Seitenleiste sind nicht mehr markierbar (1.15.36)
+
+Zog man mit gedrückter Maustaste über die Optionsspalte des Übersetzers, wurde der Text mit ausgewählt: die Überschrift „Zusammenhang“ (`.ctx summary`), die Platzhalterzeile darunter und die Abschnittsüberschriften der Stil-Karte hinterließen blaue Markierungen. Bei einem Menü ist das unerwünscht, weil die Auswahl nirgends hin führt.
+
+`style.css` setzt deshalb `user-select:none` (mit `-webkit-`-Variante) für die Menü- und Beschriftungstexte der Spalte: `.side summary`, `.side h3`, `.side .sh`, `.side .slab`, `.side .seg`, `.side .opt`, `.side .set b`, `.side label` und `.side button`. Eingabefelder bleiben ausdrücklich markierbar – `.side textarea`, `.side input` und `.side select` setzen `user-select:text`. Der Platzhalter unter „Zusammenhang“ verschwand dadurch ebenfalls aus der Auswahl, weil ein Ziehen auf einer nicht markierbaren Zeile keine Auswahl mehr beginnt. Die Regeln gelten nur innerhalb der Optionsspalte `#vT .side`; Editor, Lesetexte, Vokabellisten und Dialoge sind unberührt.
+
+Geprüft in eigenem `--user-data-dir` über CDP: `getComputedStyle` meldet für `summary`, die Stil-Überschrift, einen Segment-Knopf und den Glossar-Knopf `user-select: none`, für das Feld `#ctx` weiterhin `text`. Eine per Range über den Inhalt der Zeile „Zusammenhang“ gelegte Auswahl ergibt die Länge 0, während im Feld `#ctx` die Zeichen 4 bis 12 („Beispiel“) normal markiert werden können.
