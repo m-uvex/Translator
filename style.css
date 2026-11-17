@@ -590,3 +590,11 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 /* Abstand zwischen letzter Einstellung und dem Knopf "Alles zuruecksetzen":
    ohne ihn klebte der Knopf mit 0 px an der Notiz unter NLLB-200. */
 #settings #setBody + .dh{margin-top:16px}
+/* Textmarker und Schriftfarbe: die aktive Farbe steht als schmaler Balken unten
+   im Werkzeugknopf, die Palette ist ein 4-mal-3-Raster aus Kreisen. Der
+   gewaehlte Kreis traegt zwei Ringe (Karte + Textfarbe), damit die Auswahl in
+   hellem und dunklem Modus sichtbar bleibt. */
+.pop.colpop{min-width:0;padding:10px;display:grid;grid-template-columns:repeat(4,26px);gap:8px}
+.pop.colpop .csw{width:26px;height:26px;padding:0;border-radius:50%;border:1px solid color-mix(in srgb,var(--text) 22%,transparent);background:var(--c);cursor:pointer;transition:transform .12s}
+.pop.colpop .csw:hover{transform:scale(1.08)}
+.pop.colpop .csw.on{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--text)}

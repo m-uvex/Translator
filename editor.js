@@ -19,6 +19,10 @@ Object.assign(IC, {
   undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>', redo:'<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>',
   bold:'<path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/>', italic:'<path d="M14 5h-4M14 19h-4M15 5l-6 14"/>', underline:'<path d="M7 4v7a5 5 0 0 0 10 0V4M5 20h14"/>',
   strike:'<path d="M5 12h14M16 7a4 4 0 0 0-4-2c-2.5 0-4 1.2-4 3 0 4 8 2.5 8 7 0 1.8-1.7 3-4.2 3a4.6 4.6 0 0 1-4.3-2.5"/>',
+  // Textmarker: schraeger Stift mit Spitze und der Strich, den er zieht.
+  marker:'<path d="M8.6 15.2 15.4 5.2a2.3 2.3 0 0 1 3.6 2.6l-6.8 10"/><path d="M8.6 15.2 5.6 16.8 7.2 19.8l3.2-.8z"/><path d="M3.8 20.8h16.4"/>',
+  // Schriftfarbe: ein A mit farbiger Grundlinie.
+  textColor:'<path d="M6.4 14.8 11.8 4.4l5.4 10.4"/><path d="M8.2 11.8h7.2"/><path d="M4.4 20.6h15.2"/>',
   ul:'<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>', ol:'<path d="M10 6h10M10 12h10M10 18h10M4 5l1-.5V9M4 14h2l-2 3h2"/>',
   quote:'<path d="M6 8c-1.5 1-2 2.5-2 4v4h5v-5H6.5M15 8c-1.5 1-2 2.5-2 4v4h5v-5h-2.5"/>',
   alignL:'<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>', alignC:'<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>', alignR:'<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>', alignJ:'<path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>',
@@ -143,6 +147,8 @@ X('noChanges','Keine Änderungen gefunden','No changes found','Geen wijzigingen 
 X('proofTitle','Änderungen prüfen','Review changes','Wijzigingen controleren','Revisar cambios','Değişiklikleri incele','مراجعة التغييرات');
 X('accept','Übernehmen','Accept','Overnemen','Aceptar','Kabul et','قبول'); X('reject','Ablehnen','Reject','Afwijzen','Rechazar','Reddet','رفض');
 X('acceptAll','Alle verbleibenden übernehmen','Accept all remaining','Alle resterende overnemen','Aceptar todo lo restante','Kalanların tümünü kabul et','قبول جميع المتبقي');
+X('hl','Textmarker (Rechtsklick: Farbe wählen)','Highlighter (right-click: pick a color)','Tekstmarkeerder (rechtsklik: kleur kiezen)','Rotulador (clic derecho: elegir color)','Fosforlu kalem (sağ tık: renk seç)','قلم تظليل (زر الفأرة الأيمن: اختيار اللون)');
+X('ink','Schriftfarbe (Rechtsklick: Farbe wählen)','Text color (right-click: pick a color)','Tekstkleur (rechtsklik: kleur kiezen)','Color de texto (clic derecho: elegir color)','Yazı rengi (sağ tık: renk seç)','لون النص (زر الفأرة الأيمن: اختيار اللون)');
 X('pagebreak','Seitenumbruch','Page break','Pagina-einde','Salto de página','Sayfa sonu','فاصل صفحة');
 
 S.ed = Object.assign({ src:'auto', tgt:'en', formal:'standard', wGender:'unknown', aGender:'unknown', wGroup:'none', aGroup:'none' }, S.ed || {});
@@ -155,6 +161,10 @@ for (const [main, grp] of [['wGender', 'wGroup'], ['aGender', 'aGroup']]) {
 }
 S.edStyles = S.edStyles || []; S.edWrite = S.edWrite || ''; S.edTrans = S.edTrans || ''; S.dictLang = S.dictLang || ''; if (S.edSpell === undefined) S.edSpell = true;
 if (S.edSpellAnim === undefined) S.edSpellAnim = true;
+// Aktive Farbe von Textmarker und Schriftfarbe (Basiston; der Marker wird
+// halbtransparent aufgetragen). Gespeichert wie die übrigen Editor-Optionen.
+if (!S.edMark) S.edMark = '#f5ae39';
+if (!S.edInk) S.edInk = '#ac6e00';
 // Einmalige Migration: Die schlaengelnden Wellen sind jetzt Standard. Wer die
 // Einstellung vorher nie bewusst gesetzt hat, bekommt sie beim ersten Start
 // nach diesem Update eingeschaltet; danach gilt wieder die Nutzerwahl.
@@ -236,6 +246,7 @@ function replaceRange(range, text) {
     if (text.includes('\n')) document.execCommand('insertHTML', false, text.split('\n').map(esc).join('<br>'));
     else document.execCommand('insertText', false, text);
   } finally { ED.writing = false; }
+  resetSpellRanges();
 }
 // Zentraler Commit: setzt Inhalt und richtet Undo-Stack so ein,
 // dass ein Undo zum `beforeHTML`-Zustand zurückfuehrt.
@@ -255,6 +266,7 @@ function applyContent(html, beforeHTML) {
     document.execCommand('insertHTML', false, target);
   } finally { ED.writing = false; }
   page.dispatchEvent(new Event('input'));
+  resetSpellRanges();
 }
 // Entfernt alle Diff-/AI-Reste aus dem DOM - Text bleibt erhalten,
 // ausser bei diff-del (die sind "geloescht").
@@ -330,6 +342,7 @@ function applyChangeToDOM(id, accept) {
 }
 function decideChange(id, accept) {
   applyChangeToDOM(id, accept);
+  resetSpellRanges();
   const row = diffPanel.querySelector(`.diff-row[data-id="${id}"]`);
   if (row) { row.dataset.done = '1'; row.style.opacity = '0.45'; row.style.pointerEvents = 'none'; }
   if ([...diffPanel.querySelectorAll('.diff-row')].every(r => r.dataset.done)) finishDiff('discard-pending');
@@ -345,6 +358,7 @@ function finishDiff(mode) {
       row.dataset.done = '1';
     });
     cleanMarks();
+    resetSpellRanges();
     const finalHTML = page.innerHTML;
     applyContent(finalHTML, diffPanel._beforeHTML || '<p><br></p>');
     diffPanel.classList.add('hidden');
@@ -775,10 +789,70 @@ function newPage() {
   page.dispatchEvent(new Event('input'));
 }
 
+// ---------- Textmarker und Schriftfarbe ----------
+// Zwoelf Toene je Werkzeug, im Popover als 4-mal-3-Raster aus Kreisen. Rot und
+// Gruen fehlen bewusst: Rot zeichnet die Rechtschreibwelle (#e5484d), Gruen
+// uebernimmt der Korrektur-Diff (diff-ins). Die Textfarben erreichen auf
+// hellem wie dunklem Papier rund 4,2:1 Kontrast; die Marker werden mit 50 %
+// Deckkraft aufgetragen, damit der Text darunter in beiden Modi lesbar bleibt
+// (hell: dunkler Text auf Pastell, dunkel: heller Text auf gedecktem Ton).
+const MARK_TONES = ['#ff9c68', '#ffa44e', '#f5ae39', '#e6b731', '#00dbd3', '#00d8eb', '#00d3ff', '#51c9ff', '#83bdff', '#abb1ff', '#cda6ff', '#e89cf9'];
+const INK_TONES = ['#c2602f', '#b96600', '#ac6e00', '#9e7500', '#008a84', '#008899', '#0086ad', '#0082c3', '#487bcf', '#6f72cf', '#8d69c6', '#a462b4'];
+const MARK_ALPHA = 0.5;
+const toneCss = (kind, hex) => kind === 'mark'
+  ? `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${MARK_ALPHA})`
+  : hex;
+const toneCur = kind => kind === 'mark' ? (S.edMark || MARK_TONES[2]) : (S.edInk || INK_TONES[2]);
+const colPop = document.createElement('div');
+colPop.id = 'colPop'; colPop.className = 'pop colpop hidden';
+document.body.appendChild(colPop);
+let colPopKind = 'mark';
+// Die aktive Farbe steht als schmaler Balken unten im Werkzeugknopf.
+function paintSwatches() {
+  [['hl', 'mark'], ['ink', 'ink']].forEach(([k, kind]) => {
+    const b = tb.querySelector(`[data-tt="${k}"]`); if (!b) return;
+    b.style.boxShadow = `inset 0 -3px 0 0 ${toneCss(kind, toneCur(kind))}`;
+  });
+}
+function colorPop(kind, btn) {
+  if (!btn) return;
+  colPopKind = kind;
+  const cur = toneCur(kind), tones = kind === 'mark' ? MARK_TONES : INK_TONES;
+  colPop.innerHTML = tones.map(hex => `<button type="button" class="csw${hex === cur ? ' on' : ''}" data-hex="${hex}" style="--c:${toneCss(kind, hex)}"></button>`).join('');
+  colPop.querySelectorAll('.csw').forEach(b => {
+    b.onmousedown = e => e.preventDefault();
+    b.onclick = () => {
+      if (colPopKind === 'mark') S.edMark = b.dataset.hex; else S.edInk = b.dataset.hex;
+      save(); paintSwatches();
+      colPop.querySelectorAll('.csw').forEach(x => x.classList.toggle('on', x === b));
+      colPop.classList.add('hidden');
+    };
+  });
+  colPop.classList.remove('hidden');
+  const r = btn.getBoundingClientRect(), w = colPop.offsetWidth, h = colPop.offsetHeight;
+  colPop.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + 'px';
+  colPop.style.top = (r.bottom + 6 + h > innerHeight - 8 ? Math.max(8, r.top - h - 6) : r.bottom + 6) + 'px';
+}
+// Linksklick faerbt die Auswahl mit der aktiven Farbe; ohne Auswahl oeffnet
+// sich die Palette (dann ist klar, dass zuerst Text markiert werden muss).
+function paint(kind) {
+  const sel = getSelection();
+  const btn = tb.querySelector(`[data-tt="${kind === 'mark' ? 'hl' : 'ink'}"]`);
+  if (!sel || !sel.rangeCount || sel.isCollapsed || !page.contains(sel.anchorNode)) { colorPop(kind, btn); return; }
+  document.execCommand('styleWithCSS', false, true);
+  document.execCommand(kind === 'mark' ? 'hiliteColor' : 'foreColor', false, toneCss(kind, toneCur(kind)));
+  document.execCommand('styleWithCSS', false, false);
+  page.dispatchEvent(new Event('input'));
+  updTb();
+}
+document.addEventListener('mousedown', e => { if (!e.target.closest('#colPop,[data-tt="hl"],[data-tt="ink"]')) colPop.classList.add('hidden'); });
+window.addEventListener('resize', () => colPop.classList.add('hidden'));
+window.addEventListener('scroll', () => colPop.classList.add('hidden'), true);
+
 const TB = [
   ['btn','fNew','filenew', () => newDoc()], ['btn','fOpen','folder', () => $('#edFile').click()], ['btn','fSave','save', e => savePop(e.currentTarget)], ['sep'],
   ['btn','undo','undo', () => cmd('undo')], ['btn','redo','redo', () => cmd('redo')], ['sep'], ['sel','font'], ['sel','size'], ['sel','heading'], ['sep'],
-  ['tog','bold','bold','bold'], ['tog','italic','italic','italic'], ['tog','underline','underline','underline'], ['tog','strike','strike','strikeThrough'], ['sep'],
+  ['tog','bold','bold','bold'], ['tog','italic','italic','italic'], ['tog','underline','underline','underline'], ['tog','strike','strike','strikeThrough'], ['btn','hl','marker', () => paint('mark')], ['btn','ink','textColor', () => paint('ink')], ['sep'],
   ['tog','ul','ul','insertUnorderedList'], ['tog','ol','ol','insertOrderedList'], ['btn','quote','quote', () => cmd('formatBlock', document.queryCommandValue('formatBlock') === 'blockquote' ? 'p' : 'blockquote')], ['sep'],
   ['tog','aL','alignL','justifyLeft'], ['tog','aC','alignC','justifyCenter'], ['tog','aR','alignR','justifyRight'], ['tog','aJ','alignJ','justifyFull'], ['sep'],
   ['btn','link','link', addLink], ['btn','clear','eraser', () => { cmd('removeFormat'); cmd('formatBlock', 'p'); }], ['sep'],
@@ -814,6 +888,12 @@ function renderTb() {
   mBtn.onclick = e => modelMenu(e.currentTarget);
   tb.appendChild(mBtn);
   applyI18n(); reicon(); updTb();
+  // Rechtsklick auf Textmarker oder Schriftfarbe stellt die aktive Farbe ein.
+  [['hl', 'mark'], ['ink', 'ink']].forEach(([k, kind]) => {
+    const b = tb.querySelector(`[data-tt="${k}"]`); if (!b) return;
+    b.oncontextmenu = ev => { ev.preventDefault(); colorPop(kind, b); };
+  });
+  paintSwatches();
 }
 function updTb() {
   // Nur auswerten, wenn die Auswahl in der Seite liegt. Steht sie in einem
@@ -1311,6 +1391,14 @@ function dropWordRanges(word) {
   ED.ranges = ED.ranges.filter(x => String(x.word || '').toLowerCase() !== w);
   syncSpellHighlight();
 }
+// Nach einer angenommenen Korrektur zeigen die alten Ranges auf verschobene
+// oder entfernte Textknoten. Sie werden sofort verworfen, damit keine Welle an
+// der alten Stelle stehen bleibt; der naechste Scan setzt nur echte Fehler neu.
+function resetSpellRanges() {
+  ED.ranges = [];
+  syncSpellHighlight();
+  scheduleScan();
+}
 
 // ---------- Weiches Wellen-Overlay ----------
 // Die Wellen werden als Sinuslinie auf ein Canvas gezeichnet: runde Enden,
@@ -1432,7 +1520,7 @@ page.addEventListener('contextmenu', async e => {
   } else {
     let sug = []; try { sug = await window.api.spellSuggest(dictCode(), hit.word); } catch {}
     if (!sug.length) { const h = document.createElement('div'); h.className = 'row hd'; h.textContent = t('noSug'); m.append(h); }
-    sug.forEach(s => row(s, () => { const s2 = getSelection(); s2.removeAllRanges(); s2.addRange(hit.r); page.focus(); ED.writing = true; try { document.execCommand('insertText', false, s); } finally { ED.writing = false; } }, true));
+    sug.forEach(s => row(s, () => { const s2 = getSelection(); s2.removeAllRanges(); s2.addRange(hit.r); page.focus(); ED.writing = true; try { document.execCommand('insertText', false, s); } finally { ED.writing = false; } dropWordRanges(hit.word); resetSpellRanges(); }, true));
     m.append(document.createElement('hr'));
     row(t('addDict'), async () => {
       // Sofort alle Wellen dieses Wortes entfernen; der Scan bestaetigt das
