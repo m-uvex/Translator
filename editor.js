@@ -19,10 +19,14 @@ Object.assign(IC, {
   undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>', redo:'<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>',
   bold:'<path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/>', italic:'<path d="M14 5h-4M14 19h-4M15 5l-6 14"/>', underline:'<path d="M7 4v7a5 5 0 0 0 10 0V4M5 20h14"/>',
   strike:'<path d="M5 12h14M16 7a4 4 0 0 0-4-2c-2.5 0-4 1.2-4 3 0 4 8 2.5 8 7 0 1.8-1.7 3-4.2 3a4.6 4.6 0 0 1-4.3-2.5"/>',
-  // Textmarker: dicker Koerper mit breiter Keilspitze, darunter der kurze,
-  // dicke Strich, den er zieht - das unterscheidet ihn vom Stift und vom
-  // Stempel. Bewusst ohne Farbe: die aktive Farbe zeigt die Palette.
-  marker:'<path d="M7.4 13.4 14.8 3.4a3.2 3.2 0 0 1 5.1 3.9l-7.6 10.2z"/><path d="M7.4 13.4 12.2 17.2 8.4 20.6 3.6 16.8z"/><path stroke-width="2.4" d="M2.4 22.2h8.2"/>',
+  // Textmarker: Koerper mit Ring, abgesetzter Keilspitze und dem Strich am
+  // Ende - die Form, die man als Textmarker kennt (Material Symbols
+  // "ink_highlighter", Apache-2.0, auf das 24er-Raster umgerechnet). Eigene
+  // Umriss-Versuche lasen sich mit 18 px alle wie ein Stift.
+  // Der zusaetzliche Strich (70 Einheiten im 960er-Raster, also 1,75 im 24er)
+  // macht den Koerper breit und fuellt die schmalen Stellen - erst so liest er
+  // sich als Textmarker und nicht als Fueller.
+  marker:'<g transform="translate(.25 0) scale(.025) translate(0 960)"><path fill="currentColor" stroke="currentColor" stroke-width="70" d="M554-407 439-522 217-300l115 115 222-222Zm-72-158 115 115 213-213-115-115-213 213Zm-64-21 200 200-234 234q-19 19-52.5 19T279-152l-11-11-43 43H70l120-120-4-4q-22-22-21.5-55.5T187-355l231-231Zm0 0 237-237q17-17 43-17t43 17l112 112q17 17 16.5 45.5T852-620L618-386 418-586Z"/></g>',
   // Schriftfarbe: ein A mit Grundlinie.
   textColor:'<path d="M6.8 14.4 12 4.4l5.2 10"/><path d="M8.6 11.4h6.8"/><path d="M4.8 20.4h14.4"/>',
   ul:'<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>', ol:'<path d="M10 6h10M10 12h10M10 18h10M4 5l1-.5V9M4 14h2l-2 3h2"/>',
