@@ -1023,18 +1023,48 @@ function repShuffle(list) {
   return a;
 }
 
-// Tastaturhilfen fuer die gelernte Sprache: ? statt ¿, ! statt ¡, n statt ñ.
-// Akzente duerfen fehlen, Satzzeichen stoeren nicht, Gross-/Kleinschreibung
-// und doppelte Leerzeichen auch nicht - geprueft wird die Schreibweise.
-const repNorm = s => nrm(String(s || ''))
-  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+// Tastaturhilfen beim Tippen: Akzente duerfen fehlen (? statt ¿, ! statt ¡,
+// n statt ñ), Satzzeichen stoeren nicht, Gross-/Kleinschreibung und doppelte
+// Leerzeichen auch nicht - geprueft wird die Schreibweise.
+//
+// Zusaetzlich gelten die Umschreibungen, die in einer Sprache ueblich sind,
+// wenn die Taste fehlt: im Deutschen ae/oe/ue fuer ä/ö/ü und ss fuer ß, im
+// Schwedischen und Daenischen aa fuer å, im Franzoesischen oe fuer œ, im
+// Tuerkischen i fuer ı (das punktlose i). Beide Formen werden verglichen,
+// "für", "fuer" und "fur" sind also alle richtig, "fuehr" nicht.
+const REP_ALIAS = {
+  de: { 'ä':'ae', 'ö':'oe', 'ü':'ue', 'ß':'ss' },
+  sv: { 'å':'aa', 'ä':'ae', 'ö':'oe' },
+  da: { 'å':'aa', 'æ':'ae', 'ø':'oe' },
+  no: { 'å':'aa', 'æ':'ae', 'ø':'oe' },
+  fi: { 'ä':'ae', 'ö':'oe' },
+  is: { 'þ':'th', 'ð':'d', 'æ':'ae', 'ö':'oe' },
+  fr: { 'œ':'oe', 'æ':'ae' },
+  tr: { 'ı':'i' }
+};
+// Satzzeichen und doppelte Leerzeichen weg - sie sind keine Schreibweise.
+const repFlat = s => String(s || '')
   .replace(/[¿?¡!.,;:'"…()\[\]{}]/g, '')
   .replace(/\s+/g, ' ')
   .trim();
+// Akzente und Sonderbuchstaben auf ihre Grundform (ä -> a, ß -> ss, ñ -> n).
+const repFold = s => foldLetters(repFlat(nrm(s)).normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+// Dieselbe Sache, aber mit den Umschreibungen der gelernten Sprache davor.
+function repSpell(s) {
+  const m = REP_ALIAS[S.studySrc] || {};
+  const base = [...nrm(repFlat(s))].map(c => m[c] || c).join('');
+  return foldLetters(base.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+}
+// Zwei gleichwertige Lesarten einer Antwort; getippt und erwartet werden beide
+// verglichen, damit weder die Tastaturhilfe noch die strenge Form noetig ist.
+const repForms = s => [...new Set([repFold(s), repSpell(s)].filter(Boolean))];
+// Die Zeichen, die auf einer deutschen Tastatur fuer die gelernte Sprache
+// fehlen (Tabelle EXTRA_CHARS), als Knoepfe ueber dem Eingabefeld.
+const repChars = () => [...new Set(EXTRA_CHARS[S.studySrc] || '')];
 function termOk(e, typed) {
-  const got = repNorm(typed);
-  if (!got) return false;
-  return [e.term, e.lemma].map(repNorm).filter(Boolean).includes(got);
+  const got = repForms(typed);
+  if (!got.length) return false;
+  return [e.term, e.lemma].some(w => repForms(w).some(x => got.includes(x)));
 }
 
 function startRepeat(ids) {
@@ -1096,16 +1126,15 @@ function renderRepeat(box) {
   const e = ST.vocab.find(v => v.id === rep.queue[0]);
   rep.seen.add(e.id);
   const P = pairOf(e);
-  const chars = ['á', 'é', 'í', 'ó', 'ú', 'ñ', '¿', '¡']
-    .map(ch => `<button class="ch" data-ch="${esc(ch)}">${esc(ch)}</button>`).join('');
+  const chars = repChars().map(ch => `<button class="ch" data-ch="${esc(ch)}">${esc(ch)}</button>`).join('');
   const note = rep.note
     ? `<div class="srsnote ${rep.note.ok ? 'ok' : 'bad'}">${esc(rep.note.text)}${rep.note.retry ? `<div class="repretry muted">${esc(t('repAgain'))}</div>` : ''}</div>`
     : '';
   box.innerHTML = `<div class="srscard typing">
     <div class="replabel muted">${esc(langLabel(P.tgt))} → ${esc(langLabel(P.src))}</div>
     <div class="srsword">${esc(solutionOf(e))}</div>
+    ${chars ? `<div class="charbar above" title="${esc(t('srsChars'))}">${chars}</div>` : ''}
     <div class="srsinput"><input id="srsIn" autocomplete="off" spellcheck="false" placeholder="${esc(t('repTypeIn'))}"><button class="ib go" id="srsCheckBtn" title="${esc(t('srsCheck'))}">${ic('check', 18)}</button></div>
-    ${chars ? `<div class="charbar" title="${esc(t('srsChars'))}">${chars}</div>` : ''}
     ${note}
     <div class="srsendless muted">${esc(t('repEndless'))}</div>
     <div class="srsbtns"><button class="ghost" id="repStop">${esc(t('repStop'))}</button></div>
