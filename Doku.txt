@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.46 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.47 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1075,3 +1075,21 @@ Beim Aus- und Einschalten des Generators frischt `renderStoryBtn()` jetzt auch d
 **Hinweis, Längenwahl und Zähler stehen zusammen.** Der Zähler („5 von 5 Lücken gefüllt“) war das dritte Element links unten in der Fußzeile und wirkte dort verloren. Er sitzt jetzt in einer Zeile unter der Vorgabe: links der Hinweis, darunter die Längenwahl „Kurz · Mittel · Lang“, rechts außen am Kartenrand der Zähler (`.stfoot` mit `.sp` als Dehnung). Die Fußzeile enthält nur noch die drei Knöpfe. Abstände in der linken Spalte einheitlich 10 px (`.stmain{gap:10px}`), innerhalb der Zeile 12 px.
 
 Geprüft in eigenem `--user-data-dir` über CDP mit gemessenen Rechtecken: Oberkante von Vorgabe und Wortliste gleich (Differenz 0 px), Beschriftung „Vorgabe“ in der Karte vorhanden, Zähler rechtsbündig auf derselben Kante wie die Karte und nicht mehr in der Fußzeile, Hinweis 10 px über der Längenzeile. Dialog als Screenshot angesehen.
+
+## 79. Kurzgeschichten-Symbole neu gezeichnet (1.15.47)
+
+**Was bleibt.** Ritterin (Schild mit Kreuz), Hexe, Detektiv, Insel, Berge und Bauernhof haben die Prüfung bestanden und sind unverändert geblieben. Sie waren die einzigen, die in der Pille mit 16 px noch als das lesbar waren, was sie zeigen.
+
+**Wald ohne Überlappung.** Die beiden Nadelbäume standen vorher mit ihren Dreiecken so dicht, dass sich die Striche kreuzten und die Fläche zwischen ihnen zu einem einzigen Klecks wurde. Jetzt ist der linke Baum hoch und breit (Basis 3,6 bis 12,8 auf y 14,6), der rechte kleiner und tiefer (Basis 13,8 bis 21 auf y 16,2). Die Dreiecke berühren sich nirgends, dazwischen bleibt ein voller Pixel Luft, und der Höhenunterschied macht zwei Bäume statt einer Fläche. Die Bodenlinie liegt darunter.
+
+**Spiegel statt Spiegelei.** Der alte Handspiegel war ein Kreis im Kreis mit Stiel — zwei konzentrische Ringe mit zwei Beinen, also genau das Spiegelei. Jetzt ist der Rahmen eine ovale Scheibe (`rotate(-22 12 12)`, damit sie wie ein gehaltener Spiegel schräg steht), das Glas ist leer bis auf einen kurzen Reflexbogen oben links, darunter sitzt ein gerader Griff mit schmalem Fuß. Ohne den zweiten Kreis verschwindet die Eier-Form.
+
+**Schlüssel ohne Anhängsel.** Die Bärte des Schlüssels liefen vorher parallel zum Schaft schräg nach unten und wirkten wie ein zweiter, schiefer Schaft am Ring. Der Schlüssel steht jetzt aufrecht: Ring oben (r 3,6), Schaft nach unten bis 20,4, zwei Bärte rechtwinklig nach rechts (bei y 14,4 und 17,6). Das kleine Loch im Ring ist entfallen — es war bei 16 px nur ein Punkt und ließ den Ring wie einen Ring mit Knubbel aussehen.
+
+**Unter Wasser.** Die zwei Wellenlinien mit dem Fisch darüber lasen sich als Gekritzel. Jetzt steht oben eine einzelne Wellenlinie, darunter ein geschlossener Fischkörper (Oval von 6,6 bis 18,6), ein dreieckiger Schwanz links, ein Auge rechts und zwei Luftblasen. Die drei Teile überlappen sich nicht.
+
+**Alle übrigen neu.** Figur: Totenkopf mit großen Augenlöchern und Zähnen statt Augenklappe und Band (das las sich als Maske), Cowboyhut mit Delle und Band, Astronaut mit Helm, Visier, zwei Ohrkapseln und Antenne, Drache mit Hörnern, Brauen und Fangzähnen, Roboter mit gefüllten Augen. Schauplatz: Kaktus mit zwei Armen auf dem Boden, Zinnenmauer mit rundem Tor für das Schloss, drei Häuser mit Fenstern für die Großstadt, zwei breite Blätter mit Blattadern für den Dschungel. Begleiter: Papagei mit Hakenchnabel und Federbusch, Hufeisen mit Nagellöchern, Katze mit angesetzten Ohren, Hund mit Hängeohren und Schnauze, Frosch mit Augen auf dem Kopf, Riese neben einer kleinen Figur, Bär und Maus mit Schnauze. Handlung und Gegenstand: zwei Fußabdrücke aus Sohle und Ferse, Flöte als Blockflöte mit Schalltrichter und drei Grifflöchern (die quer gelegte Röhre sah aus wie eine Batterie, die Panflöte wie ein Strichcode).
+
+**Regel für alle Zeichen.** Große Formen, wenige Linien: höchstens fünf Pfade je Zeichen, keine Taste-Striche, keine Details unter einem Pixel. Kleine Punkte (Augen, Pupillen, Grifflöcher) sind gefüllt (`fill="currentColor" stroke="none"`), weil ein Ring mit 0,8 px Radius bei 16 px zu einem grauen Fleck wird. Alle Zeichen liegen im selben 24er-Raster und werden über `ic(name, 16)` in die Pille gesetzt, sodass die Strichstärke mitskaliert.
+
+Geprüft: alle 50 Zeichen in einer Übersicht bei 64, 24 und 18 px angesehen und die schwachen nachgezeichnet; in der installierten App über CDP alle fünf Lücken durchgeschaltet (je 10 Pillen, je ein Symbol, keins leer, Symbolbreite 16 px) und der Dialog als Screenshot geprüft.
