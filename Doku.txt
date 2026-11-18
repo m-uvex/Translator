@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.56 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 17. November 2026, App-Version 1.15.57 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1169,3 +1169,19 @@ Erste Runde: gefuellter Keil in einem Stueck (las sich als Kreide), gefuellter K
 Das Zeichen stammt aus Material Symbols (Apache-2.0), umgerechnet und in der Strichstaerke angepasst. Die eigene Zeichnung hat die Pruefung in der Leiste nicht bestanden; der Vermerk steht hier, damit die Herkunft nachvollziehbar bleibt.
 
 Geprueft in der installierten App: Leiste in hellem und dunklem Modus als 4-fach vergroesserter Screenshot, Symbol 18 px, ein Pfad in einer Skalierungsgruppe, kein Balken und kein Ring am Knopf. Palette und Farbauftrag unveraendert.
+
+## 88. Der Textmarker hat wieder normale Strichstaerke (1.15.57)
+
+Das Symbol aus 1.15.56 war in der Leiste fetter als jedes andere Zeichen. Der zusaetzliche Strich (70 Einheiten im 960er-Raster, also 1,75 im 24er) sass auf einer bereits gefuellten Form: Koerper, Kerbe und Spitze liefen zu einem Klumpen zusammen, die Rille dazwischen war nur noch ein Schlitz.
+
+**Der Zusatzstrich ist wieder entfallen.** Das Zeichen ist die reine Material-Form (`ink_highlighter`, Apache-2.0), auf das 24er-Raster umgerechnet (`translate(.25 0) scale(.025) translate(0 960)`) und ohne eigene Strichstaerke. Koerper, Kerbe und Keilspitze bleiben; das Gewicht entspricht jetzt dem der uebrigen Werkzeugknoepfe.
+
+Verglichen wurden fuenf Fassungen direkt im laufenden Fenster (Strich 70 wie in 1.15.56, reine Fuellung, Strich 40, Strich 30, Strich 18) in hellem und dunklem Modus als 5-fach vergroesserter Screenshot. Nur die reine Fuellung ist so leicht wie die Nachbarzeichen; die Zwischenstufen wirkten bei 18 px weiterhin fett.
+
+Geprueft in der installierten App 1.15.57: Leiste in hellem und dunklem Modus als 4-fach vergroesserter Screenshot, Knopf 18 px mit einem Pfad ohne `stroke-width`. Palette und Farbauftrag sind unveraendert.
+
+## 89. Die Desktop-Verknuepfung kommt vom Installer (1.15.57)
+
+Die stillen Installationen (`/S`) hinterliessen keine Verknuepfung auf dem Schreibtisch; im Startmenue lag sie. In `package.json` steht `nsis.createDesktopShortcut` deshalb jetzt auf `"always"` statt `true`. Damit legt der Installer die Verknuepfung bei jeder Installation neu an, auch wenn auf dem Schreibtisch keine liegt.
+
+Geprueft: die vorhandene Verknuepfung von Hand geloescht, Setup 1.15.57 still installiert — danach war sie wieder da, Ziel `%LOCALAPPDATA%\Programs\Uebersetzer\Übersetzer.exe`, Symbol aus der EXE.
