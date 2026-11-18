@@ -1828,7 +1828,6 @@ function storyStart() {
   storySel = {};
   renderTexts();
   $('#stDlg').close();
-  window.trStatus(t('stQueued'));
   storyGenerate(tx.id);
 }
 
@@ -1867,8 +1866,9 @@ async function storyGenerate(id) {
   }
   tx.updated = Date.now();
   persist('texts'); renderTexts();
+  // Keine Meldung im Arbeitsplatz: Die Karte in der Ablage zeigt den Fortschritt
+  // („wird geschrieben“, „nicht fertig geschrieben“) und danach Titel und Text.
   if (ST.cur && ST.cur.id === tx.id && !Number(tx.pending)) drawReader();
-  if (!Number(tx.pending)) window.trStatus(t('stDone', tx.title));
 }
 
 // Der Knopf in der Lesebibliothek gehoert zum Generator: ausgeschaltet ist er weg.
@@ -1903,11 +1903,9 @@ const STORY_STR = {
     (n, all) => `${n} de ${all} huecos rellenos`, (n, all) => `${all} boşluktan ${n} tanesi dolu`, (n, all) => `${n} من ${all} فراغات مملوءة`],
   stClear: ['Auswahl leeren', 'Clear choices', 'Keuzes wissen', 'Borrar elección', 'Seçimi temizle', 'إفراغ الاختيار'],
   stGo: ['Schreiben', 'Write', 'Schrijven', 'Escribir', 'Yaz', 'اكتب'],
-  stQueued: ['Kurzgeschichte wird geschrieben …', 'Writing the short story …', 'Het korte verhaal wordt geschreven …', 'Escribiendo el relato …', 'Kısa hikâye yazılıyor …', 'يجري كتابة القصة …'],
   stWorking: ['Wird geschrieben …', 'Writing …', 'Wordt geschreven …', 'Escribiendo …', 'Yazılıyor …', 'يجري الكتابة …'],
   stFailed: ['Nicht fertig geschrieben', 'Not finished', 'Niet afgemaakt', 'Sin terminar', 'Tamamlanmadı', 'لم تكتمل'],
   stRetry: ['Klicken: noch einmal versuchen', 'Click to try again', 'Klik om het opnieuw te proberen', 'Haz clic para reintentar', 'Yeniden denemek için tıkla', 'انقر للمحاولة مجدداً'],
-  stDone: [x => `Kurzgeschichte fertig: ${x}`, x => `Short story finished: ${x}`, x => `Kort verhaal klaar: ${x}`, x => `Relato terminado: ${x}`, x => `Kısa hikâye hazır: ${x}`, x => `اكتملت القصة: ${x}`],
   stNoModel: ['Kein Schreibmodell gefunden.', 'No writing model found.', 'Geen schrijfmodel gevonden.', 'No se encontró modelo de escritura.', 'Yazma modeli bulunamadı.', 'لم يتم العثور على نموذج كتابة.'],
   stUntitled: ['Kurzgeschichte', 'Short story', 'Kort verhaal', 'Relato corto', 'Kısa hikâye', 'قصة قصيرة'],
   s_story: ['Kurzgeschichten-Generator', 'Short story generator', 'Korteverhalengenerator', 'Generador de relatos', 'Kısa hikâye üreticisi', 'مولّد القصص القصيرة']

@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 17. November 2026, App-Version 1.15.57 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 18. November 2026, App-Version 1.15.58 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1185,3 +1185,22 @@ Geprueft in der installierten App 1.15.57: Leiste in hellem und dunklem Modus al
 Die stillen Installationen (`/S`) hinterliessen keine Verknuepfung auf dem Schreibtisch; im Startmenue lag sie. In `package.json` steht `nsis.createDesktopShortcut` deshalb jetzt auf `"always"` statt `true`. Damit legt der Installer die Verknuepfung bei jeder Installation neu an, auch wenn auf dem Schreibtisch keine liegt.
 
 Geprueft: die vorhandene Verknuepfung von Hand geloescht, Setup 1.15.57 still installiert — danach war sie wieder da, Ziel `%LOCALAPPDATA%\Programs\Uebersetzer\Übersetzer.exe`, Symbol aus der EXE.
+## 90. Woerter im Woerterbuch bleiben im Woerterbuch (1.15.58)
+
+Nach „Zum Woerterbuch hinzufuegen“ kamen die roten Wellen nach dem naechsten Scan zurueck — nicht bei allen Woertern, aber bei denen, die im deutschen Grundbestand nur als Teil eines Kompositums stehen. Die Datei `dict/de/index.dic` fuehrt sie mit dem Flag `o` (`ONLYINCOMPOUND`), etwa `ernaehren/DIOXY`, `macht/ozm` oder `schloss/VZke`. nspell ueberspringt solche Eintraege in `exact()` und meldet sie damit als falsch; `add()` haengt die uebergebenen Codes nur an den vorhandenen Eintrag an und kann das Flag nicht entfernen. Der Eintrag blieb also gesperrt, `spell:check` antwortete weiter mit dem Wort, `spellScan()` markierte es erneut. Das erklaert auch, warum die Fruehfälle des persoenlichen Woerterbuchs (`ernaehren`, `macht`, `sparen`, `zerstoeren` ...) in `personal-dictionary.json` standen und trotzdem angestrichen wurden.
+
+**Das persoenliche Woerterbuch entscheidet jetzt zuerst.** `main.js` haelt neben `personal` einen Vergleichsindex `personalKeys` (Set aus `persKey(w)` = getrimmter Wortlaut in Kleinbuchstaben); `setPersonal(list)` setzt Liste und Index gemeinsam, und alle Stellen, die den Bestand aendern (Start, `spell:add`, `spell:remove`, `spell:edit`, `dict:import`), gehen durch diese Funktion. `spell:check` filtert Woerter, die im Index stehen, vor der nspell-Pruefung heraus; `spell:add` vergleicht ebenfalls ueber den Schluessel statt mit `includes`, damit „Schloss“ im Text und „schloss“ in der Liste derselbe Eintrag sind. Gross-/Kleinschreibung im Text bleibt damit ohne Wirkung auf die Zugehoerigkeit zum Woerterbuch, echte Fremdwoerter werden weiter gemeldet.
+
+Geprueft mit `node` gegen das echte Woerterbuch und die vorhandene `personal-dictionary.json` (40 Woerter): vor der Aenderung blieben 11 davon falsch (`ernaehren`, `schloss`, `erklaeren`, `aufloesen`, `erlassen`, `aufheben`, `macht`, `entheben`, `erhoehen`, `sparen`, `zerstoeren`), nach der Aenderung keines. Gegenprobe: `Hausx`, `Quastenflosser` und `gross` werden weiterhin als falsch gemeldet, `Haus`, `schoen` und `gehen` nicht.
+
+## 91. Die Kurzgeschichte meldet sich nicht mehr im Arbeitsplatz (1.15.58)
+
+Der Statusstreifen zeigte „Kurzgeschichte wird geschrieben …“ beim Start und „Kurzgeschichte fertig: <Titel>“ nach dem Ende. Beides ist entfallen: Die Karte in der Dokumentenablage zeigt den Fortschritt selbst (`stWorking`, `stFailed` und der Titel), und ein fertiger Text steht nach dem Schreiben als normale Karte mit Titel und Text da. In `study.js` sind die beiden `window.trStatus(...)`-Aufrufe in `storyStart()` und `storyGenerate()` entfernt und die nicht mehr benutzten Texte `stQueued` und `stDone` aus `STORY_STR` geloescht; `stUntitled`, `stWorking`, `stFailed` und `stRetry` bleiben. `storyGenerate()` zeichnet nach dem Schreiben weiterhin die Karte und den offenen Lesetext neu.
+
+## 92. Der Astronaut ist kein Kopfhoerer mehr (1.15.58)
+
+Das Zeichen `sgAstro` bestand aus einem Helmkreis, einem Visier, zwei Ohrkapseln (`x=1.8` und `x=19.2`, also ausserhalb des Helms) und einer Antenne. In der Pillenreihe bei 16 px las sich das als Kopfhoerer mit Kabel — die Kapseln sassen wie Ohrmuscheln links und rechts, die Antenne wie ein Buegel.
+
+**Neu:** runder Helm mit breitem Visier, darunter die Schultern als Bogen und eine kurze Kragenlinie. Ohrkapseln und Antenne sind entfallen; das Zeichen besteht aus vier Pfaden im 24er-Raster und bleibt damit auch bei 16 px ruhig. Verglichen wurden auf einem Testblatt bei 96 px in hellem und dunklem Modus: die alte Fassung (Kopfhoerer), A (Helm, Visier, Schulterbogen, Kragenlinie), B (dasselbe mit Punkt auf der Brust), C (Helm mit rechteckigem Koerper), D (zu grosser Helm mit durchgehendem Visierband). B wirkte wie ein Lolli, C wie ein Rucksack, D wie eine Fliegerbrille; A liest sich als Person mit Helm und ist eingebaut.
+
+Geprueft: Testblatt in hellem und dunklem Modus angesehen, Symbolgroesse 16 px (Pille) und 96 px (Kontrolle), alle vier Pfade ohne Fuellung.

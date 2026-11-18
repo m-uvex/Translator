@@ -184,8 +184,18 @@ ipcMain.handle('fonts:list', () => {
 });
 
 // ---------- Rechtschreibpruefung ----------
-const spellers = {}; let personal = [];
+const spellers = {}; let personal = [], personalKeys = new Set();
 const persFile = () => path.join(app.getPath('userData'), 'personal-dictionary.json');
+// Vergleichsschluessel des persoenlichen Woerterbuchs: Wortlaut ohne
+// Gross-/Kleinschreibung, damit „Schloss“ im Text denselben Eintrag meint wie
+// „schloss“ in der Liste.
+const persKey = w => String(w == null ? '' : w).trim().toLocaleLowerCase();
+// Setzt Liste und Vergleichsindex gemeinsam. Jede Stelle, die `personal`
+// aendert, geht hier durch, damit der Index nicht auseinanderlaeuft.
+function setPersonal(list) {
+  personal = Array.isArray(list) ? list : [];
+  personalKeys = new Set(personal.map(persKey));
+}
 function speller(lang) {
   if (spellers[lang]) return spellers[lang];
   let dir = path.join(__dirname, 'node_modules', 'dictionary-' + lang);
@@ -201,24 +211,43 @@ function speller(lang) {
   }
 }
 const wordOk = (sp, w) => sp.correct(w) || (/[-'’]/.test(w) && w.split(/['’-]/).every(p => !p || sp.correct(p)));
-// Fehler NICHT schlucken - der Renderer loggt sie
-ipcMain.handle('spell:check', (_e, lang, words) => { const sp = speller(lang); return words.filter(w => !wordOk(sp, w)); });
+// Fehler NICHT schlucken - der Renderer loggt sie.
+// Das persoenliche Woerterbuch entscheidet zuerst: nspell kann ein Wort nicht
+// freischalten, das im Grundbestand nur als Teil eines Kompositums steht
+// (Flag `o` = ONLYINCOMPOUND, etwa „ernaehren“, „macht“ oder „schloss“).
+// `.add()` haengt dort nur weitere Flags an den gesperrten Eintrag, das Wort
+// blieb also fuer immer falsch und die rote Welle kam nach dem naechsten Scan
+// zurueck. Wer im Woerterbuch steht, gilt deshalb ohne Rueckfrage als richtig.
+ipcMain.handle('spell:check', (_e, lang, words) => {
+  const sp = speller(lang);
+  return words.filter(w => !personalKeys.has(persKey(w)) && !wordOk(sp, w));
+});
 ipcMain.handle('spell:suggest', (_e, lang, word) => { try { return speller(lang).suggest(word).slice(0, 5); } catch { return []; } });
 ipcMain.handle('spell:add', (_e, word) => {
-  if (!personal.includes(word)) { personal.push(word); try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {} Object.values(spellers).forEach(s => s.add(word)); }
+  const w = String(word == null ? '' : word).trim();
+  if (!w) return false;
+  const key = persKey(w);
+  if (!personalKeys.has(key)) {
+    personal.push(w); personalKeys.add(key);
+    try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {}
+    Object.values(spellers).forEach(s => s.add(w));
+  }
   return true;
 });
 ipcMain.handle('spell:getPersonal', () => [...personal]);
 ipcMain.handle('spell:remove', (_e, word) => {
-  personal = personal.filter(w => w !== word);
+  const key = persKey(word);
+  setPersonal(personal.filter(w => persKey(w) !== key));
   try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {}
   for (const k in spellers) delete spellers[k];
   return true;
 });
 ipcMain.handle('spell:edit', (_e, oldWord, newWord) => {
-  const idx = personal.indexOf(oldWord);
-  if (idx >= 0 && newWord.trim()) {
-    personal[idx] = newWord.trim();
+  const next = String(newWord == null ? '' : newWord).trim();
+  const idx = personal.findIndex(w => persKey(w) === persKey(oldWord));
+  if (idx >= 0 && next) {
+    personal[idx] = next;
+    setPersonal(personal);
     try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {}
     for (const k in spellers) delete spellers[k];
   }
@@ -276,7 +305,7 @@ ipcMain.handle('dict:import', async () => {
   if (r.canceled || !r.filePaths.length) return null;
   try {
     const merged = mergeDictWords(personal, parseDictFile(fs.readFileSync(r.filePaths[0], 'utf8')));
-    personal = merged.list;
+    setPersonal(merged.list);
     try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {}
     for (const k in spellers) delete spellers[k];
     return { added: merged.added, skipped: merged.skipped, total: personal.length };
@@ -442,7 +471,7 @@ ipcMain.handle('app:forceQuit', () => {
 });
 
 app.whenReady().then(() => {
-  try { personal = JSON.parse(fs.readFileSync(persFile(), 'utf8')); } catch {}
+  try { setPersonal(JSON.parse(fs.readFileSync(persFile(), 'utf8'))); } catch {}
   session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => cb(permission === 'local-fonts'));
   startOllama(); startNllb();
   const icon = resPath('build', IS_WIN ? 'icon.ico' : 'icon.png');

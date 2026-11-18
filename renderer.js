@@ -91,8 +91,10 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   sgCowboy:'<path d="M8 4.8c0 1.7 1.8 2.8 4 2.8s4-1.1 4-2.8c1 1.3 1.5 3 1.5 4.8v2.2H6.5V9.6c0-1.8.5-3.5 1.5-4.8z"/><path d="M6.5 10.6h11"/><path d="M2.8 14c0-1 4.1-1.7 9.2-1.7s9.2.7 9.2 1.7c0 1.9-4.1 3.3-9.2 3.3S2.8 15.9 2.8 14z"/>',
   // Ritterin: Schild mit Kreuz.
   sgKnight:'<path d="M12 2.8 19.2 5.4v6.8c0 4.6-3 8-7.2 9.2-4.2-1.2-7.2-4.6-7.2-9.2V5.4z"/><path d="M12 7.2v8.6M8.8 10.8h6.4"/>',
-  // Astronaut: Helm mit Visierfenster, Kragen und Antenne.
-  sgAstro:'<circle cx="12" cy="9.6" r="6"/><path d="M7.4 7.2h9.2a1.4 1.4 0 0 1 1.4 1.4v2.6a1.4 1.4 0 0 1-1.4 1.4H7.4a1.4 1.4 0 0 1-1.4-1.4V8.6a1.4 1.4 0 0 1 1.4-1.4z"/><rect x="1.8" y="8" width="3" height="3.6" rx="1.3"/><rect x="19.2" y="8" width="3" height="3.6" rx="1.3"/><path d="M12 3.6V2.2"/><path d="M9.2 15.6c.9.7 1.8 1 2.8 1s1.9-.3 2.8-1"/>',
+  // Astronaut: runder Helm mit breitem Visier und Schultern. Die seitlichen
+  // Ohrkapseln und die Antenne der alten Fassung sind entfallen - bei 16 px
+  // lasen sie sich als Kopfhoerer samt Kabel.
+  sgAstro:'<circle cx="12" cy="8.4" r="5.9"/><path d="M8.7 5.9h6.6a1.7 1.7 0 0 1 1.7 1.7v2.1a1.7 1.7 0 0 1-1.7 1.7H8.7a1.7 1.7 0 0 1-1.7-1.7V7.6a1.7 1.7 0 0 1 1.7-1.7z"/><path d="M5.6 21.6v-1.9a6.4 6.4 0 0 1 12.8 0v1.9"/><path d="M11 17.6h2"/>',
   // Hexenhut: gebogener Kegel mit Knick, Krempe und Hutband.
   sgWitch:'<path d="M2.8 18.6c3.2-1.2 15.2-1.2 18.4 0"/><path d="M7.4 17.8 12.4 8.2l1.4-3.4 1.4 2.4 1.2 10.6"/><path d="M8.4 14.4h7"/>',
   // Detektiv: Hut mit breiter Krempe und Lupe darunter.
