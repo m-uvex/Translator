@@ -43,8 +43,19 @@ FAMILIES = {
     # }},
     # ------------------------------------------------------------------
 }
-STATE = HERE / "nllb-models.json"
-LANGF = HERE / "nllb-languages.json"
+# Zustandsdateien: normalerweise neben dem Skript, aber NLLB_STATE_DIR hat
+# Vorrang. Die Electron-Fassung schickt dort den Benutzerordner hin, weil der
+# Programmordner (app.asar.unpacked) bei jedem Update ersetzt wird und die
+# Angabe „installiert“ sonst verloren ginge, obwohl die Gewichte im
+# Hugging-Face-Cache bleiben. Die Rust-Fassung und die CLI setzen die Variable
+# nicht und schreiben weiter neben nllb_server.py.
+STATE_DIR = Path(os.environ.get("NLLB_STATE_DIR") or HERE)
+try:
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    STATE_DIR = HERE
+STATE = STATE_DIR / "nllb-models.json"
+LANGF = STATE_DIR / "nllb-languages.json"
 CODE = re.compile(r"^[a-z]{3}_[A-Z][a-z]{3}$")
 lock = threading.RLock()
 jobs = {}

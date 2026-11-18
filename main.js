@@ -73,7 +73,17 @@ function startNllb() {
     const py = venvPython();
     if (cfg.nllbAutostart && py) {
       nllbWanted = true;
-      nllb = runHidden(py, [resPath('nllb_server.py')], { cwd: __dirname });
+      // Der Server liegt im gepackten Betrieb in app.asar.unpacked. `__dirname`
+      // zeigt dagegen auf die Datei app.asar, und ein spawn mit diesem `cwd`
+      // scheitert mit ENOENT - der Server startete in der installierten
+      // Fassung deshalb nie. Genommen wird das Verzeichnis der aufgeloesten
+      // Datei; im Entwicklungsbetrieb ist das der Projektordner.
+      const srv = resPath('nllb_server.py');
+      // Zustand (installierte Modelle, Sprachliste) ins Benutzerprofil legen:
+      // app.asar.unpacked wird bei jedem Update ersetzt, die Modellgewichte
+      // liegen aber weiter im Hugging-Face-Cache und gaelten sonst als fehlend.
+      const env = Object.assign({}, process.env, { NLLB_STATE_DIR: app.getPath('userData') });
+      nllb = runHidden(py, [srv], { cwd: path.dirname(srv), env });
       nllb.on('error', () => {});
     }
   } catch {}
