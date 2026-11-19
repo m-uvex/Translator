@@ -67,18 +67,55 @@ function startOllama() {
     try { ollama = runHidden(ollamaExe(), ['serve']); ollama.on('error', () => { ollama = null; }); } catch { ollama = null; }
   });
 }
-// Antwortet auf Port 8765 schon ein Server - von Hand gestartet oder von einer
-// zweiten App-Fassung -, dann darf startNllb() keinen zweiten daneben setzen:
-// der zweite faende den Port belegt und liefe ins Leere. Jede HTTP-Antwort
+// Die NLLB-Adresse steht in den Einstellungen der Oberflaeche und damit im
+// localStorage der Seite, das der Hauptprozess nicht selbst lesen kann. Die
+// Seite meldet sie deshalb bei jeder Aenderung ueber 'nllb:url'; hier wird sie
+// zusaetzlich neben config.json abgelegt, damit die Vorabpruefung schon beim
+// naechsten Hochfahren dieselbe Adresse fragt und nicht fest 8765.
+const NLLB_DEFAULT = 'http://127.0.0.1:8765';
+const nllbUrlFile = () => path.join(app.getPath('userData'), 'nllb-address.json');
+const cleanUrl = u => String(u || '').trim().replace(/\/+$/, '');
+let nllbUrl = NLLB_DEFAULT;
+function readNllbUrl() {
+  try {
+    const u = cleanUrl(JSON.parse(fs.readFileSync(nllbUrlFile(), 'utf8')).url);
+    if (/^https?:\/\/[^\s/]+$/i.test(u)) nllbUrl = u;
+  } catch {}
+  return nllbUrl;
+}
+function setNllbUrl(u) {
+  const s = cleanUrl(u);
+  if (!/^https?:\/\/[^\s/]+$/i.test(s)) return;
+  // Auch die Vorgabe wird einmal geschrieben, damit die Datei den Stand der
+  // Einstellungen abbildet und nicht nur die Abweichungen davon.
+  if (s === nllbUrl && fs.existsSync(nllbUrlFile())) return;
+  nllbUrl = s;
+  try { fs.writeFileSync(nllbUrlFile(), JSON.stringify({ url: s })); } catch {}
+}
+// Ein von Hand gestarteter Server darf nicht verdoppelt werden: erst fragen, ob
+// auf der eingestellten Adresse schon jemand antwortet. Jede HTTP-Antwort
 // zaehlt, nicht nur 200; erst wenn gar nichts antwortet oder die Verbindung
 // haengt, startet die App selbst.
 function nllbAnswers(cb) {
+  const base = readNllbUrl();
+  let lib;
+  try { lib = new URL(base).protocol === 'https:' ? require('https') : http; } catch { return cb(false); }
   let done = false;
   const answer = v => { if (!done) { done = true; cb(v); } };
-  const req = http.get('http://127.0.0.1:8765/health', { timeout: 1500 }, res => { res.resume(); answer(true); });
+  const req = lib.get(base + '/health', { timeout: 1500 }, res => { res.resume(); answer(true); });
   req.on('timeout', () => req.destroy());
   req.on('error', () => answer(false));
 }
+// nllb_server.py hoert von sich aus auf 8765. Steht in den Einstellungen ein
+// anderer Port auf diesem Rechner, bekommt der Server ihn ueber NLLB_PORT,
+// damit die Oberflaeche denselben Endpunkt erreicht, den sie anspricht.
+function nllbPort() {
+  try {
+    const u = new URL(readNllbUrl());
+    return /^(127\.0\.0\.1|localhost|\[::1\])$/i.test(u.hostname) ? u.port : '';
+  } catch { return ''; }
+}
+ipcMain.on('nllb:url', (_e, u) => setNllbUrl(u));
 function startNllb() {
   try {
     const cfg = readCfg();
@@ -99,7 +136,8 @@ function startNllb() {
           // legen: app.asar.unpacked wird bei jedem Update ersetzt, die
           // Modellgewichte liegen aber weiter im Hugging-Face-Cache und
           // gaelten sonst als fehlend.
-          const env = Object.assign({}, process.env, { NLLB_STATE_DIR: app.getPath('userData') });
+          const port = nllbPort();
+          const env = Object.assign({}, process.env, { NLLB_STATE_DIR: app.getPath('userData') }, port ? { NLLB_PORT: port } : {});
           nllb = runHidden(py, [srv], { cwd: path.dirname(srv), env });
           nllb.on('error', () => {});
         } catch {}

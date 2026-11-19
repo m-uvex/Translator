@@ -530,7 +530,13 @@ if (!S.pref) S.pref = S.model;
 // beim Start umgeschrieben, und mindestens eine Gruppe bleibt immer sichtbar.
 const WS_ALL = 'tr,ed,study';
 const wsList = () => [...new Set(String(S.workspace || WS_ALL).split(',').filter(k => ['tr', 'ed', 'study'].includes(k)))];
-const save = () => localStorage.setItem('s', JSON.stringify(S));
+// Die NLLB-Adresse kennt nur diese Seite; der Hauptprozess prueft damit beim
+// Hochfahren, ob dort schon ein Server antwortet. Deshalb wird sie bei jeder
+// Aenderung mitgemeldet und dort neben config.json abgelegt.
+const save = () => {
+  localStorage.setItem('s', JSON.stringify(S));
+  try { window.api.nllbUrl(S.nllb); } catch {}
+};
 if (!wsList().length || S.workspace !== wsList().join(',')) { S.workspace = wsList().length ? wsList().join(',') : WS_ALL; save(); }
 // Migration: Symbol-Layout und dynamisches Markdown sind die neuen Standardwerte;
 // bestehende Installationen uebernehmen sie einmalig (Flag verhindert spaetere Ueberschreibung).

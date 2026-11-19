@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 19. November 2026, App-Version 1.15.60 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 19. November 2026, App-Version 1.15.61 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1223,3 +1223,13 @@ Geprueft 1.15.58/1.15.59 auf diesem Rechner: venv in `%APPDATA%\uebersetzer\nllb
 Nebeneffekt: Ein von Hand gestarteter Server bleibt beim Beenden der App laufen, weil `nllb` in dem Fall `null` bleibt und `will-quit` ihn nicht ueber `killTree()` abraeumt.
 
 Geprueft 1.15.60 auf diesem Rechner, beide Richtungen: (1) Server von Hand mit `pythonw.exe` und `NLLB_STATE_DIR` gestartet (`/health` 200, zwei `pythonw.exe`-Prozesse), danach die installierte App gestartet — nach 14 s dieselben beiden Prozesse mit unveraenderter Startzeit, kein dritter, `/health` weiter 200. (2) App und Handserver beendet (8765 antwortete nicht mehr), installierte App gestartet — nach 22 s zwei neue `pythonw.exe`-Prozesse, `/health` 200. Der Waechter greift also in beide Richtungen.
+
+## 95. Die Vorabpruefung folgt der eingestellten NLLB-Adresse (1.15.61)
+
+Die Pruefung aus Abschnitt 94 fragte fest `http://127.0.0.1:8765/health`. Die Adresse ist aber in den Einstellungen aenderbar (Feld „NLLB-Server-Adresse“, Schluessel `nllb`, Vorgabe `http://127.0.0.1:8765`), und sie liegt im `localStorage` der Seite — der Hauptprozess kann sie nicht selbst lesen. Stand dort ein anderer Port und lief dort ein von Hand gestarteter Server, schaute die App trotzdem auf 8765, fand nichts und setzte einen zweiten Server daneben.
+
+**Meldung statt Raten.** `save()` in `renderer.js` meldet die Adresse jetzt bei jeder Aenderung ueber den neuen Kanal `nllb:url` an den Hauptprozess (`preload.js`: `nllbUrl`). `setNllbUrl()` prueft sie auf `http(s)://host[:port]`, merkt sie und schreibt sie nach `%APPDATA%\Uebersetzer\nllb-address.json`; die Vorgabe wird einmal mitgeschrieben, damit die Datei den Stand der Einstellungen abbildet. `readNllbUrl()` liest sie beim Hochfahren; `nllbAnswers()` fragt `readNllbUrl() + '/health'` (weiter 1,5 s Zeitlimit, jede HTTP-Antwort zaehlt) und nimmt bei `https:` das `https`-Modul statt `http`.
+
+**Derselbe Port fuer den eigenen Server.** `nllb_server.py` liest seinen Port schon immer aus `NLLB_PORT` (Vorgabe 8765). `startNllb()` gibt die Variable jetzt mit, wenn die eingestellte Adresse auf `127.0.0.1`, `localhost` oder `[::1]` zeigt und einen Port nennt; sonst bleibt es bei 8765. Ohne diese Zeile haette die Pruefung auf 8799 geschaut, der eigene Server aber auf 8765 gelauscht, und die Oberflaeche haette den eingestellten Port nie erreicht.
+
+Geprueft 1.15.61 auf diesem Rechner, drei Laeufe: (1) Handserver auf 8799 (`NLLB_PORT=8799`, `/health` 200) und `nllb-address.json` auf dieselbe Adresse gesetzt, dann die App gestartet — nach 20 s dieselben zwei `pythonw.exe`-Prozesse, keine dritte Instanz, 8799 weiter 200, 8765 ohne Antwort; die App fiel also nicht auf den festen Port zurueck. (2) Nur die Adressdatei auf 8799, dort nichts gestartet — die App brachte ihren Server auf 8799 hoch (zwei neue `pythonw.exe`, `/health` 200 auf 8799, 8765 ohne Antwort), `NLLB_PORT` wirkt also. (3) Ohne Adressdatei — Server auf 8765, `/health` 200; die Datei wurde beim Start angelegt und enthielt `{"url":"http://127.0.0.1:8765"}`, womit auch die Meldung aus der Oberflaeche ueber `preload.js` bis zur Datei belegt ist.
