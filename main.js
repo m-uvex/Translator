@@ -67,24 +67,43 @@ function startOllama() {
     try { ollama = runHidden(ollamaExe(), ['serve']); ollama.on('error', () => { ollama = null; }); } catch { ollama = null; }
   });
 }
+// Antwortet auf Port 8765 schon ein Server - von Hand gestartet oder von einer
+// zweiten App-Fassung -, dann darf startNllb() keinen zweiten daneben setzen:
+// der zweite faende den Port belegt und liefe ins Leere. Jede HTTP-Antwort
+// zaehlt, nicht nur 200; erst wenn gar nichts antwortet oder die Verbindung
+// haengt, startet die App selbst.
+function nllbAnswers(cb) {
+  let done = false;
+  const answer = v => { if (!done) { done = true; cb(v); } };
+  const req = http.get('http://127.0.0.1:8765/health', { timeout: 1500 }, res => { res.resume(); answer(true); });
+  req.on('timeout', () => req.destroy());
+  req.on('error', () => answer(false));
+}
 function startNllb() {
   try {
     const cfg = readCfg();
     const py = venvPython();
     if (cfg.nllbAutostart && py) {
       nllbWanted = true;
-      // Der Server liegt im gepackten Betrieb in app.asar.unpacked. `__dirname`
-      // zeigt dagegen auf die Datei app.asar, und ein spawn mit diesem `cwd`
-      // scheitert mit ENOENT - der Server startete in der installierten
-      // Fassung deshalb nie. Genommen wird das Verzeichnis der aufgeloesten
-      // Datei; im Entwicklungsbetrieb ist das der Projektordner.
-      const srv = resPath('nllb_server.py');
-      // Zustand (installierte Modelle, Sprachliste) ins Benutzerprofil legen:
-      // app.asar.unpacked wird bei jedem Update ersetzt, die Modellgewichte
-      // liegen aber weiter im Hugging-Face-Cache und gaelten sonst als fehlend.
-      const env = Object.assign({}, process.env, { NLLB_STATE_DIR: app.getPath('userData') });
-      nllb = runHidden(py, [srv], { cwd: path.dirname(srv), env });
-      nllb.on('error', () => {});
+      nllbAnswers(up => {
+        if (up) return;
+        try {
+          // Der Server liegt im gepackten Betrieb in app.asar.unpacked.
+          // `__dirname` zeigt dagegen auf die Datei app.asar, und ein spawn mit
+          // diesem `cwd` scheitert mit ENOENT - der Server startete in der
+          // installierten Fassung deshalb nie. Genommen wird das Verzeichnis
+          // der aufgeloesten Datei; im Entwicklungsbetrieb ist das der
+          // Projektordner.
+          const srv = resPath('nllb_server.py');
+          // Zustand (installierte Modelle, Sprachliste) ins Benutzerprofil
+          // legen: app.asar.unpacked wird bei jedem Update ersetzt, die
+          // Modellgewichte liegen aber weiter im Hugging-Face-Cache und
+          // gaelten sonst als fehlend.
+          const env = Object.assign({}, process.env, { NLLB_STATE_DIR: app.getPath('userData') });
+          nllb = runHidden(py, [srv], { cwd: path.dirname(srv), env });
+          nllb.on('error', () => {});
+        } catch {}
+      });
     }
   } catch {}
 }
