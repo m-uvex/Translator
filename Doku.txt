@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.112 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.113 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1841,5 +1841,24 @@ Jeder Aufruf nennt seinen Zweck: `translate` (alle Wege in `translateCore`, auch
 | Editor-Leiste, Klick auf „Kuerzen“ nach dem Umlegen im laufenden Fenster | Statuszeile zeigt dieselbe Meldung, Text unveraendert, 0 Requests |
 
 Mit `aiAll = true` laufen dieselben Zwecke: `editor-op`, `study-word`, ein Aufruf ohne Zweck und die Ersatzwoerter (Popup „AlternativA AlternativB“), Uebersetzen weiterhin „STUB-ANTWORT“. Die Zahlen stammen aus dem Protokoll des Stubs, nicht aus der Konsole der App.
+
+`node --check` laeuft fuer `renderer.js`, `editor.js` und `study.js` durch; die Oberflaeche wurde nicht per Bildschirmfoto betrachtet.
+
+## 139. Zwei Schalter, klar benannt; Meldung statt Tooltip (1.15.113)
+
+Der softwareweite Schalter heisst „KI-Funktionen (alle auf einmal)“, der Editor-Schalter hiess seit 1.15.83 „KI-Funktionen im Editor (alle auf einmal)“. Dieselbe Klammer bei zwei Schaltern mit ganz verschiedener Reichweite: der eine gilt fuer die ganze App, der andere nur fuer seine Gruppe.
+
+**Umbenannt.** `s_edAI` heisst jetzt „KI-Funktionen im Editor (Sammelschalter)“ — en „AI functions in the editor (group switch)“, nl „AI-functies in de editor (groepsschakelaar)“, es „Funciones de IA en el editor (interruptor de grupo)“, tr „Düzenleyicideki YZ işlevleri (grup anahtarı)“, ar „وظائف الذكاء الاصطناعي في المحرر (مفتاح المجموعة)“. Der Tooltip der ausgegrauten Editor-Zeilen (`edAIdim`) nennt ihn entsprechend „Sammelschalter“. Der softwareweite Schalter behaelt seine Formulierung und ist damit der einzige mit „alle auf einmal“.
+
+**Innen ohne Ortsbezug.** `studyAI()` hiess nach dem Lese-Arbeitsplatz, obwohl es nur `S.aiAll` las; der Meldungsschluessel `studyAIoff` ebenfalls — obwohl Editor, Ersatzwoerter und Bildbeschreibung dieselbe Meldung benutzen. Neu: `aiAllOn()` in `renderer.js` neben `aiAllowed()`/`AI_ALLOWED` (auch als `window.aiAllOn`), die eigene Definition in `study.js` ist weg; der Schluessel heisst `aiOffMsg` und traegt unveraendert denselben Text in allen sechs Sprachen. Die alten Namen kommen im Code nicht mehr vor; die historischen Abschnitte 116 ff. nennen sie noch, weil sie den damaligen Stand beschreiben.
+
+**Der Tooltip-Satz ist keine Fehlermeldung mehr.** `aiAlldim` („Der Hauptschalter „KI-Funktionen“ ist aus; diese Einstellung wirkt erst, wenn er wieder an ist.“) steht nur noch in `title`-Attributen ausgegrauter Zeilen. Jeder Fehlerfall fuehrt `aiOffMsg` („Die KI-Funktionen sind aus (Einstellungen → KI-Funktionen).“): die Sperre in `chat()`, die Statuszeile des Editors (`e.aiOff`), die Meldungen in Vokabeln und Kurzgeschichten und der Klick auf ein Wort der Ausgabe. Bis 1.15.111 warf `edRun()` den Tooltip-Text, deshalb stand er in der Statuszeile.
+
+**Geprueft 1.15.113** (eigenes `--user-data-dir`, CDP, gestubbter Ollama/NLLB-Ersatz auf 127.0.0.1:4599, deutsches Fenster):
+
+- In den Einstellungen traegt genau eine Zeile „alle auf einmal“ (`s_aiAll`); die Editor-Zeile heisst „KI-Funktionen im Editor (Sammelschalter)“. Die sechs Sprachfassungen von `s_edAI` und `aiOffMsg` im Fenster ausgelesen, alle vorhanden.
+- `edAI` aus, `aiAll` an: die beiden gedimmten Editor-Karten tragen den Titel „Der Sammelschalter „KI-Funktionen im Editor“ ist aus; …“.
+- `aiAll` im laufenden Fenster aus, Klick auf „Kuerzen“ in der Kontext-Leiste: Statuszeile „Die KI-Funktionen sind aus (Einstellungen → KI-Funktionen).“, kein „wirkt erst“, 0 Modellanfragen im Protokoll des Stubs, Text unveraendert.
+- `aiAllowed('translate')` bleibt `true`, `aiAllowed('editor-op')` ist `false`, `typeof aiAllOn` ist `function`.
 
 `node --check` laeuft fuer `renderer.js`, `editor.js` und `study.js` durch; die Oberflaeche wurde nicht per Bildschirmfoto betrachtet.

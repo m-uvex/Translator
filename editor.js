@@ -298,7 +298,7 @@ async function withBusy(fn) {
   try {
     cleanMarks();
     await fn();
-  } catch (e) { edStatus(e.aiOff ? t('studyAIoff') : t('error', String(e.message).slice(0, 100))); }
+  } catch (e) { edStatus(e.aiOff ? t('aiOffMsg') : t('error', String(e.message).slice(0, 100))); }
   finally {
     cleanMarks();
     unmarkProcessing(page);

@@ -386,10 +386,11 @@ const K = {
     'No model with image recognition is installed — you can download one online (Settings → Images in text → Model for describing images, e.g. gemma3:4b).'],
   imgExpDescribe:['Bilder beschreiben','Describe images'], imgExpAnyway:['Trotzdem exportieren','Export anyway'],
   imgExpBusy:['Bilder werden beschrieben …','Describing images …'], imgExpDesc:['Bild','Image'],
+  // Nur ein Tooltip an ausgegrauten Zeilen. Als Fehlermeldung dient `aiOffMsg`.
   aiAlldim:['Der Hauptschalter „KI-Funktionen“ ist aus; diese Einstellung wirkt erst, wenn er wieder an ist.','The master switch “AI functions” is off; this setting takes effect only when it is on again.'],
   // KI-Funktionen des Editors: Hauptschalter, Leiste und jede Funktion.
   s_groupEdAI:['Textbearbeitung (KI)','Text editing (AI)'],
-  s_edAI:['KI-Funktionen im Editor (alle auf einmal)','AI functions in the editor (all at once)'],
+  s_edAI:['KI-Funktionen im Editor (Sammelschalter)','AI functions in the editor (group switch)'],
   s_edCtx:['Leiste bei Textauswahl zeigen','Show the bar when text is selected'],
   s_edTbGroup:['Werkzeugleiste: ganzer Text','Toolbar: whole text'],
   s_edCtxShorten:['Kürzen','Shorten'], s_edCtxLengthen:['Verlängern','Lengthen'], s_edCtxSummarize:['Zusammenfassen','Summarize'],
@@ -397,7 +398,7 @@ const K = {
   s_edTbShorten:['Kürzen (ganzer Text)','Shorten (entire text)'], s_edTbLengthen:['Verlängern (ganzer Text)','Lengthen (entire text)'], s_edTbSum:['Zusammenfassen (ganzer Text)','Summarize (entire text)'],
   // Vorschlaege in der Sprachsuche (Modelle, die die gesuchte Sprache kennen).
   suggH:['Andere Modelle können diese Sprache','Other models support this language'], recTag:['Empfohlen','Recommended'],
-  edAIdim:['Der Hauptschalter „KI-Funktionen im Editor“ ist aus; diese Einstellung wirkt erst, wenn er wieder an ist.','The master switch “AI functions in the editor” is off; this setting takes effect only when it is on again.'],
+  edAIdim:['Der Sammelschalter „KI-Funktionen im Editor“ ist aus; diese Einstellung wirkt erst, wenn er wieder an ist.','The group switch “AI functions in the editor” is off; this setting takes effect only when it is on again.'],
   langGeneric:['Allgemeine Liste — die von diesem Modell unterstützten Sprachen sind nicht dokumentiert.','General list — this model’s supported languages are not documented.'],
   reset:['Zurücksetzen','Reset'], resetAll:['Alles zurücksetzen','Reset all'], autoSys:['Automatisch (System)','Automatic (system)'], autoO:['Automatisch','Automatic'], autoModel:['Automatisch','Automatic'], light:['Hell','Light'], dark:['Dunkel','Dark'],
   nllbH:['Übersetzungsmodelle','Translation models'], srvSetup:['Server einrichten','Set up server'], mInst:['Eingerichtet','Installed'], mNot:['Nicht eingerichtet','Not installed'], mLoad:[p => `Lädt … ${p} %`, p => `Downloading … ${p}%`],
@@ -430,7 +431,7 @@ const NL = {
   s_url:'Ollama-adres', s_nllb:'Adres van NLLB-server', s_ui:'Weergavetaal', s_theme:'Thema', s_start:'Openen bij starten', s_workspace:'Zichtbare werkplekken',
   s_helper:'Model voor woordalternatieven (bij TranslateGemma/NLLB)', s_sys:'Systeemprompt', s_temp:'Temperatuur (lager = consistenter)', s_ctx:'Contextlengte (num_ctx)',
   s_groupGeneral:'Algemeen', s_groupConn:'Verbindingen', s_groupTrans:'Vertaling',
-  s_groupEdAI:'Tekstbewerking (AI)', s_edAI:'AI-functies in de editor (alles tegelijk)', s_edCtx:'Werkbalk tonen bij tekstselectie', s_edTbGroup:'Werkbalk: hele tekst',
+  s_groupEdAI:'Tekstbewerking (AI)', s_edAI:'AI-functies in de editor (groepsschakelaar)', s_edCtx:'Werkbalk tonen bij tekstselectie', s_edTbGroup:'Werkbalk: hele tekst',
   s_accent:'Accentkleur', accentSky:'Hemelblauw', accentIndigo:'Indigo', accentViolet:'Violet', accentPink:'Roze',
   /* accentBabyPink:'Babyroze', */ accentCoral:'Koraal', accentAmber:'Amber', accentGreen:'Groen', accentTeal:'Turquoise', accentSlate:'Grijs',
   s_groupImages:'Afbeeldingen in de tekst', s_imgModel:'Model om afbeeldingen te beschrijven', imgIns:'Afbeelding invoegen',
@@ -445,7 +446,7 @@ const NL = {
   imgExpDescribe:'Afbeeldingen beschrijven', imgExpAnyway:'Toch exporteren', imgExpBusy:'Afbeeldingen worden beschreven …', imgExpDesc:'Afbeelding',
   s_groupAI:'AI-functies', s_aiAll:'AI-functies (alles tegelijk)', aiAllHint:'Schakelt alle AI-functies in beide werkplekken uit — ook toekomstige. Vertalen blijft mogelijk, net als alles wat zonder model werkt: spelling, woordenboek, geschiedenis, export.', s_studyWord:'Woorden vertalen bij aanraken', aiAlldim:'De hoofdschakelaar “AI-functies” staat uit; deze instelling werkt pas als hij weer aan staat.',
   s_edCtxShorten:'Inkorten', s_edCtxLengthen:'Verlengen', s_edCtxSummarize:'Samenvatten', s_edCtxProofread:'Nalezen', s_edCtxSyn:'Synoniemen', s_edCtxStyle:'Stijl', s_edCtxTr:'Vertalen (selectie)',
-  s_edTbShorten:'Inkorten (hele tekst)', s_edTbLengthen:'Verlengen (hele tekst)',   s_edTbSum:'Samenvatten (hele tekst)', suggH:'Andere modellen ondersteunen deze taal', recTag:'Aanbevolen', langGeneric:'Algemene lijst — de talen die dit model ondersteunt zijn niet gedocumenteerd.', edAIdim:'De hoofdschakelaar “AI-functies in de editor” staat uit; deze instelling werkt pas als hij weer aan staat.',
+  s_edTbShorten:'Inkorten (hele tekst)', s_edTbLengthen:'Verlengen (hele tekst)',   s_edTbSum:'Samenvatten (hele tekst)', suggH:'Andere modellen ondersteunen deze taal', recTag:'Aanbevolen', langGeneric:'Algemene lijst — de talen die dit model ondersteunt zijn niet gedocumenteerd.', edAIdim:'De groepsschakelaar “AI-functies in de editor” staat uit; deze instelling werkt pas als hij weer aan staat.',
   s_history:'Vertaalgeschiedenis', s_diag:'Verbindingen (diagnose)', historyH:'Geschiedenis', historyEmpty:'Nog geen vertalingen', histLoad:'In de velden laden',
   glossColls:'Woordenlijstcollecties', glossSave:'Huidige lijst als collectie bewaren', glossNewName:n => `Collectie ${n}`,
   glossImportT:'Woordenlijst importeren', glossImported:n => `${n} items overgenomen`, glossNone:'Geen items in het bestand', glossNoFile:'Bestand kon niet worden gelezen',
@@ -480,7 +481,7 @@ const ES = {
   s_url:'Dirección de Ollama', s_nllb:'Dirección del servidor NLLB', s_ui:'Idioma de visualización', s_theme:'Tema', s_start:'Abrir al inicio', s_workspace:'Espacios visibles',
   s_helper:'Modelo para alternativas de palabras (TranslateGemma/NLLB)', s_sys:'Prompt del sistema', s_temp:'Temperatura (menor = más consistente)', s_ctx:'Longitud de contexto (num_ctx)',
   s_groupGeneral:'General', s_groupConn:'Conexiones', s_groupTrans:'Traducción', s_groupFeatures:'Ajustes adicionales',
-  s_groupEdAI:'Edición de texto (IA)', s_edAI:'Funciones de IA en el editor (todas a la vez)', s_edCtx:'Mostrar la barra al seleccionar texto', s_edTbGroup:'Barra de herramientas: todo el texto',
+  s_groupEdAI:'Edición de texto (IA)', s_edAI:'Funciones de IA en el editor (interruptor de grupo)', s_edCtx:'Mostrar la barra al seleccionar texto', s_edTbGroup:'Barra de herramientas: todo el texto',
   s_accent:'Color de acento', accentSky:'Azul cielo', accentIndigo:'Índigo', accentViolet:'Violeta', accentPink:'Rosa',
   /* accentBabyPink:'Rosa bebé', */ accentCoral:'Coral', accentAmber:'Ámbar', accentGreen:'Verde', accentTeal:'Turquesa', accentSlate:'Gris',
   s_groupImages:'Imágenes en el texto', s_imgModel:'Modelo para describir imágenes', imgIns:'Insertar imagen',
@@ -495,7 +496,7 @@ const ES = {
   imgExpDescribe:'Describir imágenes', imgExpAnyway:'Exportar de todos modos', imgExpBusy:'Describiendo imágenes …', imgExpDesc:'Imagen',
   s_groupAI:'Funciones de IA', s_aiAll:'Funciones de IA (todas a la vez)', aiAllHint:'Desactiva todas las funciones de IA en ambos espacios de trabajo, también las futuras. La traducción sigue disponible, igual que todo lo que funciona sin modelo: ortografía, diccionario, historial, exportación.', s_studyWord:'Traducir palabras al tocar', aiAlldim:'El interruptor principal «Funciones de IA» está desactivado; este ajuste solo actúa cuando vuelve a estar activo.',
   s_edCtxShorten:'Acortar', s_edCtxLengthen:'Alargar', s_edCtxSummarize:'Resumir', s_edCtxProofread:'Revisar', s_edCtxSyn:'Sinónimos', s_edCtxStyle:'Estilo', s_edCtxTr:'Traducir (selección)',
-  s_edTbShorten:'Acortar (texto completo)', s_edTbLengthen:'Alargar (texto completo)',   s_edTbSum:'Resumir (texto completo)', suggH:'Otros modelos admiten este idioma', recTag:'Recomendado', langGeneric:'Lista general — no está documentado qué idiomas admite este modelo.', edAIdim:'El interruptor principal «Funciones de IA en el editor» está desactivado; este ajuste solo actúa cuando vuelve a estar activo.',
+  s_edTbShorten:'Acortar (texto completo)', s_edTbLengthen:'Alargar (texto completo)',   s_edTbSum:'Resumir (texto completo)', suggH:'Otros modelos admiten este idioma', recTag:'Recomendado', langGeneric:'Lista general — no está documentado qué idiomas admite este modelo.', edAIdim:'El interruptor de grupo «Funciones de IA en el editor» está desactivado; este ajuste solo actúa cuando vuelve a estar activo.',
   s_history:'Historial de traducciones', s_diag:'Conexiones (diagnóstico)', historyH:'Historial', historyEmpty:'Aún no hay traducciones', histLoad:'Cargar en los campos',
   glossColls:'Colecciones de glosario', glossSave:'Guardar la lista actual como colección', glossNewName:n => `Colección ${n}`,
   glossImportT:'Importar glosario', glossImported:n => `${n} entradas añadidas`, glossNone:'No hay entradas en el archivo', glossNoFile:'No se pudo leer el archivo',
@@ -532,7 +533,7 @@ const TR = {
   s_url:'Ollama adresi', s_nllb:'NLLB sunucu adresi', s_ui:'Arayüz dili', s_theme:'Tema', s_start:'Başlangıçta aç', s_workspace:'Görünür çalışma alanları',
   s_helper:'Kelime alternatifleri modeli (TranslateGemma/NLLB için)', s_sys:'Sistem komutu', s_temp:'Sıcaklık (düşük = daha tutarlı)', s_ctx:'Bağlam uzunluğu (num_ctx)',
   s_groupGeneral:'Genel', s_groupConn:'Bağlantılar', s_groupTrans:'Çeviri', s_groupFeatures:'Ek ayarlar',
-  s_groupEdAI:'Metin düzenleme (YZ)', s_edAI:'Düzenleyicideki YZ işlevleri (hepsi birden)', s_edCtx:'Metin seçildiğinde çubuğu göster', s_edTbGroup:'Araç çubuğu: tüm metin',
+  s_groupEdAI:'Metin düzenleme (YZ)', s_edAI:'Düzenleyicideki YZ işlevleri (grup anahtarı)', s_edCtx:'Metin seçildiğinde çubuğu göster', s_edTbGroup:'Araç çubuğu: tüm metin',
   s_accent:'Vurgu rengi', accentSky:'Gök mavisi', accentIndigo:'Çivit', accentViolet:'Mor', accentPink:'Pembe',
   /* accentBabyPink:'Bebek pembesi', */ accentCoral:'Mercan', accentAmber:'Amber', accentGreen:'Yeşil', accentTeal:'Turkuaz', accentSlate:'Gri',
   s_groupImages:'Metindeki görseller', s_imgModel:'Görselleri betimleme modeli', imgIns:'Görsel ekle',
@@ -547,7 +548,7 @@ const TR = {
   imgExpDescribe:'Görselleri betimle', imgExpAnyway:'Yine de dışa aktar', imgExpBusy:'Görseller betimleniyor …', imgExpDesc:'Görsel',
   s_groupAI:'YZ işlevleri', s_aiAll:'YZ işlevleri (hepsi birden)', aiAllHint:'Her iki çalışma alanındaki tüm YZ işlevlerini kapatır — gelecekteki yeniler dahil. Çeviri kullanılabilir kalır; model gerektirmeyen her şey de: yazım denetimi, sözlük, geçmiş, dışa aktarma.', s_studyWord:'Dokununca kelimeyi çevir', aiAlldim:'“YZ işlevleri” ana anahtarı kapalı; bu ayar ancak ana anahtar açılınca etkili olur.',
   s_edCtxShorten:'Kısalt', s_edCtxLengthen:'Uzat', s_edCtxSummarize:'Özetle', s_edCtxProofread:'Düzelt', s_edCtxSyn:'Eş anlamlılar', s_edCtxStyle:'Stil', s_edCtxTr:'Çevir (seçim)',
-  s_edTbShorten:'Kısalt (tüm metin)', s_edTbLengthen:'Uzat (tüm metin)',   s_edTbSum:'Özetle (tüm metin)', suggH:'Diğer modeller bu dili destekliyor', recTag:'Önerilen', langGeneric:'Genel liste — bu modelin desteklediği diller belgelenmemiş.', edAIdim:'“Düzenleyicideki YZ işlevleri” ana anahtarı kapalı; bu ayar ancak ana anahtar açılınca etkili olur.',
+  s_edTbShorten:'Kısalt (tüm metin)', s_edTbLengthen:'Uzat (tüm metin)',   s_edTbSum:'Özetle (tüm metin)', suggH:'Diğer modeller bu dili destekliyor', recTag:'Önerilen', langGeneric:'Genel liste — bu modelin desteklediği diller belgelenmemiş.', edAIdim:'“Düzenleyicideki YZ işlevleri” grup anahtarı kapalı; bu ayar ancak o açılınca etkili olur.',
   s_history:'Çeviri geçmişi', s_diag:'Bağlantılar (tanı)', historyH:'Geçmiş', historyEmpty:'Henüz çeviri yok', histLoad:'Alanlara yükle',
   glossColls:'Sözlük koleksiyonları', glossSave:'Geçerli listeyi koleksiyon olarak kaydet', glossNewName:n => `Koleksiyon ${n}`,
   glossImportT:'Sözlük içe aktar', glossImported:n => `${n} giriş alındı`, glossNone:'Dosyada giriş yok', glossNoFile:'Dosya okunamadı',
@@ -584,7 +585,7 @@ const AR = {
   s_url:'عنوان Ollama', s_nllb:'عنوان خادم NLLB', s_ui:'لغة الواجهة', s_theme:'المظهر', s_start:'الفتح عند البدء', s_workspace:'مساحات العمل المرئية',
   s_helper:'نموذج بدائل الكلمات (مع TranslateGemma/NLLB)', s_sys:'توجيه النظام', s_temp:'درجة الحرارة (أقل = أكثر دقة)', s_ctx:'طول السياق (num_ctx)',
   s_groupGeneral:'عام', s_groupConn:'الاتصالات', s_groupTrans:'الترجمة', s_groupFeatures:'إعدادات إضافية',
-  s_groupEdAI:'تحرير النص (ذكاء اصطناعي)', s_edAI:'وظائف الذكاء الاصطناعي في المحرر (كلها دفعة واحدة)', s_edCtx:'إظهار الشريط عند تحديد النص', s_edTbGroup:'شريط الأدوات: النص كله',
+  s_groupEdAI:'تحرير النص (ذكاء اصطناعي)', s_edAI:'وظائف الذكاء الاصطناعي في المحرر (مفتاح المجموعة)', s_edCtx:'إظهار الشريط عند تحديد النص', s_edTbGroup:'شريط الأدوات: النص كله',
   s_accent:'لون التمييز', accentSky:'أزرق سماوي', accentIndigo:'نيلي', accentViolet:'بنفسجي', accentPink:'وردي',
   /* accentBabyPink:'وردي فاتح', */ accentCoral:'مرجاني', accentAmber:'كهرماني', accentGreen:'أخضر', accentTeal:'فيروزي', accentSlate:'رمادي',
   s_groupImages:'الصور في النص', s_imgModel:'نموذج لوصف الصور', imgIns:'إدراج صورة',
@@ -599,7 +600,7 @@ const AR = {
   imgExpDescribe:'وصف الصور', imgExpAnyway:'تصدير على أي حال', imgExpBusy:'جارٍ وصف الصور …', imgExpDesc:'صورة',
   s_groupAI:'وظائف الذكاء الاصطناعي', s_aiAll:'وظائف الذكاء الاصطناعي (كلها دفعة واحدة)', aiAllHint:'يغلق جميع وظائف الذكاء الاصطناعي في مساحتي العمل، بما في ذلك الوظائف المستقبلية. تبقى الترجمة متاحة، وكل ما يعمل دون نموذج: التدقيق الإملائي، القاموس، السجل، التصدير.', s_studyWord:'ترجمة الكلمة عند لمسها', aiAlldim:'المفتاح الرئيسي «وظائف الذكاء الاصطناعي» مغلق؛ لا يؤثر هذا الإعداد إلا عند تشغيله مرة أخرى.',
   s_edCtxShorten:'تقصير', s_edCtxLengthen:'إطالة', s_edCtxSummarize:'تلخيص', s_edCtxProofread:'تدقيق', s_edCtxSyn:'مرادفات', s_edCtxStyle:'الأسلوب', s_edCtxTr:'ترجمة (تحديد)',
-  s_edTbShorten:'تقصير (النص كامل)', s_edTbLengthen:'إطالة (النص كامل)',   s_edTbSum:'تلخيص (النص كامل)', suggH:'نماذج أخرى تدعم هذه اللغة', recTag:'موصى به', langGeneric:'قائمة عامة — اللغات التي يدعمها هذا النموذج غير موثقة.', edAIdim:'المفتاح الرئيسي «وظائف الذكاء الاصطناعي في المحرر» مغلق؛ لا يؤثر هذا الإعداد إلا عند تشغيله مرة أخرى.',
+  s_edTbShorten:'تقصير (النص كامل)', s_edTbLengthen:'إطالة (النص كامل)',   s_edTbSum:'تلخيص (النص كامل)', suggH:'نماذج أخرى تدعم هذه اللغة', recTag:'موصى به', langGeneric:'قائمة عامة — اللغات التي يدعمها هذا النموذج غير موثقة.', edAIdim:'مفتاح المجموعة «وظائف الذكاء الاصطناعي في المحرر» مغلق؛ لا يؤثر هذا الإعداد إلا عند تشغيله مرة أخرى.',
   s_history:'سجل الترجمات', s_diag:'الاتصالات (تشخيص)', historyH:'السجل', historyEmpty:'لا توجد ترجمات بعد', histLoad:'تحميل في الحقول',
   glossColls:'مجموعات المسرد', glossSave:'حفظ القائمة الحالية كمجموعة', glossNewName:n => `مجموعة ${n}`,
   glossImportT:'استيراد مسرد', glossImported:n => `تمت إضافة ${n} مدخلاً`, glossNone:'لا توجد مدخلات في الملف', glossNoFile:'تعذر قراءة الملف',
@@ -1049,14 +1050,17 @@ function modelPop(btn) {
 // Modellfrei und deshalb gar nicht hier: Rechtschreibung, Woerterbuch, Verlauf,
 // Export und Dokumentenablage rufen kein Modell und brauchen keine Ausnahme.
 const AI_ALLOWED = new Set(['translate']);
-const aiAllowed = purpose => S.aiAll !== false || AI_ALLOWED.has(purpose);
+// Neutraler Name: der Schalter gilt fuer die ganze App, nicht fuer einen
+// einzelnen Arbeitsplatz.
+const aiAllOn = () => S.aiAll !== false;
+const aiAllowed = purpose => aiAllOn() || AI_ALLOWED.has(purpose);
 function aiGate(purpose) {
   if (aiAllowed(purpose)) return;
   const e = new Error('aioff');
   e.aiOff = true; e.purpose = purpose;
   throw e;
 }
-window.aiAllowed = aiAllowed; window.AI_ALLOWED = AI_ALLOWED;
+window.aiAllowed = aiAllowed; window.aiAllOn = aiAllOn; window.AI_ALLOWED = AI_ALLOWED;
 
 async function chat(messages, { purpose, stream, format, onToken, model, signal, options } = {}) {
   aiGate(purpose);
@@ -1539,7 +1543,7 @@ $('#glossImp').onclick = glossImport;
 $('#output').addEventListener('click', async e => {
   const w = e.target.closest('.w'); if (!w || busy) return;
   if (isMt()) return status(t('nllbNoAlt'));
-  if (!aiAllowed('alts')) return status(t('studyAIoff'));
+  if (!aiAllowed('alts')) return status(t('aiOffMsg'));
   const hm = helperModel(); if (!hm) return status(t('needHelper'));
   const word = w.textContent, n = [...$('#output').querySelectorAll('.w')].filter(x => x.textContent === word).indexOf(w) + 1;
   const p = $('#alt'), r = w.getBoundingClientRect(); closePops();

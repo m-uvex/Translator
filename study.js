@@ -177,13 +177,14 @@ function cleanTranslation(tr) {
 }
 
 // Alle KI-Funktionen der App haengen am softwareweiten Schalter `aiAll`
-// (Abschnitt 131): Wortuebersetzung und Kurzgeschichten sind keine Sonderfaelle
-// mehr. Ist er aus, wird kein Modell gefragt; `aioff` traegt die Meldung nach
-// aussen.
-const studyAI = () => S.aiAll !== false;
+// (Abschnitte 131 und 138): Wortuebersetzung und Kurzgeschichten sind keine
+// Sonderfaelle mehr. Ist er aus, wird kein Modell gefragt; `aioff` traegt die
+// Meldung nach aussen. Der Schalter selbst heisst neutral `aiAllOn()` und steht
+// zentral in renderer.js - er gilt fuer die ganze App, nicht fuer einen
+// einzelnen Arbeitsplatz.
 
 async function translateTerm(term, ctx, pair, single) {
-  if (!studyAI()) throw new Error('aioff');
+  if (!aiAllOn()) throw new Error('aioff');
   const P = pair || curPair();
   const key = nrm(term) + '|' + nrm(ctx) + '|' + P.src + '>' + P.tgt + (single ? '|one' : '');
   if (wordCache.has(key)) return wordCache.get(key);
@@ -832,7 +833,7 @@ async function pickWord(el) {
   let res;
   try { res = await translateTerm(term, ctx, pair); }
   catch (e) {
-    const msg = e.message === 'aioff' ? t('studyAIoff') : e.message === 'nomodel' ? t('studyNoModel') : t('wordErr');
+    const msg = e.message === 'aioff' ? t('aiOffMsg') : e.message === 'nomodel' ? t('studyNoModel') : t('wordErr');
     window.trStatus(msg);
     chipFail(el, msg);
     return;
@@ -861,7 +862,7 @@ async function pickPhrase(sel) {
   let res;
   try { res = await translateTerm(phrase, ctx, pair); }
   catch (e) {
-    const msg = e.message === 'aioff' ? t('studyAIoff') : e.message === 'nomodel' ? t('studyNoModel') : t('wordErr');
+    const msg = e.message === 'aioff' ? t('aiOffMsg') : e.message === 'nomodel' ? t('studyNoModel') : t('wordErr');
     window.trStatus(msg);
     chipFail(anchor0, msg);
     return;
@@ -920,7 +921,7 @@ async function addFromSearch() {
   vocStatus(t('wordTr'));
   let res;
   try { res = await translateTerm(term, ''); }
-  catch (e) { vocStatus(e.message === 'aioff' ? t('studyAIoff') : e.message === 'nomodel' ? t('studyNoModel') : t('wordErr'), true); return; }
+  catch (e) { vocStatus(e.message === 'aioff' ? t('aiOffMsg') : e.message === 'nomodel' ? t('studyNoModel') : t('wordErr'), true); return; }
   vocStatus('');
   addVocab(term, res, '', null);
   inp.value = '';
@@ -934,7 +935,7 @@ async function addFromSearch() {
 async function fillMissingTranslations() {
   const todo = ST.vocab.filter(e => inPair(e) && !String(e.translation || '').trim());
   if (!todo.length) { vocStatus(t('vocFillNone')); return; }
-  if (!studyAI()) { vocStatus(t('studyAIoff'), true); return; }
+  if (!aiAllOn()) { vocStatus(t('aiOffMsg'), true); return; }
   if (!studyModel()) { vocStatus(t('studyNoModel'), true); return; }
   if (!await ask(t('vocFillAsk', todo.length), t('vocFillDo'), t('cancel'))) return;
   let done = 0, fails = 0;
@@ -1895,8 +1896,8 @@ function storyOpen() {
 function storyStart() {
   if (ST_SLOTS.some(s => !storySel[s[0]])) return;
   const msg = $('#stMsg');
-  if (!studyAI()) {
-    if (msg) { msg.textContent = t('studyAIoff'); msg.classList.remove('hidden'); msg.classList.add('err'); }
+  if (!aiAllOn()) {
+    if (msg) { msg.textContent = t('aiOffMsg'); msg.classList.remove('hidden'); msg.classList.add('err'); }
     return;
   }
   if (!storyModel()) {
@@ -1925,7 +1926,7 @@ async function storyGenerate(id) {
   persist('texts'); renderTexts();
   const lang = tx.src;
   try {
-    if (!studyAI()) throw new Error('aioff');
+    if (!aiAllOn()) throw new Error('aioff');
     const mdl = storyModel();
     if (!mdl) throw new Error('nomodel');
     const [lo, hi, p1, p2] = ST_LEN[tx.len] || ST_LEN.mid;
@@ -1965,7 +1966,7 @@ async function storyGenerate(id) {
 // Generator laeuft - deshalb hier gleich mit auffrischen.
 function renderStoryBtn() {
   const b = $('#txStory'); if (!b) return;
-  b.classList.toggle('hidden', !S.storyOn || !studyAI());
+  b.classList.toggle('hidden', !S.storyOn || !aiAllOn());
   renderStudyModel();
 }
 window.studyStorySync = renderStoryBtn;
@@ -1997,7 +1998,7 @@ const STORY_STR = {
   stRetry: ['Klicken: noch einmal versuchen', 'Click to try again', 'Klik om het opnieuw te proberen', 'Haz clic para reintentar', 'Yeniden denemek için tıkla', 'انقر للمحاولة مجدداً'],
   stNoModel: ['Kein Schreibmodell gefunden.', 'No writing model found.', 'Geen schrijfmodel gevonden.', 'No se encontró modelo de escritura.', 'Yazma modeli bulunamadı.', 'لم يتم العثور على نموذج كتابة.'],
   stUntitled: ['Kurzgeschichte', 'Short story', 'Kort verhaal', 'Relato corto', 'Kısa hikâye', 'قصة قصيرة'],
-  studyAIoff: ['Die KI-Funktionen sind aus (Einstellungen → KI-Funktionen).', 'AI functions are off (Settings → AI functions).', 'De AI-functies staan uit (Instellingen → AI-functies).', 'Las funciones de IA están desactivadas (Ajustes → Funciones de IA).', 'YZ işlevleri kapalı (Ayarlar → YZ işlevleri).', 'وظائف الذكاء الاصطناعي مغلقة (الإعدادات ← وظائف الذكاء الاصطناعي).'],
+  aiOffMsg: ['Die KI-Funktionen sind aus (Einstellungen → KI-Funktionen).', 'AI functions are off (Settings → AI functions).', 'De AI-functies staan uit (Instellingen → AI-functies).', 'Las funciones de IA están desactivadas (Ajustes → Funciones de IA).', 'YZ işlevleri kapalı (Ayarlar → YZ işlevleri).', 'وظائف الذكاء الاصطناعي مغلقة (الإعدادات ← وظائف الذكاء الاصطناعي).'],
   s_story: ['Kurzgeschichten-Generator', 'Short story generator', 'Korteverhalengenerator', 'Generador de relatos', 'Kısa hikâye üreticisi', 'مولّد القصص القصيرة']
 };
 for (const [k, v] of Object.entries(STORY_STR)) {
