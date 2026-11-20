@@ -518,7 +518,7 @@ ipcMain.handle('file:save', async (_e, name, data, kind) => {
   const names = { md:'Markdown', html:'HTML', txt:'Text', pdf:'PDF' };
   const r = await dialog.showSaveDialog(win, { defaultPath: name + '.' + kind, filters: [{ name: names[kind], extensions: [kind] }] });
   if (r.canceled || !r.filePath) return false;
-  if (kind === 'pdf') fs.writeFileSync(r.filePath, await win.webContents.printToPDF({ pageSize: 'A4', printBackground: false }));
+  if (kind === 'pdf') fs.writeFileSync(r.filePath, await win.webContents.printToPDF({ pageSize: 'A4', printBackground: true }));
   else fs.writeFileSync(r.filePath, data, 'utf8');
   return true;
 });

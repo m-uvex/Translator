@@ -640,3 +640,18 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 /* Einzelschalter unter dem ausgeschalteten Hauptschalter „KI-Funktionen im
    Editor“: sichtbar inaktiv, aber weiter bedienbar. */
 .set.dim{opacity:.45}
+/* Bilder im Text: Der Rahmen traegt die Groesse des sichtbaren Bildes, das Bild
+   darin wird gedreht und gespiegelt; die vier Ecken sind Ziehpunkte. */
+.edimg{position:relative;display:block;margin:12px auto;user-select:none;border-radius:2px}
+.edimg img{position:absolute;display:block;max-width:none;transform-origin:center center;pointer-events:auto}
+.edimg .hnd{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--card);border:1.5px solid var(--accent-ink);box-shadow:0 1px 3px #0003;opacity:0;transition:opacity .12s;z-index:3}
+.edimg:hover .hnd,.edimg.sel .hnd{opacity:1}
+.edimg.sel{box-shadow:0 0 0 1.5px var(--accent-ink)}
+/* In der kleinen Vorschau der Ablage stehen die Bilder im Fluss: der Rahmen ist
+   dort wenige Pixel breit, absolute Bilder wuerden ihn sonst verlassen. */
+.libprev .doc .edimg,.dockprev .doc .edimg{width:auto!important;height:auto!important}
+.libprev .doc .edimg img,.dockprev .doc .edimg img{position:static!important;width:100%!important;height:auto!important;transform:none!important}
+.libprev .doc .edimg .hnd,.dockprev .doc .edimg .hnd{display:none}
+/* Im Druck zaehlen nur Bild und Text: keine Ziehpunkte, kein Auswahlrahmen.
+   print-color-adjust:exact haelt Schriftfarben und Textmarker im PDF. */
+@media print{.edimg{margin:10px auto;box-shadow:none}.edimg .hnd{display:none}#page{print-color-adjust:exact;-webkit-print-color-adjust:exact}}

@@ -40,6 +40,7 @@
     <div class="sbar" id="edBar"></div>
     <div class="ctxbar hidden" id="ctxBar"></div>
     <input type="file" id="edFile" hidden accept=".txt,.md,.html,.docx,.pdf">
+    <input type="file" id="edImgFile" hidden accept="image/png,image/jpeg,image/gif,image/webp" multiple>
   </div>
   <div id="vL" class="view hidden">
     <header class="libhead"><h2 data-t="libTitle"></h2><span class="sp"></span><span class="muted" id="libCount"></span></header>
@@ -105,6 +106,7 @@
   <div id="vocDlgMsg" class="vmsg hidden"></div>
   <div class="vxacts"><span class="sp"></span><button class="ghost" id="vocCancel" data-t="cancel"></button><button class="primary" id="vocSaveBtn" data-t="save"></button></div>
 </dialog>
+<dialog id="imgDlg"><p id="imgDlgText"></p><div class="dh"><button class="ghost" id="imgDlgCancel"></button><button class="ghost" id="imgDlgAi"></button><button class="primary" id="imgDlgGo"></button></div></dialog>
 <dialog id="ask"><p id="askText"></p><input id="askIn" class="hidden"><div class="dh"><button class="ghost" id="askNo"></button><button class="primary" id="askYes"></button></div></dialog>
 <dialog id="styleDlg"></dialog>
 <dialog id="sumDlg"></dialog>

@@ -361,6 +361,19 @@ const K = {
   // Funktionen, die ihn benutzen. Vom Editor-Hauptschalter unabhaengig.
   s_studyAI:['KI-Funktionen im Lese-Arbeitsplatz (alle auf einmal)','AI functions in the reading workspace (all at once)'],
   s_studyWord:['Wortübersetzung beim Antippen','Translate words on tap'],
+  // Bilder im Text: Werkzeug, Menue am Bild und der Export, der keine Bilder kann.
+  s_groupImages:['Bilder im Text','Images in text'],
+  s_imgModel:['Modell zum Beschreiben von Bildern','Model for describing images'],
+  imgIns:['Bild einfügen','Insert image'],
+  imgMenuRotL:['Nach links drehen','Rotate left'], imgMenuRotR:['Nach rechts drehen','Rotate right'],
+  imgMenuFlipH:['Waagerecht spiegeln','Flip horizontally'], imgMenuFlipV:['Senkrecht spiegeln','Flip vertically'],
+  imgMenuReset:['Zurücksetzen','Reset'], imgMenuDel:['Löschen','Delete'],
+  imgExpWarn:[(n, x) => `Dieses Dokument enthält ${n === 1 ? 'ein Bild' : n + ' Bilder'}. Im Format ${x} können Bilder nicht mit in die Datei übernommen werden.`,
+    (n, x) => `This document contains ${n === 1 ? 'one image' : n + ' images'}. Images cannot be included in a ${x} file.`],
+  imgExpNoVision:['Es ist kein Modell mit Bilderkennung installiert — Sie können eines online herunterladen (Einstellungen → Bilder im Text → Modell zum Beschreiben von Bildern, z. B. gemma3:4b).',
+    'No model with image recognition is installed — you can download one online (Settings → Images in text → Model for describing images, e.g. gemma3:4b).'],
+  imgExpDescribe:['Bilder beschreiben','Describe images'], imgExpAnyway:['Trotzdem exportieren','Export anyway'],
+  imgExpBusy:['Bilder werden beschrieben …','Describing images …'], imgExpDesc:['Bild','Image'],
   studyAIdim:['Der Hauptschalter „KI-Funktionen im Lese-Arbeitsplatz“ ist aus; diese Einstellung wirkt erst, wenn er wieder an ist.','The master switch “AI functions in the reading workspace” is off; this setting takes effect only when it is on again.'],
   // KI-Funktionen des Editors: Hauptschalter, Leiste und jede Funktion.
   s_groupEdAI:['Textbearbeitung (KI)','Text editing (AI)'],
@@ -405,6 +418,12 @@ const NL = {
   s_helper:'Model voor woordalternatieven (bij TranslateGemma/NLLB)', s_sys:'Systeemprompt', s_temp:'Temperatuur (lager = consistenter)', s_ctx:'Contextlengte (num_ctx)',
   s_groupGeneral:'Algemeen', s_groupConn:'Verbindingen', s_groupTrans:'Vertaling',
   s_groupEdAI:'Tekstbewerking (AI)', s_edAI:'AI-functies in de editor (alles tegelijk)', s_edCtx:'Werkbalk tonen bij tekstselectie',
+  s_groupImages:'Afbeeldingen in de tekst', s_imgModel:'Model om afbeeldingen te beschrijven', imgIns:'Afbeelding invoegen',
+  imgMenuRotL:'Naar links draaien', imgMenuRotR:'Naar rechts draaien', imgMenuFlipH:'Horizontaal spiegelen', imgMenuFlipV:'Verticaal spiegelen',
+  imgMenuReset:'Herstellen', imgMenuDel:'Verwijderen',
+  imgExpWarn:(n, x) => `Dit document bevat ${n === 1 ? 'één afbeelding' : n + ' afbeeldingen'}. In het formaat ${x} kunnen afbeeldingen niet in het bestand worden opgenomen.`,
+  imgExpNoVision:'Er is geen model met beeldherkenning geïnstalleerd — u kunt er online een downloaden (Instellingen → Afbeeldingen in de tekst → Model om afbeeldingen te beschrijven, bijv. gemma3:4b).',
+  imgExpDescribe:'Afbeeldingen beschrijven', imgExpAnyway:'Toch exporteren', imgExpBusy:'Afbeeldingen worden beschreven …', imgExpDesc:'Afbeelding',
   s_studyAI:'AI-functies in de leeswerkplek (alles tegelijk)', s_studyWord:'Woorden vertalen bij aanraken', studyAIdim:'De hoofdschakelaar “AI-functies in de leeswerkplek” staat uit; deze instelling werkt pas als hij weer aan staat.',
   s_edCtxShorten:'Inkorten', s_edCtxLengthen:'Verlengen', s_edCtxSummarize:'Samenvatten', s_edCtxProofread:'Nalezen', s_edCtxSyn:'Synoniemen', s_edCtxStyle:'Stijl', s_edCtxTr:'Vertalen (selectie)',
   s_edTbShorten:'Inkorten (hele tekst)', s_edTbLengthen:'Verlengen (hele tekst)',   s_edTbSum:'Samenvatten (hele tekst)', suggH:'Andere modellen ondersteunen deze taal', recTag:'Aanbevolen', langGeneric:'Algemene lijst — de talen die dit model ondersteunt zijn niet gedocumenteerd.', edAIdim:'De hoofdschakelaar “AI-functies in de editor” staat uit; deze instelling werkt pas als hij weer aan staat.',
@@ -443,6 +462,12 @@ const ES = {
   s_helper:'Modelo para alternativas de palabras (TranslateGemma/NLLB)', s_sys:'Prompt del sistema', s_temp:'Temperatura (menor = más consistente)', s_ctx:'Longitud de contexto (num_ctx)',
   s_groupGeneral:'General', s_groupConn:'Conexiones', s_groupTrans:'Traducción', s_groupFeatures:'Ajustes adicionales',
   s_groupEdAI:'Edición de texto (IA)', s_edAI:'Funciones de IA en el editor (todas a la vez)', s_edCtx:'Mostrar la barra al seleccionar texto',
+  s_groupImages:'Imágenes en el texto', s_imgModel:'Modelo para describir imágenes', imgIns:'Insertar imagen',
+  imgMenuRotL:'Girar a la izquierda', imgMenuRotR:'Girar a la derecha', imgMenuFlipH:'Voltear horizontalmente', imgMenuFlipV:'Voltear verticalmente',
+  imgMenuReset:'Restablecer', imgMenuDel:'Eliminar',
+  imgExpWarn:(n, x) => `Este documento contiene ${n === 1 ? 'una imagen' : n + ' imágenes'}. En el formato ${x} las imágenes no pueden incluirse en el archivo.`,
+  imgExpNoVision:'No hay instalado ningún modelo con reconocimiento de imágenes; puede descargar uno en línea (Ajustes → Imágenes en el texto → Modelo para describir imágenes, p. ej. gemma3:4b).',
+  imgExpDescribe:'Describir imágenes', imgExpAnyway:'Exportar de todos modos', imgExpBusy:'Describiendo imágenes …', imgExpDesc:'Imagen',
   s_studyAI:'Funciones de IA en el espacio de lectura (todas a la vez)', s_studyWord:'Traducir palabras al tocar', studyAIdim:'El interruptor principal «Funciones de IA en el espacio de lectura» está desactivado; este ajuste solo actúa cuando vuelve a estar activo.',
   s_edCtxShorten:'Acortar', s_edCtxLengthen:'Alargar', s_edCtxSummarize:'Resumir', s_edCtxProofread:'Revisar', s_edCtxSyn:'Sinónimos', s_edCtxStyle:'Estilo', s_edCtxTr:'Traducir (selección)',
   s_edTbShorten:'Acortar (texto completo)', s_edTbLengthen:'Alargar (texto completo)',   s_edTbSum:'Resumir (texto completo)', suggH:'Otros modelos admiten este idioma', recTag:'Recomendado', langGeneric:'Lista general — no está documentado qué idiomas admite este modelo.', edAIdim:'El interruptor principal «Funciones de IA en el editor» está desactivado; este ajuste solo actúa cuando vuelve a estar activo.',
@@ -483,6 +508,12 @@ const TR = {
   s_helper:'Kelime alternatifleri modeli (TranslateGemma/NLLB için)', s_sys:'Sistem komutu', s_temp:'Sıcaklık (düşük = daha tutarlı)', s_ctx:'Bağlam uzunluğu (num_ctx)',
   s_groupGeneral:'Genel', s_groupConn:'Bağlantılar', s_groupTrans:'Çeviri', s_groupFeatures:'Ek ayarlar',
   s_groupEdAI:'Metin düzenleme (YZ)', s_edAI:'Düzenleyicideki YZ işlevleri (hepsi birden)', s_edCtx:'Metin seçildiğinde çubuğu göster',
+  s_groupImages:'Metindeki görseller', s_imgModel:'Görselleri betimleme modeli', imgIns:'Görsel ekle',
+  imgMenuRotL:'Sola döndür', imgMenuRotR:'Sağa döndür', imgMenuFlipH:'Yatay aynala', imgMenuFlipV:'Dikey aynala',
+  imgMenuReset:'Sıfırla', imgMenuDel:'Sil',
+  imgExpWarn:(n, x) => `Bu belgede ${n === 1 ? 'bir görsel' : n + ' görsel'} var. ${x} biçiminde görseller dosyaya eklenemez.`,
+  imgExpNoVision:'Görsel tanıma özellikli bir model kurulu değil — çevrimiçi indirebilirsiniz (Ayarlar → Metindeki görseller → Görselleri betimleme modeli, ör. gemma3:4b).',
+  imgExpDescribe:'Görselleri betimle', imgExpAnyway:'Yine de dışa aktar', imgExpBusy:'Görseller betimleniyor …', imgExpDesc:'Görsel',
   s_studyAI:'Okuma çalışma alanındaki YZ işlevleri (hepsi birden)', s_studyWord:'Dokununca kelimeyi çevir', studyAIdim:'“Okuma çalışma alanındaki YZ işlevleri” ana anahtarı kapalı; bu ayar ancak ana anahtar açılınca etkili olur.',
   s_edCtxShorten:'Kısalt', s_edCtxLengthen:'Uzat', s_edCtxSummarize:'Özetle', s_edCtxProofread:'Düzelt', s_edCtxSyn:'Eş anlamlılar', s_edCtxStyle:'Stil', s_edCtxTr:'Çevir (seçim)',
   s_edTbShorten:'Kısalt (tüm metin)', s_edTbLengthen:'Uzat (tüm metin)',   s_edTbSum:'Özetle (tüm metin)', suggH:'Diğer modeller bu dili destekliyor', recTag:'Önerilen', langGeneric:'Genel liste — bu modelin desteklediği diller belgelenmemiş.', edAIdim:'“Düzenleyicideki YZ işlevleri” ana anahtarı kapalı; bu ayar ancak ana anahtar açılınca etkili olur.',
@@ -523,6 +554,12 @@ const AR = {
   s_helper:'نموذج بدائل الكلمات (مع TranslateGemma/NLLB)', s_sys:'توجيه النظام', s_temp:'درجة الحرارة (أقل = أكثر دقة)', s_ctx:'طول السياق (num_ctx)',
   s_groupGeneral:'عام', s_groupConn:'الاتصالات', s_groupTrans:'الترجمة', s_groupFeatures:'إعدادات إضافية',
   s_groupEdAI:'تحرير النص (ذكاء اصطناعي)', s_edAI:'وظائف الذكاء الاصطناعي في المحرر (كلها دفعة واحدة)', s_edCtx:'إظهار الشريط عند تحديد النص',
+  s_groupImages:'الصور في النص', s_imgModel:'نموذج لوصف الصور', imgIns:'إدراج صورة',
+  imgMenuRotL:'تدوير إلى اليسار', imgMenuRotR:'تدوير إلى اليمين', imgMenuFlipH:'انعكاس أفقي', imgMenuFlipV:'انعكاس رأسي',
+  imgMenuReset:'إعادة الضبط', imgMenuDel:'حذف',
+  imgExpWarn:(n, x) => `يحتوي هذا المستند على ${n === 1 ? 'صورة واحدة' : n + ' صور'}. في صيغة ${x} لا يمكن تضمين الصور في الملف.`,
+  imgExpNoVision:'لا يوجد نموذج مثبّت يتعرّف على الصور — يمكنك تنزيل واحد عبر الإنترنت (الإعدادات ← الصور في النص ← نموذج لوصف الصور، مثل gemma3:4b).',
+  imgExpDescribe:'وصف الصور', imgExpAnyway:'تصدير على أي حال', imgExpBusy:'جارٍ وصف الصور …', imgExpDesc:'صورة',
   s_studyAI:'وظائف الذكاء الاصطناعي في مساحة القراءة (كلها دفعة واحدة)', s_studyWord:'ترجمة الكلمة عند لمسها', studyAIdim:'المفتاح الرئيسي «وظائف الذكاء الاصطناعي في مساحة القراءة» مغلق؛ لا يؤثر هذا الإعداد إلا عند تشغيله مرة أخرى.',
   s_edCtxShorten:'تقصير', s_edCtxLengthen:'إطالة', s_edCtxSummarize:'تلخيص', s_edCtxProofread:'تدقيق', s_edCtxSyn:'مرادفات', s_edCtxStyle:'الأسلوب', s_edCtxTr:'ترجمة (تحديد)',
   s_edTbShorten:'تقصير (النص كامل)', s_edTbLengthen:'إطالة (النص كامل)',   s_edTbSum:'تلخيص (النص كامل)', suggH:'نماذج أخرى تدعم هذه اللغة', recTag:'موصى به', langGeneric:'قائمة عامة — اللغات التي يدعمها هذا النموذج غير موثقة.', edAIdim:'المفتاح الرئيسي «وظائف الذكاء الاصطناعي في المحرر» مغلق؛ لا يؤثر هذا الإعداد إلا عند تشغيله مرة أخرى.',
@@ -632,6 +669,9 @@ const D = { url:'http://localhost:11434', nllb:'http://127.0.0.1:8765', model:''
   // Nachschlagen nichts mit der Textbearbeitung im Editor zu tun haben. Die
   // Uebersetzungsfunktionen der App bleiben auch davon unberuehrt.
   studyAI:true, studyWord:true,
+  // Bevorzugtes Modell zum Beschreiben von Bildern; '' heisst: das erste
+  // installierte Modell mit Bilderkennung.
+  imgModel:'',
   // KI-Funktionen im Texteditor: Hauptschalter, die Kontextleiste und jede
   // Funktion einzeln. Die Uebersetzungsfunktionen der App bleiben davon
   // unberuehrt (Nutzerwunsch).
@@ -1790,7 +1830,7 @@ $('#refresh').onclick = async () => {
 const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['start','s_start','start'],['workspace','s_workspace','workspaces'],
   // Klassik-Layout vorerst deaktiviert (Nutzerwunsch): Symbol-Layout ist fest.
   // Zum Reaktivieren ['uiMode','s_uiMode','uiMode'] hier wieder aufnehmen.
-  ['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['profanityStyle','s_profanityStyle','profanityStyle'],['edMarkdown','s_mdMode','bool'],['edSpellAnim','s_spellAnim','bool'],['autoCopy','s_autoCopy','bool'],['autoCopyTyped','s_autoCopyTyped','bool'],['historyOn','s_history','bool'],['diagOn','s_diag','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['csvSrs','s_csvSrs','bool'],['studyAI','s_studyAI','bool'],['studyWord','s_studyWord','bool'],['storyOn','s_story','bool'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number'],
+  ['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['profanityStyle','s_profanityStyle','profanityStyle'],['edMarkdown','s_mdMode','bool'],['edSpellAnim','s_spellAnim','bool'],['autoCopy','s_autoCopy','bool'],['autoCopyTyped','s_autoCopyTyped','bool'],['historyOn','s_history','bool'],['diagOn','s_diag','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['csvSrs','s_csvSrs','bool'],['studyAI','s_studyAI','bool'],['studyWord','s_studyWord','bool'],['storyOn','s_story','bool'],['imgModel','s_imgModel','imgModel'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number'],
   // KI-Funktionen des Texteditors: erst der Hauptschalter, dann die Leiste bei
   // Textauswahl, dann die drei Knoepfe der Werkzeugleiste. Die Uebersetzungs-
   // funktionen der App haben hier bewusst keinen Schalter.
@@ -1798,7 +1838,7 @@ const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['start','s_s
   ['edCtxShorten','s_edCtxShorten','bool'],['edCtxLengthen','s_edCtxLengthen','bool'],['edCtxSummarize','s_edCtxSummarize','bool'],
   ['edCtxProofread','s_edCtxProofread','bool'],['edCtxSyn','s_edCtxSyn','bool'],['edCtxStyle','s_edCtxStyle','bool'],['edCtxTr','s_edCtxTr','bool'],
   ['edTbShorten','s_edTbShorten','bool'],['edTbLengthen','s_edTbLengthen','bool'],['edTbSum','s_edTbSum','bool']];
-const GROUPS = [['s_groupGeneral',['uiLang','theme','start','workspace']],['s_groupStudy',['studyAI','studyWord','storyOn','csvSrs']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped','historyOn','diagOn']],['s_groupEdAI',['edAI','edCtx','edCtxShorten','edCtxLengthen','edCtxSummarize','edCtxProofread','edCtxSyn','edCtxStyle','edCtxTr','edTbShorten','edTbLengthen','edTbSum']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
+const GROUPS = [['s_groupGeneral',['uiLang','theme','start','workspace']],['s_groupStudy',['studyAI','studyWord','storyOn','csvSrs']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped','historyOn','diagOn']],['s_groupImages',['imgModel']],['s_groupEdAI',['edAI','edCtx','edCtxShorten','edCtxLengthen','edCtxSummarize','edCtxProofread','edCtxSyn','edCtxStyle','edCtxTr','edTbShorten','edTbLengthen','edTbSum']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
 // Der systemweite Kurzbefehl kann von einem anderen Programm belegt sein:
 // globalShortcut.register() scheitert dann still. main.js meldet ueber
 // `app:hotkey`, ob die Registrierung geklappt hat; bis die Antwort da ist,
@@ -1813,7 +1853,8 @@ function drawSettings() {
     // Klassik-Layout vorerst deaktiviert (Nutzerwunsch).
     // k === 'uiMode' ? [['classic', t('o_classic')], ['icons', t('o_icons')]] :
     k === 'profanityStyle' ? [['stars', t('o_stars')], ['symbols', t('o_symbols')]] :
-    k === 'helper' ? [['', t('autoModel')], ...Object.keys(caps).filter(n => caps[n].includes('completion') && !isTg(n)).map(n => [n, n])] : null;
+    k === 'helper' ? [['', t('autoModel')], ...Object.keys(caps).filter(n => caps[n].includes('completion') && !isTg(n)).map(n => [n, n])] :
+    k === 'imgModel' ? [['', t('autoModel')], ...Object.keys(caps).filter(n => hasVision(n)).map(n => [n, n])] : null;
   // Zuruecksetzen ist ein reiner Icon-Button; der Name erscheint nur als Tooltip.
   // Das Icon wird direkt eingesetzt, weil reicon() nur im Editor-Scope existiert.
   const rst = k => `<button class="ib" data-r="${k}" data-tt="reset">${ic('refresh', 16)}</button>`;

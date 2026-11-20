@@ -876,7 +876,7 @@ const TB = [
   ['tog','bold','bold','bold'], ['tog','italic','italic','italic'], ['tog','underline','underline','underline'], ['tog','strike','strike','strikeThrough'], ['btn','hl','marker', () => paint('mark')], ['btn','ink','textColor', () => paint('ink')], ['sep'],
   ['tog','ul','ul','insertUnorderedList'], ['tog','ol','ol','insertOrderedList'], ['btn','quote','quote', () => cmd('formatBlock', document.queryCommandValue('formatBlock') === 'blockquote' ? 'p' : 'blockquote')], ['sep'],
   ['tog','aL','alignL','justifyLeft'], ['tog','aC','alignC','justifyCenter'], ['tog','aR','alignR','justifyRight'], ['tog','aJ','alignJ','justifyFull'], ['sep'],
-  ['btn','link','link', addLink], ['btn','clear','eraser', () => { cmd('removeFormat'); cmd('formatBlock', 'p'); }], ['sep'],
+  ['btn','link','link', addLink], ['btn','img','image', () => $('#edImgFile').click()], ['btn','clear','eraser', () => { cmd('removeFormat'); cmd('formatBlock', 'p'); }], ['sep'],
   ['btn','shortenAll','shorten', () => allOp('shorten')], ['btn','lengthenAll','lengthen', () => allOp('lengthen')], ['btn','summarizeAll','summarize', () => allOp('summarize')]
 ];
 function renderTb() {
@@ -1013,6 +1013,7 @@ function applyDocEntry(e) {
   ED.docId = e.id || null;
   try { localStorage.setItem('edDocId', ED.docId || ''); } catch {}
   page.innerHTML = e.html || '<p><br></p>';
+  initImages();
   page.dispatchEvent(new Event('input'));
   page.scrollTop = 0;
 }
@@ -1038,6 +1039,10 @@ function cleanHtml(html) {
   }));
   return d.body.innerHTML || '<p><br></p>';
 }
+$('#edImgFile').onchange = async e => {
+  const files = [...e.target.files]; e.target.value = '';
+  if (files.length) await addImageFiles(files);
+};
 $('#edFile').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try {
@@ -1084,12 +1089,272 @@ function savePop(btn) {
 }
 async function doSave(kind) {
   const name = docName();
-  const data = kind === 'md' ? toMd(page).trim() + '\n' : page.innerText;
+  // Markdown und reiner Text koennen keine Bilder tragen. Vor dem Export wird
+  // gefragt: abbrechen, ohne Bilder exportieren, oder die Bilder vorher vom
+  // Modell beschreiben lassen (dann steht die Beschreibung im Text).
+  const nImg = page.querySelectorAll('.edimg').length + [...page.querySelectorAll('img')].filter(im => !im.closest('.edimg')).length;
+  let describe = false;
+  if (nImg && (kind === 'md' || kind === 'txt')) {
+    const choice = await imgWarn(nImg, kind === 'md' ? 'Markdown (.md)' : 'Text (.txt)', !!imgModel());
+    if (choice === 'cancel') return;
+    describe = choice === 'describe';
+  }
+  let data;
+  if (describe) {
+    edStatus(t('imgExpBusy'));
+    // Der Klon haengt kurz unsichtbar im Dokument: nur so liefert innerText
+    // die Absaetze richtig, ein loser Knoten hat kein Layout.
+    const holder = document.createElement('div');
+    holder.style.cssText = 'position:fixed;left:-10000px;top:0;width:760px';
+    const clone = page.cloneNode(true);
+    holder.append(clone); document.body.append(holder);
+    try {
+      await describeInto(clone);
+      data = kind === 'md' ? toMd(clone).trim() + '\n' : clone.innerText;
+    } finally { holder.remove(); edStatus(''); }
+  } else {
+    data = kind === 'md' ? toMd(page).trim() + '\n' : page.innerText;
+  }
   try {
     // Ein erfolgreicher Export landet zusaetzlich in der Ablage, damit
     // erstellte Dateien dort ohne eigenen Schritt wiederzufinden sind.
     if (await window.api.saveFile(name, data, kind)) await libUpsert();
   } catch { edStatus(t('readErr')); }
+}
+
+// ---------- Bilder im Text ----------
+// Bilder liegen als Data-URL im Dokument: damit ueberstehen sie Neustarts, die
+// Ablage braucht keine Neben-Dateien, und der PDF-Export bringt sie von selbst
+// mit. Jedes Bild sitzt in einem eigenen Rahmen `.edimg`, weil Drehen und
+// Spiegeln sonst am Textfluss haengen: Der Rahmen traegt immer die Groesse des
+// sichtbaren Bildes, das Bild selbst wird darin gedreht.
+Object.assign(IC, {
+  image:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16.5 16 11l-6 6-2-2-5 5"/>',
+  rotL:'<path d="M4 9V4h5"/><path d="M4.6 9.2a8 8 0 1 1 1.1 6.9"/>',
+  rotR:'<path d="M20 9V4h-5"/><path d="M19.4 9.2a8 8 0 1 0-1.1 6.9"/>',
+  flipH:'<path d="M12 3v18"/><path d="M9.5 6 4 12l5.5 6z"/><path d="M14.5 6 20 12l-5.5 6z"/>',
+  flipV:'<path d="M3 12h18"/><path d="M6 9.5 12 4l6 5.5z"/><path d="M6 14.5 12 20l6-5.5z"/>'
+});
+const IMG_ED_W = 480;        // Anzeigebreite beim Einfuegen
+const IMG_ED_MAX = 1600;     // laengste Kante der gespeicherten Fassung
+const imgReady = im => (im.complete && im.naturalWidth) ? Promise.resolve()
+  : new Promise(res => { im.onload = res; im.onerror = res; });
+
+// Datei -> Data-URL, dabei auf hoechstens 1600 px verkleinert. Ohne das traegt
+// ein einziges Foto aus einer Kamera leicht zehn Megabyte im Dokument.
+async function imgDataFromFile(file) {
+  const url = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result)); fr.onerror = rej; fr.readAsDataURL(file); });
+  const im = new Image(); im.src = url; await imgReady(im);
+  const nw = im.naturalWidth || 1, nh = im.naturalHeight || 1;
+  const k = Math.min(1, IMG_ED_MAX / Math.max(nw, nh));
+  if (k >= 1 && url.length < 1.2e6) return { src:url, w:nw, h:nh };
+  const cv = document.createElement('canvas');
+  cv.width = Math.max(1, Math.round(nw * k)); cv.height = Math.max(1, Math.round(nh * k));
+  cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+  const type = /png|gif|webp/i.test(file.type) ? 'image/png' : 'image/jpeg';
+  return { src:cv.toDataURL(type, 0.92), w:cv.width, h:cv.height };
+}
+
+// Rahmen um ein Bild: Groesse des sichtbaren Bildes, das Bild darin zentriert.
+function applyImgBox(wrap) {
+  const img = wrap.querySelector('img'); if (!img) return;
+  const W = Math.max(24, Math.round(+img.dataset.w || 240));
+  const H = Math.max(24, Math.round(W * (+img.dataset.r || 0.75)));
+  const rot = (((+img.dataset.rot || 0) % 360) + 360) % 360;
+  const q = rot === 90 || rot === 270;
+  const bw = q ? H : W, bh = q ? W : H;
+  wrap.style.width = bw + 'px'; wrap.style.height = bh + 'px';
+  const fx = img.dataset.fx === '1' ? -1 : 1, fy = img.dataset.fy === '1' ? -1 : 1;
+  Object.assign(img.style, {
+    width: W + 'px', height: H + 'px',
+    left: Math.round((bw - W) / 2) + 'px', top: Math.round((bh - H) / 2) + 'px',
+    transform: 'rotate(' + rot + 'deg) scale(' + fx + ',' + fy + ')'
+  });
+  wrap.querySelectorAll('.hnd').forEach(h => {
+    const p = h.dataset.h;
+    h.style.left = (p.includes('w') ? -5 : bw - 5) + 'px';
+    h.style.top = (p.includes('n') ? -5 : bh - 5) + 'px';
+  });
+}
+
+function selectImg(wrap) {
+  page.querySelectorAll('.edimg.sel').forEach(w => { if (w !== wrap) w.classList.remove('sel'); });
+  wrap.classList.add('sel');
+}
+
+// Ziehen an einer Ecke aendert die Breite; die Hoehe folgt aus dem Seiten-
+// verhaeltnis. Bei 90/270 Grad liegt die sichtbare Breite in der Senkrechten,
+// deshalb wird dort die senkrechte Bewegung genommen.
+function bindImg(wrap) {
+  wrap.querySelectorAll('.hnd').forEach(h => {
+    h.addEventListener('pointerdown', ev => {
+      ev.preventDefault(); ev.stopPropagation();
+      const img = wrap.querySelector('img'); if (!img) return;
+      const rot = (((+img.dataset.rot || 0) % 360) + 360) % 360, q = rot === 90 || rot === 270;
+      const startW = +img.dataset.w || 240, x0 = ev.clientX, y0 = ev.clientY;
+      const sx = h.dataset.h.includes('e') ? 1 : -1, sy = h.dataset.h.includes('s') ? 1 : -1;
+      try { h.setPointerCapture(ev.pointerId); } catch {}
+      const move = e2 => {
+        const d = q ? sy * (e2.clientY - y0) : sx * (e2.clientX - x0);
+        img.dataset.w = String(Math.max(48, Math.min(3000, Math.round(startW + d))));
+        applyImgBox(wrap);
+      };
+      const up = () => {
+        h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up);
+        page.dispatchEvent(new Event('input'));
+      };
+      h.addEventListener('pointermove', move); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+    });
+  });
+  wrap.addEventListener('pointerdown', () => selectImg(wrap));
+}
+
+function mkEdImage(spec) {
+  const wrap = document.createElement('div');
+  wrap.className = 'edimg'; wrap.contentEditable = 'false';
+  const img = document.createElement('img');
+  img.src = spec.src; img.alt = ''; img.draggable = false;
+  const w = Math.max(48, Math.min(spec.w || IMG_ED_W, IMG_ED_W));
+  const r = (spec.h && spec.w) ? spec.h / spec.w : 0.75;
+  img.dataset.w = String(Math.round(w)); img.dataset.r = String(r);
+  img.dataset.rot = '0'; img.dataset.fx = '0'; img.dataset.fy = '0';
+  wrap.append(img);
+  ['nw','ne','sw','se'].forEach(p => {
+    const h = document.createElement('span'); h.className = 'hnd ' + p; h.dataset.h = p; wrap.append(h);
+  });
+  applyImgBox(wrap); bindImg(wrap);
+  return wrap;
+}
+
+// Das Bild kommt als eigener Block an die Stelle des Cursors; danach bleibt ein
+// leerer Absatz stehen, sonst kann der Cursor nicht unter das Bild.
+function insertEdImage(wrap) {
+  let host = null;
+  const s = getSelection();
+  if (s && s.rangeCount) {
+    let n = s.anchorNode;
+    while (n && n.parentNode !== page) n = n.parentNode;
+    if (n && n !== page) host = n;
+  }
+  if (host) host.after(wrap); else page.append(wrap);
+  const p = document.createElement('p'); p.innerHTML = '<br>';
+  wrap.after(p);
+  const r = document.createRange(); r.setStart(p, 0); r.collapse(true);
+  if (s) { s.removeAllRanges(); s.addRange(r); }
+  page.dispatchEvent(new Event('input'));
+  selectImg(wrap);
+  try { wrap.scrollIntoView({ block:'nearest' }); } catch {}
+}
+
+async function addImageFiles(files) {
+  for (const f of files) {
+    if (!/^image\//.test(f.type)) continue;
+    try {
+      const spec = await imgDataFromFile(f);
+      insertEdImage(mkEdImage(spec));
+    } catch { edStatus(t('readErr')); }
+  }
+}
+
+// Vorhandene <img> (aus einer importierten HTML-Datei, aus der Ablage) bekommen
+// denselben Rahmen; gespeicherte Rahmen werden nur nachgerechnet.
+function initImages() {
+  page.querySelectorAll('img').forEach(im => {
+    const wrap = im.closest('.edimg');
+    if (wrap) {
+      if (!wrap.querySelector('.hnd')) {
+        ['nw','ne','sw','se'].forEach(p => { const h = document.createElement('span'); h.className = 'hnd ' + p; h.dataset.h = p; wrap.append(h); });
+      }
+      if (!im.dataset.r) {
+        const nw = im.naturalWidth || 0, nh = im.naturalHeight || 0;
+        im.dataset.w = im.dataset.w || String(Math.min(nw || IMG_ED_W, IMG_ED_W));
+        im.dataset.r = String(nw && nh ? nh / nw : 0.75);
+      }
+      wrap.contentEditable = 'false';
+      applyImgBox(wrap); bindImg(wrap);
+      return;
+    }
+    const nw = im.naturalWidth || 0, nh = im.naturalHeight || 0;
+    im.replaceWith(mkEdImage({ src: im.getAttribute('src') || '', w: nw ? Math.min(nw, IMG_ED_W) : IMG_ED_W, h: nh }));
+  });
+}
+
+// Rechtsklick auf ein Bild: drehen, spiegeln, loeschen.
+function imgMenu(img, ev) {
+  closePops(); const p = $('#pop'); p.innerHTML = '';
+  const wrap = img.closest('.edimg'); if (!wrap) return;
+  const row = (icon, name, fn) => {
+    const r = document.createElement('div'); r.className = 'row';
+    r.innerHTML = '<span class="lft"><span class="ico">' + ic(icon, 18) + '</span>' + esc(name) + '</span>';
+    r.onclick = () => { closePops(); fn(); page.dispatchEvent(new Event('input')); };
+    p.append(r);
+  };
+  row('rotL', t('imgMenuRotL'), () => { img.dataset.rot = String((((+img.dataset.rot || 0) - 90) % 360 + 360) % 360); applyImgBox(wrap); });
+  row('rotR', t('imgMenuRotR'), () => { img.dataset.rot = String((((+img.dataset.rot || 0) + 90) % 360 + 360) % 360); applyImgBox(wrap); });
+  row('flipH', t('imgMenuFlipH'), () => { img.dataset.fx = img.dataset.fx === '1' ? '0' : '1'; applyImgBox(wrap); });
+  row('flipV', t('imgMenuFlipV'), () => { img.dataset.fy = img.dataset.fy === '1' ? '0' : '1'; applyImgBox(wrap); });
+  p.append(document.createElement('hr'));
+  row('refresh', t('imgMenuReset'), () => {
+    img.dataset.rot = '0'; img.dataset.fx = '0'; img.dataset.fy = '0';
+    img.dataset.w = String(Math.min(img.naturalWidth || IMG_ED_W, IMG_ED_W));
+    applyImgBox(wrap);
+  });
+  row('x', t('imgMenuDel'), () => { wrap.remove(); });
+  const x = Math.min(ev ? ev.clientX : 40, innerWidth - 260), y = Math.min(ev ? ev.clientY : 40, innerHeight - 260);
+  Object.assign(p.style, { left:Math.max(8, x) + 'px', top:Math.max(8, y) + 'px' });
+  p.classList.remove('hidden');
+}
+
+// Bevorzugtes Modell zum Beschreiben von Bildern; ohne eigene Wahl das erste
+// installierte Modell mit Bilderkennung.
+const imgModel = () => {
+  const ok = n => hasVision(n) && (caps[n] || []).includes('completion');
+  if (S.imgModel && ok(S.imgModel)) return S.imgModel;
+  return Object.keys(caps).filter(ok)[0] || null;
+};
+
+// Rueckfrage vor einem Export, der keine Bilder kann. Drei Wege: abbrechen,
+// trotzdem exportieren, oder die Bilder vom Modell beschreiben lassen. Der
+// dritte Knopf erscheint nur, wenn ein Modell mit Bilderkennung da ist.
+function imgWarn(n, kind, withVision) {
+  const d = $('#imgDlg');
+  $('#imgDlgText').textContent = t('imgExpWarn', n, kind) + (withVision ? '' : ' ' + t('imgExpNoVision'));
+  $('#imgDlgCancel').textContent = t('cancel');
+  $('#imgDlgGo').textContent = t('imgExpAnyway');
+  const ai = $('#imgDlgAi');
+  ai.textContent = t('imgExpDescribe');
+  ai.classList.toggle('hidden', !withVision);
+  d.showModal();
+  return new Promise(res => {
+    let done = false; const fin = v => { if (done) return; done = true; d.close(); res(v); };
+    $('#imgDlgCancel').onclick = () => fin('cancel');
+    $('#imgDlgGo').onclick = () => fin('anyway');
+    ai.onclick = () => fin('describe');
+    d.oncancel = e => { e.preventDefault(); fin('cancel'); };
+  });
+}
+
+// Beschreibungen fuer den Export: Im Klon wird jedes Bild durch einen Absatz
+// mit der Beschreibung ersetzt, das Original bleibt unberuehrt.
+async function describeInto(root) {
+  const mdl = imgModel();
+  const lang = S.uiLang === 'auto' ? 'German' : S.uiLang;
+  for (const im of [...root.querySelectorAll('.edimg img, img')]) {
+    let txt = '';
+    try {
+      const src = im.getAttribute('src') || '';
+      const b64 = src.startsWith('data:') ? src.split(',')[1] : '';
+      if (b64 && mdl) {
+        const out = await window.trChat([
+          { role:'user', content:'Describe this image in one short, factual sentence. Answer in ' + lang + ' and return the sentence only.', images:[b64] }
+        ], { model:mdl });
+        txt = String(out || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+      }
+    } catch {}
+    const p = document.createElement('p');
+    p.textContent = '[' + t('imgExpDesc') + (txt ? ': ' + txt : '') + ']';
+    (im.closest('.edimg') || im).replaceWith(p);
+  }
 }
 
 // ---------- Dokumentenablage ----------
@@ -1777,7 +2042,32 @@ page.addEventListener('input', e => {
 page.addEventListener('beforeinput', e => {
   if (ED.busy && !ED.writing && e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') e.preventDefault();
 });
-page.addEventListener('paste', e => { e.preventDefault(); document.execCommand('insertText', false, e.clipboardData.getData('text/plain')); });
+// Ein Bild in der Zwischenablage hat Vorrang vor Text: Strg+V fuegt es ein,
+// alles andere geht wie bisher als reiner Text hinein.
+page.addEventListener('paste', e => {
+  const dt = e.clipboardData;
+  const files = dt ? [...dt.files].filter(f => /^image\//.test(f.type)) : [];
+  if (files.length) { e.preventDefault(); addImageFiles(files); return; }
+  e.preventDefault(); document.execCommand('insertText', false, dt.getData('text/plain'));
+});
+// Drag und Drop: Das Bild landet dort, wo der Zeiger loslaesst.
+page.addEventListener('dragover', e => {
+  if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }
+});
+page.addEventListener('drop', e => {
+  const files = [...((e.dataTransfer && e.dataTransfer.files) || [])].filter(f => /^image\//.test(f.type));
+  if (!files.length) return;
+  e.preventDefault();
+  const r = document.caretRangeFromPoint ? document.caretRangeFromPoint(e.clientX, e.clientY) : null;
+  if (r) { const s2 = getSelection(); s2.removeAllRanges(); s2.addRange(r); }
+  addImageFiles(files);
+});
+// Rechtsklick auf ein Bild oeffnet das Bildmenue statt des Systemmenues.
+page.addEventListener('contextmenu', e => {
+  const im = e.target.closest && e.target.closest('.edimg img, img');
+  if (!im || !page.contains(im)) return;
+  e.preventDefault(); imgMenu(im, e);
+});
 page.addEventListener('mouseup', () => setTimeout(showBar, 0));
 page.addEventListener('keyup', e => { if (e.shiftKey || e.key.startsWith('Arrow')) showBar(); });
 page.addEventListener('keydown', e => {
