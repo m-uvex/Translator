@@ -1312,6 +1312,23 @@ function blockUnder(x, y) {
   return { node, before: y < b.top + b.height / 2, rect: b };
 }
 
+// Zeiger bis zum Loslassen verfolgen. Am Dokument statt am Element: pointer
+// capture greift hier nicht zuverlaessig, dann kaemen die Bewegungen ueber
+// anderen Elementen nicht mehr an und der Zug bliebe haengen. `end` bekommt
+// true, wenn der Zug abgebrochen wurde (pointercancel).
+function trackPointer(move, end) {
+  const stop = () => {
+    document.removeEventListener('pointermove', move);
+    document.removeEventListener('pointerup', up);
+    document.removeEventListener('pointercancel', cancel);
+  };
+  const up = () => { stop(); end(false); };
+  const cancel = () => { stop(); end(true); };
+  document.addEventListener('pointermove', move);
+  document.addEventListener('pointerup', up);
+  document.addEventListener('pointercancel', cancel);
+}
+
 // Die vier Ziehpunkte; Groesse und Position setzt applyImgBox.
 function addHandles(wrap) {
   ['nw','ne','sw','se'].forEach(p => {
@@ -1331,17 +1348,19 @@ function bindImg(wrap) {
       const rot = (((+img.dataset.rot || 0) % 360) + 360) % 360, q = rot === 90 || rot === 270;
       const startW = +img.dataset.w || 240, x0 = ev.clientX, y0 = ev.clientY;
       const sx = h.dataset.h.includes('e') ? 1 : -1, sy = h.dataset.h.includes('s') ? 1 : -1;
-      try { h.setPointerCapture(ev.pointerId); } catch {}
-      const move = e2 => {
+      let w = startW;
+      trackPointer(e2 => {
         const d = q ? sy * (e2.clientY - y0) : sx * (e2.clientX - x0);
-        img.dataset.w = String(Math.max(48, Math.min(3000, Math.round(startW + d))));
+        const nw = Math.max(48, Math.min(3000, Math.round(startW + d)));
+        if (nw === w) return;
+        w = nw;
+        img.dataset.w = String(nw);
         applyImgBox(wrap);
-      };
-      const up = () => {
-        h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up);
-        page.dispatchEvent(new Event('input'));
-      };
-      h.addEventListener('pointermove', move); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+      }, cancelled => {
+        // Ein Klick ohne Ziehen aendert nichts und soll das Dokument nicht als
+        // geaendert melden.
+        if (!cancelled && w !== startW) page.dispatchEvent(new Event('input'));
+      });
     });
   });
   wrap.addEventListener('pointerdown', ev => {
@@ -1359,14 +1378,6 @@ function bindImg(wrap) {
     const x0 = ev.clientX, y0 = ev.clientY;
     let moving = false, mark = null, drop = null;
     const unmark = () => { if (mark) mark.remove(); mark = null; };
-    // Am Dokument horchen statt am Bild: pointer capture kann verloren gehen,
-    // dann kaemen die Bewegungen ueber anderen Elementen nicht mehr an und der
-    // Zug bliebe haengen.
-    const stop = () => {
-      document.removeEventListener('pointermove', move);
-      document.removeEventListener('pointerup', end);
-      document.removeEventListener('pointercancel', cancel);
-    };
     const move = e2 => {
       if (!moving && Math.hypot(e2.clientX - x0, e2.clientY - y0) < 5) return;
       if (!moving) { moving = true; wrap.classList.add('drag'); }
@@ -1382,20 +1393,16 @@ function bindImg(wrap) {
         top: (to.before ? b.top - 2 : b.bottom) + 'px'
       });
     };
-    const end = () => {
-      stop(); unmark();
+    trackPointer(move, cancelled => {
+      unmark();
+      const to = drop; drop = null;
       if (!moving) return;
       moving = false;
       wrap.classList.remove('drag');
-      const to = drop; drop = null;
-      if (!to) return;
+      if (cancelled || !to) return;
       if (to.before) to.node.before(wrap); else to.node.after(wrap);
       page.dispatchEvent(new Event('input'));
-    };
-    const cancel = () => { stop(); unmark(); moving = false; drop = null; wrap.classList.remove('drag'); };
-    document.addEventListener('pointermove', move);
-    document.addEventListener('pointerup', end);
-    document.addEventListener('pointercancel', cancel);
+    });
   });
 }
 

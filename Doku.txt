@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.108 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.109 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1745,3 +1745,25 @@ Die Bildbearbeitung aus Abschnitt 124–133 wurde aufgeraeumt: gleiche Funktion,
 - Rueckgaengig (Grenze, unveraendert): Ein Verschieben ist keine Bearbeitung im Undo-Stapel von Chromium. `Strg+Z` nach einem Zug nimmt die *vorherige Textaenderung* zurueck, das Bild bleibt, wo es liegt. Getestet: Text „Zwei##ter“ → nach dem Zug `Strg+Z` → „Zweiter Absatz.“, Reihenfolge unveraendert. Ein eigener Undo-Stapel waere noetig; bewusst nicht eingebaut, weil er nur fuer Bilder gelten wuerde.
 
 `node --check editor.js` laeuft durch; die Oberflaeche wurde nicht per Bildschirmfoto betrachtet. Zwei Testlaeufe mit erzeugten `PointerEvent`s zeigten den Zug scheinbar funktionsfaehig, obwohl er es nicht war — erst echte Eingaben ueber CDP brachten die drei Fehler ans Licht.
+## 135. Griffe ziehen ueber dieselben Dokument-Listener (1.15.109)
+
+Der Groessen-Zug an den vier Eckgriffen hing noch an `setPointerCapture()` am Griff selbst, obwohl sich das beim Verschieben des Bildes als unzuverlaessig erwiesen hatte (Abschnitt 134). Beide Wege laufen jetzt ueber einen gemeinsamen Helfer.
+
+**Neu: `trackPointer(move, end)`.** Haengt `pointermove`, `pointerup` und `pointercancel` am `document` an, raeumt sie beim Loslassen wieder ab und meldet `end(true)`, wenn der Zug abgebrochen wurde. Das Verschieben benutzt ihn (die eigene Listener-Verwaltung dort ist weggefallen), die Griffe ebenso. `end` beim Griff meldet das Dokument nur noch als geaendert, wenn sich die Breite wirklich geaendert hat — vorher feuerte jeder Klick auf einen Griff ein `input` und markierte das Dokument als geaendert. Der Frueh-Ausstieg `if (nw === w) return;` spart ausserdem das Neurechnen des Rahmens, solange der Zeiger innerhalb eines Pixels bleibt.
+
+**Nicht schlechter, nachgemessen.** Gleicher Test mit echter Maus (CDP-`Input.dispatchMouseEvent`), einmal mit dem Stand 1.15.108 (`git show HEAD:editor.js`, also `setPointerCapture`) und einmal mit dem neuen Stand, jeweils eigenes `--user-data-dir`:
+
+| Fall | 1.15.108 | 1.15.109 |
+|---|---|---|
+| SO-Griff 250 px ueber den Griff hinaus (480 px) | 730 px, 1 `input` | 730 px, 1 `input` |
+| NW-Griff 100 px nach links oben | 730 → 830 px | 730 → 830 px |
+| SO-Griff 150 px nach links oben ueber das Bild | nicht gemessen | 830 → 680 px, Auswahl bleibt |
+| Bild auf 90 Grad, SO-Griff 100 px senkrecht | `dataset.w` 480 → 580, Wrap 387×580, Griff `ns-resize` | identisch |
+| Klick auf den Griff ohne Ziehen | 1 `input` | 0 `input` |
+| danach Bild verschieben | `bild, a, b, (leer)`, keine Reste | identisch |
+
+Beim ersten Durchlauf mit dem alten Stand waren die Messpunkte nach dem Drehen aus dem sichtbaren Bereich gerutscht (Treffer war die Bildlaufleiste `sbar`); die Koordinaten werden jetzt auf den sichtbaren Teil der Seite begrenzt und der Treffer mit `elementFromPoint` geprueft, bevor gezogen wird.
+
+**Geprueft 1.15.109** (echte Maus, deutsches Fenster): Groesse 480 → 730 px bei einem Zug 250 px weit ueber den 10-px-Griff hinaus; Zeigerbewegung ohne gedrueckte Taste aendert nichts; Klick ohne Ziehen meldet keine Aenderung; NW-Griff 730 → 830 px; Zug ueber das Bild hinweg 830 → 680 px mit erhaltener Auswahl; nach dem Drehen um 90 Grad vergroessert der senkrechte Zug die Breite (480 → 580, Wrap 387×580, Zeiger `ns-resize`); danach verschiebt sich das Bild weiter sauber (`bild, a, b, (leer)`, keine Marke, keine `drag`-Klasse) und bleibt ausgewaehlt. Keine Ausnahmen im Renderer.
+
+`node --check editor.js` laeuft durch; die Oberflaeche wurde nicht per Bildschirmfoto betrachtet.
