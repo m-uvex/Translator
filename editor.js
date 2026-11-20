@@ -1300,12 +1300,27 @@ function topChild(n) {
 }
 
 // Block unter dem Zeiger und ob das Bild davor oder dahinter gehoert. Ueber dem
-// Bild selbst gibt es kein Ziel - dort steht es ja schon.
-function blockUnder(x, y) {
+// Bild selbst gibt es kein Ziel - dort steht es ja schon. Neben der Seite
+// (Leisten, Raender) ebenfalls keins: ein leeres Ergebnis laesst den Aufrufer
+// die Marke wegnehmen, statt das zuletzt gueltige Ziel stehen zu lassen und das
+// Bild beim Loslassen dorthin zu setzen. Im leeren Platz der Seite gilt der
+// naechstgelegene Block, damit ein Bild auch ueber dem ersten oder unter dem
+// letzten Block ankommen kann.
+function blockUnder(x, y, skip) {
   let at = null;
   try { const r = document.caretRangeFromPoint(x, y); at = r && r.startContainer; } catch {}
-  const node = topChild(at) || topChild(document.elementFromPoint(x, y));
-  if (!node || node.classList.contains('edimg')) return null;
+  const hit = document.elementFromPoint(x, y);
+  let node = topChild(at) || topChild(hit);
+  if (!node) {
+    if (!page.contains(at) && !page.contains(hit)) return {};
+    const blocks = [...page.children].filter(k => k !== skip);
+    if (!blocks.length) return {};
+    node = blocks.reduce((a, b) => {
+      const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+      return Math.abs(ra.top + ra.height / 2 - y) <= Math.abs(rb.top + rb.height / 2 - y) ? a : b;
+    });
+  }
+  if (node.classList.contains('edimg')) return {};
   const b = node.getBoundingClientRect();
   return { node, before: y < b.top + b.height / 2, rect: b };
 }
@@ -1379,8 +1394,10 @@ function bindImg(wrap) {
     const move = e2 => {
       if (!moving && Math.hypot(e2.clientX - x0, e2.clientY - y0) < 5) return;
       if (!moving) { moving = true; wrap.classList.add('drag'); }
-      const to = blockUnder(e2.clientX, e2.clientY);
-      if (!to) return;
+      const to = blockUnder(e2.clientX, e2.clientY, wrap);
+      // Ohne Ziel (neben der Seite, ueber einem Bild) verschwindet die Marke;
+      // ein Loslassen setzt dann nichts um.
+      if (!to.node) { drop = null; unmark(); return; }
       drop = to;
       // Die Marke liegt ueber der Seite, nicht in ihr: so kann sie weder
       // gespeichert noch gedruckt werden und verschiebt kein Layout.

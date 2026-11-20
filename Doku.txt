@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.116 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.117 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1912,3 +1912,28 @@ Jede der drei Dateien hat eine Seite, die Bilder sind vollstaendig darauf. Nach 
 **Gegenprobe ohne `--pz`.** Ein direktes `printToPDF` am Exportweg vorbei (also ohne `fitImagesForPrint`) zeigt, was die Verkleinerung leistet: Das 1200-px-Bild wurde 600 pt breit und lief bis x1 = 627,8 pt ueber die Seitenkante 595,9 hinaus; das 1333 px hohe Bild blieb unskaliert (999,8 pt) und verteilte sich ueber drei Seiten. Mit `--pz` sind beide Faelle sauber.
 
 **Nicht geprueft.** Der Druck ueber den Systemdialog (dieselbe Druck-CSS), Bilder in Tabellen und Listen, und sehr breite Bilder zusammen mit einer Drehung. Fuer die Messung war `pymupdf` wieder in der Doku-Venv (Befehl in Abschnitt 136) und ist danach erneut entfernt worden.
+
+## 142. Bilder in Tabellen und Listen verschieben (1.15.117)
+
+In Abschnitt 141 stand das Verschieben von Bildern in Tabellen und Listen noch als ungeprueft. `blockUnder()` nimmt den Block unter dem Zeiger ueber `topChild()`, also das direkte Kind von `#page`; in einer Zelle oder einem Punkt ist das die ganze Tabelle bzw. Liste. Ein Bild ist dort ein eigener Block und kann nicht in eine Zelle wandern, deshalb landet es immer vor oder nach dem ganzen Gebilde. Entscheidend ist, ob die Marke (`dropmark`) genau dort steht, wo das Bild beim Loslassen hinkommt.
+
+**Aufbau.** Dasselbe Electron-Hilfsskript wie in Abschnitt 141: echte `index.html` mit `preload.js`, Bild per `drop`, Tabelle mit drei Zeilen und Liste mit drei Punkten direkt in `#page`, gezogen mit echten Mausereignissen (`sendInputEvent`), Marke waehrend des Zuges ausgelesen, danach die Reihenfolge der Kinder von `#page` protokolliert.
+
+| Zeiger auf | Zeiger-y | Marke-y | Ergebnis (Reihenfolge in `#page`) |
+|---|---|---|---|
+| Absatz, untere Haelfte | 250 | 255 | `start · BILD · P · tbl · lst` – hinter dem Absatz |
+| Tabellenzeile 1, obere Haelfte | 524 | 513 | `start · P · BILD · tbl` – vor der Tabelle |
+| Tabellenzeile 2, untere Haelfte | 568 | 600 | `start · P · tbl · BILD` – hinter der Tabelle |
+| Tabellenzeile 3, unten | 595 | 600 | `start · P · tbl · BILD` – hinter der Tabelle |
+| Listenpunkt 1 | 624 | 614 | `… · BILD · lst` – vor der Liste |
+| Listenpunkt 2, unten | 665 | 695 | `… · lst · BILD` – hinter der Liste |
+| Listenpunkt 3, Mitte | 682 | 695 | `… · lst · BILD` – hinter der Liste |
+| leerer Platz ueber dem ersten Block | 197 | 227 | `BILD · start · …` – vor dem ersten Block |
+| leerer Platz unter dem letzten Block | 625 | 505 | `… · P · BILD` – hinter dem letzten Block |
+| neben der Seite (Statusleiste) | 706 | keine | unveraendert, Bild bleibt stehen |
+
+Die Marke lag in jedem Fall genau an der Kante, an der das Bild danach stand; die Tabelle entscheidet ueber ihre Mitte (557,5 px), die Liste ueber ihre Mitte (655,5 px). In Zellen und Listenpunkten ist die Einfuegung also grob – ein Bild ueber Zeile 2 landet je nach Haelfte am Tabellenkopf oder am Tabellenfuss –, aber nie an einer anderen Stelle als angezeigt.
+
+**Gefunden und behoben.** Der letzte Fall war vorher falsch: Verliess der Zeiger die Seite, gab `blockUnder()` `null` zurueck, der Aufrufer kehrte still zurueck und behielt das *letzte gueltige* Ziel. Die Marke blieb an dieser alten Stelle stehen, und ein Loslassen neben der Seite setzte das Bild dorthin (gemessen: Bild sprang von Position 2 auf 4, hinter die Liste). Jetzt liefert `blockUnder()` ein leeres Ergebnis, wenn weder `caretRangeFromPoint` noch `elementFromPoint` in `#page` liegen; der Aufrufer nimmt dann die Marke weg und verwirft das Ziel, ein Loslassen aendert nichts. Im leeren Platz *innerhalb* der Seite gilt der naechstgelegene Block (oben der erste, unten der letzte), damit ein Bild weiterhin ans Ende rutschen kann; das Bild selbst ist als Ziel ausgenommen.
+
+**Nicht geprueft.** Ein Bild direkt in eine Zelle oder zwischen zwei Listenpunkte setzen (die Einfuegung ist bewusst blockweise), Tabellen, die laenger als der Bildschirm sind (die Marke springt dort an den Tabellenrand), und Ziehen mit Stift oder Touch.
