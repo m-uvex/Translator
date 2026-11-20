@@ -582,6 +582,10 @@ const HOTKEY = 'CommandOrControl+Shift+Space';
 // keinen Tastenkuerzel mehr an, sondern einen Hinweis.
 let hotkeyOk = false;
 let tray = null;
+// Der Infobereich ist der Ort, an dem das Symbol ohnehin angeklickt wird;
+// steht der Kurzbefehl zur Verfuegung, nennt der Tooltip ihn gleich mit. Das
+// Menu bleibt deutsch, weil das Tray dem Betriebssystem gehoert.
+const trayTip = () => hotkeyOk ? 'Übersetzer – Strg+Shift+Leertaste' : 'Übersetzer';
 function showWindow() {
   if (!win || win.isDestroyed()) return;
   if (win.isMinimized()) win.restore();
@@ -599,7 +603,7 @@ function createTray() {
   if (img.isEmpty()) return;
   try {
     tray = new Tray(img);
-    tray.setToolTip('Übersetzer');
+    tray.setToolTip(trayTip());
     tray.setContextMenu(Menu.buildFromTemplate([
       { label: 'Öffnen', click: showWindow },
       { type: 'separator' },
@@ -626,6 +630,9 @@ app.whenReady().then(() => {
   // Der Kurzbefehl ist eine Zusatzleistung: Ist er schon von einem anderen
   // Programm belegt, laeuft die App ohne ihn weiter.
   try { hotkeyOk = globalShortcut.register(HOTKEY, showWindow); } catch { hotkeyOk = false; }
+  // createTray() lief vor der Registrierung, der Tooltip kennt den Kurzbefehl
+  // deshalb erst jetzt.
+  if (tray) tray.setToolTip(trayTip());
   const icon = resPath('build', IS_WIN ? 'icon.ico' : 'icon.png');
   win = new BrowserWindow({ width: 1280, height: 820, minWidth: 980, minHeight: 600, autoHideMenuBar: true, frame: false,
     ...(fs.existsSync(icon) ? { icon } : {}),
