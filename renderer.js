@@ -1500,13 +1500,19 @@ function drawStyles() {
   // Klassik-Layout vorerst deaktiviert (Nutzerwunsch): immer Symbol-Layout.
   // Zum Reaktivieren wieder S.uiMode === 'icons' ? 'icons' : 'classic' verwenden.
   const mode = 'icons';
-  // Der Ruhewert einer Reihe ("ohne Angabe", "Gruppe: ohne Geschlechtsangabe")
-  // ist keine Wahl, sondern das Nichts-Gewählte. Er wird nie markiert, damit
-  // bei "Empfänger*in" und "Absender*in" über beide Reihen hinweg höchstens
-  // ein Knopf leuchtet; gedrückt werden kann er trotzdem (löscht die Wahl).
-  const rest = (key, v) => (key === 'gender' || key === 'writer') ? v === 'unknown'
-    : (key === 'genderGroup' || key === 'writerGroup') ? v === 'none' : false;
-  const sel = (key, v) => S.style[key] === v && !rest(key, v);
+  // „Keine Angabe“ ist eine Angabe wie jede andere und wird deshalb markiert —
+  // so wie der Strich bei „Ton“ (Nutzerwunsch: überall gleich). Bei „Empfänger*in“
+  // und „Absender*in“ gibt es zwei Reihen für eine Angabe: Es leuchtet immer nur
+  // die Reihe, die den gespeicherten Zustand beschreibt. Ohne Gruppe ist das die
+  // erste Reihe („ohne Angabe“ = unknown); die Gruppenreihe markiert dann
+  // nichts, weil „keine Gruppe“ bereits durch den Strich oben dargestellt wird.
+  const groupKey = key => key === 'gender' ? 'genderGroup' : key === 'writer' ? 'writerGroup' : null;
+  const sel = (key, v) => {
+    const gk = groupKey(key);
+    if (!gk) return S.style[key] === v;
+    if (key === gk) return S.style[key] === v && v !== 'none';
+    return S.style[key] === v && S.style[gk] === 'none';
+  };
   // `size` steuert nur die Zeichen-Größe (die Knöpfe bleiben 32 px); die
   // Strichstärke wird mitgerechnet, damit sie optisch gleich bleibt.
   const btn = (key, o, pref, size = 18) => mode === 'icons'
