@@ -21,6 +21,33 @@ const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${Stri
 const nrm = s => String(s || '').toLocaleLowerCase().trim();
 const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
+// ---------- Vorlesen ----------
+// Die Sprachausgabe des Systems (Windows und Linux ueber speechSynthesis); es
+// wird nichts nachgeladen und nichts gesendet. Die Stimme wird nach der Sprache
+// des Wortes gesucht, damit ein deutsches Wort nicht englisch klingt; fehlt sie,
+// bleibt es bei der Standardstimme statt bei Stille.
+const SPEECH_ISO = { deu:'de', eng:'en', fra:'fr', spa:'es', ita:'it', por:'pt', nld:'nl', pol:'pl', ces:'cs', swe:'sv', dan:'da', nob:'no', nor:'no', fin:'fi', tur:'tr', rus:'ru', ukr:'uk', ell:'el', ron:'ro', hun:'hu', zho:'zh', jpn:'ja', kor:'ko', ara:'ar', hin:'hi', ind:'id', vie:'vi' };
+const speechLang = code => {
+  const c = String(code || '').split('_')[0].toLowerCase();
+  return SPEECH_ISO[c] || c || 'en';
+};
+function speakText(text, code) {
+  const s = String(text || '').trim();
+  if (!s || !window.speechSynthesis) return false;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(s);
+    const lang = speechLang(code);
+    u.lang = lang;
+    const v = speechSynthesis.getVoices().find(x => String(x.lang || '').toLowerCase().startsWith(lang));
+    if (v) u.voice = v;
+    u.rate = 0.95;
+    speechSynthesis.speak(u);
+    return true;
+  } catch { return false; }
+}
+const speakVocab = e => !!e && speakText(e.term, e.src || S.studySrc);
+
 // Textarten: gespeichert wird der Schluessel, angezeigt die Sprache der App.
 const CATS = [['news', 'Nachrichten', 'News'], ['story', 'Erzählung', 'Story'], ['nonfiction', 'Sachtext', 'Non-fiction'], ['dialog', 'Dialog', 'Dialogue'], ['poem', 'Gedicht', 'Poem'], ['other', 'Sonstiges', 'Other']];
 const catLabel = k => { const c = CATS.find(x => x[0] === k); return c ? (LANG === 'de' ? c[1] : c[2]) : (k || ''); };
@@ -218,7 +245,8 @@ function vocRow(e, opts) {
   // In der Auswahl traegt die Zeile links ein Kaestchen; Bearbeiten und
   // Loeschen je Zeile treten zurueck, damit ein Klick die Zeile anwaehlt.
   const box = ST.selMode ? `<span class="pickbox">${picked ? ic('check', 13) : ''}</span>` : '';
-  const acts = ST.selMode ? '' : `<button class="rm ed" data-edit="${e.id}" title="${esc(t('edit'))}">${ic('pencil', 15)}</button>
+  const acts = ST.selMode ? '' : `<button class="rm spk" data-say="${e.id}" title="${esc(t('speak'))}">${ic('volume', 15)}</button>
+    <button class="rm ed" data-edit="${e.id}" title="${esc(t('edit'))}">${ic('pencil', 15)}</button>
     <button class="rm" data-del="${e.id}" title="${esc(t('remove'))}">${ic('x', 15)}</button>`;
   return `<div class="vrow${ST.selMode ? ' selmode' : ''}${picked ? ' picked' : ''}" data-id="${e.id}"${ST.selMode ? ` data-sel="${e.id}"` : ''}>
     ${box}
@@ -368,6 +396,10 @@ async function vocSelDelete() {
 }
 
 // ---------- Auswahlmodus im Uebersetzer ----------
+// Fuer editor.js: Ist der Lernen-Arbeitsplatz abgeschaltet, wird der
+// Auswahlmodus beendet; der Knopf verschwindet mit dem Arbeitsplatz.
+window.studyPickOff = () => { if (!ST.pick) return; ST.pick = false; pickSync(); };
+
 function pickSync() {
   const layer = $('#pickLayer');
   if (!layer) return;
@@ -1313,7 +1345,7 @@ function renderSrs() {
     <div class="srsword">${srsShow || !ctx ? esc(e.term) : ''}</div>
     ${srsShow ? `<div class="srsres">${e.gender ? `<span class="vg">${genderMark(e)}</span>` : ''}${sol ? esc(sol) : `<span class="muted">${esc(t('srsNoTr'))}</span>`}</div>
       ${subLine}
-      <div class="srseditrow"><button class="ib srsedit" id="srsEdit" title="${esc(t('edit'))}" aria-label="${esc(t('edit'))}">${ic('pencil', 16)}</button></div>
+      <div class="srseditrow"><button class="ib srsedit" id="srsSay" title="${esc(t('speak'))}" aria-label="${esc(t('speak'))}">${ic('volume', 16)}</button><button class="ib srsedit" id="srsEdit" title="${esc(t('edit'))}" aria-label="${esc(t('edit'))}">${ic('pencil', 16)}</button></div>
       <div class="srsbtns">
         <button class="ghost" data-r="again">${esc(t('srsAgain'))}</button>
         <button class="ghost" data-r="hard">${esc(t('srsHard'))}</button>
@@ -1329,6 +1361,8 @@ function renderSrs() {
   // Der Stift ist derselbe wie in der Vokabelliste (#vocDlg, vocOpenEdit).
   const ed = box.querySelector('#srsEdit');
   if (ed) ed.onclick = () => vocOpenEdit(e.id);
+  const say = box.querySelector('#srsSay');
+  if (say) say.onclick = () => speakVocab(e);
   box.querySelectorAll('[data-r]').forEach(b => b.onclick = () => {
     rate(e, b.dataset.r);
     srsShow = false;
@@ -1952,6 +1986,8 @@ function wire() {
   $('#vocTerm').addEventListener('input', () => vocStatus(''));
   $('#vocTerm').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addFromSearch(); } });
   $('#vocList').addEventListener('click', e => {
+    const say = e.target.closest('[data-say]');
+    if (say) return speakVocab(ST.vocab.find(v => v.id === say.dataset.say));
     const ed = e.target.closest('[data-edit]');
     if (ed) return vocOpenEdit(ed.dataset.edit);
     const b = e.target.closest('[data-del]');

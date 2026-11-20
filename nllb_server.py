@@ -171,6 +171,21 @@ def load(full):
         model = AutoModelForSeq2SeqLM.from_pretrained(repo, local_files_only=True, **kw)
     cur.update(id=full, tok=tok, model=model.eval())
 
+# Modell aus dem Speicher nehmen. Der Server laeuft weiter, die naechste
+# Anfrage laedt es erneut - das dauert beim ersten Mal 20 bis 40 s, gibt aber
+# den Arbeitsspeicher frei, wenn die App nur noch Ollama braucht.
+def unload():
+    with lock:
+        had = cur["id"]
+        cur.update(id=None, tok=None, model=None)
+    gc.collect()
+    try:
+        import torch
+        if torch.cuda.is_available(): torch.cuda.empty_cache()
+    except Exception:
+        pass
+    return had
+
 def translate_line(text, src, tgt, req=None):
     import torch
     from transformers import StoppingCriteria, StoppingCriteriaList
@@ -200,7 +215,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/languages": self._json(200, LANGS)
         elif self.path == "/models": self._json(200, model_info())
-        elif self.path == "/health": self._json(200, {"ok": True})
+        elif self.path == "/health": self._json(200, {"ok": True, "loaded": cur["id"], "port": PORT})
         else: self._json(404, {"error": "not found"})
     def do_POST(self):
         try:
@@ -213,6 +228,8 @@ class Handler(BaseHTTPRequestHandler):
                     # dem Ende der Anfrage); die Menge bleibt so klein.
                     if len(cancelled) > 64: cancelled.clear(); cancelled.add(req)
                 return self._json(200, {"ok": True})
+            if self.path == "/unload":
+                return self._json(200, {"ok": True, "was": unload()})
             full = d.get("id") or d.get("model")
             fam, mid, m = find(full)
             if self.path == "/load":

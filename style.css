@@ -598,3 +598,33 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .pop.colpop .csw{width:26px;height:26px;padding:0;border-radius:50%;border:1px solid color-mix(in srgb,var(--text) 22%,transparent);background:var(--c);cursor:pointer;transition:transform .12s}
 .pop.colpop .csw:hover{transform:scale(1.08)}
 .pop.colpop .csw.on{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--text)}
+/* Glossar-Sammlungen: eine Leiste ueber den Eintraegen mit zwei Symbolknoepfen
+   und dem Namen der geladenen Sammlung. Sie ist 28 px hoch, damit sie die
+   uebrigen Zeilen der Karte nicht auseinanderzieht. */
+.glbar{display:flex;align-items:center;gap:6px;margin:2px 0 4px}
+.glbar .ib{width:28px;height:28px;flex:none}
+.glbar .ib:hover{background:var(--accent-hover);color:var(--on-accent)}
+#glossName{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.pop .row .rowend{display:flex;align-items:center;gap:6px}
+.pop .row .rm{width:22px;height:22px;padding:0;border:0;border-radius:50%;background:none;color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.pop .row .rm:hover{background:var(--card);color:var(--accent-ink)}
+/* Verlauf: die Ausgangsfassung oben, die Uebersetzung darunter, beide auf eine
+   Zeile gekuerzt und ohne Umbruch. Der Klick laedt beides in die Karten. */
+#histList .hrow{display:flex;align-items:center;gap:6px;padding:6px 4px;border-radius:10px;cursor:pointer}
+#histList .hrow:hover{background:var(--card)}
+#histList .hcol{flex:1;min-width:0}
+#histList .hsrc,#histList .htr{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px}
+#histList .htr{color:var(--muted)}
+#histList .rm{flex:none;width:22px;height:22px;padding:0;border:0;border-radius:50%;background:none;color:var(--muted);display:grid;place-items:center;cursor:pointer}
+#histList .rm:hover{background:var(--card);color:var(--accent-ink)}
+.histempty{font-size:12.5px;padding:2px 4px}
+/* Diagnose-Seite: zwei Karten, je Dienst eine, mit einer Zeile je Messwert. */
+.diagcard{background:var(--soft);border-radius:var(--r);padding:12px;margin:12px 0}
+.diaghead{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.diaghead .sp{flex:1}
+.diaghead .ib{width:28px;height:28px}
+.diaghead .ib:hover{background:var(--accent-hover);color:var(--on-accent)}
+.diagrow{display:flex;gap:10px;font-size:13px;padding:2px 0}
+.diagrow>span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.diagpill{border-radius:999px;padding:1px 8px;font-size:12px;background:var(--card);color:var(--muted);border:1px solid var(--line)}
+.diagpill.ok{background:var(--accent);color:var(--on-accent);border-color:transparent}

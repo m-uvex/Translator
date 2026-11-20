@@ -188,7 +188,13 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // Kompass: runde Dose mit Nadel.
   sgCompass:'<circle cx="12" cy="12" r="8.4"/><path d="m15 9-1.8 4.2L9 15l1.8-4.2z"/>',
   // Schwert mit Griff und Parierstange.
-  sgSword:'<path d="M19.4 4.2h-3L5.8 14.8l3.4 3.4L19.4 7.2z"/><path d="M4.2 13.6 10.4 19.8"/><path d="M3.6 21.2 5.6 19.2"/>'
+  sgSword:'<path d="M19.4 4.2h-3L5.8 14.8l3.4 3.4L19.4 7.2z"/><path d="M4.2 13.6 10.4 19.8"/><path d="M3.6 21.2 5.6 19.2"/>',
+  // Ordner fuer die Glossar-Sammlungen, ein Pulssignal fuer die Diagnose-Seite,
+  // ein Lautsprecher fuers Vorlesen und ein Ausschalter fuers Entladen.
+  folder:'<path d="M3.2 6.4h5.6l1.8 2h10.2v11.2H3.2z"/>',
+  activity:'<path d="M3 12h3.4l2.6-7 4 14 2.6-7H21"/>',
+  volume:'<path d="M11 5 6.6 9H3v6h3.6L11 19z"/><path d="M15 9.3a4 4 0 0 1 0 5.4M17.8 6.5a8 8 0 0 1 0 11"/>',
+  power:'<path d="M12 3.2v8.4"/><path d="M7.4 6.6a7 7 0 1 0 9.2 0"/>'
 };
 const ic = (n, s = 18, sw = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -267,6 +273,26 @@ const K = {
   s_helper:['Modell für Ersatzwörter (bei TranslateGemma/NLLB)','Model for word alternatives (for TranslateGemma/NLLB)'], s_sys:['System-Anweisung','System prompt'],
   s_temp:['Temperatur (niedriger = beständiger)','Temperature (lower = more consistent)'], s_ctx:['Kontextlänge (num_ctx)','Context length (num_ctx)'],
   s_groupGeneral:['Allgemein','General'], s_groupConn:['Verbindungen','Connections'], s_groupTrans:['Übersetzung','Translation'],
+  // Verlauf, Glossar-Sammlungen, Diagnose und Vorlesen.
+  s_history:['Übersetzungsverlauf','Translation history'],
+  historyH:['Verlauf','History'], historyEmpty:['Noch keine Übersetzungen','No translations yet'],
+  histLoad:['In die Felder laden','Load into the panes'],
+  glossColls:['Glossar-Sammlungen','Glossary collections'],
+  glossSave:['Aktuelle Liste als Sammlung sichern','Save the current list as a collection'],
+  glossNewName:[n => `Sammlung ${n}`, n => `Collection ${n}`],
+  glossImportT:['Glossar importieren','Import a glossary'],
+  glossImported:[n => `${n} Einträge übernommen`, n => `${n} entries added`],
+  glossNone:['Keine Einträge in der Datei','No entries in the file'],
+  glossNoFile:['Datei konnte nicht gelesen werden','Could not read the file'],
+  speak:['Vorlesen','Read aloud'],
+  diagH:['Verbindungen','Connections'], diagRefresh:['Neu messen','Measure again'],
+  diagOk:['Erreichbar','Reachable'], diagFail:['Nicht erreichbar','Not reachable'],
+  diagModels:[n => `${n} Modelle`, n => `${n} models`],
+  diagLoaded:['Geladen','Loaded'], diagNone:['nichts','nothing'], diagVersion:['Version','Version'],
+  diagUnload:['Modelle entladen','Unload models'], diagUnloaded:['Modelle entladen','Models unloaded'],
+  diagNoUnload:['Nichts geladen','Nothing loaded'],
+  diagOllama:['Ollama','Ollama'], diagNllb:['NLLB-Server','NLLB server'],
+  diagHint:['Die Adressen stehen in den Einstellungen unter „Verbindungen“.','The addresses are set in the settings under “Connections”.'],
   startTr:['Übersetzer öffnen','Open translator'], startEd:['Textbearbeitung öffnen','Open text editor'], startStudy:['Lernen öffnen','Open study'], startLast:['Zuletzt verwendetes öffnen','Open last used'],
   // Namen der Arbeitsplatz-Gruppen fuer die Kaestchen in den Einstellungen.
   wsTr:['Übersetzer','Translator'], wsEd:['Textbearbeitung','Text editor'], wsStudy:['Lernen','Study'],
@@ -352,6 +378,13 @@ const NL = {
   s_url:'Ollama-adres', s_nllb:'Adres van NLLB-server', s_ui:'Weergavetaal', s_theme:'Thema', s_start:'Openen bij starten', s_workspace:'Zichtbare werkplekken',
   s_helper:'Model voor woordalternatieven (bij TranslateGemma/NLLB)', s_sys:'Systeemprompt', s_temp:'Temperatuur (lager = consistenter)', s_ctx:'Contextlengte (num_ctx)',
   s_groupGeneral:'Algemeen', s_groupConn:'Verbindingen', s_groupTrans:'Vertaling',
+  s_history:'Vertaalgeschiedenis', historyH:'Geschiedenis', historyEmpty:'Nog geen vertalingen', histLoad:'In de velden laden',
+  glossColls:'Woordenlijstcollecties', glossSave:'Huidige lijst als collectie bewaren', glossNewName:n => `Collectie ${n}`,
+  glossImportT:'Woordenlijst importeren', glossImported:n => `${n} items overgenomen`, glossNone:'Geen items in het bestand', glossNoFile:'Bestand kon niet worden gelezen',
+  speak:'Voorlezen', diagH:'Verbindingen', diagRefresh:'Opnieuw meten', diagOk:'Bereikbaar', diagFail:'Niet bereikbaar',
+  diagModels:n => `${n} modellen`, diagLoaded:'Geladen', diagNone:'niets', diagVersion:'Versie',
+  diagUnload:'Modellen vrijgeven', diagUnloaded:'Modellen vrijgegeven', diagNoUnload:'Niets geladen',
+  diagOllama:'Ollama', diagNllb:'NLLB-server', diagHint:'De adressen staan in de instellingen onder „Verbindingen“.',
   startTr:'Vertaler openen', startEd:'Tekstbewerking openen', startLast:'Laatst gebruikte openen', wsTr:'Vertaler', wsEd:'Tekstbewerking', wsStudy:'Leren',
   reset:'Herstellen', resetAll:'Alles herstellen', autoSys:'Automatisch (systeem)', autoO:'Automatisch', autoModel:'Automatisch', light:'Licht', dark:'Donker',
   nllbH:'NLLB-200', mInst:'Geïnstalleerd', mNot:'Niet geïnstalleerd', mLoad:p => `Downloaden … ${p} %`, mErr:e => `Fout: ${e}`, bDl:'Downloaden', bDel:'Verwijderen', bBusy:'Bezig …',
@@ -377,6 +410,13 @@ const ES = {
   s_url:'Dirección de Ollama', s_nllb:'Dirección del servidor NLLB', s_ui:'Idioma de visualización', s_theme:'Tema', s_start:'Abrir al inicio', s_workspace:'Espacios visibles',
   s_helper:'Modelo para alternativas de palabras (TranslateGemma/NLLB)', s_sys:'Prompt del sistema', s_temp:'Temperatura (menor = más consistente)', s_ctx:'Longitud de contexto (num_ctx)',
   s_groupGeneral:'General', s_groupConn:'Conexiones', s_groupTrans:'Traducción', s_groupFeatures:'Ajustes adicionales',
+  s_history:'Historial de traducciones', historyH:'Historial', historyEmpty:'Aún no hay traducciones', histLoad:'Cargar en los campos',
+  glossColls:'Colecciones de glosario', glossSave:'Guardar la lista actual como colección', glossNewName:n => `Colección ${n}`,
+  glossImportT:'Importar glosario', glossImported:n => `${n} entradas añadidas`, glossNone:'No hay entradas en el archivo', glossNoFile:'No se pudo leer el archivo',
+  speak:'Leer en voz alta', diagH:'Conexiones', diagRefresh:'Medir de nuevo', diagOk:'Accesible', diagFail:'No accesible',
+  diagModels:n => `${n} modelos`, diagLoaded:'Cargado', diagNone:'nada', diagVersion:'Versión',
+  diagUnload:'Liberar modelos', diagUnloaded:'Modelos liberados', diagNoUnload:'Nada cargado',
+  diagNllb:'Servidor NLLB', diagHint:'Las direcciones se ajustan en la configuración, en «Conexiones».',
   startTr:'Abrir traductor', startEd:'Abrir editor', startLast:'Abrir último usado', wsTr:'Traductor', wsEd:'Editor', wsStudy:'Aprendizaje',
   reset:'Restablecer', resetAll:'Restablecer todo', autoSys:'Automático (sistema)', autoO:'Automático', autoModel:'Automático', light:'Claro', dark:'Oscuro',
   nllbH:'NLLB-200', mInst:'Instalado', mNot:'No instalado', mLoad:p => `Descargando … ${p} %`, mErr:e => `Error: ${e}`, bDl:'Descargar', bDel:'Eliminar', bBusy:'Descargando …',
@@ -404,6 +444,13 @@ const TR = {
   s_url:'Ollama adresi', s_nllb:'NLLB sunucu adresi', s_ui:'Arayüz dili', s_theme:'Tema', s_start:'Başlangıçta aç', s_workspace:'Görünür çalışma alanları',
   s_helper:'Kelime alternatifleri modeli (TranslateGemma/NLLB için)', s_sys:'Sistem komutu', s_temp:'Sıcaklık (düşük = daha tutarlı)', s_ctx:'Bağlam uzunluğu (num_ctx)',
   s_groupGeneral:'Genel', s_groupConn:'Bağlantılar', s_groupTrans:'Çeviri', s_groupFeatures:'Ek ayarlar',
+  s_history:'Çeviri geçmişi', historyH:'Geçmiş', historyEmpty:'Henüz çeviri yok', histLoad:'Alanlara yükle',
+  glossColls:'Sözlük koleksiyonları', glossSave:'Geçerli listeyi koleksiyon olarak kaydet', glossNewName:n => `Koleksiyon ${n}`,
+  glossImportT:'Sözlük içe aktar', glossImported:n => `${n} giriş alındı`, glossNone:'Dosyada giriş yok', glossNoFile:'Dosya okunamadı',
+  speak:'Sesli oku', diagH:'Bağlantılar', diagRefresh:'Yeniden ölç', diagOk:'Erişilebilir', diagFail:'Erişilemiyor',
+  diagModels:n => `${n} model`, diagLoaded:'Yüklü', diagNone:'yok', diagVersion:'Sürüm',
+  diagUnload:'Modelleri boşalt', diagUnloaded:'Modeller boşaltıldı', diagNoUnload:'Yüklü model yok',
+  diagNllb:'NLLB sunucusu', diagHint:'Adresler ayarlarda „Bağlantılar“ altında.',
   startTr:'Çevirmeni aç', startEd:'Metin düzenleyiciyi aç', startLast:'Son kullanılanı aç', wsTr:'Çevirmen', wsEd:'Editör', wsStudy:'Öğrenme',
   reset:'Sıfırla', resetAll:'Tümünü sıfırla', autoSys:'Otomatik (sistem)', autoO:'Otomatik', autoModel:'Otomatik', light:'Açık', dark:'Koyu',
   nllbH:'NLLB-200', mInst:'Yüklü', mNot:'Yüklü değil', mLoad:p => `İndiriliyor … %${p}`, mErr:e => `Hata: ${e}`, bDl:'İndir', bDel:'Sil', bBusy:'İndiriliyor …',
@@ -431,6 +478,13 @@ const AR = {
   s_url:'عنوان Ollama', s_nllb:'عنوان خادم NLLB', s_ui:'لغة الواجهة', s_theme:'المظهر', s_start:'الفتح عند البدء', s_workspace:'مساحات العمل المرئية',
   s_helper:'نموذج بدائل الكلمات (مع TranslateGemma/NLLB)', s_sys:'توجيه النظام', s_temp:'درجة الحرارة (أقل = أكثر دقة)', s_ctx:'طول السياق (num_ctx)',
   s_groupGeneral:'عام', s_groupConn:'الاتصالات', s_groupTrans:'الترجمة', s_groupFeatures:'إعدادات إضافية',
+  s_history:'سجل الترجمات', historyH:'السجل', historyEmpty:'لا توجد ترجمات بعد', histLoad:'تحميل في الحقول',
+  glossColls:'مجموعات المسرد', glossSave:'حفظ القائمة الحالية كمجموعة', glossNewName:n => `مجموعة ${n}`,
+  glossImportT:'استيراد مسرد', glossImported:n => `تمت إضافة ${n} مدخلاً`, glossNone:'لا توجد مدخلات في الملف', glossNoFile:'تعذر قراءة الملف',
+  speak:'قراءة بصوت عالٍ', diagH:'الاتصالات', diagRefresh:'قياس مرة أخرى', diagOk:'متاح', diagFail:'غير متاح',
+  diagModels:n => `${n} نماذج`, diagLoaded:'محمّل', diagNone:'لا شيء', diagVersion:'الإصدار',
+  diagUnload:'إفراغ النماذج', diagUnloaded:'تم إفراغ النماذج', diagNoUnload:'لا شيء محمّل',
+  diagNllb:'خادم NLLB', diagHint:'تُضبط العناوين في الإعدادات ضمن «الاتصالات».',
   startTr:'فتح المترجم', startEd:'فتح المحرر', startLast:'فتح آخر مستخدم', wsTr:'المترجم', wsEd:'المحرر', wsStudy:'التعلّم',
   reset:'إعادة تعيين', resetAll:'إعادة تعيين الكل', autoSys:'تلقائي (النظام)', autoO:'تلقائي', autoModel:'تلقائي', light:'فاتح', dark:'داكن',
   nllbH:'NLLB-200', mInst:'مثبت', mNot:'غير مثبت', mLoad:p => `جاري التنزيل … ${p} %`, mErr:e => `خطأ: ${e}`, bDl:'تنزيل', bDel:'حذف', bBusy:'جاري التنزيل …',
@@ -505,6 +559,10 @@ const D = { url:'http://localhost:11434', nllb:'http://127.0.0.1:8765', model:''
   pins:{ ollama:['de','en'], nllb:['deu_Latn','eng_Latn'] }, style:{type:'natural',formal:'standard',gender:'unknown',writer:'unknown',genderGroup:'none',writerGroup:'none'}, uiMode:'icons',
   gloss:[], ctxt:'', temp:0.3, numctx:4096, bootModel:true, profanityFilter:true, profanityStyle:'stars', edMarkdown:false, edSpellAnim:true, edSpellAnimDefault:false, autoCopy:false, autoCopyTyped:false,
   csvSrs:true, srsType:false, studySrc:'', studyTgt:'', studyModel:'',
+  // Verlauf und Glossar-Sammlungen. Der Verlauf startet aus (Nutzerwunsch:
+  // nur wer will, sammelt mit), die Sammlungen sind leer und S.gloss bleibt die
+  // arbeitende Liste, die in den Prompt geht.
+  historyOn:false, hist:[], glossId:'', glossColls:[],
   // Kurzgeschichten: an/aus und ein eigenes Schreibmodell (leer = wie der
   // Texteditor). Die Woerter und der Lueckentext stehen im Code, nicht hier.
   storyOn:true, storyModel:'', storyLen:'mid',
@@ -536,6 +594,9 @@ const wsList = () => [...new Set(String(S.workspace || WS_ALL).split(',').filter
 const save = () => {
   localStorage.setItem('s', JSON.stringify(S));
   try { window.api.nllbUrl(S.nllb); } catch {}
+  // Dieselbe Meldung fuer Ollama: der Hauptprozess fragt beim Hochfahren die
+  // eingestellte Adresse und startet nur einen lokalen Server.
+  try { window.api.ollamaUrl(S.url); } catch {}
 };
 if (!wsList().length || S.workspace !== wsList().join(',')) { S.workspace = wsList().length ? wsList().join(',') : WS_ALL; save(); }
 // Migration: Symbol-Layout und dynamisches Markdown sind die neuen Standardwerte;
@@ -832,6 +893,36 @@ function userPromptFor(text, o) {
     (o.images?.length ? '\n\nAlso translate any text visible in the attached image(s).' : '') + (text ? `\n\n<text>\n${text}\n</text>` : '');
 }
 const tgPrompt = (x, sc = S.src, tc = S.tgt) => { const a = engName(sc), b = engName(tc); return `You are a professional ${a} (${sc}) to ${b} (${tc}) translator. Your goal is to accurately convey the meaning and nuances of the original ${a} text while adhering to ${b} grammar, vocabulary, and cultural sensitivities.\nProduce only the ${b} translation, without any additional explanations or commentary. Please translate the following ${a} text into ${b}:\n\n\n${x}`; };
+// ---------- Lange Texte stueckweise ----------
+// num_ctx begrenzt, wie viel das Modell ueberhaupt sieht; ein laengerer Text
+// wurde bisher still abgeschnitten. Die Stuecke folgen der Zeilengliederung,
+// damit kein Absatz an der Naht zerreisst; eine einzelne ueberlange Zeile wird
+// am letzten Leerzeichen geteilt. Die Grenze waechst mit der eingestellten
+// Kontextlaenge, bleibt aber deutlich darunter: das Ergebnis braucht ebenfalls
+// Platz im Kontext.
+function textChunks(txt, limit) {
+  const out = []; let cur = '';
+  const push = () => { if (cur.trim()) out.push(cur); cur = ''; };
+  for (const line of String(txt).split(/\n/)) {
+    if (line.length > limit) {
+      push();
+      let rest = line;
+      while (rest.length > limit) {
+        const cut = Math.max(rest.lastIndexOf(' ', limit), rest.lastIndexOf(';', limit), 1);
+        out.push(rest.slice(0, cut));
+        rest = rest.slice(cut).replace(/^\s+/, '');
+      }
+      if (rest.trim()) out.push(rest);
+      continue;
+    }
+    if (cur && cur.length + 1 + line.length > limit) push();
+    cur = cur ? cur + '\n' + line : line;
+  }
+  push();
+  return out;
+}
+const chunkChars = () => Math.max(1200, Math.min(9000, Math.round((Number(S.numctx) || 4096) * 1.5)));
+
 function helperModel() {
   if (S.helper && caps[S.helper]) return S.helper;
   if (!isMt() && !isTg(S.model) && caps[S.model]) return S.model;
@@ -850,13 +941,41 @@ async function translateCore(text, o) {
     return fin(out.join('\n'));
   }
   const opt = { stream:!!o.onToken, onToken:o.onToken ? x => o.onToken(filterProfanity(stripStars(x, text), false, o.tgt, o.src)) : undefined, model:o.model, signal:o.signal };
-  if (eng === 'tg') return fin(await chat([{ role:'user', content:tgPrompt(text, o.src, o.tgt) }], opt));
+  const parts = textChunks(text, chunkChars());
+  // TranslateGemma bekommt sein eigenes Prompt-Format, aber dieselbe Stueckelung:
+  // ein langer Text wurde auch hier abgeschnitten.
+  if (eng === 'tg') {
+    if (parts.length < 2) return fin(await chat([{ role:'user', content:tgPrompt(text, o.src, o.tgt) }], opt));
+    const outs = [];
+    for (let i = 0; i < parts.length; i++) {
+      if (o.signal && o.signal.aborted) throw new DOMException('aborted', 'AbortError');
+      outs.push((await chat([{ role:'user', content:tgPrompt(parts[i], o.src, o.tgt) }], { ...opt, stream:false, onToken:undefined })).trim());
+      if (o.onToken) o.onToken(fin(outs.join('\n\n')));
+    }
+    return fin(outs.join('\n\n'));
+  }
   const msg = { role:'user', content:userPromptFor(text, o) };
   if (o.images?.length) msg.images = o.images.map(i => i.b64);
   // Die Geschlechts-Regeln wiederholt auch im System-Prompt: die Gewichtung dort
   // ist bei kleinen Modellen spuerbar hoeher als im Fliesstext der User-Nachricht.
   const pb = peopleBlock(o);
-  return fin(await chat([{ role:'system', content: pb ? S.sys + '\n\n' + pb : S.sys }, msg], opt));
+  const sys = pb ? S.sys + '\n\n' + pb : S.sys;
+  // Kurz genug oder mit Bildern: ein Aufruf wie bisher. Sonst Stuecke
+  // nacheinander, mit dem Schluss des vorigen Ergebnisses als Anschluss, damit
+  // Ton und Begriffe gleich bleiben. Gezeigt wird das Ergebnis nach jedem
+  // fertigen Stueck, nicht mitten im Satz.
+  if (parts.length < 2 || o.images?.length) return fin(await chat([{ role:'system', content: sys }, msg], opt));
+  const outs = [];
+  for (let i = 0; i < parts.length; i++) {
+    if (o.signal && o.signal.aborted) throw new DOMException('aborted', 'AbortError');
+    const prev = outs[outs.length - 1] || '';
+    const note = `\n\nThe text above is part ${i + 1} of ${parts.length} of one longer document. Translate only this part, keep terminology, tone and tense consistent with the other parts, do not repeat whole sentences and do not add an introduction or a closing sentence.` +
+      (prev ? `\nThe previous part ended with:\n…${prev.slice(-300)}` : '');
+    const pmsg = { role:'user', content: userPromptFor(parts[i], o) + note };
+    outs.push((await chat([{ role:'system', content: sys }, pmsg], { ...opt, stream:false, onToken:undefined })).trim());
+    if (o.onToken) o.onToken(fin(outs.join('\n\n')));
+  }
+  return fin(outs.join('\n\n'));
 }
 // Der Stopp-Knopf erscheint ausschliesslich waehrend eines Laufs. Er ist ein
 // reiner Icon-Button (Stoppschild ohne Schrift) und sitzt neben dem Kopieren-Icon.
@@ -912,6 +1031,7 @@ async function translate() {
     lastSrc = text; $('#output').textContent = '';
     const live = x => $('#output').textContent = x;
     lastTr = await translateCore(text, { model:S.model, src:S.src, tgt:S.tgt, style:S.style, writer:S.style.writer, ctxt:S.ctxt, gloss:S.gloss, images, onToken:live, signal:currentAbortController.signal, req:currentReq });
+    histAdd(lastSrc, lastTr);
     renderOut(); status(''); maybeAutoCopy();
   } catch (e) {
     if (e.name === 'AbortError' || currentAbortController?.signal.aborted) {
@@ -931,6 +1051,139 @@ function renderOut() {
     if (isWordLike) { const s = document.createElement('span'); s.className = 'w'; s.textContent = segment; o.append(s); } else o.append(segment);
   }
 }
+
+// ---------- Verlauf ----------
+// Die letzten Uebersetzungen liegen in S.hist und damit im localStorage der
+// Seite. Gesammelt wird nur bei eingeschaltetem Schalter (Vorgabe: aus); die
+// Liste steht eingeklappt unter dem Glossar und ist sonst gar nicht da.
+const HIST_MAX = 20;
+function histAdd(s, tr) {
+  if (!S.historyOn || !s || !tr) return;
+  const e = { s: String(s).slice(0, 4000), t: String(tr).slice(0, 4000), src: S.src, tgt: S.tgt, at: Date.now() };
+  const rest = (Array.isArray(S.hist) ? S.hist : []).filter(x => !(x.s === e.s && x.t === e.t));
+  S.hist = [e, ...rest].slice(0, HIST_MAX);
+  save(); drawHist();
+}
+function drawHist() {
+  const box = $('#histBox'); if (!box) return;
+  box.classList.toggle('hidden', !S.historyOn);
+  if (!S.historyOn) return;
+  const host = $('#histList'); if (!host) return;
+  const list = Array.isArray(S.hist) ? S.hist : [];
+  if (!list.length) { host.innerHTML = `<div class="muted histempty">${esc(t('historyEmpty'))}</div>`; return; }
+  const one = x => esc(String(x || '').replace(/\s+/g, ' ').slice(0, 120));
+  host.innerHTML = list.map((h, i) => `<div class="hrow" data-h="${i}" title="${esc(t('histLoad'))}"><div class="hcol"><div class="hsrc">${one(h.s)}</div><div class="htr">${one(h.t)}</div></div><button class="rm" data-hdel="${i}" title="${esc(t('remove'))}">${ic('x', 13)}</button></div>`).join('');
+}
+$('#histList').onclick = e => {
+  const del = e.target.closest('[data-hdel]');
+  if (del) { S.hist.splice(+del.dataset.hdel, 1); save(); drawHist(); return; }
+  const row = e.target.closest('[data-h]'); if (!row) return;
+  const h = (S.hist || [])[+row.dataset.h]; if (!h) return;
+  // Der Eintrag laedt Quelle und Ausgabe zurueck in die Karten; das Paar wird
+  // nur uebernommen, wenn beide Sprachen zur aktuellen Engine passen.
+  $('#input').value = h.s; inputPasted = true; count();
+  lastSrc = h.s; lastTr = h.t; renderOut(); status('');
+  const has = c => c === 'auto' || activeLangs().some(l => l[0] === c);
+  if (h.src && h.tgt && h.src !== h.tgt && has(h.src) && has(h.tgt)) { S.src = h.src; S.tgt = h.tgt; save(); upd(); }
+};
+
+// ---------- Glossar-Sammlungen ----------
+// S.gloss ist die arbeitende Liste, die in den Prompt geht. Sammlungen sind
+// benannte Kopien davon (S.glossColls). "Laden" ersetzt die arbeitende Liste,
+// "sichern" legt eine Kopie an; wer eine geladene Sammlung weiterbearbeitet,
+// schreibt die Aenderung zurueck, sonst waere die Kopie sofort veraltet.
+const glossKey = s => String(s || '').trim().toLocaleLowerCase();
+const glossName = () => (S.glossColls.find(c => c.id === S.glossId) || {}).name || '';
+function drawGlossName() { const el = $('#glossName'); if (el) el.textContent = glossName(); }
+function glossSyncColl() {
+  const c = S.glossColls.find(x => x.id === S.glossId);
+  if (c) c.gloss = S.gloss.map(g => ({ s: g.s, t: g.t }));
+}
+function glossAddEntries(rows) {
+  const seen = new Set(S.gloss.map(g => glossKey(g.s)).filter(Boolean));
+  let n = 0;
+  for (const r of rows || []) {
+    const s = String((r && r.s) || '').trim(), tr = String((r && r.t) || '').trim();
+    if (!s || !tr || seen.has(glossKey(s))) continue;
+    seen.add(glossKey(s)); S.gloss.push({ s, t: tr }); n++;
+  }
+  if (n) { glossSyncColl(); save(); }
+  return n;
+}
+// CSV, TSV und TXT mit zwei Spalten je Zeile, dazu JSON als Liste von Paaren
+// oder von Objekten mit s/t, term/translation oder source/target.
+function glossParse(text) {
+  const raw = String(text || '').replace(/^\uFEFF/, '').trim();
+  if (!raw) return [];
+  if (/^[\[{]/.test(raw)) {
+    try {
+      const d = JSON.parse(raw);
+      const arr = Array.isArray(d) ? d : (d.entries || d.gloss || d.terms || []);
+      return (Array.isArray(arr) ? arr : []).map(x => Array.isArray(x)
+        ? { s: x[0], t: x[1] }
+        : { s: x.s ?? x.term ?? x.source, t: x.t ?? x.translation ?? x.target });
+    } catch { }
+  }
+  const rows = [];
+  for (const line of raw.split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    const sep = line.includes('\t') ? '\t' : line.includes(';') ? ';' : ',';
+    const cols = line.split(sep).map(c => c.trim().replace(/^"|"$/g, ''));
+    if (cols.length < 2 || !cols[0] || !cols[1]) continue;
+    // Eine Kopfzeile wird uebersprungen, damit "Begriff,Übersetzung" nicht als
+    // Glossareintrag in die Liste rutscht.
+    if (!rows.length && /^(term|begriff|wort|source|ausgangsterm)$/i.test(cols[0])) continue;
+    rows.push({ s: cols[0], t: cols[1] });
+  }
+  return rows;
+}
+function glossSaveNew() {
+  const c = { id: 'g' + Date.now().toString(36), name: t('glossNewName', S.glossColls.length + 1), gloss: S.gloss.map(g => ({ s: g.s, t: g.t })) };
+  S.glossColls.push(c); S.glossId = c.id; save(); drawGloss();
+}
+function glossLoad(id) {
+  const c = S.glossColls.find(x => x.id === id); if (!c) return;
+  S.gloss = c.gloss.map(g => ({ s: g.s, t: g.t })); S.glossId = id; save(); drawGloss();
+}
+function glossDrop(id) {
+  S.glossColls = S.glossColls.filter(c => c.id !== id);
+  if (S.glossId === id) S.glossId = '';
+  save(); drawGloss();
+}
+function glossPop(btn) {
+  closePops();
+  const p = $('#pop'); p.innerHTML = '';
+  const head = txt => { const h = document.createElement('div'); h.className = 'ph'; h.textContent = txt; p.append(h); };
+  const row = (label, cur, what, onDel) => {
+    const r = document.createElement('div'); r.className = 'row' + (cur ? ' sel' : '');
+    r.innerHTML = `<span>${esc(label)}</span><span class="rowend"></span>`;
+    const end = r.querySelector('.rowend');
+    if (cur) end.innerHTML = ic('check', 14);
+    if (onDel) {
+      const b = document.createElement('button'); b.className = 'rm'; b.title = t('remove'); b.innerHTML = ic('x', 13);
+      b.onclick = ev => { ev.stopPropagation(); onDel(); };
+      end.append(b);
+    }
+    r.onclick = ev => { if (ev.target.closest('.rm')) return; closePops(); what(); };
+    p.append(r);
+  };
+  head(t('glossColls'));
+  row(t('glossSave'), false, glossSaveNew);
+  S.glossColls.forEach(c => row(`${c.name} · ${c.gloss.length}`, c.id === S.glossId, () => glossLoad(c.id), () => glossDrop(c.id)));
+  const r = btn.getBoundingClientRect();
+  Object.assign(p.style, { left: Math.max(8, Math.min(r.left, innerWidth - 280)) + 'px', top: r.bottom + 6 + 'px' });
+  p.classList.remove('hidden');
+}
+async function glossImport() {
+  const r = await window.api.studyImportFile('csv,tsv,txt,json');
+  if (!r) return;
+  let n = 0;
+  try { n = glossAddEntries(glossParse(r.text)); } catch { return status(t('glossNoFile')); }
+  drawGloss();
+  status(t(n ? 'glossImported' : 'glossNone', n));
+}
+$('#glossPick').onclick = e => glossPop(e.currentTarget);
+$('#glossImp').onclick = glossImport;
 
 $('#output').addEventListener('click', async e => {
   const w = e.target.closest('.w'); if (!w || busy) return;
@@ -1037,15 +1290,16 @@ $('#styles').onclick = e => {
 };
 function drawGloss() {
   const box = $('#glossList'); box.innerHTML = '';
+  drawGlossName();
   S.gloss.forEach((g, i) => {
     const row = document.createElement('div'); row.className = 'gl';
     row.innerHTML = `<input data-idx="${i}" data-f="s" placeholder="${t('term')}"><span class="ar">→</span><input data-idx="${i}" data-f="t" placeholder="${t('termT')}"><button class="ib" data-del="${i}" title="${t('remove')}"></button>`;
     row.querySelector('[data-f=s]').value = g.s; row.querySelector('[data-f=t]').value = g.t; row.querySelector('[data-del]').innerHTML = ic('x', 14); box.append(row);
   });
 }
-$('#glossList').oninput = e => { const i = e.target.dataset.idx; if (i !== undefined) { S.gloss[i][e.target.dataset.f] = e.target.value; save(); } };
-$('#glossList').onclick = e => { const b = e.target.closest('[data-del]'); if (b) { S.gloss.splice(+b.dataset.del, 1); save(); drawGloss(); } };
-$('#glAdd').onclick = () => { S.gloss.push({ s:'', t:'' }); save(); drawGloss(); };
+$('#glossList').oninput = e => { const i = e.target.dataset.idx; if (i !== undefined) { S.gloss[i][e.target.dataset.f] = e.target.value; glossSyncColl(); save(); } };
+$('#glossList').onclick = e => { const b = e.target.closest('[data-del]'); if (b) { S.gloss.splice(+b.dataset.del, 1); glossSyncColl(); save(); drawGloss(); } };
+$('#glAdd').onclick = () => { S.gloss.push({ s:'', t:'' }); glossSyncColl(); save(); drawGloss(); };
 $('#ctx').value = S.ctxt; $('#ctx').oninput = e => { S.ctxt = e.target.value; save(); };
 
 async function visionFallback() {
@@ -1264,8 +1518,8 @@ $('#refresh').onclick = async () => {
 const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['start','s_start','start'],['workspace','s_workspace','workspaces'],
   // Klassik-Layout vorerst deaktiviert (Nutzerwunsch): Symbol-Layout ist fest.
   // Zum Reaktivieren ['uiMode','s_uiMode','uiMode'] hier wieder aufnehmen.
-  ['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['profanityStyle','s_profanityStyle','profanityStyle'],['edMarkdown','s_mdMode','bool'],['edSpellAnim','s_spellAnim','bool'],['autoCopy','s_autoCopy','bool'],['autoCopyTyped','s_autoCopyTyped','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['csvSrs','s_csvSrs','bool'],['storyOn','s_story','bool'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number']];
-const GROUPS = [['s_groupGeneral',['uiLang','theme','start','workspace']],['s_groupStudy',['csvSrs','storyOn']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
+  ['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['profanityStyle','s_profanityStyle','profanityStyle'],['edMarkdown','s_mdMode','bool'],['edSpellAnim','s_spellAnim','bool'],['autoCopy','s_autoCopy','bool'],['autoCopyTyped','s_autoCopyTyped','bool'],['historyOn','s_history','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['csvSrs','s_csvSrs','bool'],['storyOn','s_story','bool'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number']];
+const GROUPS = [['s_groupGeneral',['uiLang','theme','start','workspace']],['s_groupStudy',['csvSrs','storyOn']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped','historyOn']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
 function drawSettings() {
   const lists = k =>
     k === 'uiLang' ? [['auto', t('autoO')], ['de','Deutsch'], ['en','English'], ['nl','Nederlands'], ['es','Español'], ['tr','Türkçe'], ['ar','العربية']] :
@@ -1317,7 +1571,7 @@ function alignSideTop() {
   const top = Math.round(out.getBoundingClientRect().top - side.getBoundingClientRect().top);
   side.style.paddingTop = Math.max(14, top) + 'px';
 }
-function renderAll() { setLang(); applyI18n(); upd(); drawStyles(); drawGloss(); updModelBtn(); count(); if ($('#settings').open) drawSettings(); alignSideTop(); if (window.edRender) window.edRender(); }
+function renderAll() { setLang(); applyI18n(); upd(); drawStyles(); drawGloss(); drawHist(); updModelBtn(); count(); if ($('#settings').open) drawSettings(); alignSideTop(); if (window.edRender) window.edRender(); }
 window.addEventListener('resize', alignSideTop);
 window.trAlignSide = alignSideTop;
 const sideObs = new ResizeObserver(() => alignSideTop());
@@ -1385,6 +1639,79 @@ async function mtAction(b) {
   await drawMt(); if (act === 'delete') loadModels();
 }
 
+// ---------- Diagnose: Verbindungen ----------
+// Eine Messung, kein Dauerzustand: Jede Zeile fragt ihren Dienst einmal an und
+// nennt Antwortzeit, Zustand, Zahl der Modelle und was gerade geladen ist. Der
+// Knopf im Rail oeffnet die Seite, der Knopf oben rechts misst neu. Entladen
+// gibt Arbeitsspeicher frei; der naechste Auftrag laedt das Modell wieder.
+async function probe(url, p, ms = 3000) {
+  const c = new AbortController(), to = setTimeout(() => c.abort(), ms);
+  const t0 = performance.now();
+  try {
+    const r = await fetch(url + p, { signal: c.signal, cache: 'no-store' });
+    const txt = await r.text();
+    let j = null; try { j = JSON.parse(txt); } catch {}
+    return { ok: r.ok, status: r.status, j, ms: Math.round(performance.now() - t0) };
+  } catch (e) {
+    return { ok: false, status: 0, err: e && e.name === 'AbortError' ? 'timeout' : 'error', ms: Math.round(performance.now() - t0) };
+  } finally { clearTimeout(to); }
+}
+const diagPill = s => `<span class="diagpill ${s.ok ? 'ok' : 'bad'}">${esc(t(s.ok ? 'diagOk' : 'diagFail'))}</span>`;
+const diagRow = (label, value) => `<div class="diagrow"><span class="muted">${esc(label)}</span><span>${value}</span></div>`;
+function diagMsg(text) { const el = $('#diagMsg'); if (el) el.textContent = text || ''; }
+async function drawDiag() {
+  const box = $('#diagBody'); if (!box) return;
+  box.innerHTML = `<div class="muted">…</div>`; diagMsg('');
+  const [ov, ot, ops, nh, nm] = await Promise.all([
+    probe(S.url, '/api/version'), probe(S.url, '/api/tags'), probe(S.url, '/api/ps'),
+    probe(S.nllb, '/health'), probe(S.nllb, '/models')
+  ]);
+  const oModels = ot.ok && ot.j && Array.isArray(ot.j.models) ? ot.j.models.length : null;
+  const oLoaded = ops.ok && ops.j && Array.isArray(ops.j.models) ? ops.j.models.map(m => m.name) : [];
+  const nInst = nm.ok && Array.isArray(nm.j) ? nm.j.filter(m => m.installed).length : null;
+  const nLoad = nh.ok && nh.j && nh.j.loaded ? String(nh.j.loaded) : '';
+  const oVer = ov.ok && ov.j && ov.j.version ? String(ov.j.version) : '—';
+  box.innerHTML =
+    `<div class="diagcard">
+      <div class="diaghead"><b>${esc(t('diagOllama'))}</b>${diagPill(ov)}<span class="sp"></span>
+        <button class="ib" data-act="unload-ollama" title="${esc(t('diagUnload'))}">${ic('power', 16)}</button></div>
+      ${diagRow(S.url, `${esc(oVer)} · ${ov.ms} ms`)}
+      ${diagRow(t('diagModels'), oModels == null ? '—' : String(oModels))}
+      ${diagRow(t('diagLoaded'), oLoaded.length ? esc(oLoaded.join(', ')) : esc(t('diagNone')))}
+    </div>
+    <div class="diagcard">
+      <div class="diaghead"><b>${esc(t('diagNllb'))}</b>${diagPill(nh)}<span class="sp"></span>
+        <button class="ib" data-act="unload-nllb" title="${esc(t('diagUnload'))}">${ic('power', 16)}</button></div>
+      ${diagRow(S.nllb, `${nh.ok ? 'HTTP ' + nh.status : esc(nh.err || '—')} · ${nh.ms} ms`)}
+      ${diagRow(t('diagModels'), nInst == null ? '—' : String(nInst))}
+      ${diagRow(t('diagLoaded'), nLoad ? esc(nLoad) : esc(t('diagNone')))}
+    </div>`;
+}
+async function unloadOllama() {
+  const ps = await probe(S.url, '/api/ps');
+  const list = ps.ok && ps.j && Array.isArray(ps.j.models) ? ps.j.models : [];
+  if (!list.length) return diagMsg(t('diagNoUnload'));
+  // keep_alive 0 entlaesst ein Modell sofort; die naechste Anfrage laedt es neu.
+  for (const m of list) { try { await fetch(S.url + '/api/generate', { method:'POST', body: JSON.stringify({ model: m.name, keep_alive: 0 }) }); } catch {} }
+  diagMsg(t('diagUnloaded'));
+  drawDiag();
+}
+async function unloadNllb() {
+  const h = await probe(S.nllb, '/health');
+  if (!h.ok || !h.j || !h.j.loaded) return diagMsg(t('diagNoUnload'));
+  try { await fetch(S.nllb + '/unload', { method:'POST', body:'{}' }); } catch {}
+  diagMsg(t('diagUnloaded'));
+  drawDiag();
+}
+$('#openDiag').onclick = () => { $('#diagDlg').showModal(); drawDiag(); };
+$('#diagRefresh').onclick = drawDiag;
+$('#diagClose').onclick = () => $('#diagDlg').close();
+$('#diagBody').onclick = e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  if (b.dataset.act === 'unload-ollama') unloadOllama();
+  else if (b.dataset.act === 'unload-nllb') unloadNllb();
+};
+
 // Fensterleiste: Die drei Knoepfe gehoeren zur eigenen Titelleiste (frame:false).
 // Beim Maximieren tauscht das mittlere Icon zwischen Quadrat und zwei Karten.
 function setWinMax(max) {
@@ -1419,4 +1746,4 @@ window.trEngName = engName;
 window.trIsStudyless = () => isMt() || isTg(S.model);
 window.trStatus = status;
 
-applyTheme(); applyI18n(); upd(); drawStyles(); drawGloss(); updModelBtn(); loadModels();
+applyTheme(); applyI18n(); upd(); drawStyles(); drawGloss(); drawHist(); updModelBtn(); loadModels();

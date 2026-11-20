@@ -1840,6 +1840,14 @@ const homeView = () => (wsOn('tr') ? 'tr' : wsOn('ed') ? 'ed' : 'txt');
 function applyWorkspace() {
   const ed = wsOn('ed'), study = wsOn('study');
   $('#nvTr').classList.toggle('hidden', !wsOn('tr'));
+  // Das Wortauswaehlen gehoert zum Lernen: Ohne diesen Arbeitsplatz gibt es
+  // keine Vokabelliste, in der ein angetipptes Wort landen koennte. Der Knopf
+  // im Fuss des Eingabefelds verschwindet deshalb mit, und ein noch laufender
+  // Auswahlmodus wird beendet (sonst bliebe die Ebene ueber dem Text stehen,
+  // ohne dass sich der Modus noch ausschalten liesse).
+  const pickBtn = $('#pickBtn');
+  if (pickBtn) pickBtn.classList.toggle('hidden', !study);
+  if (!study && window.studyPickOff) window.studyPickOff();
   // Editor und Ablage gehoeren zusammen und erscheinen beide, sobald die Gruppe
   // sichtbar ist (frueher blieb in „Nur Textbearbeitung“ nur die Ablage uebrig).
   $('#nvEd').classList.toggle('hidden', !ed);

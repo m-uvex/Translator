@@ -23,6 +23,9 @@ contextBridge.exposeInMainWorld('api', {
   studyExportFile: (name, data, ext) => ipcRenderer.invoke('study:exportFile', name, data, ext),
   fontsList: () => ipcRenderer.invoke('fonts:list'),
   nllbUrl: u => ipcRenderer.send('nllb:url', u),
+  // Dieselbe Meldung fuer Ollama: der Hauptprozess prueft beim Hochfahren die
+  // eingestellte Adresse und startet nur einen lokalen Server.
+  ollamaUrl: u => ipcRenderer.send('ollama:url', u),
   onRequestClose: cb => ipcRenderer.on('app:request-close', () => cb()),
   forceQuit: () => ipcRenderer.invoke('app:forceQuit'),
   winMinimize: () => ipcRenderer.invoke('win:minimize'),

@@ -4,7 +4,7 @@
 <div class="app">
   <nav class="rail">
     <div class="rg"><button class="ib rb active" id="nvTr" data-i="languages" data-tt="navTr"></button><button class="ib rb" id="nvEd" data-i="doc" data-tt="navEd"></button><button class="ib rb" id="nvLib" data-i="library" data-tt="navLib"></button><button class="ib rb" id="nvTxt" data-i="reading" data-tt="navTxt"></button><button class="ib rb" id="nvVoc" data-i="vocab" data-tt="navVoc"></button><button class="ib rb" id="nvSrs" data-i="practice" data-tt="navSrs"></button></div>
-    <div class="rg"><button class="ib" id="openSettings" data-i="sliders" data-tt="settings"></button></div>
+    <div class="rg"><button class="ib" id="openDiag" data-i="activity" data-tt="diagH"></button><button class="ib" id="openSettings" data-i="sliders" data-tt="settings"></button></div>
   </nav>
   <div id="vT" class="view">
     <main>
@@ -25,8 +25,12 @@
     <aside class="side">
       <div id="llmOnly"><div id="styles"></div>
         <details class="ctx"><summary data-t="context"></summary><textarea id="ctx" data-ph="ctxPh"></textarea></details>
-        <details class="ctx"><summary data-t="glossary"></summary><div id="glossList"></div><button class="ghost" id="glAdd" data-t="addEntry"></button></details>
+        <details class="ctx" id="glossBox"><summary data-t="glossary"></summary>
+          <div class="glbar"><button class="ib" id="glossPick" data-i="folder" data-tt="glossColls"></button><button class="ib" id="glossImp" data-i="upload" data-tt="glossImportT"></button><span id="glossName" class="muted"></span><button class="ib" id="glAdd" data-i="plus" data-tt="addEntry"></button></div>
+          <div id="glossList"></div>
+        </details>
       </div>
+      <details class="ctx hidden" id="histBox"><summary data-t="historyH"></summary><div id="histList"></div></details>
       <p id="nllbNote" class="muted hidden"></p>
     </aside>
   </div>
@@ -105,6 +109,7 @@
 <dialog id="styleDlg"></dialog>
 <dialog id="sumDlg"></dialog>
 <dialog id="dictDlg"></dialog>
+<dialog id="diagDlg"><div class="dh"><h2 data-t="diagH"></h2><button class="ib" id="diagRefresh" data-i="refresh" data-tt="diagRefresh"></button><button class="ib" id="diagClose" data-i="x" data-tt="cancel"></button></div><div id="diagBody"></div><div id="diagMsg" class="muted"></div><p class="muted" data-t="diagHint"></p></dialog>
 <dialog id="settings"><div class="dh"><h2 data-t="settings"></h2><button class="ib" id="closeSet" data-i="x"></button></div><div id="setBody"></div>
 <div class="dh"><button class="ghost" id="resetAll" data-t="resetAll"></button></div></dialog>
 <script src="renderer.js"></script><script src="editor.js"></script><script src="study.js"></script></body></html>

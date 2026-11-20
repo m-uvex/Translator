@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, session, clipboard } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, session, clipboard, Tray, Menu, globalShortcut, nativeImage } = require('electron');
 const { spawn } = require('child_process');
 const http = require('http'), path = require('path'), fs = require('fs'), os = require('os');
 let nllb = null, ollama = null, nllbWanted = false, win = null;
@@ -60,11 +60,51 @@ function killTree(c) {
   } catch { try { c.kill(); } catch {} }
 }
 
+// Adressen kommen aus den Einstellungen der Oberflaeche und damit aus deren
+// localStorage, den der Hauptprozess nicht lesen kann. Beide Dienste melden
+// ihre Adresse deshalb ueber einen IPC-Kanal; hier wird sie zusaetzlich neben
+// config.json abgelegt, damit die Vorabpruefung beim naechsten Hochfahren
+// dieselbe Adresse fragt und nicht die fest eingebaute.
+const cleanUrl = u => String(u || '').trim().replace(/\/+$/, '');
+const isLoopback = h => /^(127\.0\.0\.1|localhost|\[::1\])$/i.test(String(h || ''));
+
+const OLLAMA_DEFAULT = 'http://127.0.0.1:11434';
+const ollamaUrlFile = () => path.join(app.getPath('userData'), 'ollama-address.json');
+let ollamaUrl = OLLAMA_DEFAULT;
+function readOllamaUrl() {
+  try {
+    const u = cleanUrl(JSON.parse(fs.readFileSync(ollamaUrlFile(), 'utf8')).url);
+    if (/^https?:\/\/[^\s/]+$/i.test(u)) ollamaUrl = u;
+  } catch {}
+  return ollamaUrl;
+}
+function setOllamaUrl(u) {
+  const s = cleanUrl(u);
+  if (!/^https?:\/\/[^\s/]+$/i.test(s)) return;
+  if (s === ollamaUrl && fs.existsSync(ollamaUrlFile())) return;
+  ollamaUrl = s;
+  try { fs.writeFileSync(ollamaUrlFile(), JSON.stringify({ url: s })); } catch {}
+}
+ipcMain.on('ollama:url', (_e, u) => setOllamaUrl(u));
+// Ollama wird nur gestartet, wenn die eingestellte Adresse auf diesen Rechner
+// zeigt. Eine fremde Adresse gehoert einem anderen Geraet; ein `ollama serve`
+// auf diesem Rechner haette dort nichts zu bedienen. Bei einem anderen lokalen
+// Port bekommt der Server ihn ueber OLLAMA_HOST, damit er auch dort lauscht.
 function startOllama() {
-  const req = http.get('http://127.0.0.1:11434', { timeout: 1500 }, res => res.resume());
+  const base = readOllamaUrl();
+  let u; try { u = new URL(base); } catch { return; }
+  const lib = u.protocol === 'https:' ? require('https') : http;
+  const req = lib.get(base + '/api/version', { timeout: 1500 }, res => res.resume());
   req.on('timeout', () => req.destroy());
   req.on('error', () => {
-    try { ollama = runHidden(ollamaExe(), ['serve']); ollama.on('error', () => { ollama = null; }); } catch { ollama = null; }
+    if (!isLoopback(u.hostname)) return;
+    const port = u.port || (u.protocol === 'https:' ? '443' : '80');
+    const host = u.hostname === 'localhost' ? '127.0.0.1' : u.hostname;
+    try {
+      const env = Object.assign({}, process.env, { OLLAMA_HOST: `${host}:${port}` });
+      ollama = runHidden(ollamaExe(), ['serve'], { env });
+      ollama.on('error', () => { ollama = null; });
+    } catch { ollama = null; }
   });
 }
 // Die NLLB-Adresse steht in den Einstellungen der Oberflaeche und damit im
@@ -74,7 +114,6 @@ function startOllama() {
 // naechsten Hochfahren dieselbe Adresse fragt und nicht fest 8765.
 const NLLB_DEFAULT = 'http://127.0.0.1:8765';
 const nllbUrlFile = () => path.join(app.getPath('userData'), 'nllb-address.json');
-const cleanUrl = u => String(u || '').trim().replace(/\/+$/, '');
 let nllbUrl = NLLB_DEFAULT;
 function readNllbUrl() {
   try {
@@ -531,6 +570,33 @@ ipcMain.handle('win:toggleMax', () => {
 });
 ipcMain.handle('win:close', () => { if (win && !win.isDestroyed()) win.close(); });
 
+// ---------- Infobereich und systemweiter Kurzbefehl ----------
+// Das Fenster ist der einzige Weg in die App; wer es hinter anderen Fenstern
+// verliert, holt es mit dem Kurzbefehl oder ueber das Symbol im Infobereich
+// nach vorn. Der Kurzbefehl zeigt immer, er versteckt nicht: ein verstecktes
+// Fenster ohne Tray-Symbol waere nicht mehr zu erreichen.
+const HOTKEY = 'CommandOrControl+Shift+Space';
+let tray = null;
+function showWindow() {
+  if (!win || win.isDestroyed()) return;
+  if (win.isMinimized()) win.restore();
+  win.show(); win.focus();
+}
+function createTray() {
+  const icon = resPath('build', IS_WIN ? 'icon.ico' : 'icon.png');
+  if (!fs.existsSync(icon)) return;
+  try {
+    tray = new Tray(nativeImage.createFromPath(icon));
+    tray.setToolTip('Übersetzer');
+    tray.setContextMenu(Menu.buildFromTemplate([
+      { label: 'Öffnen', click: showWindow },
+      { type: 'separator' },
+      { label: 'Beenden', click: () => { forceQuit = true; app.quit(); } }
+    ]));
+    tray.on('click', showWindow);
+  } catch { tray = null; }
+}
+
 let forceQuit = false;
 ipcMain.handle('app:forceQuit', () => {
   forceQuit = true;
@@ -540,7 +606,10 @@ ipcMain.handle('app:forceQuit', () => {
 app.whenReady().then(() => {
   try { setPersonal(JSON.parse(fs.readFileSync(persFile(), 'utf8'))); } catch {}
   session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => cb(permission === 'local-fonts'));
-  startOllama(); startNllb();
+  startOllama(); startNllb(); createTray();
+  // Der Kurzbefehl ist eine Zusatzleistung: Ist er schon von einem anderen
+  // Programm belegt, laeuft die App ohne ihn weiter.
+  try { globalShortcut.register(HOTKEY, showWindow); } catch {}
   const icon = resPath('build', IS_WIN ? 'icon.ico' : 'icon.png');
   win = new BrowserWindow({ width: 1280, height: 820, minWidth: 980, minHeight: 600, autoHideMenuBar: true, frame: false,
     ...(fs.existsSync(icon) ? { icon } : {}),
@@ -554,5 +623,9 @@ app.whenReady().then(() => {
   });
   win.loadFile('index.html', nllbWanted ? { query: { nllb: '1' } } : {});
 });
-app.on('will-quit', () => { killTree(nllb); killTree(ollama); });
+app.on('will-quit', () => {
+  try { globalShortcut.unregisterAll(); } catch {}
+  try { if (tray) { tray.destroy(); tray = null; } } catch {}
+  killTree(nllb); killTree(ollama);
+});
 app.on('window-all-closed', () => app.quit());
