@@ -36,11 +36,11 @@ PORT = int(os.environ.get("NLLB_PORT", "8765"))
 def _langs(rows):
     return [{"code": c, "name": n, "prompt": p, **({"zh": z} if z else {})} for c, n, p, z in rows]
 
-# Tencent HY-MT 1.5: die 33 Sprachen der Modellkarte. Die Karte nennt zusaetzlich
-# fuenf chinesische Minderheiten- und Dialektvarianten (bo, kk, mn, ug, yue);
-# sie fehlen hier bewusst, weil das 1.8B sie nur aus dem Chinesischen brauchbar
-# uebersetzt und mit deutscher oder englischer Quelle in fremder Schrift oder
-# sinnfrei antwortet (Messung in Doku.txt, Abschnitt 110).
+# Tencent HY-MT 1.5: die 33 Sprachen der Modellkarte, dazu fuenf chinesische
+# Minderheiten- und Dialektvarianten (bo, kk, mn, ug, yue) - zusammen 38 Codes.
+# Die fuenf uebersetzen nur aus dem Chinesischen brauchbar (Messung in Doku.txt,
+# Abschnitt 110); sie bleiben in der Liste, sind als Ziel aber nur mit
+# chinesischer Quelle erlaubt (ZH_ONLY unten).
 HY_LANGS = _langs([
     ("zh", "Chinese", "Chinese", "\u4e2d\u6587"),
     ("zh-Hant", "Traditional Chinese", "Traditional Chinese", "\u7e41\u4f53\u4e2d\u6587"),
@@ -75,7 +75,21 @@ HY_LANGS = _langs([
     ("tl", "Filipino", "Filipino", "\u83f2\u5f8b\u5bbe\u8bed"),
     ("km", "Khmer", "Khmer", "\u9ad8\u68c9\u8bed"),
     ("my", "Burmese", "Burmese", "\u7f05\u7538\u8bed"),
+    ("bo", "Tibetan", "Tibetan", "\u85cf\u8bed"),
+    ("kk", "Kazakh", "Kazakh", "\u54c8\u8428\u514b\u8bed"),
+    ("mn", "Mongolian", "Mongolian", "\u8499\u53e4\u8bed"),
+    ("ug", "Uyghur", "Uyghur", "\u7ef4\u543e\u5c14\u8bed"),
+    ("yue", "Cantonese", "Cantonese", "\u7ca4\u8bed"),
 ])
+
+# Diese fuenf Codes liefert das Modell nur aus dem Chinesischen brauchbar; mit
+# deutscher oder englischer Quelle kommen fremde Schriften oder sinnfreie
+# Saetze heraus. Sie bleiben waehlbar, als Ziel aber nur bei chinesischer
+# Quelle: der Client blendet sie sonst aus, und /translate lehnt das Paar ab.
+ZH_ONLY = {"bo", "kk", "mn", "ug", "yue"}
+for _l in HY_LANGS:
+    if _l["code"] in ZH_ONLY:
+        _l["zh_only"] = True
 
 # Xiaomi MiLMMT-46 (v1.0): 46 Sprachen. Die Namen sind die der Modellkarte;
 # die Vorlage des Modells verlangt genau diese Schreibweisen ("Tagalog",
@@ -411,6 +425,8 @@ class Handler(BaseHTTPRequestHandler):
                 if not m: return self._json(400, {"error": "unbekanntes Modell"})
                 codes = {l["code"] for l in (lang_list(fam) or [])}
                 if d.get("src") not in codes or d.get("tgt") not in codes: return self._json(400, {"error": "unbekannte Sprache"})
+                if fam == "hy" and d.get("tgt") in ZH_ONLY and not str(d.get("src") or "").startswith("zh"):
+                    return self._json(400, {"error": "Diese Sprache nur mit chinesischer Ausgangssprache"})
                 if full not in installed(): return self._json(400, {"error": "Modell nicht installiert"})
                 req = d.get("req")
                 if req and req in cancelled:

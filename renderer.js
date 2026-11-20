@@ -543,7 +543,7 @@ const OLLAMA_LANGS = [['de','Deutsch','German'],['en','English','English'],['fr'
 // zusammengefasst, Chinesisch bleibt in Kurz- und Langzeichen getrennt. Mehr
 // Sprachen als diese bietet die App bei TranslateGemma nicht an.
 const TG_LANGS = [['en','English','English'],['de','Deutsch','German'],['fr','Français','French'],['es','Español','Spanish'],['it','Italiano','Italian'],['pt','Português','Portuguese'],['nl','Nederlands','Dutch'],['da','Dansk','Danish'],['no','Norsk','Norwegian'],['sv','Svenska','Swedish'],['fi','Suomi','Finnish'],['is','Íslenska','Icelandic'],['pl','Polski','Polish'],['cs','Čeština','Czech'],['sk','Slovenčina','Slovak'],['sl','Slovenščina','Slovenian'],['hr','Hrvatski','Croatian'],['sr','Српски','Serbian'],['bg','Български','Bulgarian'],['ro','Română','Romanian'],['el','Ελληνικά','Greek'],['et','Eesti','Estonian'],['lv','Latviešu','Latvian'],['lt','Lietuvių','Lithuanian'],['ru','Русский','Russian'],['uk','Українська','Ukrainian'],['ca','Català','Catalan'],['fa','فارسی','Persian'],['ar','العربية','Arabic'],['he','עברית','Hebrew'],['hi','हिन्दी','Hindi'],['bn','বাংলা','Bengali'],['gu','ગુજરાતી','Gujarati'],['kn','ಕನ್ನಡ','Kannada'],['ml','മലയാളം','Malayalam'],['mr','मराठी','Marathi'],['pa','ਪੰਜਾਬੀ','Punjabi'],['ta','தமிழ்','Tamil'],['te','తెలుగు','Telugu'],['ur','اردو','Urdu'],['th','ไทย','Thai'],['vi','Tiếng Việt','Vietnamese'],['id','Bahasa Indonesia','Indonesian'],['ms','Bahasa Melayu','Malay'],['fil','Filipino','Filipino'],['sw','Kiswahili','Swahili'],['zu','isiZulu','Zulu'],['zh','中文','Chinese'],['zh-Hant','中文（繁體）','Traditional Chinese'],['ja','日本語','Japanese'],['ko','한국어','Korean'],['tr','Türkçe','Turkish']];
-let NLLB_LANGS = [], MT_MODELS = [], MT_LANGS = {};
+let NLLB_LANGS = [], MT_MODELS = [], MT_LANGS = {}, MT_PAIR_ONLY = {};
 const famOf = m => String(m || '').split(':')[0];
 const mtLangs = fam => MT_LANGS[fam] || [];
 const nllbName = c => (NLLB_LANGS.find(l => l[0] === c) || TG_LANGS.find(l => l[0] === c) ||
@@ -777,6 +777,13 @@ const noAuto = () => isMt() || isTg(S.model);
 // Jede Familie hat ihre eigene, offizielle Sprachliste; NLLB liefert sie aus dem
 // Tokenizer, HY-MT und MiLMMT-46 aus dem Python-Server, TranslateGemma aus TG_LANGS.
 const activeLangs = () => isMt() ? mtLangs(famOf(S.model)) : isTg(S.model) ? TG_LANGS : OLLAMA_LANGS;
+// Fuenf Minderheitensprachen von HY-MT uebersetzen nur mit chinesischer Quelle
+// brauchbar. Sie bleiben als Ausgangssprache waehlbar, erscheinen als Ziel aber
+// nur, wenn die Quelle Chinesisch ist; der Server lehnt andere Paare mit 400 ab.
+const isZhCode = c => c === 'zh' || c === 'zh-Hant';
+const zhOnlyIn = (fam, c) => (MT_PAIR_ONLY[fam] || []).includes(c);
+const langsForTgt = (list, fam, src) => list.filter(l => !zhOnlyIn(fam, l[0]) || isZhCode(src));
+const tgtLangs = (src = S.src) => langsForTgt(activeLangs(), isMt() ? famOf(S.model) : '', src);
 const pinsOf = () => S.pins[isMt() ? 'nllb' : 'ollama'];
 const isThinking = m => (caps[m] || []).includes('thinking');
 const hasVision = m => (caps[m] || []).includes('vision') && !isTg(m);
@@ -790,6 +797,9 @@ function fixLangs() {
     // NLLB kennt die Tokenizer-Codes (deu_Latn), die Chat-Familien ISO-Codes (de).
     if (!has(S.src)) S.src = has('deu_Latn') ? 'deu_Latn' : has('de') ? (S.tgt === 'de' ? 'en' : 'de') : L[0][0];
     if (!has(S.tgt)) S.tgt = has('eng_Latn') ? 'eng_Latn' : has('en') ? 'en' : L[0][0];
+    // Ein Ziel aus der Gruppe, die nur mit Chinesisch geht, faellt ohne
+    // chinesische Quelle auf Englisch zurueck.
+    if (zhOnlyIn(famOf(S.model), S.tgt) && !isZhCode(S.src)) S.tgt = has('eng_Latn') ? 'eng_Latn' : has('en') ? 'en' : L[0][0];
   } else {
     if (S.src === 'auto' && isTg(S.model)) S.src = S.tgt === 'de' ? 'en' : 'de';
     else if (S.src !== 'auto' && !has(S.src)) S.src = 'auto';
@@ -810,11 +820,15 @@ async function loadNllb() {
       if (f === 'nllb') continue;
       try {
         const rr = await fetch(`${S.nllb}/languages?family=${encodeURIComponent(f)}`);
-        if (rr.ok) MT_LANGS[f] = (await rr.json()).map(l => [l.code, l.name, l.name]);
+        if (rr.ok) {
+          const rows = await rr.json();
+          MT_LANGS[f] = rows.map(l => [l.code, l.name, l.name]);
+          MT_PAIR_ONLY[f] = rows.filter(l => l.zh_only).map(l => l.code);
+        }
       } catch { }
     }
     return true;
-  } catch { NLLB_LANGS = []; MT_MODELS = []; MT_LANGS = {}; return false; }
+  } catch { NLLB_LANGS = []; MT_MODELS = []; MT_LANGS = {}; MT_PAIR_ONLY = {}; return false; }
 }
 async function loadModels() {
   caps = {}; let ollamaUp = false;
@@ -1338,8 +1352,12 @@ function upd() {
   $('#nllbNote').textContent = t(!n ? 'noteTg' : hy ? 'noteHy' : fam === 'milmmt' ? 'noteMi' : 'noteNllb');
   $('#output').classList.toggle('plain', n || (tg && !helperModel()));
 }
-$('#srcBtn').onclick = e => langPop(e.currentTarget, 'src'); $('#tgtBtn').onclick = e => langPop(e.currentTarget, 'tgt'); $('#modelBtn').onclick = e => modelPop(e.currentTarget);
-$('#swap').onclick = () => { if (S.src === 'auto') return; [S.src, S.tgt] = [S.tgt, S.src]; if (lastTr) { $('#input').value = lastTr; inputPasted = false; lastTr = ''; $('#output').textContent = ''; count(); } save(); upd(); };
+// Die Ziel-Liste laesst die fuenf HY-MT-Sprachen weg, solange die Quelle nicht
+// Chinesisch ist; nach jeder Quellwahl wird die Zielsprache gleich mitgeprueft.
+$('#srcBtn').onclick = e => langPop(e.currentTarget, 'src', { done: () => { fixLangs(); upd(); } });
+$('#tgtBtn').onclick = e => langPop(e.currentTarget, 'tgt', { langs: tgtLangs() });
+$('#modelBtn').onclick = e => modelPop(e.currentTarget);
+$('#swap').onclick = () => { if (S.src === 'auto') return; [S.src, S.tgt] = [S.tgt, S.src]; if (lastTr) { $('#input').value = lastTr; inputPasted = false; lastTr = ''; $('#output').textContent = ''; count(); } fixLangs(); upd(); };
 
 function drawStyles() {
   // Klassik-Layout vorerst deaktiviert (Nutzerwunsch): immer Symbol-Layout.
