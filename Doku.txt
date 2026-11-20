@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.117 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.118 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1937,3 +1937,33 @@ Die Marke lag in jedem Fall genau an der Kante, an der das Bild danach stand; di
 **Gefunden und behoben.** Der letzte Fall war vorher falsch: Verliess der Zeiger die Seite, gab `blockUnder()` `null` zurueck, der Aufrufer kehrte still zurueck und behielt das *letzte gueltige* Ziel. Die Marke blieb an dieser alten Stelle stehen, und ein Loslassen neben der Seite setzte das Bild dorthin (gemessen: Bild sprang von Position 2 auf 4, hinter die Liste). Jetzt liefert `blockUnder()` ein leeres Ergebnis, wenn weder `caretRangeFromPoint` noch `elementFromPoint` in `#page` liegen; der Aufrufer nimmt dann die Marke weg und verwirft das Ziel, ein Loslassen aendert nichts. Im leeren Platz *innerhalb* der Seite gilt der naechstgelegene Block (oben der erste, unten der letzte), damit ein Bild weiterhin ans Ende rutschen kann; das Bild selbst ist als Ziel ausgenommen.
 
 **Nicht geprueft.** Ein Bild direkt in eine Zelle oder zwischen zwei Listenpunkte setzen (die Einfuegung ist bewusst blockweise), Tabellen, die laenger als der Bildschirm sind (die Marke springt dort an den Tabellenrand), und Ziehen mit Stift oder Touch.
+
+## 143. Fehlende Tooltips in Vokabeln und Studium: NL, ES, TR, AR (1.15.118)
+
+Die vier Sprachobjekte `NL`, `ES`, `TR` und `AR` in `renderer.js` deckten nur den Übersetzer ab. Alles aus Vokabeln, Üben und Lesen fiel deshalb über `t()` auf das englische `K`-Objekt zurück (`if (!v) v = K[k]?.[1] || K[k]?.[0] || k`). Nachgetragen sind die 19 Schlüssel, die in `index.html` als `data-tt` an Knöpfen der drei Ansichten hängen – je Schlüssel eine Zeile pro Sprache, eingetragen am Ende des jeweiligen Objekts unter der Marke „Tooltips der Vokabel- und Studium-Ansichten“.
+
+| Schlüssel | Deutsch | Englisch | NL | ES | TR | AR |
+|---|---|---|---|---|---|---|
+| `navVoc` | Vokabeln | Vocabulary | Woorden | Vocabulario | Kelimeler | المفردات |
+| `navSrs` | Üben | Practice | Oefenen | Practicar | Alıştırma | التدريب |
+| `navTxt` | Lesen | Reading | Lezen | Lectura | Okuma | القراءة |
+| `vocSelectT` | Mehrere auswählen | Select several | Meerdere selecteren | Seleccionar varios | Birden fazla seç | تحديد عدة |
+| `csvImp` | Vokabeln aus CSV oder Readlang importieren | Import words from CSV or Readlang | Woorden uit CSV of Readlang importeren | Importar palabras desde CSV o Readlang | CSV veya Readlang'dan kelime içe aktar | استيراد المفردات من CSV أو Readlang |
+| `csvExp` | CSV exportieren | Export CSV | CSV exporteren | Exportar CSV | CSV dışa aktar | تصدير CSV |
+| `pickT` | Wörter auswählen | Pick words | Woorden kiezen | Elegir palabras | Kelime seç | اختيار الكلمات |
+| `txAdd` | Text hinzufügen | Add text | Tekst toevoegen | Añadir texto | Metin ekle | إضافة نص |
+| `txtImp` | Texte importieren | Import texts | Teksten importeren | Importar textos | Metinleri içe aktar | استيراد نصوص |
+| `txtExp` | Texte exportieren | Export texts | Teksten exporteren | Exportar textos | Metinleri dışa aktar | تصدير النصوص |
+| `repStartT` | Endlos üben | Practice endlessly | Eindeloos oefenen | Practicar sin fin | Sonsuz alıştırma | تدريب بلا نهاية |
+| `srsTypeT` | Übersetzung tippen | Type the translation | Vertaling typen | Escribir la traducción | Çeviriyi yaz | كتابة الترجمة |
+| `vocSelAll` | Alle auswählen | Select all | Alles selecteren | Seleccionar todo | Tümünü seç | تحديد الكل |
+| `vocSelDel` | Ausgewählte löschen | Delete selected | Geselecteerde verwijderen | Eliminar seleccionadas | Seçilenleri sil | حذف المحدد |
+| `vocSelEnd` | Auswahl beenden | End the selection | Selectie beëindigen | Terminar la selección | Seçimi bitir | إنهاء التحديد |
+| `vocFillT` | Fehlende Übersetzungen nachtragen | Fill in missing translations | Ontbrekende vertalingen aanvullen | Completar las traducciones que faltan | Eksik çevirileri tamamla | استكمال الترجمات الناقصة |
+| `vocFilterT` | Sortieren und filtern | Sort and filter | Sorteren en filteren | Ordenar y filtrar | Sırala ve filtrele | الفرز والتصفية |
+| `vocSearchT` | Vokabeln durchsuchen | Search words | Woorden doorzoeken | Buscar en las palabras | Kelimelerde ara | البحث في المفردات |
+| `vocFindClear` | Suche leeren | Clear the search | Zoekopdracht wissen | Borrar la búsqueda | Aramayı temizle | مسح البحث |
+
+**Geprüft im laufenden Fenster.** Die installierte App (1.15.118) wurde mit `--remote-debugging-port=9333` gestartet, über CDP `LANG` auf `nl`, `es`, `tr` und `ar` gesetzt, jeweils `applyI18n()` aufgerufen und danach die `title`-Attribute der 19 Knöpfe ausgelesen (`[data-tt="…"]`). In allen vier Sprachen stand der Text aus der Tabelle oben am Knopf, und keiner der 76 Werte war mit dem englischen identisch – der Rückfall auf Englisch ist damit für diese Schlüssel weg. Die gespeicherte Einstellung `S.uiLang` blieb unberührt (nur `LANG` und `applyI18n()` im Speicher), die App stand nach der Prüfung wieder in ihrer vorherigen Sprache.
+
+**Offen.** Die übrigen Schlüssel dieser Ansichten (`vocTitle`, `vocCount`, `vocEmpty`, `srsTitle`, `srsAgain`, `srsGood`, `vocAdd`, `lib*` und die Editor-Texte) fehlen in den vier Objekten weiterhin und fallen auf Englisch zurück; sie waren nicht Teil dieser Aufgabe. Die RTL-Darstellung im arabischen Fenster wurde nur über `dir="rtl"` gesetzt, nicht visuell geprüft.

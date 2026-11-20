@@ -458,7 +458,27 @@ const NL = {
   reset:'Herstellen', resetAll:'Alles herstellen', autoSys:'Automatisch (systeem)', autoO:'Automatisch', autoModel:'Automatisch', light:'Licht', dark:'Donker',
   nllbH:'Vertaalmodellen', srvSetup:'Server instellen', mInst:'Geïnstalleerd', mNot:'Niet geïnstalleerd', mLoad:p => `Downloaden … ${p} %`, mErr:e => `Fout: ${e}`, bDl:'Downloaden', bDel:'Verwijderen', bBusy:'Bezig …',
   serverDown:'De vertaalserver is niet bereikbaar. Die wordt door de installatiewizard (Installieren.bat) geïnstalleerd en start met de app.',
-  confBig:(id, gb) => `${id} is ${gb} GB groot en heeft veel werkgeheugen en tijd nodig. Toch downloaden?`, confDel:id => `${id} echt verwijderen? Je kunt het later opnieuw downloaden.`
+  confBig:(id, gb) => `${id} is ${gb} GB groot en heeft veel werkgeheugen en tijd nodig. Toch downloaden?`, confDel:id => `${id} echt verwijderen? Je kunt het later opnieuw downloaden.`,
+  // Tooltips der Vokabel- und Studium-Ansichten (Abschnitt 143)
+  navVoc:'Woorden',
+  navSrs:'Oefenen',
+  navTxt:'Lezen',
+  vocSelectT:'Meerdere selecteren',
+  csvImp:'Woorden uit CSV of Readlang importeren',
+  csvExp:'CSV exporteren',
+  pickT:'Woorden kiezen',
+  txAdd:'Tekst toevoegen',
+  txtImp:'Teksten importeren',
+  txtExp:'Teksten exporteren',
+  repStartT:'Eindeloos oefenen',
+  srsTypeT:'Vertaling typen',
+  vocSelAll:'Alles selecteren',
+  vocSelDel:'Geselecteerde verwijderen',
+  vocSelEnd:'Selectie beëindigen',
+  vocFillT:'Ontbrekende vertalingen aanvullen',
+  vocFilterT:'Sorteren en filteren',
+  vocSearchT:'Woorden doorzoeken',
+  vocFindClear:'Zoekopdracht wissen',
 };
 
 const ES = {
@@ -510,7 +530,27 @@ const ES = {
   serverDown:'El servidor de traducción no está disponible. Se instala con el asistente y se inicia con la app.',
   confBig:(id, gb) => `${id} tiene un tamaño de ${gb} GB y requiere bastante memoria y tiempo. ¿Descargar igualmente?`, confDel:id => `¿Realmente eliminar ${id}? Puedes descargarlo nuevamente más tarde.`,
   stopTr:'Detener', stopped:'Traducción detenida', on:'Activado', off:'Desactivado', s_bootModel:'Precargar último modelo al iniciar', s_profanity:'Filtro de malas palabras', s_profanityStyle:'Sustitución de palabras malsonantes', s_autoCopy:'Copiar la salida automáticamente', s_autoCopyTyped:'Copiar la salida solo con texto tecleado', o_stars:'Asteriscos (****)', o_symbols:'Símbolos (@#$%&!)', s_mdMode:'Markdown dinámico en el editor', s_spellAnim:'Animar las ondulaciones ortográficas',
-  personalDict:'Diccionario personal', dictWords:'Palabras guardadas', addWord:'Añadir palabra', addWordPh:'Nueva palabra …', noDictWords:'No hay palabras en el diccionario personal', edit:'Editar', wordExists:'La palabra ya existe'
+  personalDict:'Diccionario personal', dictWords:'Palabras guardadas', addWord:'Añadir palabra', addWordPh:'Nueva palabra …', noDictWords:'No hay palabras en el diccionario personal', edit:'Editar', wordExists:'La palabra ya existe',
+  // Tooltips der Vokabel- und Studium-Ansichten (Abschnitt 143)
+  navVoc:'Vocabulario',
+  navSrs:'Practicar',
+  navTxt:'Lectura',
+  vocSelectT:'Seleccionar varios',
+  csvImp:'Importar palabras desde CSV o Readlang',
+  csvExp:'Exportar CSV',
+  pickT:'Elegir palabras',
+  txAdd:'Añadir texto',
+  txtImp:'Importar textos',
+  txtExp:'Exportar textos',
+  repStartT:'Practicar sin fin',
+  srsTypeT:'Escribir la traducción',
+  vocSelAll:'Seleccionar todo',
+  vocSelDel:'Eliminar seleccionadas',
+  vocSelEnd:'Terminar la selección',
+  vocFillT:'Completar las traducciones que faltan',
+  vocFilterT:'Ordenar y filtrar',
+  vocSearchT:'Buscar en las palabras',
+  vocFindClear:'Borrar la búsqueda',
 };
 
 const TR = {
@@ -562,7 +602,27 @@ const TR = {
   serverDown:'Çeviri sunucusuna ulaşılamıyor. Kurulum sihirbazı ile kurulur ve uygulamayla birlikte başlar.',
   confBig:(id, gb) => `${id} boyutu ${gb} GB ve çok bellek gerektirir. Yine de indirilsin mi?`, confDel:id => `${id} gerçekten silinsin mi? Daha sonra tekrar indirebilirsiniz.`,
   stopTr:'Durdur', stopped:'Çeviri durduruldu', on:'Açık', off:'Kapalı', s_bootModel:'Başlangıçta son kullanılan modeli ön yükle', s_profanity:'Küfür filtresini etkinleştir', s_profanityStyle:'Küfürlerin değiştirilmesi', s_autoCopy:'Çıktıyı otomatik kopyala', s_autoCopyTyped:'Çıktıyı yalnızca yazılan metinde kopyala', o_stars:'Yıldızlar (****)', o_symbols:'Semboller (@#$%&!)', s_mdMode:'Editörde dinamik Markdown', s_spellAnim:'Yazım dalgalarını canlandır',
-  personalDict:'Kişisel sözlük', dictWords:'Kayıtlı kelimeler', addWord:'Kelime ekle', addWordPh:'Yeni kelime yazın …', noDictWords:'Kişisel sözlükte kayıtlı kelime yok', edit:'Düzenle', wordExists:'Kelime zaten mevcut'
+  personalDict:'Kişisel sözlük', dictWords:'Kayıtlı kelimeler', addWord:'Kelime ekle', addWordPh:'Yeni kelime yazın …', noDictWords:'Kişisel sözlükte kayıtlı kelime yok', edit:'Düzenle', wordExists:'Kelime zaten mevcut',
+  // Tooltips der Vokabel- und Studium-Ansichten (Abschnitt 143)
+  navVoc:'Kelimeler',
+  navSrs:'Alıştırma',
+  navTxt:'Okuma',
+  vocSelectT:'Birden fazla seç',
+  csvImp:'CSV veya Readlang\'dan kelime içe aktar',
+  csvExp:'CSV dışa aktar',
+  pickT:'Kelime seç',
+  txAdd:'Metin ekle',
+  txtImp:'Metinleri içe aktar',
+  txtExp:'Metinleri dışa aktar',
+  repStartT:'Sonsuz alıştırma',
+  srsTypeT:'Çeviriyi yaz',
+  vocSelAll:'Tümünü seç',
+  vocSelDel:'Seçilenleri sil',
+  vocSelEnd:'Seçimi bitir',
+  vocFillT:'Eksik çevirileri tamamla',
+  vocFilterT:'Sırala ve filtrele',
+  vocSearchT:'Kelimelerde ara',
+  vocFindClear:'Aramayı temizle',
 };
 
 const AR = {
@@ -614,7 +674,27 @@ const AR = {
   serverDown:'خادم الترجمة غير متاح. يتم تثبيته عبر المعالج ويعمل مع التطبيق.',
   confBig:(id, gb) => `حجم ${id} هو ${gb} غيغابايت ويتطلب ذاكرة ووقت. هل تريد التنزيل؟`, confDel:id => `هل تريد حقاً حذف ${id}؟ يمكنك تنزيله لاحقاً.`,
   stopTr:'إيقاف', stopped:'تم إيقاف الترجمة', on:'مفعّل', off:'معطّل', s_bootModel:'تحميل النموذج مسبقاً عند البدء', s_profanity:'فلتر الكلمات البذيئة', s_profanityStyle:'استبدال الكلمات البذيئة', s_autoCopy:'نسخ الناتج تلقائياً', s_autoCopyTyped:'نسخ الناتج فقط عند الكتابة يدوياً', o_stars:'نجوم (****)', o_symbols:'رموز (@#$%&!)', s_mdMode:'ماركداون ديناميكي في المحرر', s_spellAnim:'تحريك موجات التدقيق الإملائي',
-  personalDict:'القاموس الشخصي', dictWords:'الكلمات المحفوظة', addWord:'إضافة كلمة', addWordPh:'اكتب كلمة جديدة …', noDictWords:'لا توجد كلمات في القاموس الشخصي', edit:'تعديل', wordExists:'الكلمة موجودة بالفعل'
+  personalDict:'القاموس الشخصي', dictWords:'الكلمات المحفوظة', addWord:'إضافة كلمة', addWordPh:'اكتب كلمة جديدة …', noDictWords:'لا توجد كلمات في القاموس الشخصي', edit:'تعديل', wordExists:'الكلمة موجودة بالفعل',
+  // Tooltips der Vokabel- und Studium-Ansichten (Abschnitt 143)
+  navVoc:'المفردات',
+  navSrs:'التدريب',
+  navTxt:'القراءة',
+  vocSelectT:'تحديد عدة',
+  csvImp:'استيراد المفردات من CSV أو Readlang',
+  csvExp:'تصدير CSV',
+  pickT:'اختيار الكلمات',
+  txAdd:'إضافة نص',
+  txtImp:'استيراد نصوص',
+  txtExp:'تصدير النصوص',
+  repStartT:'تدريب بلا نهاية',
+  srsTypeT:'كتابة الترجمة',
+  vocSelAll:'تحديد الكل',
+  vocSelDel:'حذف المحدد',
+  vocSelEnd:'إنهاء التحديد',
+  vocFillT:'استكمال الترجمات الناقصة',
+  vocFilterT:'الفرز والتصفية',
+  vocSearchT:'البحث في المفردات',
+  vocFindClear:'مسح البحث',
 };
 window.K = K; window.NL = NL; window.ES = ES; window.TR = TR; window.AR = AR;
 
