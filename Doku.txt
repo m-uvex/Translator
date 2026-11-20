@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.115 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.116 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1894,3 +1894,21 @@ Geprueft wurde die Frage, ob die Sperre nur an den Leisten wirkt. Der Editor ruf
 **Befund zum Vision-Rueckfall.** `visionFallback()` fragt selbst kein Modell: es waehlt ein Modell mit Bilderkennung oder bietet an, eines zu holen (`pullModel`) — im Test ging keine Anfrage raus, der Abbruch liess `S.model` unveraendert. Bestaetigt man den Download, ginge ein `/api/pull` an Ollama; das ist kein Modellaufruf, wird aber auch bei ausgeschaltetem Schalter angeboten, weil das Uebersetzen die Ausnahme ist. Wer das anders will, muesste den Download sperren.
 
 **Ergebnis.** Alle Modellaufrufe des Editors laufen durch `chat()` und damit durch `AI_ALLOWED`; die einzige Anfrage, die mit ausgeschaltetem Schalter rausging, war die Ausnahme „Uebersetzen“ (`purpose: 'translate'`). Ein Bild-Export ohne Beschreibung schreibt weiterhin Platzhalter, und der Editor meldet in allen gesperrten Faellen `aiOffMsg`.
+
+## 141. Zu grosse Bilder im PDF: `--pz` verkleinert, die Ausrichtung bleibt (1.15.116)
+
+In Abschnitt 136 blieb offen, was mit Bildern passiert, die groesser als die bedruckbare Flaeche sind (`PRINT_W` 700, `PRINT_H` 1000 CSS-Pixel). `fitImagesForPrint(true)` setzt vor dem Druck je Rahmen `--pz = min(1, 700/Breite, 1000/Hoehe)`, die Druck-CSS wendet es als `zoom: var(--pz,1)` an, `fitImagesForPrint(false)` entfernt es danach wieder.
+
+**Aufbau.** Electron-Hilfsskript mit eigenem `--user-data-dir` laedt die echte `index.html` mit `preload.js`. Die Bilder kamen per `drop` (echter Weg `addImageFiles` → `insertEdImage` → `mkEdImage`), vergroessert wurden sie am Eckgriff mit echten Mausereignissen (`sendInputEvent`), ausgerichtet ueber die Leistenknoepfe `aL`, `aR`, `aC`. Exportiert wurde ueber den echten Weg: „Speichern unter“ → „PDF (.pdf)“ → `doSave('pdf')` → `fitImagesForPrint(true)` → `window.api.saveFile` → `printToPDF({ pageSize:'A4', printBackground:true })` wie in `main.js`. Der Kanal `file:save` war im Hilfsskript ohne Dialog nachgebaut und protokollierte die `--pz`-Werte im Augenblick des Drucks.
+
+| Fall | Bild im Editor (CSS-px) | `--pz` beim Druck | im PDF: Breite x Hoehe (pt) | x0 / x1 (pt) | Bezug |
+|---|---|---|---|---|---|
+| links | 1400x600, am Griff auf 1200x514 gezogen | 0,583 | 525,0 x 225,0 | 27,8 / 552,8 | linke Kante = Inhaltskante 27,8 |
+| rechts | 600x1600, am Griff auf 500x1333 gezogen | 0,75 | 281,2 x 750,0 | 287,2 / 568,5 | rechte Kante = Inhaltskante 568,4 |
+| Mitte | 900x900, am Griff auf 900x900 gezogen | 0,778 | 525,8 x 525,0 | 35,2 / 561,0 | Mitte 298,1 gegen Seitenmitte 298,0 |
+
+Jede der drei Dateien hat eine Seite, die Bilder sind vollstaendig darauf. Nach dem Druck traegt kein Rahmen mehr `--pz` (`pzReste: 0`), und die Breiten im Editor sind unveraendert (1200, 500, 900). Die Ausrichtung ueberlebt die Verkleinerung also: links sitzt an der linken Inhaltskante, rechts an der rechten, die Mitte in der Seitenmitte.
+
+**Gegenprobe ohne `--pz`.** Ein direktes `printToPDF` am Exportweg vorbei (also ohne `fitImagesForPrint`) zeigt, was die Verkleinerung leistet: Das 1200-px-Bild wurde 600 pt breit und lief bis x1 = 627,8 pt ueber die Seitenkante 595,9 hinaus; das 1333 px hohe Bild blieb unskaliert (999,8 pt) und verteilte sich ueber drei Seiten. Mit `--pz` sind beide Faelle sauber.
+
+**Nicht geprueft.** Der Druck ueber den Systemdialog (dieselbe Druck-CSS), Bilder in Tabellen und Listen, und sehr breite Bilder zusammen mit einer Drehung. Fuer die Messung war `pymupdf` wieder in der Doku-Venv (Befehl in Abschnitt 136) und ist danach erneut entfernt worden.
