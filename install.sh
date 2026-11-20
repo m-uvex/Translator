@@ -142,6 +142,15 @@ command -v update-desktop-database >/dev/null && update-desktop-database "$APPS"
 command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -f -t "$HOME/.local/share/icons/hicolor" >/dev/null 2>&1 || true
 say "$APPS/uebersetzer.desktop"
 
+step "Sprachausgabe pruefen"
+if command -v spd-say >/dev/null 2>&1 || command -v espeak-ng >/dev/null 2>&1 || command -v espeak >/dev/null 2>&1; then
+  say "Vorlesen: $(command -v spd-say || command -v espeak-ng || command -v espeak)"
+else
+  say "Vorlesen fehlt: die App spricht ueber spd-say (speech-dispatcher) oder espeak-ng."
+  say "Das braucht Administratorrechte, deshalb hier nur der Hinweis:"
+  say "  sudo apt install espeak-ng            (oder: sudo apt install speech-dispatcher)"
+fi
+
 step "Fertig"
 say "Starten:  $TARGET/starten.sh"
 say "Entfernen: $TARGET/Uninstall.sh"

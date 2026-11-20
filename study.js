@@ -22,22 +22,26 @@ const nrm = s => String(s || '').toLocaleLowerCase().trim();
 const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
 // ---------- Vorlesen ----------
-// Die Sprachausgabe des Systems (Windows und Linux ueber speechSynthesis); es
-// wird nichts nachgeladen und nichts gesendet. Die Stimme wird nach der Sprache
-// des Wortes gesucht, damit ein deutsches Wort nicht englisch klingt; fehlt sie,
-// bleibt es bei der Standardstimme statt bei Stille.
+// Gesprochen wird ueber die Sprachausgabe des Systems, nicht ueber
+// speechSynthesis: Chromium bringt in Electron keine Web-Speech-Stimmen mit,
+// getVoices() ist dort leer und jeder Aufruf bliebe stumm (gemessen in der
+// laufenden App: 0 Stimmen). Der Hauptprozess spricht deshalb ueber SAPI
+// (Windows) bzw. spd-say oder espeak-ng (Linux), lokal und ohne Netz. Die
+// Stimme wird nach der Sprache des Wortes gewaehlt, damit ein deutsches Wort
+// nicht englisch klingt; fehlt sie, bleibt es bei der Standardstimme statt bei
+// Stille. speechSynthesis bleibt nur als Rueckfall, falls eine Plattform doch
+// Stimmen mitbringt.
 const SPEECH_ISO = { deu:'de', eng:'en', fra:'fr', spa:'es', ita:'it', por:'pt', nld:'nl', pol:'pl', ces:'cs', swe:'sv', dan:'da', nob:'no', nor:'no', fin:'fi', tur:'tr', rus:'ru', ukr:'uk', ell:'el', ron:'ro', hun:'hu', zho:'zh', jpn:'ja', kor:'ko', ara:'ar', hin:'hi', ind:'id', vie:'vi' };
 const speechLang = code => {
   const c = String(code || '').split('_')[0].toLowerCase();
   return SPEECH_ISO[c] || c || 'en';
 };
-function speakText(text, code) {
-  const s = String(text || '').trim();
-  if (!s || !window.speechSynthesis) return false;
+// Alter Weg ueber die Web-Speech-Schnittstelle; nur noch Rueckfall.
+function legacySpeak(s, lang) {
+  if (!window.speechSynthesis) return false;
   try {
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(s);
-    const lang = speechLang(code);
     u.lang = lang;
     const v = speechSynthesis.getVoices().find(x => String(x.lang || '').toLowerCase().startsWith(lang));
     if (v) u.voice = v;
@@ -45,6 +49,20 @@ function speakText(text, code) {
     speechSynthesis.speak(u);
     return true;
   } catch { return false; }
+}
+function speakText(text, code) {
+  const s = String(text || '').trim();
+  if (!s) return false;
+  const lang = speechLang(code);
+  try {
+    if (window.api && window.api.ttsSpeak) {
+      window.api.ttsSpeak(s, lang)
+        .then(r => { if (!r || !r.ok) legacySpeak(s, lang); })
+        .catch(() => legacySpeak(s, lang));
+      return true;
+    }
+  } catch {}
+  return legacySpeak(s, lang);
 }
 const speakVocab = e => !!e && speakText(e.term, e.src || S.studySrc);
 

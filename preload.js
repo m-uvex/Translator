@@ -30,6 +30,10 @@ contextBridge.exposeInMainWorld('api', {
   // Ob der systemweite Kurzbefehl wirklich registriert wurde (ein anderes
   // Programm kann ihn belegt haben); die Einstellungen richten sich danach.
   hotkeyOk: () => ipcRenderer.invoke('app:hotkey'),
+  // Vorlesen: Chromium hat in Electron keine Stimmen, deshalb spricht der
+  // Hauptprozess ueber die Ausgabe des Systems (SAPI bzw. spd-say/espeak-ng).
+  ttsSpeak: (text, lang) => ipcRenderer.invoke('tts:speak', text, lang),
+  ttsStop: () => ipcRenderer.invoke('tts:stop'),
   forceQuit: () => ipcRenderer.invoke('app:forceQuit'),
   winMinimize: () => ipcRenderer.invoke('win:minimize'),
   winToggleMax: () => ipcRenderer.invoke('win:toggleMax'),

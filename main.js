@@ -1,5 +1,5 @@
 const { app, BrowserWindow, ipcMain, dialog, session, clipboard, Tray, Menu, globalShortcut, nativeImage } = require('electron');
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const http = require('http'), path = require('path'), fs = require('fs'), os = require('os');
 let nllb = null, ollama = null, nllbWanted = false, win = null;
 
@@ -591,6 +591,56 @@ function showWindow() {
   if (win.isMinimized()) win.restore();
   win.show(); win.focus();
 }
+// ---------- Sprachausgabe ----------
+// Chromium bringt in Electron keine Web-Speech-Stimmen mit: getVoices() ist
+// leer, und speechSynthesis bleibt stumm. Gesprochen wird deshalb ueber die
+// Ausgabe des Systems - unter Windows SAPI, unter Linux speech-dispatcher
+// (spd-say) oder espeak-ng. Beides laeuft lokal, es wird nichts gesendet und
+// nichts nachgeladen.
+let ttsProc = null;
+let ttsBackend = null; // unter Linux: 'spd-say', 'espeak-ng', 'espeak' oder 'keine'
+// Das PowerShell-Skript geht als Base64 (UTF-16LE) hinueber, damit der Text
+// nicht durch Anfuehrungszeichen muss: er steht in einer Datei und wird von
+// dort gelesen. Stimme nach Sprache, sonst bleibt die Standardstimme.
+const TTS_PS = [
+  'Add-Type -AssemblyName System.Speech',
+  '$s = New-Object System.Speech.Synthesis.SpeechSynthesizer',
+  '$s.Rate = -1',
+  '$txt = [IO.File]::ReadAllText($env:TTS_FILE, [Text.Encoding]::UTF8)',
+  "$v = $s.GetInstalledVoices() | Where-Object { $_.Enabled -and $_.VoiceInfo.Culture.Name -like ($env:TTS_LANG + '-*') } | Select-Object -First 1",
+  'if ($v) { $s.SelectVoice($v.VoiceInfo.Name) }',
+  '$s.Speak($txt)'
+].join('; ');
+const TTS_PS_B64 = Buffer.from(TTS_PS, 'utf16le').toString('base64');
+function ttsStop() {
+  if (!ttsProc) return;
+  try { ttsProc.kill(); } catch {}
+  ttsProc = null;
+}
+function ttsSpeak(text, lang) {
+  const txt = String(text || '').trim();
+  if (!txt) return { ok: false, reason: 'leer' };
+  const l = String(lang || 'en').slice(0, 2).toLowerCase();
+  ttsStop();
+  if (IS_WIN) {
+    const file = path.join(app.getPath('temp'), 'uebersetzer-tts.txt');
+    try { fs.writeFileSync(file, txt, 'utf8'); } catch { return { ok: false, reason: 'datei' }; }
+    const env = Object.assign({}, process.env, { TTS_FILE: file, TTS_LANG: l });
+    ttsProc = spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', TTS_PS_B64],
+      { windowsHide: true, stdio: 'ignore', env });
+    ttsProc.on('error', () => { ttsProc = null; });
+    return { ok: true, backend: 'sapi', lang: l };
+  }
+  const has = cmd => { try { return spawnSync('sh', ['-c', `command -v ${cmd}`]).status === 0; } catch { return false; } };
+  if (!ttsBackend) ttsBackend = has('spd-say') ? 'spd-say' : has('espeak-ng') ? 'espeak-ng' : has('espeak') ? 'espeak' : 'keine';
+  if (ttsBackend === 'keine') return { ok: false, reason: 'keine Sprachausgabe auf diesem System' };
+  // spd-say nimmt die Sprache als Kurzform, espeak-ng ebenso; der Text ist ein
+  // eigenes Argument, deshalb braucht er keine Anfuehrungszeichen.
+  const args = ttsBackend === 'spd-say' ? ['-l', l, '-r', '-10', txt] : ['-v', l, txt];
+  ttsProc = spawn(ttsBackend, args, { stdio: 'ignore' });
+  ttsProc.on('error', () => { ttsProc = null; });
+  return { ok: true, backend: ttsBackend, lang: l };
+}
 function createTray() {
   // Auf beiden Systemen das PNG: Das ICO liegt nur im Archiv (app.asar), und
   // resPath zeigt im gepackten Betrieb auf app.asar.unpacked, wo nur icon.png
@@ -618,6 +668,8 @@ function createTray() {
 
 let forceQuit = false;
 ipcMain.handle('app:hotkey', () => hotkeyOk);
+ipcMain.handle('tts:speak', (_e, text, lang) => ttsSpeak(text, lang));
+ipcMain.handle('tts:stop', () => { ttsStop(); return true; });
 ipcMain.handle('app:forceQuit', () => {
   forceQuit = true;
   if (win && !win.isDestroyed()) win.close();
@@ -649,6 +701,7 @@ app.whenReady().then(() => {
 app.on('will-quit', () => {
   try { globalShortcut.unregisterAll(); } catch {}
   try { if (tray) { tray.destroy(); tray = null; } } catch {}
+  ttsStop();
   killTree(nllb); killTree(ollama);
 });
 app.on('window-all-closed', () => app.quit());
