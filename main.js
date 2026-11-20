@@ -591,7 +591,10 @@ function createTray() {
     tray.setContextMenu(Menu.buildFromTemplate([
       { label: 'Öffnen', click: showWindow },
       { type: 'separator' },
-      { label: 'Beenden', click: () => { forceQuit = true; app.quit(); } }
+      // Beenden laeuft ueber win.close(), damit die Rueckfrage des Editors bei
+      // ungesicherten Dokumenten greift und der Merker forceQuit erst dort
+      // gesetzt wird; ein app.quit() an dieser Stelle uebersprang sie.
+      { label: 'Beenden', click: () => { if (win && !win.isDestroyed()) win.close(); else { forceQuit = true; app.quit(); } } }
     ]));
     tray.on('click', showWindow);
   } catch { tray = null; }
