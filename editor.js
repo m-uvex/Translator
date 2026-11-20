@@ -1187,9 +1187,16 @@ const IMG_ED_MAX = 1600;     // laengste Kante der gespeicherten Fassung
 // und Ablage nicht unkontrolliert wachsen. Abschaltbar in den Einstellungen.
 const IMG_LIMIT_MB = 3;
 const IMG_LIMIT = IMG_LIMIT_MB * 1024 * 1024;
+// Obergrenze fuer alle Bilder eines Dokuments zusammen. Einzelgrenzen allein
+// verhindern nicht, dass sich 20 knapp erlaubte Bilder zu einem unhandlichen
+// Dokument summieren (Abschnitt 129). Ebenfalls abschaltbar.
+const IMG_TOTAL_MB = 20;
+const IMG_TOTAL = IMG_TOTAL_MB * 1024 * 1024;
 // Groesse einer Data-URL in Byte (Base64: 4 Zeichen = 3 Byte).
 const dataUrlBytes = u => Math.max(0, Math.floor((String(u).length - String(u).indexOf(',') - 1) * 3 / 4));
 const mbText = b => (Math.round(b / 1048576 * 10) / 10).toFixed(1).replace('.', LANG === 'de' ? ',' : '.');
+// Kleine Bilder in Kilobyte nennen: '0,0 MB' waere keine Auskunft.
+const sizeText = b => b < 102400 ? Math.max(1, Math.round(b / 1024)) + ' kB' : mbText(b);
 const imgReady = im => (im.complete && im.naturalWidth) ? Promise.resolve()
   : new Promise(res => { im.onload = res; im.onerror = res; });
 
@@ -1360,11 +1367,26 @@ function insertEdImage(wrap) {
   try { wrap.scrollIntoView({ block:'nearest' }); } catch {}
 }
 
+// Bildmenge des Dokuments: die Data-URLs aller Bilder in der Seite, auch der
+// aus importierten HTML-Dateien. Wird bei jedem Einfuegen neu gerechnet, ein
+// geloeschtes Bild gibt sein Budget also sofort wieder frei.
+function imgBytesInDoc() {
+  let sum = 0;
+  page.querySelectorAll('img').forEach(im => { sum += dataUrlBytes(im.getAttribute('src') || ''); });
+  return sum;
+}
+
 async function addImageFiles(files) {
   for (const f of files) {
     if (!/^image\//.test(f.type)) continue;
     try {
       const spec = await imgDataFromFile(f);
+      // Gesamtgrenze: erst rechnen, dann einfuegen, damit nichts halb drin ist.
+      const used = imgBytesInDoc(), add = dataUrlBytes(spec.src);
+      if (S.imgTotalLimit !== false && used + add > IMG_TOTAL) {
+        edStatus(t('imgTotalFull', mbText(used), sizeText(add), IMG_TOTAL_MB));
+        continue;
+      }
       insertEdImage(mkEdImage(spec));
       // Eine alte Ablehnung nicht stehen lassen: das Bild ist jetzt drin.
       edStatus('');

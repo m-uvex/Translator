@@ -371,6 +371,9 @@ const K = {
   s_imgLimit:['Bildgröße beim Einfügen begrenzen (höchstens 3 MB pro Bild)','Limit image size on insert (at most 3 MB per image)'],
   imgTooBig:[(mb, lim) => `Das Bild ist zu groß: ${mb} MB. Erlaubt sind höchstens ${lim} MB pro Bild. Die Grenze lässt sich in den Einstellungen unter „Bilder im Text“ ausschalten.`,
     (mb, lim) => `This image is too large: ${mb} MB. At most ${lim} MB per image is allowed. You can turn the limit off in Settings under “Images in text”.`],
+  s_imgTotalLimit:['Bildmenge je Dokument begrenzen (höchstens 20 MB)','Limit total images per document (at most 20 MB)'],
+  imgTotalFull:[(used, add, lim) => `Das Dokument enthält schon ${used} MB an Bildern. Mit diesem Bild (${add}) wären es mehr als ${lim} MB. Die Gesamtgrenze lässt sich in den Einstellungen unter „Bilder im Text“ ausschalten.`,
+    (used, add, lim) => `This document already holds ${used} MB of images. With this image (${add}) it would exceed ${lim} MB. You can turn the total limit off in Settings under “Images in text”.`],
   imgIns:['Bild einfügen','Insert image'],
   imgMenuRotL:['Nach links drehen','Rotate left'], imgMenuRotR:['Nach rechts drehen','Rotate right'],
   imgMenuFlipH:['Waagerecht spiegeln','Flip horizontally'], imgMenuFlipV:['Senkrecht spiegeln','Flip vertically'],
@@ -429,6 +432,8 @@ const NL = {
   /* accentBabyPink:'Babyroze', */ accentCoral:'Koraal', accentAmber:'Amber', accentGreen:'Groen', accentTeal:'Turquoise', accentSlate:'Grijs',
   s_groupImages:'Afbeeldingen in de tekst', s_imgModel:'Model om afbeeldingen te beschrijven', imgIns:'Afbeelding invoegen',
   s_imgLimit:'Afbeeldingsgrootte bij invoegen beperken (hoogstens 3 MB per afbeelding)',
+  s_imgTotalLimit:'Totale hoeveelheid afbeeldingen per document beperken (hoogstens 20 MB)',
+  imgTotalFull:(used, add, lim) => `Het document bevat al ${used} MB aan afbeeldingen. Met deze afbeelding (${add}) zou dat meer dan ${lim} MB worden. De totale grens is uit te schakelen in de instellingen onder “Afbeeldingen in de tekst”.`,
   imgTooBig:(mb, lim) => `De afbeelding is te groot: ${mb} MB. Toegestaan is hoogstens ${lim} MB per afbeelding. De grens is uit te schakelen in de instellingen onder “Afbeeldingen in de tekst”.`,
   imgMenuRotL:'Naar links draaien', imgMenuRotR:'Naar rechts draaien', imgMenuFlipH:'Horizontaal spiegelen', imgMenuFlipV:'Verticaal spiegelen',
   imgMenuReset:'Herstellen', imgMenuDel:'Verwijderen',
@@ -477,6 +482,8 @@ const ES = {
   /* accentBabyPink:'Rosa bebé', */ accentCoral:'Coral', accentAmber:'Ámbar', accentGreen:'Verde', accentTeal:'Turquesa', accentSlate:'Gris',
   s_groupImages:'Imágenes en el texto', s_imgModel:'Modelo para describir imágenes', imgIns:'Insertar imagen',
   s_imgLimit:'Limitar el tamaño de la imagen al insertar (máx. 3 MB por imagen)',
+  s_imgTotalLimit:'Limitar la cantidad total de imágenes por documento (máx. 20 MB)',
+  imgTotalFull:(used, add, lim) => `El documento ya contiene ${used} MB de imágenes. Con esta imagen (${add}) superaría los ${lim} MB. El límite total se puede desactivar en los ajustes, en «Imágenes en el texto».`,
   imgTooBig:(mb, lim) => `La imagen es demasiado grande: ${mb} MB. Se permiten como máximo ${lim} MB por imagen. Puede desactivar el límite en los ajustes, en «Imágenes en el texto».`,
   imgMenuRotL:'Girar a la izquierda', imgMenuRotR:'Girar a la derecha', imgMenuFlipH:'Voltear horizontalmente', imgMenuFlipV:'Voltear verticalmente',
   imgMenuReset:'Restablecer', imgMenuDel:'Eliminar',
@@ -527,6 +534,8 @@ const TR = {
   /* accentBabyPink:'Bebek pembesi', */ accentCoral:'Mercan', accentAmber:'Amber', accentGreen:'Yeşil', accentTeal:'Turkuaz', accentSlate:'Gri',
   s_groupImages:'Metindeki görseller', s_imgModel:'Görselleri betimleme modeli', imgIns:'Görsel ekle',
   s_imgLimit:'Ekleme sırasında görsel boyutunu sınırla (görsel başına en fazla 3 MB)',
+  s_imgTotalLimit:'Belge başına toplam görsel miktarını sınırla (en fazla 20 MB)',
+  imgTotalFull:(used, add, lim) => `Belgede zaten ${used} MB görsel var. Bu görselle (${add}) ${lim} MB sınırı aşılırdı. Toplam sınırı ayarlarda “Metindeki görseller” altında kapatabilirsiniz.`,
   imgTooBig:(mb, lim) => `Görsel çok büyük: ${mb} MB. Görsel başına en fazla ${lim} MB izin verilir. Sınırı ayarlarda “Metindeki görseller” altında kapatabilirsiniz.`,
   imgMenuRotL:'Sola döndür', imgMenuRotR:'Sağa döndür', imgMenuFlipH:'Yatay aynala', imgMenuFlipV:'Dikey aynala',
   imgMenuReset:'Sıfırla', imgMenuDel:'Sil',
@@ -577,6 +586,8 @@ const AR = {
   /* accentBabyPink:'وردي فاتح', */ accentCoral:'مرجاني', accentAmber:'كهرماني', accentGreen:'أخضر', accentTeal:'فيروزي', accentSlate:'رمادي',
   s_groupImages:'الصور في النص', s_imgModel:'نموذج لوصف الصور', imgIns:'إدراج صورة',
   s_imgLimit:'تحديد حجم الصورة عند الإدراج (3 ميغابايت كحد أقصى لكل صورة)',
+  s_imgTotalLimit:'تحديد إجمالي الصور لكل مستند (20 ميغابايت كحد أقصى)',
+  imgTotalFull:(used, add, lim) => `يحتوي المستند بالفعل على ${used} ميغابايت من الصور. مع هذه الصورة (${add} ميغابايت) سيتجاوز الحد ${lim} ميغابايت. يمكنك إيقاف الحد الإجمالي في الإعدادات ضمن «الصور في النص».`,
   imgTooBig:(mb, lim) => `الصورة كبيرة جداً: ${mb} ميغابايت. الحد الأقصى المسموح ${lim} ميغابايت لكل صورة. يمكنك إيقاف الحد في الإعدادات ضمن «الصور في النص».`,
   imgMenuRotL:'تدوير إلى اليسار', imgMenuRotR:'تدوير إلى اليمين', imgMenuFlipH:'انعكاس أفقي', imgMenuFlipV:'انعكاس رأسي',
   imgMenuReset:'إعادة الضبط', imgMenuDel:'حذف',
@@ -697,6 +708,8 @@ const D = { url:'http://localhost:11434', nllb:'http://127.0.0.1:8765', model:''
   imgModel:'',
   // Bilder beim Einfuegen begrenzen (Abschnitt 125); abschaltbar.
   imgLimit:true,
+  // Gesamtgrenze fuer alle Bilder eines Dokuments (Abschnitt 129).
+  imgTotalLimit:true,
   // Akzentfarbe (Schluessel aus den Paletten in style.css).
   accent:'sky',
   // KI-Funktionen im Texteditor: Hauptschalter, die Kontextleiste und jede
@@ -1890,7 +1903,7 @@ $('#refresh').onclick = async () => {
 const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['accent','s_accent','accent'],['start','s_start','start'],['workspace','s_workspace','workspaces'],
   // Klassik-Layout vorerst deaktiviert (Nutzerwunsch): Symbol-Layout ist fest.
   // Zum Reaktivieren ['uiMode','s_uiMode','uiMode'] hier wieder aufnehmen.
-  ['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['profanityStyle','s_profanityStyle','profanityStyle'],['edMarkdown','s_mdMode','bool'],['edSpellAnim','s_spellAnim','bool'],['autoCopy','s_autoCopy','bool'],['autoCopyTyped','s_autoCopyTyped','bool'],['historyOn','s_history','bool'],['diagOn','s_diag','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['csvSrs','s_csvSrs','bool'],['studyAI','s_studyAI','bool'],['studyWord','s_studyWord','bool'],['storyOn','s_story','bool'],['imgModel','s_imgModel','imgModel'],['imgLimit','s_imgLimit','bool'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number'],
+  ['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['profanityStyle','s_profanityStyle','profanityStyle'],['edMarkdown','s_mdMode','bool'],['edSpellAnim','s_spellAnim','bool'],['autoCopy','s_autoCopy','bool'],['autoCopyTyped','s_autoCopyTyped','bool'],['historyOn','s_history','bool'],['diagOn','s_diag','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['csvSrs','s_csvSrs','bool'],['studyAI','s_studyAI','bool'],['studyWord','s_studyWord','bool'],['storyOn','s_story','bool'],['imgModel','s_imgModel','imgModel'],['imgLimit','s_imgLimit','bool'],['imgTotalLimit','s_imgTotalLimit','bool'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number'],
   // KI-Funktionen des Texteditors: erst der Hauptschalter, dann die Leiste bei
   // Textauswahl, dann die drei Knoepfe der Werkzeugleiste. Die Uebersetzungs-
   // funktionen der App haben hier bewusst keinen Schalter.
@@ -1898,7 +1911,7 @@ const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['accent','s_
   ['edCtxShorten','s_edCtxShorten','bool'],['edCtxLengthen','s_edCtxLengthen','bool'],['edCtxSummarize','s_edCtxSummarize','bool'],
   ['edCtxProofread','s_edCtxProofread','bool'],['edCtxSyn','s_edCtxSyn','bool'],['edCtxStyle','s_edCtxStyle','bool'],['edCtxTr','s_edCtxTr','bool'],
   ['edTbShorten','s_edTbShorten','bool'],['edTbLengthen','s_edTbLengthen','bool'],['edTbSum','s_edTbSum','bool']];
-const GROUPS = [['s_groupGeneral',['uiLang','theme','accent','start','workspace']],['s_groupStudy',['studyAI','studyWord','storyOn','csvSrs']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped','historyOn','diagOn']],['s_groupImages',['imgModel','imgLimit']],['s_groupEdAI',['edAI',{bar:1},'edTbShorten','edTbLengthen','edTbSum']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
+const GROUPS = [['s_groupGeneral',['uiLang','theme','accent','start','workspace']],['s_groupStudy',['studyAI','studyWord','storyOn','csvSrs']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped','historyOn','diagOn']],['s_groupImages',['imgModel','imgLimit','imgTotalLimit']],['s_groupEdAI',['edAI',{bar:1},'edTbShorten','edTbLengthen','edTbSum']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
 // Der systemweite Kurzbefehl kann von einem anderen Programm belegt sein:
 // globalShortcut.register() scheitert dann still. main.js meldet ueber
 // `app:hotkey`, ob die Registrierung geklappt hat; bis die Antwort da ist,
