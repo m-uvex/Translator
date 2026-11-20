@@ -640,6 +640,8 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 /* Einzelschalter unter dem ausgeschalteten Hauptschalter „KI-Funktionen im
    Editor“: sichtbar inaktiv, aber weiter bedienbar. */
 .set.dim{opacity:.45}
+/* Hinweis unter einem Hauptschalter: sagt, was er nicht abschaltet. */
+.set .hint{margin-top:9px;font-size:12.5px;line-height:1.45;color:var(--muted)}
 /* Bilder im Text: Der Rahmen traegt die Groesse des sichtbaren Bildes, das Bild
    darin wird gedreht und gespiegelt; die vier Ecken sind Ziehpunkte. */
 .edimg{position:relative;display:block;margin:12px auto;user-select:none;border-radius:2px}

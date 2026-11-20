@@ -176,10 +176,11 @@ function cleanTranslation(tr) {
   return out.join(' / ');
 }
 
-// Der Lese-Arbeitsplatz hat einen eigenen Hauptschalter: Wortuebersetzung und
-// Kurzgeschichten-Generator sind KI-Funktionen des Lesens, nicht des Editors.
-// Ist er aus, wird kein Modell gefragt; `aioff` traegt die Meldung nach aussen.
-const studyAI = () => S.studyAI !== false;
+// Alle KI-Funktionen der App haengen am softwareweiten Schalter `aiAll`
+// (Abschnitt 131): Wortuebersetzung und Kurzgeschichten sind keine Sonderfaelle
+// mehr. Ist er aus, wird kein Modell gefragt; `aioff` traegt die Meldung nach
+// aussen.
+const studyAI = () => S.aiAll !== false;
 
 async function translateTerm(term, ctx, pair, single) {
   if (!studyAI()) throw new Error('aioff');
@@ -1996,7 +1997,7 @@ const STORY_STR = {
   stRetry: ['Klicken: noch einmal versuchen', 'Click to try again', 'Klik om het opnieuw te proberen', 'Haz clic para reintentar', 'Yeniden denemek için tıkla', 'انقر للمحاولة مجدداً'],
   stNoModel: ['Kein Schreibmodell gefunden.', 'No writing model found.', 'Geen schrijfmodel gevonden.', 'No se encontró modelo de escritura.', 'Yazma modeli bulunamadı.', 'لم يتم العثور على نموذج كتابة.'],
   stUntitled: ['Kurzgeschichte', 'Short story', 'Kort verhaal', 'Relato corto', 'Kısa hikâye', 'قصة قصيرة'],
-  studyAIoff: ['Die KI-Funktionen im Lese-Arbeitsplatz sind aus (Einstellungen → KI-Funktionen im Lese-Arbeitsplatz).', 'The AI functions in the reading workspace are off (Settings → AI functions in the reading workspace).', 'De AI-functies in de leeswerkplek staan uit (Instellingen → AI-functies in de leeswerkplek).', 'Las funciones de IA del espacio de lectura están desactivadas (Ajustes → Funciones de IA en el espacio de lectura).', 'Okuma çalışma alanındaki YZ işlevleri kapalı (Ayarlar → Okuma çalışma alanındaki YZ işlevleri).', 'وظائف الذكاء الاصطناعي في مساحة القراءة مغلقة (الإعدادات ← وظائف الذكاء الاصطناعي في مساحة القراءة).'],
+  studyAIoff: ['Die KI-Funktionen sind aus (Einstellungen → KI-Funktionen).', 'AI functions are off (Settings → AI functions).', 'De AI-functies staan uit (Instellingen → AI-functies).', 'Las funciones de IA están desactivadas (Ajustes → Funciones de IA).', 'YZ işlevleri kapalı (Ayarlar → YZ işlevleri).', 'وظائف الذكاء الاصطناعي مغلقة (الإعدادات ← وظائف الذكاء الاصطناعي).'],
   s_story: ['Kurzgeschichten-Generator', 'Short story generator', 'Korteverhalengenerator', 'Generador de relatos', 'Kısa hikâye üreticisi', 'مولّد القصص القصيرة']
 };
 for (const [k, v] of Object.entries(STORY_STR)) {

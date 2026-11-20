@@ -234,16 +234,19 @@ const STYLE_ICONS = [
 const edStatus = m => { const e = $('#sbStatus'); if (e) e.textContent = m || ''; };
 
 async function edRun(instr, text, json) {
+  if (aiBlocked()) throw new Error(t('aiAlldim'));
   const m = writeModel(); if (!m) throw new Error(t('noWrite'));
   return chat([{ role:'system', content:json ? 'You are a writing assistant. Answer only with valid JSON.' : EDSYS }, { role:'user', content:`${instr}\n\n<text>\n${text}\n</text>` }], { model:m, format:json ? 'json' : undefined });
 }
 async function edRunProofread(text) {
+  if (aiBlocked()) throw new Error(t('aiAlldim'));
   const m = writeModel(); if (!m) throw new Error(t('noWrite'));
   return chat([{ role:'system', content:PROOFREAD_SYS }, { role:'user', content:`${proofreadPrompt()}\n\n<text>\n${text}\n</text>` }], { model:m });
 }
 // Nur die Markierung, direkt im Auftrag - kein Satzkontext, kein Tag-Wrapper.
 // Kurzer Prompt = schnelle Antwort.
 async function edRunSynonyms(text) {
+  if (aiBlocked()) throw new Error(t('aiAlldim'));
   const m = writeModel(); if (!m) throw new Error(t('noWrite'));
   const w = String(text).replace(/"/g, "'");
   const instr = `Give up to 5 ${langHint()} synonyms that could replace the word "${w}" in a sentence. Same part of speech and grammatical form. No translations, no explanations, no duplicates. Output JSON: {"synonyms":["..."]}`;
@@ -592,12 +595,17 @@ function showSummary(txt) {
 
 const BAR = [['shorten','shorten'],['lengthen','lengthen'],['summarize','summarize'],['proofread','proofread'],['synonyms','synonyms'],['styleB','wand'],['translateSel','languages']];
 // Die KI-Funktionen des Editors lassen sich in den Einstellungen einzeln
-// abschalten ("Textbearbeitung (KI)"); `edAI` nimmt alle auf einmal. Die
-// Uebersetzungsfunktionen der App haengen bewusst nicht daran: Sie bleiben
-// erreichbar, auch wenn hier alles aus ist.
+// abschalten ("Textbearbeitung (KI)"); `edAI` nimmt die des Editors auf einmal,
+// `aiAll` alle der ganzen App (Abschnitt 131). Die Uebersetzungsfunktionen der
+// App haengen bewusst nicht daran: Sie bleiben erreichbar, auch wenn hier alles
+// aus ist.
 const BAR_SET = { shorten:'edCtxShorten', lengthen:'edCtxLengthen', summarize:'edCtxSummarize', proofread:'edCtxProofread', synonyms:'edCtxSyn', styleB:'edCtxStyle', translateSel:'edCtxTr' };
 const TB_SET = { shortenAll:'edTbShorten', lengthenAll:'edTbLengthen', summarizeAll:'edTbSum' };
-const aiOn = k => S.edAI !== false && S[k] !== false;
+const aiOn = k => S.aiAll !== false && S.edAI !== false && S[k] !== false;
+// Jede Modellanfrage des Editors prueft den softwareweiten Schalter selbst —
+// so gilt er auch fuer kuenftige Funktionen, die den Umweg ueber die Leisten
+// nicht nehmen.
+const aiBlocked = () => S.aiAll === false;
 const barItems = () => S.edCtx === false ? [] : BAR.filter(([k]) => aiOn(BAR_SET[k]));
 function buildBar() {
   const items = barItems();
@@ -1133,7 +1141,7 @@ async function doSave(kind) {
   const nImg = page.querySelectorAll('.edimg').length + [...page.querySelectorAll('img')].filter(im => !im.closest('.edimg')).length;
   let describe = false;
   if (nImg && (kind === 'md' || kind === 'txt')) {
-    const choice = await imgWarn(nImg, kind === 'md' ? 'Markdown (.md)' : 'Text (.txt)', !!imgModel());
+    const choice = await imgWarn(nImg, kind === 'md' ? 'Markdown (.md)' : 'Text (.txt)', !!imgModel() && aiOn('imgModel'));
     if (choice === 'cancel') return;
     describe = choice === 'describe';
   }
@@ -1480,7 +1488,7 @@ function imgWarn(n, kind, withVision) {
 // Beschreibungen fuer den Export: Im Klon wird jedes Bild durch einen Absatz
 // mit der Beschreibung ersetzt, das Original bleibt unberuehrt.
 async function describeInto(root) {
-  const mdl = imgModel();
+  const mdl = aiBlocked() ? '' : imgModel();
   const lang = S.uiLang === 'auto' ? 'German' : S.uiLang;
   for (const im of [...root.querySelectorAll('.edimg img, img')]) {
     let txt = '';
