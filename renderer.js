@@ -358,7 +358,7 @@ const K = {
   s_csvSrs:['Lernstände in Export-Dateien schreiben','Include practice state in exported files'],
   s_groupStudy:['Lesen und Vokabeln','Reading and vocabulary'],
   reset:['Zurücksetzen','Reset'], resetAll:['Alles zurücksetzen','Reset all'], autoSys:['Automatisch (System)','Automatic (system)'], autoO:['Automatisch','Automatic'], autoModel:['Automatisch','Automatic'], light:['Hell','Light'], dark:['Dunkel','Dark'],
-  nllbH:['Übersetzungsmodelle','Translation models'], mInst:['Eingerichtet','Installed'], mNot:['Nicht eingerichtet','Not installed'], mLoad:[p => `Lädt … ${p} %`, p => `Downloading … ${p}%`],
+  nllbH:['Übersetzungsmodelle','Translation models'], srvSetup:['Server einrichten','Set up server'], mInst:['Eingerichtet','Installed'], mNot:['Nicht eingerichtet','Not installed'], mLoad:[p => `Lädt … ${p} %`, p => `Downloading … ${p}%`],
   mErr:[e => `Fehler: ${e}`, e => `Error: ${e}`], bDl:['Herunterladen','Download'], bDel:['Löschen','Delete'], bBusy:['Lädt …','Downloading …'],
   // Wortwahl vorlaeufig: "miteingerichtet" ist kein Standardwort. Falls es
   // stoert, sind "wird mitinstalliert" oder "richtet sich mit ein" die
@@ -397,7 +397,7 @@ const NL = {
   diagOllama:'Ollama', diagNllb:'NLLB-server', diagHint:'De adressen staan in de instellingen onder „Verbindingen“.', hotkeyHint:'Snel openen vanuit elk programma: Ctrl+Shift+Spatie', hotkeyTaken:'Snel openen vanuit elk programma is bezet door een ander programma; na een herstart wordt het opnieuw geprobeerd.',
   startTr:'Vertaler openen', startEd:'Tekstbewerking openen', startLast:'Laatst gebruikte openen', wsTr:'Vertaler', wsEd:'Tekstbewerking', wsStudy:'Leren',
   reset:'Herstellen', resetAll:'Alles herstellen', autoSys:'Automatisch (systeem)', autoO:'Automatisch', autoModel:'Automatisch', light:'Licht', dark:'Donker',
-  nllbH:'Vertaalmodellen', mInst:'Geïnstalleerd', mNot:'Niet geïnstalleerd', mLoad:p => `Downloaden … ${p} %`, mErr:e => `Fout: ${e}`, bDl:'Downloaden', bDel:'Verwijderen', bBusy:'Bezig …',
+  nllbH:'Vertaalmodellen', srvSetup:'Server instellen', mInst:'Geïnstalleerd', mNot:'Niet geïnstalleerd', mLoad:p => `Downloaden … ${p} %`, mErr:e => `Fout: ${e}`, bDl:'Downloaden', bDel:'Verwijderen', bBusy:'Bezig …',
   serverDown:'De vertaalserver is niet bereikbaar. Die wordt door de installatiewizard (Installieren.bat) geïnstalleerd en start met de app.',
   confBig:(id, gb) => `${id} is ${gb} GB groot en heeft veel werkgeheugen en tijd nodig. Toch downloaden?`, confDel:id => `${id} echt verwijderen? Je kunt het later opnieuw downloaden.`
 };
@@ -431,7 +431,7 @@ const ES = {
   diagNllb:'Servidor NLLB', diagHint:'Las direcciones se ajustan en la configuración, en «Conexiones».', hotkeyHint:'Acceso rápido desde cualquier programa: Ctrl+Shift+Espacio', hotkeyTaken:'El acceso rápido desde cualquier programa está ocupado por otro programa; se volverá a intentar tras reiniciar.',
   startTr:'Abrir traductor', startEd:'Abrir editor', startLast:'Abrir último usado', wsTr:'Traductor', wsEd:'Editor', wsStudy:'Aprendizaje',
   reset:'Restablecer', resetAll:'Restablecer todo', autoSys:'Automático (sistema)', autoO:'Automático', autoModel:'Automático', light:'Claro', dark:'Oscuro',
-  nllbH:'Modelos de traducción', mInst:'Instalado', mNot:'No instalado', mLoad:p => `Descargando … ${p} %`, mErr:e => `Error: ${e}`, bDl:'Descargar', bDel:'Eliminar', bBusy:'Descargando …',
+  nllbH:'Modelos de traducción', srvSetup:'Configurar el servidor', mInst:'Instalado', mNot:'No instalado', mLoad:p => `Descargando … ${p} %`, mErr:e => `Error: ${e}`, bDl:'Descargar', bDel:'Eliminar', bBusy:'Descargando …',
   serverDown:'El servidor de traducción no está disponible. Se instala con el asistente y se inicia con la app.',
   confBig:(id, gb) => `${id} tiene un tamaño de ${gb} GB y requiere bastante memoria y tiempo. ¿Descargar igualmente?`, confDel:id => `¿Realmente eliminar ${id}? Puedes descargarlo nuevamente más tarde.`,
   stopTr:'Detener', stopped:'Traducción detenida', on:'Activado', off:'Desactivado', s_bootModel:'Precargar último modelo al iniciar', s_profanity:'Filtro de malas palabras', s_profanityStyle:'Sustitución de palabras malsonantes', s_autoCopy:'Copiar la salida automáticamente', s_autoCopyTyped:'Copiar la salida solo con texto tecleado', o_stars:'Asteriscos (****)', o_symbols:'Símbolos (@#$%&!)', s_mdMode:'Markdown dinámico en el editor', s_spellAnim:'Animar las ondulaciones ortográficas',
@@ -467,7 +467,7 @@ const TR = {
   diagNllb:'NLLB sunucusu', diagHint:'Adresler ayarlarda „Bağlantılar“ altında.', hotkeyHint:'Her programdan hızlı erişim: Ctrl+Shift+Boşluk', hotkeyTaken:'Her programdan hızlı erişim başka bir program tarafından kullanılıyor; yeniden başlatmadan sonra tekrar denenecek.',
   startTr:'Çevirmeni aç', startEd:'Metin düzenleyiciyi aç', startLast:'Son kullanılanı aç', wsTr:'Çevirmen', wsEd:'Editör', wsStudy:'Öğrenme',
   reset:'Sıfırla', resetAll:'Tümünü sıfırla', autoSys:'Otomatik (sistem)', autoO:'Otomatik', autoModel:'Otomatik', light:'Açık', dark:'Koyu',
-  nllbH:'Çeviri modelleri', mInst:'Yüklü', mNot:'Yüklü değil', mLoad:p => `İndiriliyor … %${p}`, mErr:e => `Hata: ${e}`, bDl:'İndir', bDel:'Sil', bBusy:'İndiriliyor …',
+  nllbH:'Çeviri modelleri', srvSetup:'Sunucuyu kur', mInst:'Yüklü', mNot:'Yüklü değil', mLoad:p => `İndiriliyor … %${p}`, mErr:e => `Hata: ${e}`, bDl:'İndir', bDel:'Sil', bBusy:'İndiriliyor …',
   serverDown:'Çeviri sunucusuna ulaşılamıyor. Kurulum sihirbazı ile kurulur ve uygulamayla birlikte başlar.',
   confBig:(id, gb) => `${id} boyutu ${gb} GB ve çok bellek gerektirir. Yine de indirilsin mi?`, confDel:id => `${id} gerçekten silinsin mi? Daha sonra tekrar indirebilirsiniz.`,
   stopTr:'Durdur', stopped:'Çeviri durduruldu', on:'Açık', off:'Kapalı', s_bootModel:'Başlangıçta son kullanılan modeli ön yükle', s_profanity:'Küfür filtresini etkinleştir', s_profanityStyle:'Küfürlerin değiştirilmesi', s_autoCopy:'Çıktıyı otomatik kopyala', s_autoCopyTyped:'Çıktıyı yalnızca yazılan metinde kopyala', o_stars:'Yıldızlar (****)', o_symbols:'Semboller (@#$%&!)', s_mdMode:'Editörde dinamik Markdown', s_spellAnim:'Yazım dalgalarını canlandır',
@@ -503,7 +503,7 @@ const AR = {
   diagNllb:'خادم NLLB', diagHint:'تُضبط العناوين في الإعدادات ضمن «الاتصالات».', hotkeyHint:'وصول سريع من أي تطبيق: Ctrl+Shift+Space', hotkeyTaken:'وصول سريع من أي تطبيق محجوز من برنامج آخر؛ ستُعاد المحاولة بعد إعادة التشغيل.',
   startTr:'فتح المترجم', startEd:'فتح المحرر', startLast:'فتح آخر مستخدم', wsTr:'المترجم', wsEd:'المحرر', wsStudy:'التعلّم',
   reset:'إعادة تعيين', resetAll:'إعادة تعيين الكل', autoSys:'تلقائي (النظام)', autoO:'تلقائي', autoModel:'تلقائي', light:'فاتح', dark:'داكن',
-  nllbH:'نماذج الترجمة', mInst:'مثبت', mNot:'غير مثبت', mLoad:p => `جاري التنزيل … ${p} %`, mErr:e => `خطأ: ${e}`, bDl:'تنزيل', bDel:'حذف', bBusy:'جاري التنزيل …',
+  nllbH:'نماذج الترجمة', srvSetup:'إعداد الخادم', mInst:'مثبت', mNot:'غير مثبت', mLoad:p => `جاري التنزيل … ${p} %`, mErr:e => `خطأ: ${e}`, bDl:'تنزيل', bDel:'حذف', bBusy:'جاري التنزيل …',
   serverDown:'خادم الترجمة غير متاح. يتم تثبيته عبر المعالج ويعمل مع التطبيق.',
   confBig:(id, gb) => `حجم ${id} هو ${gb} غيغابايت ويتطلب ذاكرة ووقت. هل تريد التنزيل؟`, confDel:id => `هل تريد حقاً حذف ${id}؟ يمكنك تنزيله لاحقاً.`,
   stopTr:'إيقاف', stopped:'تم إيقاف الترجمة', on:'مفعّل', off:'معطّل', s_bootModel:'تحميل النموذج مسبقاً عند البدء', s_profanity:'فلتر الكلمات البذيئة', s_profanityStyle:'استبدال الكلمات البذيئة', s_autoCopy:'نسخ الناتج تلقائياً', s_autoCopyTyped:'نسخ الناتج فقط عند الكتابة يدوياً', o_stars:'نجوم (****)', o_symbols:'رموز (@#$%&!)', s_mdMode:'ماركداون ديناميكي في المحرر', s_spellAnim:'تحريك موجات التدقيق الإملائي',
@@ -1744,24 +1744,79 @@ $('#resetAll').onclick = () => { for (const [k] of FIELDS) S[k] = D[k]; save(); 
 $('#openSettings').onclick = () => { drawSettings(); $('#settings').showModal(); };
 $('#closeSet').onclick = () => $('#settings').close(); $('#settings').addEventListener('close', () => clearTimeout(mtPoll));
 
-let mtPoll = null, mtBusy = false;
+let mtPoll = null, mtBusy = false, mtTgBusy = false;
+// TranslateGemma laeuft nicht ueber den Python-Server, sondern ueber Ollama.
+// Der Eintrag steht trotzdem in dieser Liste, damit sich das Modell nachtraeglich
+// holen laesst, wenn es im Assistenten nicht gewaehlt wurde.
+const TG_TAG = 'translategemma:4b', TG_GB = 3.3;
+async function tgInstalled() {
+  try {
+    const j = await (await fetch(S.url + '/api/tags')).json();
+    return (j.models || []).some(m => /translategemma/i.test(m.name || m.model || ''));
+  } catch { return false; }
+}
+function tgRow(on) {
+  const gb = String(TG_GB).replace('.', LANG === 'de' ? ',' : '.');
+  return `<div class="mgroup"><b>TranslateGemma</b><div class="mrow"><div><b>4b</b><div class="muted">${gb} GB · ${on ? t('mInst') : t('mNot')}</div></div>` +
+    `<button class="ghost" data-act="${on ? 'tg-delete' : 'tg-install'}" data-id="${TG_TAG}" data-gb="${TG_GB}"${mtTgBusy ? ' disabled' : ''}>${mtTgBusy ? t('bBusy') : on ? t('bDel') : t('bDl')}</button></div></div>`;
+}
 async function drawMt() {
   const box = $('#mtBox'); if (!box) return;
-  let list; try { list = await (await fetch(S.nllb + '/models')).json(); } catch { box.innerHTML = `<div class="muted">${t('serverDown')}</div>`; return; }
+  const tg = await tgInstalled();
+  let list = null;
+  try { list = await (await fetch(S.nllb + '/models')).json(); } catch { list = null; }
+  if (!list) {
+    // Ohne Server gibt es keine Modellliste, aber einen Knopf, der die
+    // Python-Umgebung einrichtet; TranslateGemma bleibt unabhaengig davon holbar.
+    box.innerHTML = `<div class="muted">${t('serverDown')}</div>` +
+      `<div class="mrow"><div></div><button class="ghost" data-act="setup">${t('srvSetup')}</button></div>` + tgRow(tg);
+    return;
+  }
   const fam = {}, groups = {};
   list.forEach(m => { fam[m.family] = m.familyLabel || m.family; (groups[m.family] ||= []).push(m); });
   box.innerHTML = Object.entries(groups).map(([f, ms]) => `<div class="mgroup"><b>${fam[f] || f}</b>` + ms.map(m =>
     `<div class="mrow"><div><b>${m.id}</b><div class="muted">${String(m.gb).replace('.', LANG === 'de' ? ',' : '.')} GB · ${m.downloading ? t('mLoad', Math.round((m.progress || 0) * 100)) : m.error ? t('mErr', m.error) : m.installed ? t('mInst') : t('mNot')}</div></div>` +
-    `<button class="ghost" data-act="${m.installed ? 'delete' : 'install'}" data-id="${m.family}:${m.id}" data-gb="${m.gb}"${m.downloading ? ' disabled' : ''}>${m.downloading ? t('bBusy') : m.installed ? t('bDel') : t('bDl')}</button></div>`).join('') + '</div>').join('');
+    `<button class="ghost" data-act="${m.installed ? 'delete' : 'install'}" data-id="${m.family}:${m.id}" data-gb="${m.gb}"${m.downloading ? ' disabled' : ''}>${m.downloading ? t('bBusy') : m.installed ? t('bDel') : t('bDl')}</button></div>`).join('') + '</div>').join('') + tgRow(tg);
   const busyNow = list.some(m => m.downloading); clearTimeout(mtPoll);
   if (busyNow) { mtBusy = true; if ($('#settings').open) mtPoll = setTimeout(drawMt, 1500); }
   else if (mtBusy) { mtBusy = false; loadModels(); }
 }
 async function mtAction(b) {
-  const { act, id, gb } = b.dataset, mid = id.split(':')[1];
+  const { act, id, gb } = b.dataset, mid = (id || '').split(':')[1];
+  if (act === 'tg-install') {
+    mtTgBusy = true; await drawMt();
+    await pullModel(TG_TAG);
+    mtTgBusy = false; loadModels(); await drawMt(); return;
+  }
+  if (act === 'tg-delete') {
+    if (!confirm(t('confDel', TG_TAG))) return;
+    try { await fetch(S.url + '/api/delete', { method:'DELETE', body:JSON.stringify({ model:TG_TAG }) }); } catch {}
+    loadModels(); await drawMt(); return;
+  }
+  if (act === 'setup') {
+    b.disabled = true; b.textContent = t('bBusy');
+    // Die Zeilen des Hauptprozesses (venv, pip, Serverstart) erscheinen als
+    // Tooltip am Knopf; die Liste selbst tauscht am Ende auf die Modelle um.
+    const off = (window.api && window.api.onNllbSetup) ? window.api.onNllbSetup(d => { if (d && d.line) b.title = d.line; }) : null;
+    let res = null;
+    try { if (window.api && window.api.nllbSetup) res = await window.api.nllbSetup(); } catch {}
+    if (typeof off === 'function') off();
+    if (res && res.ok) loadModels();
+    await drawMt(); return;
+  }
   if (act === 'install' && +gb > 10 && !confirm(t('confBig', mid, gb))) return;
   if (act === 'delete' && !confirm(t('confDel', mid))) return;
-  try { await fetch(`${S.nllb}/models/${act}`, { method:'POST', body:JSON.stringify({ id }) }); } catch {}
+  let ok = true;
+  try { await fetch(`${S.nllb}/models/${act}`, { method:'POST', body:JSON.stringify({ id }) }); } catch { ok = false; }
+  // Server nicht erreichbar: erst die Python-Umgebung einrichten, dann den
+  // Download wiederholen. So kommt der Server mit dem Modell zusammen.
+  if (!ok && act === 'install' && window.api && window.api.nllbSetup) {
+    try {
+      const res = await window.api.nllbSetup();
+      if (res && res.ok) loadModels();
+      await fetch(`${S.nllb}/models/install`, { method:'POST', body:JSON.stringify({ id }) });
+    } catch {}
+  }
   await drawMt(); if (act === 'delete') loadModels();
 }
 

@@ -23,6 +23,10 @@ contextBridge.exposeInMainWorld('api', {
   studyExportFile: (name, data, ext) => ipcRenderer.invoke('study:exportFile', name, data, ext),
   fontsList: () => ipcRenderer.invoke('fonts:list'),
   nllbUrl: u => ipcRenderer.send('nllb:url', u),
+  // Python-Umgebung und Pakete aus der App heraus einrichten (Einstellungen,
+  // zusammen mit einem Modell-Download). Liefert {ok, error?}.
+  nllbSetup: () => ipcRenderer.invoke('nllb:setup'),
+  onNllbSetup: cb => { const f = (_e, d) => cb(d); ipcRenderer.on('nllb:setup', f); return () => ipcRenderer.removeListener('nllb:setup', f); },
   // Dieselbe Meldung fuer Ollama: der Hauptprozess prueft beim Hochfahren die
   // eingestellte Adresse und startet nur einen lokalen Server.
   ollamaUrl: u => ipcRenderer.send('ollama:url', u),

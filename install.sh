@@ -27,8 +27,9 @@ usage() {
 Aufruf: bash install.sh [Optionen]
 
   --dir PFAD      Zielordner (Vorgabe: ~/.local/opt/uebersetzer)
-  --models LISTE  NLLB-Modelle, durch Leerzeichen getrennt (Vorgabe: "nllb:600M",
-                  leer lassen mit --models "")
+  --models LISTE  Uebersetzungsmodelle, durch Leerzeichen getrennt (Vorgabe:
+                  "nllb:600M"; auch "nllb:1.3B", "hy:1.8B", "hy:7B",
+                  "milmmt:1B", "milmmt:4B"; leer lassen mit --models "")
   -y, --yes       ohne Rueckfragen
   -h, --help      diese Hilfe
 
@@ -113,7 +114,7 @@ if [ -n "$WITH_MODELS" ]; then
     fi
   done
 else
-  say 'Keine Modelle angefordert; spaeter mit --models "nllb:600M nllb:1.3B" oder in der App nachladen.'
+  say 'Keine Modelle angefordert; spaeter mit --models "nllb:600M hy:1.8B" oder in der App nachladen.'
 fi
 
 step "Autostart des NLLB-Servers eintragen"

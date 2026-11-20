@@ -155,11 +155,11 @@ function nllbPort() {
   } catch { return ''; }
 }
 ipcMain.on('nllb:url', (_e, u) => setNllbUrl(u));
-function startNllb() {
+function startNllb(force) {
   try {
     const cfg = readCfg();
     const py = venvPython();
-    if (cfg.nllbAutostart && py) {
+    if (py && (force || cfg.nllbAutostart)) {
       nllbWanted = true;
       nllbAnswers(up => {
         if (up) return;
@@ -184,6 +184,86 @@ function startNllb() {
     }
   } catch {}
 }
+
+// ---------- Python-Umgebung aus der App heraus einrichten ----------
+// Der Set-up-Wizard legt nllb-venv an. Wer die App ueber den Installer bekommt
+// oder die Umgebung spaeter verliert, soll dasselbe hier nachholen koennen: Die
+// Einstellungen bieten es an, und ein Modell-Download loest es aus, wenn der
+// Server nicht antwortet. Die Pakete stehen in requirements.txt und liegen im
+// Paket neben nllb_server.py.
+const venvDir = () => path.join(app.getPath('userData'), 'nllb-venv');
+
+// Der System-Python ist unter Windows am haeufigsten im Benutzerprofil, sonst
+// ueber den Launcher `py -3.12` oder den PATH; unter Linux heisst er python3.
+function basePython() {
+  const cands = IS_WIN
+    ? [[path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Python', 'Python312', 'python.exe'), []],
+       ['py', ['-3.12']], ['python', []]]
+    : [['python3', []], ['python', []]];
+  for (const [cmd, pre] of cands) {
+    try {
+      const r = spawnSync(cmd, [...pre, '-c', 'import sys;print(sys.version_info[0])'], { encoding: 'utf8', windowsHide: true, timeout: 20000 });
+      if (r && r.status === 0 && String(r.stdout).trim() === '3') return { cmd, pre };
+    } catch {}
+  }
+  return null;
+}
+
+// Zeilenweise Ausgabe fuer pip und venv; das Ergebnis ist nur der Exit-Code.
+function runStream(cmd, args, onLine) {
+  return new Promise(resolve => {
+    let c;
+    try { c = spawn(cmd, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }); }
+    catch (e) { onLine(String(e.message || e)); return resolve(1); }
+    const feed = b => String(b).split(/\r?\n/).forEach(l => { if (l.trim()) onLine(l.trim()); });
+    c.stdout.on('data', feed); c.stderr.on('data', feed);
+    c.on('error', e => { onLine(String(e.message || e)); resolve(1); });
+    c.on('close', code => resolve(typeof code === 'number' ? code : 1));
+  });
+}
+
+function waitNllb(ms) {
+  return new Promise(resolve => {
+    const t0 = Date.now();
+    const tick = () => nllbAnswers(up => {
+      if (up) return resolve(true);
+      if (Date.now() - t0 > ms) return resolve(false);
+      setTimeout(tick, 600);
+    });
+    tick();
+  });
+}
+
+let nllbSetupJob = null;
+function setupNllb(sender) {
+  if (nllbSetupJob) return nllbSetupJob;
+  const say = line => { try { if (sender && !sender.isDestroyed()) sender.send('nllb:setup', { line }); } catch {} };
+  nllbSetupJob = (async () => {
+    if (await waitNllb(800)) { say('Der Server antwortet bereits.'); return { ok: true, already: true }; }
+    let py = venvPython();
+    if (!py) {
+      const base = basePython();
+      if (!base) { say('Kein Python 3 gefunden. Bitte Python 3.12 installieren.'); return { ok: false, error: 'no python' }; }
+      say('Lege die Python-Umgebung an ...');
+      const code = await runStream(base.cmd, [...base.pre, '-m', 'venv', venvDir()], say);
+      if (code !== 0) return { ok: false, error: 'venv' };
+      py = venvPython();
+      if (!py) return { ok: false, error: 'venv' };
+    }
+    // pythonw.exe kann kein pip; unter Windows also der Interpreter mit Konsole.
+    const pip = IS_WIN ? py.replace(/pythonw?\.exe$/i, 'python.exe') : py;
+    say('Installiere die Pakete; das dauert einige Minuten ...');
+    const code = await runStream(pip, ['-m', 'pip', 'install', '--progress-bar', 'off', '-r', resPath('requirements.txt')], say);
+    if (code !== 0) return { ok: false, error: 'pip' };
+    say('Starte den Server ...');
+    startNllb(true);
+    if (!(await waitNllb(60000))) { say('Der Server antwortet nicht.'); return { ok: false, error: 'server' }; }
+    say('Fertig.');
+    return { ok: true };
+  })().finally(() => { nllbSetupJob = null; });
+  return nllbSetupJob;
+}
+ipcMain.handle('nllb:setup', e => setupNllb(e.sender));
 
 // ---------- EPUB ----------
 // Ein EPUB ist ein ZIP mit XHTML-Dateien. container.xml nennt die Paketdatei

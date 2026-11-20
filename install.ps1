@@ -28,7 +28,7 @@ $T = @{
     title='Uebersetzer - Einrichtung'; heading='Uebersetzer einrichten'
     intro='Fehlende Programme werden automatisch aus den offiziellen Quellen (winget, nodejs.org, ollama.com, python.org, Hugging Face) geladen.'
     folder='Installationsordner'; ollama='Ollama installieren (falls nicht vorhanden)'
-    models='Sprachmodelle fuer Ollama herunterladen:'; nllb='NLLB-200 von Meta einrichten (Python 3.12) - Versionen:'
+    models='Sprachmodelle fuer Ollama herunterladen:'; nllb='Uebersetzungsmodelle ueber Python einrichten (NLLB, HY-MT, MiLMMT) - Versionen:'
     auto='Uebersetzungs-Server automatisch mit der App starten'
     desk='Desktop-Verknuepfung erstellen'; start='Eintraege im Startmenue erstellen (inkl. Deinstallation)'
     install='Installieren'; update='Aktualisieren'; startBtn='Uebersetzer starten'; retry='Erneut versuchen'
@@ -53,7 +53,7 @@ $T = @{
     title='Translator - Setup'; heading='Set up Translator'
     intro='Missing programs are downloaded automatically from official sources (winget, nodejs.org, ollama.com, python.org, Hugging Face).'
     folder='Installation folder'; ollama='Install Ollama (if missing)'
-    models='Download language models for Ollama:'; nllb='Set up NLLB-200 by Meta (Python 3.12) - versions:'
+    models='Download language models for Ollama:'; nllb='Set up translation models via Python (NLLB, HY-MT, MiLMMT) - versions:'
     auto='Start translation server automatically with the app'
     desk='Create desktop shortcut'; start='Create Start menu entries (including uninstall)'
     install='Install'; update='Update'; startBtn='Launch Translator'; retry='Try again'
@@ -78,7 +78,7 @@ $T = @{
     title='Vertaler - Installatie'; heading='Vertaler instellen'
     intro='Ontbrekende programma''s worden automatisch gedownload van officiele bronnen (winget, nodejs.org, ollama.com, python.org, Hugging Face).'
     folder='Installatiemap'; ollama='Ollama installeren (indien niet aanwezig)'
-    models='Taalmodellen voor Ollama downloaden:'; nllb='NLLB-200 van Meta instellen (Python 3.12) - versies:'
+    models='Taalmodellen voor Ollama downloaden:'; nllb='Vertaalmodellen via Python instellen (NLLB, HY-MT, MiLMMT) - versies:'
     auto='Vertaalserver automatisch met de app starten'
     desk='Snelkoppeling op bureaublad maken'; start='Startmenu-items maken (inclusief verwijderen)'
     install='Installeren'; update='Bijwerken'; startBtn='Vertaler starten'; retry='Opnieuw proberen'
@@ -103,7 +103,7 @@ $T = @{
     title='Traductor - Configuracion'; heading='Configurar Traductor'
     intro='Los programas que falten se descargaran automaticamente de las fuentes oficiales (winget, nodejs.org, ollama.com, python.org, Hugging Face).'
     folder='Carpeta de instalacion'; ollama='Instalar Ollama (si no esta presente)'
-    models='Descargar modelos de lenguaje para Ollama:'; nllb='Configurar NLLB-200 de Meta (Python 3.12) - versiones:'
+    models='Descargar modelos de lenguaje para Ollama:'; nllb='Configurar modelos de traduccion via Python (NLLB, HY-MT, MiLMMT) - versiones:'
     auto='Iniciar servidor de traduccion automaticamente con la app'
     desk='Crear acceso directo en el escritorio'; start='Crear accesos en el menu Inicio (incluye desinstalacion)'
     install='Instalar'; update='Actualizar'; startBtn='Iniciar Traductor'; retry='Reintentar'
@@ -128,7 +128,7 @@ $T = @{
     title='Cevirmen - Kurulum'; heading='Cevirmen Kurulumu'
     intro='Eksik programlar resmi kaynaklardan (winget, nodejs.org, ollama.com, python.org, Hugging Face) otomatik indirilir.'
     folder='Kurulum klasoru'; ollama='Ollama yukle (mevcut degilse)'
-    models='Ollama icin dil modellerini indir:'; nllb='Meta NLLB-200 kurulumu (Python 3.12) - surumler:'
+    models='Ollama icin dil modellerini indir:'; nllb='Ceviri modellerini Python ile kur (NLLB, HY-MT, MiLMMT) - surumler:'
     auto='Ceviri sunucusunu uygulama ile otomatik baslat'
     desk='Masaustu kisayolu olustur'; start='Baslat menusu ogeleri olustur (kaldirma dahil)'
     install='Yukle'; update='Guncelle'; startBtn='Cevirmeni Baslat'; retry='Yeniden dene'
@@ -153,7 +153,7 @@ $T = @{
     title='Almotargem - Al Eidad'; heading='Eidad Almotargem'
     intro='Al barameg al mafqoda yatam tahmiloha talqaiyan men al masader al rasmiya (winget, nodejs.org, ollama.com, python.org, Hugging Face).'
     folder='Mogallad al tathbeet'; ollama='Tathbeet Ollama (etha lam yakon mawgoodan)'
-    models='Tahmil namatheg al logha li Ollama:'; nllb='Eidad NLLB-200 men Meta (Python 3.12) - al esdarat:'
+    models='Tahmil namatheg al logha li Ollama:'; nllb='Eidad namathej al-tarjama bi Python (NLLB, HY-MT, MiLMMT) - al-esdarat:'
     auto='Tashgheel server al targama talqaiyan maa al tatbeeq'
     desk='Inshaa ekhtesar ala sath al maktab'; start='Inshaa qawaem fi qaemat al bedaya'
     install='Tathbeet'; update='Tahdeeth'; startBtn='Tashgheel Almotargem'; retry='Iadat al mohawala'
@@ -182,8 +182,8 @@ function tr($k) { if ($script:L.ContainsKey($k)) { return $script:L[$k] } else {
 
 # ---------- Oberflaeche (resizable) ----------
 $f = New-Object Windows.Forms.Form
-$f.Text = tr 'title'; $f.ClientSize = New-Object Drawing.Size(580, 740)
-$f.MinimumSize = New-Object Drawing.Size(560, 700)
+$f.Text = tr 'title'; $f.ClientSize = New-Object Drawing.Size(580, 788)
+$f.MinimumSize = New-Object Drawing.Size(560, 748)
 $f.StartPosition = 'CenterScreen'
 $f.FormBorderStyle = 'Sizable'; $f.MaximizeBox = $true
 $f.Font = New-Object Drawing.Font('Segoe UI', 10)
@@ -227,28 +227,28 @@ $clbModels.SetItemChecked(0, $true); $clbModels.SetItemChecked(1, $true)
 
 $chkNllb = Ctl (New-Object Windows.Forms.CheckBox) 20 312 540 26 (tr 'nllb')
 $chkNllb.Anchor = 'Top,Left,Right'
-$clbNllb = Ctl (New-Object Windows.Forms.CheckedListBox) 44 340 516 78 ''
+$clbNllb = Ctl (New-Object Windows.Forms.CheckedListBox) 44 340 516 124 ''
 $clbNllb.CheckOnClick = $true; $clbNllb.Anchor = 'Top,Left,Right'; $clbNllb.Enabled = $false
-[void]$clbNllb.Items.AddRange(@('nllb:600M - schnell (ca. 2,5 GB)', 'nllb:1.3B - genauer (ca. 5,5 GB)', 'nllb:3.3B - am genauesten (ca. 17,6 GB, ~8 GB RAM, langsam)'))
+[void]$clbNllb.Items.AddRange(@('nllb:600M - schnell (ca. 2,5 GB)', 'nllb:1.3B - genauer (ca. 5,5 GB)', 'nllb:3.3B - am genauesten (ca. 17,6 GB, ~8 GB RAM, langsam)', 'hy:1.8B - HY-MT, kompakt (ca. 3,6 GB, 38 Sprachen)', 'hy:7B - HY-MT, genauer (ca. 15,2 GB, braucht ~16 GB RAM)', 'milmmt:1B - MiLMMT-46, kompakt (ca. 2,1 GB, 46 Sprachen)', 'milmmt:4B - MiLMMT-46, genauer (ca. 8,6 GB)'))
 $clbNllb.SetItemChecked(0, $true)
 
-$chkAuto = Ctl (New-Object Windows.Forms.CheckBox) 20 430 540 26 (tr 'auto')
+$chkAuto = Ctl (New-Object Windows.Forms.CheckBox) 20 478 540 26 (tr 'auto')
 $chkAuto.Anchor = 'Top,Left,Right'
-$chkDesk = Ctl (New-Object Windows.Forms.CheckBox) 20 468 540 26 (tr 'desk')
+$chkDesk = Ctl (New-Object Windows.Forms.CheckBox) 20 516 540 26 (tr 'desk')
 $chkDesk.Anchor = 'Top,Left,Right'
-$chkStart = Ctl (New-Object Windows.Forms.CheckBox) 20 496 540 26 (tr 'start')
+$chkStart = Ctl (New-Object Windows.Forms.CheckBox) 20 544 540 26 (tr 'start')
 $chkStart.Anchor = 'Top,Left,Right'
 foreach ($c in $chkOllama, $chkAuto, $chkDesk, $chkStart) { $c.Checked = $true }
 $chkAuto.Enabled = $false
 $chkNllb.Add_CheckedChanged({ $clbNllb.Enabled = $chkNllb.Checked; $chkAuto.Enabled = $chkNllb.Checked })
 
-$btn = Ctl (New-Object Windows.Forms.Button) 20 534 540 38 (tr 'install')
+$btn = Ctl (New-Object Windows.Forms.Button) 20 582 540 38 (tr 'install')
 $btn.Anchor = 'Top,Left,Right'
-$bar = Ctl (New-Object Windows.Forms.ProgressBar) 20 580 540 8 ''
+$bar = Ctl (New-Object Windows.Forms.ProgressBar) 20 628 540 8 ''
 $bar.Style = 'Marquee'; $bar.Visible = $false; $bar.Anchor = 'Top,Left,Right'
-$lblStatus = Ctl (New-Object Windows.Forms.Label) 20 592 540 22 ''
+$lblStatus = Ctl (New-Object Windows.Forms.Label) 20 640 540 22 ''
 $lblStatus.ForeColor = [Drawing.Color]::Gray; $lblStatus.Anchor = 'Top,Left,Right'
-$txtLog = Ctl (New-Object Windows.Forms.TextBox) 20 618 540 100 ''
+$txtLog = Ctl (New-Object Windows.Forms.TextBox) 20 666 540 100 ''
 $txtLog.Multiline = $true; $txtLog.ReadOnly = $true; $txtLog.ScrollBars = 'Vertical'; $txtLog.Anchor = 'Top,Bottom,Left,Right'
 
 # ---------- Hilfsfunktionen ----------
