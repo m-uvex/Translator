@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.106 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.107 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1707,3 +1707,17 @@ Der Knopf zum Einfuegen von Bildern in der Werkzeugleiste hiess im Tooltip „im
 **Neu:** Die Zeile lautet `['btn','imgIns','image', …]`. Der Schluessel `imgIns` war schon vorhanden („Bild einfügen“) und liegt in allen sechs Sprachen vor; er wird jetzt fuer den Tooltip benutzt. Das Symbol bleibt `image`, der Klick oeffnet weiter den Dateiwaehler. Ein Kommentar an der Liste `TB` sagt, dass der zweite Eintrag der Textschluessel ist.
 
 **Geprueft 1.15.106** in eigenem `--user-data-dir` ueber CDP: Der Knopf ist ueber `data-tt="imgIns"` zu finden, sein `title` lautet „Bild einfügen“, ein Knopf mit `data-tt="img"` existiert nicht mehr, und ein Klick auf ihn loest den Dateiwaehler aus (der `click` von `#edImgFile` wurde dafuer abgefangen und gezaehlt). Die Texte der anderen Sprachen wurden nicht einzeln im Fenster umgeschaltet, sondern nur im Woerterbuch geprueft (je ein Eintrag fuer de/en, nl, es, tr, ar).
+## 133. Bildauswahl endet, wenn das Bild weg ist (1.15.107)
+
+Die Bildauswahl (Abschnitt 128) merkte sich den Rahmen in `imgSel`. Wurde das Bild ueber sein Rechtsklick-Menue geloescht, blieb der Verweis auf den entfernten Knoten stehen: Die drei Ausrichtungs-Knoepfe der Leiste nahmen weiter den Bildzweig, setzten `data-al` auf einen Rahmen ausserhalb des Dokuments und riefen `execCommand` nie auf — sie richteten ins Leere statt den Text aus. Dasselbe konnte nach einem Dokumentwechsel oder einem Neuaufbau der Seite passieren, weil dort neue Rahmen entstehen.
+
+**Neu:** `pruneImgSel()` verwirft die Auswahl, sobald der gemerkte Rahmen nicht mehr in der Seite haengt; `updTb()` und `alignImg()` rufen es auf, bevor sie entscheiden. Das Loeschen ueber das Bildmenue setzt die Auswahl selbst zurueck und frischt die Leiste auf, `initImages()` — der Haken nach jedem Neuaufbau der Seite (Dokumentwechsel, Import, „Neu“) — beginnt mit `imgSel = null`.
+
+**Zweite Ursache, gleicher Weg.** `cmd()` ruft vor jedem Befehl `restoreSel()`, und das setzte eine gemerkte Textauswahl (`ED.sel`) wieder ein. Stand die aus einem geloeschten Bildbereich, lief der Befehl in einem abgehaengten Knoten und blieb wirkungslos, obwohl der Knopf danach „an“ meldete. `restoreSel()` verwirft eine gespeicherte Auswahl jetzt, wenn ihr Knoten nicht mehr im Dokument steht; ein Klick auf ein Bild loescht `ED.sel` zusaetzlich, weil dann keine Textauswahl mehr gemeint ist.
+
+**Geprueft 1.15.107** in eigenem `--user-data-dir` ueber CDP, deutsches Fenster, 600×400-Testbild:
+- Loeschen: Bild eingefuegt, angeklickt (`sel` an, „Mitte“ markiert), Rechtsklick → „Löschen“. Danach kein `.edimg` und kein `.edimg.sel` mehr; Cursor in den Absatz gesetzt und den echten Knopf „Mitte“ geklickt (gestubbter Klick ueber `data-tt="aC"`) → `text-align: center`, Knopf markiert. Vorher blieb der Absatz auf `start`, waehrend der Knopf „an“ zeigte — genau das gemeldete Verhalten.
+- Dokumentwechsel: Bild ausgewaehlt, „Neues Dokument“ geklickt, Cursor in den neuen Absatz, „Rechts“ geklickt → `text-align: right`, keine Bildauswahl, keine Rahmen.
+- Gegenprobe: Ein ausgewaehltes Bild laesst sich weiter ueber die Leiste ausrichten (`data-al="left"`, `margin-left: 0px`, Knopf markiert).
+
+`node --check editor.js` laeuft durch; die Oberflaeche wurde nicht per Bildschirmfoto betrachtet. Die erste Testwiederholung lief noch gegen den alten Stand im Entwicklungsfenster (kein Neuladen) und zeigte den Fehler weiter — erst nach `Page.reload` kamen die neuen Werte.

@@ -784,7 +784,13 @@ async function loadSystemFonts() {
   }
   ['Segoe UI', 'Arial', 'Calibri', 'Georgia', 'Times New Roman', 'Verdana', 'Courier New'].forEach(f => { if (!FONTS.includes(f)) FONTS.push(f); });
 }
-function restoreSel() { if (ED.sel) { const s = getSelection(); s.removeAllRanges(); s.addRange(ED.sel); } }
+function restoreSel() {
+  // Eine gemerkte Textauswahl aus einem Bereich, der nicht mehr im Dokument
+  // steht (etwa aus einem geloeschten Bild), wuerde den Befehl ins Leere
+  // schicken; sie wird verworfen (Abschnitt 133).
+  if (ED.sel && !page.contains(ED.sel.startContainer)) ED.sel = null;
+  if (ED.sel) { const s = getSelection(); s.removeAllRanges(); s.addRange(ED.sel); }
+}
 function cmd(name, val) { restoreSel(); page.focus(); document.execCommand(name, false, val); updTb(); }
 function applySize(px) {
   restoreSel(); page.focus(); document.execCommand('fontSize', false, '7');
@@ -894,6 +900,7 @@ const TB = [
 const IMG_AL = { justifyLeft:'left', justifyCenter:'center', justifyRight:'right' };
 function alignImg(command) {
   const al = IMG_AL[command];
+  pruneImgSel();
   if (!al || !imgSel) return false;
   imgSel.dataset.al = al;
   page.dispatchEvent(new Event('input'));
@@ -939,6 +946,7 @@ function renderTb() {
   });
 }
 function updTb() {
+  pruneImgSel();
   // Steht ein Bild in Auswahl, gibt es keine Textauswahl: dann zeigen die drei
   // Ausrichtungs-Knoepfe die Ausrichtung des Bildes.
   if (imgSel) {
@@ -1265,7 +1273,20 @@ function selectImg(wrap) {
   page.querySelectorAll('.edimg.sel').forEach(w => { if (w !== wrap) w.classList.remove('sel'); });
   wrap.classList.add('sel');
   imgSel = wrap;
+  // Wer ein Bild anklickt, waehlt keinen Text mehr aus; eine gemerkte
+  // Textauswahl wuerde die Leiste sonst mit dem Bild verwechseln.
+  ED.sel = null;
   updTb();
+}
+// Wird der ausgewaehlte Rahmen entfernt (Loeschen ueber das Bildmenue,
+// Rueckgaengig, Dokumentwechsel), zeigt `imgSel` sonst auf einen Knoten, der
+// nicht mehr im Dokument haengt - und die Ausrichtungs-Knoepfe der Leiste
+// richteten ins Leere statt den Text aus (Abschnitt 133).
+function pruneImgSel() {
+  if (!imgSel || page.contains(imgSel)) return false;
+  imgSel.classList.remove('sel');
+  imgSel = null;
+  return true;
 }
 // Ein Klick in eine Zeile, in die Seitenleiste oder in eine andere Ansicht hebt
 // die Bildauswahl auf (Abschnitt 128).
@@ -1412,6 +1433,9 @@ async function addImageFiles(files) {
 // Vorhandene <img> (aus einer importierten HTML-Datei, aus der Ablage) bekommen
 // denselben Rahmen; gespeicherte Rahmen werden nur nachgerechnet.
 function initImages() {
+  // Nach jedem Neuaufbau der Seite (Dokumentwechsel, Import, Neu) gibt es keine
+  // Bildauswahl mehr: die Rahmen sind andere Knoten.
+  imgSel = null;
   page.querySelectorAll('img').forEach(im => {
     const wrap = im.closest('.edimg');
     if (wrap) {
@@ -1452,7 +1476,12 @@ function imgMenu(img, ev) {
     img.dataset.w = String(Math.min(img.naturalWidth || IMG_ED_W, IMG_ED_W));
     applyImgBox(wrap);
   });
-  row('x', t('imgMenuDel'), () => { wrap.remove(); });
+  row('x', t('imgMenuDel'), () => {
+    // Die Auswahl darf nicht auf dem entfernten Rahmen stehen bleiben.
+    if (imgSel === wrap) { imgSel = null; wrap.classList.remove('sel'); }
+    wrap.remove();
+    updTb();
+  });
   const x = Math.min(ev ? ev.clientX : 40, innerWidth - 260), y = Math.min(ev ? ev.clientY : 40, innerHeight - 260);
   Object.assign(p.style, { left:Math.max(8, x) + 'px', top:Math.max(8, y) + 'px' });
   p.classList.remove('hidden');
