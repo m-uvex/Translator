@@ -1087,6 +1087,24 @@ function savePop(btn) {
   [['md', 'Markdown (.md)'], ['txt', 'Text (.txt)'], ['pdf', 'PDF (.pdf)']].forEach(([k, l]) => add(l, () => doSave(k)));
   const r = btn.getBoundingClientRect(); Object.assign(p.style, { left:r.left + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden');
 }
+// Bedruckbare Flaeche bei A4 und den Standardraendern von printToPDF, in CSS-
+// Pixeln, mit etwas Luft fuer die Raender des Rahmens (gemessen am PDF: 28 pt
+// Rand, 787 pt Inhalt). Ein Bild, das breiter oder hoeher ist, wuerde am Papierrand
+// abgeschnitten oder auf eine zweite Seite geschoben — der Druck skaliert nicht.
+const PRINT_W = 700, PRINT_H = 1000;
+// Vor dem PDF-Export bekommt jeder Bilderrahmen einen Zoom-Faktor, den nur die
+// Druck-CSS anwendet (zoom), damit auf dem Bildschirm nichts
+// schrumpft. Werte bleiben im Dokument: nach dem Export werden sie entfernt.
+function fitImagesForPrint(on) {
+  page.querySelectorAll('.edimg').forEach(w => {
+    if (!on) { w.style.removeProperty('--pz'); return; }
+    const bw = parseFloat(w.style.width) || w.offsetWidth || 0;
+    const bh = parseFloat(w.style.height) || w.offsetHeight || 0;
+    if (!bw || !bh) return;
+    const k = Math.min(1, PRINT_W / bw, PRINT_H / bh);
+    if (k < 0.999) w.style.setProperty('--pz', String(Math.round(k * 1000) / 1000));
+  });
+}
 async function doSave(kind) {
   const name = docName();
   // Markdown und reiner Text koennen keine Bilder tragen. Vor dem Export wird
@@ -1115,11 +1133,18 @@ async function doSave(kind) {
   } else {
     data = kind === 'md' ? toMd(page).trim() + '\n' : page.innerText;
   }
-  try {
-    // Ein erfolgreicher Export landet zusaetzlich in der Ablage, damit
-    // erstellte Dateien dort ohne eigenen Schritt wiederzufinden sind.
-    if (await window.api.saveFile(name, data, kind)) await libUpsert();
-  } catch { edStatus(t('readErr')); }
+  // Nur der PDF-Export druckt die Seite: dort muessen die Bilder in die
+  // bedruckbare Flaeche passen (Abschnitt 126).
+  if (kind === 'pdf') fitImagesForPrint(true);
+  let saved = false;
+  try { saved = await window.api.saveFile(name, data, kind); }
+  catch { edStatus(t('readErr')); }
+  finally { if (kind === 'pdf') fitImagesForPrint(false); }
+  // Erst nach dem Zuruecksetzen der Druckwerte in die Ablage: sonst landete der
+  // Zoom-Faktor im gespeicherten HTML. Ein erfolgreicher Export landet
+  // zusaetzlich in der Ablage, damit erstellte Dateien dort ohne eigenen
+  // Schritt wiederzufinden sind.
+  if (saved) await libUpsert();
 }
 
 // ---------- Bilder im Text ----------

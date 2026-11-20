@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.99 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.100 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1616,3 +1616,22 @@ Beim Einfuegen wurde ein Bild zwar auf 1600 px verkleinert (Abschnitt 94), aber 
 **Geprueft 1.15.99** in eigenem `--user-data-dir` ueber CDP, deutsches Fenster: Ein 1400×1400-Rauschbild (PNG, 6.4 MB) per `drop` auf die Seite geworfen — Rahmen `0` (nicht eingefuegt), Statuszeile nennt 6,4 MB und die 3-MB-Grenze. Schalter „Bildgröße beim Einfügen begrenzen“ auf Aus: dasselbe Bild wird eingefuegt (ein `.edimg` mit Breite 480 px), Statuszeile bleibt leer. Wieder auf An gestellt, `S.imgLimit` wieder `true`; ein kleines 600×400-PNG geht mit eingeschalteter Grenze durch. In den Einstellungen steht der Schalter unter „Bilder im Text“ mit „An“ markiert. `node --check editor.js` und `node --check renderer.js` laufen durch. Die Meldung wurde nicht per Bildschirmfoto betrachtet; sie steht in der vorhandenen Statuszeile des Editors.
 
 **Offen:** Die Grenze gilt je Einfuegung, nicht je Dokument — viele knapp erlaubte Bilder koennen ein Dokument weiterhin gross machen. Ob das gewuenscht ist, ist nicht entschieden.
+## 126. PDF-Export mit Bildern wirklich gemessen (1.15.100)
+
+Bis 1.15.99 war der PDF-Export mit Bildern nur behauptet: Abschnitt 94 versprach, die Data-URLs kaemen „von selbst“ mit, und Abschnitt 122 pruefte die Hintergrundfarben. Ob ein Bild im PDF ankommt, an der richtigen Stelle steht und gedreht ist, war nie nachgesehen.
+
+**Pruefaufbau.** Eigene Instanz (`--user-data-dir`), deutsches Fenster. Ueber die Oberflaeche ein Testbild eingefuegt (800×400: schwarzer Grund, weisser Balken oben, rotes Quadrat unten rechts, gruenes Quadrat unten links — damit ist jede Drehung und jede Spiegelung an den Ecken ablesbar), per Rechtsklick-Menue gedreht, am Eckgriff in der Breite gezogen und ueber „Speichern unter … → PDF (.pdf)“ exportiert. Der native Speichern-Dialog wurde mit `SendKeys` bedient, also der echte Weg samt `file:save` und `printToPDF`. Die entstandene Datei wurde mit PyMuPDF geoeffnet: Seitenzahl, `get_image_info` (Platzierung, Groesse, Quellpixel) und ein Rendering bei 96 dpi, in dem die Randbereiche und Ecken des Bildes abgetastet wurden.
+
+**Was schon stimmte.** Ein 480 px breites, um 90° gedrehtes Bild misst im PDF 180 × 360 pt (480 px × 0,75) und steht mittig: weisser Balken rechts, rotes Quadrat unten links, gruenes links oben. Drehung und Skalierung kommen also richtig an, die Druck-CSS muss dafuer nichts tun.
+
+**Drei Fehler, alle behoben.**
+
+1. **Ueberbreite Bilder wurden abgeschnitten.** Ein auf 1200 px gezogenes Bild lag im PDF von x = 27,8 bis x = 627,8 pt — die Seite endet bei 595,9 pt, rechts fehlten also 32 pt am Papierrand. Ursache: `.edimg` traegt seine Breite in Pixeln, der Druck skaliert sie nicht. `fitImagesForPrint()` setzt vor dem PDF-Export je Rahmen einen Faktor `--pz` (Grenzen 700 × 1000 CSS-Pixel, das ist die gemessene bedruckbare Flaeche 540 × 787 pt mit Luft fuer die Raender des Rahmens), den nur die Druck-CSS ueber `zoom` anwendet — auf dem Bildschirm aendert sich nichts. Dasselbe 1200-px-Bild liegt jetzt bei 524 × 262 pt innerhalb der Seite.
+2. **Hohe Bilder rutschten auf eine zweite Seite.** Ein 400 × 1600 px hohes Bild wurde mit Hoehenfaktor 0,656 auf 750 pt gebracht, dazu kamen Text und der leere Absatz unter dem Bild — Ergebnis: zwei Seiten, das Bild ueber beide verteilt. Mit dem Hoehenanteil von `fitImagesForPrint` und einer Druckregel, die einen leeren Schlussabsatz nicht druckt (`#page > p:last-child:empty` bzw. mit nur `<br>`), bleibt es bei einer Seite (187,5 × 750 pt, weiss oben, rot unten, gruen links).
+3. **Bilder am Seitenumbruch wurden zerschnitten.** Bei 26 Absaetzen begann das Bild bei y = 648,8 pt und lief bis 828,8 pt; Seite zwei zeigte den Rest ab y = −138,8 pt. Mit `break-inside:avoid` steht es ganz auf der zweiten Seite (405,8–585,8 pt), unbeschnitten und mit richtigen Farben.
+
+**Nebenbei.** Der Ablage-Eintrag entstand bisher vor dem Zuruecksetzen der Druckwerte, haette also `--pz` ins gespeicherte HTML geschrieben. `libUpsert()` laeuft jetzt nach dem `finally`; im HTML der Ablage steht kein `--pz` mehr (geprueft).
+
+**Geprueft 1.15.100**, drei Faelle am Ende der Aenderungen: gedreht 480 px → 1 Seite, 180 × 360 pt, weiss rechts, rot unten links; 1200 px breit → 1 Seite, 524 × 262 pt, alle Ecken richtig, nichts beschnitten; 400 × 1600 px hoch → 1 Seite, 187,5 × 750 pt, weiss oben, rot unten. Zusaetzlich der Umbruchfall (2 Seiten, Bild ganz auf Seite 2) und die Ablage ohne `--pz`. `node --check editor.js` laeuft durch. Die PDF-Seiten wurden als Pixel geprueft, nicht mit den Augen betrachtet.
+
+**Offen.** Die Grenzen 700 × 1000 px gelten fuer A4 mit den Standardraendern von `printToPDF`; aendert sich das Papierformat in `file:save` (derzeit fest `pageSize: 'A4'`), muessen sie mit. Die Werte stehen als `PRINT_W`/`PRINT_H` in `editor.js`.

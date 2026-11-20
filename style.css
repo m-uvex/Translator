@@ -654,7 +654,7 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .libprev .doc .edimg .hnd,.dockprev .doc .edimg .hnd{display:none}
 /* Im Druck zaehlen nur Bild und Text: keine Ziehpunkte, kein Auswahlrahmen.
    print-color-adjust:exact haelt Schriftfarben und Textmarker im PDF. */
-@media print{.edimg{margin:10px auto;box-shadow:none}.edimg .hnd{display:none}#page{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+@media print{.edimg{margin:10px auto;box-shadow:none;zoom:var(--pz,1);break-inside:avoid;page-break-inside:avoid}#page>p:last-child:has(>br:only-child),#page>p:last-child:empty{display:none}.edimg .hnd{display:none}#page{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
 
 /* Akzentfarben: je Variante eine helle und eine dunkle Fassung. `--accent`
    ist die Fuellfarbe (Schriftfarbe `--on-accent`), `--accent-hover` die hellere
