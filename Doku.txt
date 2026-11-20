@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.113 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.114 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1862,3 +1862,27 @@ Der softwareweite Schalter heisst „KI-Funktionen (alle auf einmal)“, der Edi
 - `aiAllowed('translate')` bleibt `true`, `aiAllowed('editor-op')` ist `false`, `typeof aiAllOn` ist `function`.
 
 `node --check` laeuft fuer `renderer.js`, `editor.js` und `study.js` durch; die Oberflaeche wurde nicht per Bildschirmfoto betrachtet.
+
+## 140. Jede Modellanfrage des Editors haengt am Hauptschalter (1.15.114)
+
+Geprueft wurde die Frage, ob die Sperre nur an den Leisten wirkt. Der Editor ruft ein Modell an genau vier Stellen: `edRun()` (Kuerzen, Verlaengern, Zusammenfassen, Ausdrucksweise, ganzer Text und `summarizeLong`), `edRunProofread()`, `edRunSynonyms()` und `describeInto()` beim Export. Dazu kommt `runTrans()` fuer „Uebersetzen (Auswahl)“, das ueber `translateCore()` laeuft und damit die Ausnahme `translate` benutzt.
+
+**So ausgeloest, dass die Leisten nichts mehr filtern.** Die Leisten wurden mit `aiAll` an gebaut (sieben Knoepfe in der Kontext-Leiste, drei KI-Knoepfe in der Werkzeugleiste), danach wurde der Schalter im laufenden Fenster auf aus gesetzt und dieselben Knoepfe weiter benutzt. Der Klick erreicht `selOp()`, `allOp()`, `styleOp()` und `proofreadDiff()` damit direkt, an `barItems()` und `renderTb()` vorbei. Zusaetzlich schrieb die Seite jeden `fetch` in ein Protokoll, und der Stub (127.0.0.1:4599) zaehlte jede Anfrage; `stub:1` antwortet mit „STUB-ANTWORT“ bzw. JSON.
+
+| Ausgeloest mit `aiAll = false` | Anfragen | `fetch` der Seite | Statuszeile |
+|---|---|---|---|
+| `edRun` — Kuerzen (Leiste) | 0 | — | `aiOffMsg` |
+| `edRun` — Verlaengern (Leiste) | 0 | — | `aiOffMsg` |
+| `edRun` — Zusammenfassen (Leiste) | 0 | — | `aiOffMsg` |
+| `styleOp()` → `edRun` (Ausdrucksweise) | 0 | — | `aiOffMsg` |
+| `allOp()` → `edRun` (Kuerzen ganzer Text) | 0 | — | `aiOffMsg` |
+| `summarizeLong()` (6379 Zeichen, also gestueckelt) | 0 | — | `aiOffMsg` |
+| `edRunProofread()` | 0 | — | `aiOffMsg` |
+| `edRunSynonyms()` | 0 | — | `aiOffMsg` |
+| `describeInto()` (Export-Dialog bei `aiAll` an geoeffnet, Schalter aus, dann „Bilder beschreiben“ gedrueckt) | 0 | — | kein Text, nur Platzhalter im Export |
+| `runTrans()` („Uebersetzen (Auswahl)“) | 1 | `POST /api/chat` | kein Fehler, Auswahl durch die Stub-Antwort ersetzt |
+| `visionFallback()` | 0 | — | Dialog „Dieses Modell kann keine Bilder lesen …“ |
+
+**Befund zum Vision-Rueckfall.** `visionFallback()` fragt selbst kein Modell: es waehlt ein Modell mit Bilderkennung oder bietet an, eines zu holen (`pullModel`) — im Test ging keine Anfrage raus, der Abbruch liess `S.model` unveraendert. Bestaetigt man den Download, ginge ein `/api/pull` an Ollama; das ist kein Modellaufruf, wird aber auch bei ausgeschaltetem Schalter angeboten, weil das Uebersetzen die Ausnahme ist. Wer das anders will, muesste den Download sperren.
+
+**Ergebnis.** Alle Modellaufrufe des Editors laufen durch `chat()` und damit durch `AI_ALLOWED`; die einzige Anfrage, die mit ausgeschaltetem Schalter rausging, war die Ausnahme „Uebersetzen“ (`purpose: 'translate'`). Ein Bild-Export ohne Beschreibung schreibt weiterhin Platzhalter, und der Editor meldet in allen gesperrten Faellen `aiOffMsg`.
