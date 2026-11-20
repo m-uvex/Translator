@@ -890,7 +890,7 @@ const TB = [
   ['tog','bold','bold','bold'], ['tog','italic','italic','italic'], ['tog','underline','underline','underline'], ['tog','strike','strike','strikeThrough'], ['btn','hl','marker', () => paint('mark')], ['btn','ink','textColor', () => paint('ink')], ['sep'],
   ['tog','ul','ul','insertUnorderedList'], ['tog','ol','ol','insertOrderedList'], ['btn','quote','quote', () => cmd('formatBlock', document.queryCommandValue('formatBlock') === 'blockquote' ? 'p' : 'blockquote')], ['sep'],
   ['tog','aL','alignL','justifyLeft'], ['tog','aC','alignC','justifyCenter'], ['tog','aR','alignR','justifyRight'], ['tog','aJ','alignJ','justifyFull'], ['sep'],
-  ['btn','link','link', addLink], ['btn','imgIns','image', () => $('#edImgFile').click()], ['btn','clear','eraser', () => { cmd('removeFormat'); cmd('formatBlock', 'p'); }], ['sep'],
+  ['btn','link','link', addLink], ['btn','imgIns','image', () => $('#edImgFile').click()], ['btn','tblIns','table', tblPick], ['btn','clear','eraser', () => { cmd('removeFormat'); cmd('formatBlock', 'p'); }], ['sep'],
   ['btn','shortenAll','shorten', () => allOp('shorten')], ['btn','lengthenAll','lengthen', () => allOp('lengthen')], ['btn','summarizeAll','summarize', () => allOp('summarize')]
 ];
 // Die drei Ausrichtungs-Knoepfe richten ein ausgewaehltes Bild aus; ohne
@@ -986,6 +986,14 @@ function mdToHtml(md) {
   }
   close(); return out.join('') || '<p><br></p>';
 }
+// Tabelle als Markdown-Tabelle (Rohrzeichen) exportieren.
+function mdTable(t) {
+  const rows = [...t.rows].map(r => [...r.cells].map(c => toMd(c).replace(/\s*\n+\s*/g, ' ').trim()));
+  if (!rows.length) return '';
+  const head = rows[0];
+  return '| ' + head.join(' | ') + ' |\n| ' + head.map(() => '---').join(' | ') + ' |\n' +
+    rows.slice(1).map(r => '| ' + r.join(' | ') + ' |').join('\n') + '\n\n';
+}
 function toMd(node) {
   let o = '';
   node.childNodes.forEach(c => {
@@ -1000,6 +1008,7 @@ function toMd(node) {
       case 'blockquote': o += inn.trim().split('\n').map(l => '> ' + l).join('\n') + '\n\n'; break;
       case 'ul': o += [...c.children].map(li => '- ' + toMd(li).trim()).join('\n') + '\n\n'; break;
       case 'ol': o += [...c.children].map((li, i) => `${i + 1}. ` + toMd(li).trim()).join('\n') + '\n\n'; break;
+      case 'table': o += mdTable(c); break;
       default: o += inn;
     }
   });
@@ -1450,6 +1459,339 @@ function insertEdImage(wrap) {
   selectImg(wrap);
   try { wrap.scrollIntoView({ block:'nearest' }); } catch {}
 }
+
+// ---------- Tabellen im Text ----------
+// Eine Tabelle ist ein eigener Block der Seite: <table class="edtbl"> mit
+// Zeilen und Zellen. Alle Befehle arbeiten direkt am DOM; steht der Cursor in
+// einer Zelle, zeigt sich ueber der Tabelle eine Leiste mit Zeilen- und
+// Spaltenbefehlen (wie die Registerkarte "Layout" in Word).
+X('tblIns','Tabelle einfügen','Insert table','Tabel invoegen','Insertar tabla','Tablo ekle','إدراج جدول');
+X('tblPickH','Tabellengröße wählen','Choose table size','Tabelgrootte kiezen','Elige el tamaño','Tablo boyutu seç','اختر حجم الجدول');
+X('rowAbove','Zeile darüber einfügen','Insert row above','Rij erboven invoegen','Insertar fila encima','Üstüne satır ekle','إدراج صف أعلى');
+X('rowBelow','Zeile darunter einfügen','Insert row below','Rij eronder invoegen','Insertar fila debajo','Altına satır ekle','إدراج صف أسفل');
+X('colLeft','Spalte links einfügen','Insert column left','Kolom links invoegen','Insertar columna a la izquierda','Sola sütun ekle','إدراج عمود يسار');
+X('colRight','Spalte rechts einfügen','Insert column right','Kolom rechts invoegen','Insertar columna a la derecha','Sağa sütun ekle','إدراج عمود يمين');
+X('rowDel','Zeile löschen','Delete row','Rij verwijderen','Eliminar fila','Satırı sil','حذف الصف');
+X('colDel','Spalte löschen','Delete column','Kolom verwijderen','Eliminar columna','Sütunu sil','حذف العمود');
+X('tblHdr','Kopfzeile ein-/ausschalten','Toggle header row','Kopregel aan/uit','Fila de encabezado','Başlık satırı','صف العنوان');
+X('tblDel','Tabelle löschen','Delete table','Tabel verwijderen','Eliminar tabla','Tabloyu sil','حذف الجدول');
+
+const TBL_MIN = 40; // schmalste Spalte beim Ziehen, in Pixeln
+// Tabelle zum Knoten suchen (nur Tabellen in der Seite selbst).
+const tblIn = node => {
+  let n = node;
+  while (n && n !== page) {
+    if (n.nodeType === 1 && n.tagName === 'TABLE') return n;
+    n = n.parentNode;
+  }
+  return null;
+};
+// Zelle, in der der Cursor steht - oder null.
+const curCell = () => {
+  const s = getSelection();
+  if (!s || !s.rangeCount) return null;
+  const tb = tblIn(s.anchorNode);
+  if (!tb) return null;
+  let n = s.anchorNode;
+  while (n && n.nodeType !== 1) n = n.parentNode;
+  while (n && n !== tb && !/^(TD|TH)$/.test(n.tagName)) n = n.parentNode;
+  return n && n !== tb ? n : null;
+};
+const cellInfo = cell => {
+  const tr = cell.parentNode, table = tr.closest('table');
+  return { table, tr, row: [...table.rows].indexOf(tr), col: [...tr.cells].indexOf(cell) };
+};
+const tblCell = tag => { const c = document.createElement(tag); c.append(document.createElement('br')); return c; };
+// Cursor in eine Zelle setzen. Mit `all` wird der Zellinhalt markiert - so
+// verhaelt sich die Tabulatortaste wie in Word: der naechste Zellinhalt ist
+// ausgewaehlt und wird beim Tippen ersetzt.
+function focusCell(cell, all) {
+  if (!cell) return;
+  page.focus();
+  const r = document.createRange();
+  r.selectNodeContents(cell);
+  if (!all) r.collapse(true);
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  try { cell.scrollIntoView({ block: 'nearest' }); } catch {}
+}
+// Tabelle mit r Zeilen und c Spalten hinter dem Block des Cursors einfuegen.
+function insertTable(rows = 3, cols = 3) {
+  const table = document.createElement('table');
+  table.className = 'edtbl';
+  const tbody = document.createElement('tbody');
+  for (let i = 0; i < rows; i++) {
+    const tr = document.createElement('tr');
+    for (let j = 0; j < cols; j++) tr.append(tblCell('td'));
+    tbody.append(tr);
+  }
+  table.append(tbody);
+  const s = getSelection();
+  const host = topChild(s && s.rangeCount ? s.anchorNode : null);
+  // Steht der Cursor in einem leeren Absatz, tritt die Tabelle an dessen
+  // Stelle - sonst bliebe eine leere Zeile ueber der Tabelle stehen.
+  const leer = host && /^(P|DIV)$/.test(host.tagName) && !host.textContent.trim() && !host.querySelector('img,table');
+  if (leer) host.replaceWith(table);
+  else if (host) host.after(table);
+  else page.append(table);
+  const p = document.createElement('p'); p.innerHTML = '<br>';
+  table.after(p);
+  page.dispatchEvent(new Event('input'));
+  focusCell(table.rows[0].cells[0]);
+  tblBarSync();
+  return table;
+}
+// Breite einer gezogenen Tabelle (0, solange sie sich selbst einteilt).
+const tblFixedWidth = table => parseFloat(table.style.width) || 0;
+// Spaltenbreiten nach dem Einfuegen oder Loeschen einer Spalte nachziehen,
+// damit eine zuvor gezogene Tabelle nicht verrutscht. Mit `target` bleibt die
+// Gesamtbreite erhalten: die Spalten teilen sich die vorhandene Breite neu,
+// statt dass die Tabelle ueber den Seitenrand hinauswaechst.
+function syncColWidths(table, target) {
+  const cg = table.querySelector('colgroup');
+  if (!cg) return;
+  const cells = table.rows[0] ? [...table.rows[0].cells] : [];
+  if (!cells.length) return;
+  let widths = cells.map(c => Math.max(TBL_MIN, Math.round(c.getBoundingClientRect().width)));
+  const sum = widths.reduce((a, b) => a + b, 0);
+  if (target && sum > 0 && Math.abs(sum - target) > 1) {
+    const k = target / sum;
+    widths = widths.map(w => Math.max(TBL_MIN, Math.round(w * k)));
+    // Die Rundung auf ganze Pixel wieder ausgleichen.
+    const s2 = widths.reduce((a, b) => a + b, 0);
+    const last = widths.length - 1;
+    widths[last] = Math.max(TBL_MIN, widths[last] + Math.round(target) - s2);
+  }
+  cg.innerHTML = '';
+  widths.forEach(w => { const col = document.createElement('col'); col.style.width = w + 'px'; cg.append(col); });
+  table.style.width = widths.reduce((a, b) => a + b, 0) + 'px';
+}
+function delTableAt(table) {
+  const next = table.nextElementSibling;
+  table.remove();
+  page.dispatchEvent(new Event('input'));
+  if (next) {
+    page.focus();
+    const r = document.createRange(); r.setStart(next, 0); r.collapse(true);
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+  updTb(); tblBarSync();
+}
+function delRowAt({ table, tr, row, col }) {
+  if (table.rows.length <= 1) return delTableAt(table);
+  tr.remove();
+  page.dispatchEvent(new Event('input'));
+  const next = table.rows[Math.min(row, table.rows.length - 1)];
+  focusCell(next.cells[Math.min(col, next.cells.length - 1)] || next.cells[0]);
+  tblBarSync();
+}
+function delColAt({ table, col }) {
+  const widest = Math.max(...[...table.rows].map(r => r.cells.length));
+  if (widest <= 1) return delTableAt(table);
+  const breite = tblFixedWidth(table);
+  [...table.rows].forEach(tr => {
+    if (tr.cells.length <= 1) return;
+    const c = tr.cells[Math.min(col, tr.cells.length - 1)];
+    if (c) c.remove();
+  });
+  page.dispatchEvent(new Event('input'));
+  syncColWidths(table, breite);
+  const tr = table.rows[0];
+  focusCell(tr.cells[Math.min(col, tr.cells.length - 1)]);
+  tblBarSync();
+}
+function toggleHeader(table) {
+  const first = table.rows[0];
+  if (!first || !first.cells.length) return;
+  const on = first.cells[0].tagName === 'TH';
+  [...first.cells].forEach(cell => {
+    const el = tblCell(on ? 'td' : 'th');
+    while (cell.firstChild) el.append(cell.firstChild);
+    cell.replaceWith(el);
+  });
+  table.classList.toggle('hdr', !on);
+  page.dispatchEvent(new Event('input'));
+  focusCell(table.rows[0].cells[0]);
+  tblBarSync();
+}
+function tblOp(kind) {
+  const cell = curCell();
+  if (!cell) return;
+  const info = cellInfo(cell), table = info.table;
+  if (kind === 'rowAbove' || kind === 'rowBelow') {
+    const tr = document.createElement('tr');
+    const n = Math.max(1, table.rows[0].cells.length);
+    for (let i = 0; i < n; i++) tr.append(tblCell('td'));
+    if (kind === 'rowAbove') info.tr.before(tr); else info.tr.after(tr);
+    page.dispatchEvent(new Event('input'));
+    focusCell(tr.cells[Math.min(info.col, tr.cells.length - 1)]);
+  } else if (kind === 'colLeft' || kind === 'colRight') {
+    const breite = tblFixedWidth(table);
+    [...table.rows].forEach(tr => {
+      const ref = tr.cells[Math.min(info.col, tr.cells.length - 1)];
+      if (!ref) return;
+      const c = tblCell(ref.tagName === 'TH' ? 'th' : 'td');
+      if (kind === 'colLeft') ref.before(c); else ref.after(c);
+    });
+    page.dispatchEvent(new Event('input'));
+    syncColWidths(table, breite);
+    const tr = table.rows[info.row] || table.rows[0];
+    focusCell(tr.cells[kind === 'colLeft' ? info.col : Math.min(info.col + 1, tr.cells.length - 1)]);
+  } else if (kind === 'rowDel') delRowAt(info);
+  else if (kind === 'colDel') delColAt(info);
+  else if (kind === 'tblHdr') toggleHeader(table);
+  else if (kind === 'tblDel') delTableAt(table);
+  updTb(); tblBarSync();
+}
+// Tabulatortaste in einer Zelle: naechste Zelle, in der letzten Zelle eine neue
+// Zeile, mit Umschalt die vorige Zelle. Ausserhalb einer Tabelle gibt die
+// Funktion false zurueck, dann bleibt das normale Verhalten.
+function tblTab(back) {
+  const cell = curCell();
+  if (!cell) return false;
+  const info = cellInfo(cell), table = info.table;
+  const flat = [...table.rows].flatMap(r => [...r.cells]);
+  const i = flat.indexOf(cell);
+  if (!back && i === flat.length - 1) {
+    const tr = document.createElement('tr');
+    const n = Math.max(1, table.rows[0].cells.length);
+    for (let k = 0; k < n; k++) tr.append(tblCell('td'));
+    table.rows[table.rows.length - 1].after(tr);
+    page.dispatchEvent(new Event('input'));
+    focusCell(tr.cells[0], true);
+    return true;
+  }
+  if (back && i === 0) {
+    const prev = table.previousElementSibling;
+    if (prev) {
+      page.focus();
+      const r = document.createRange(); r.selectNodeContents(prev); r.collapse(false);
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    }
+    tblBarSync();
+    return true;
+  }
+  focusCell(flat[i + (back ? -1 : 1)], true);
+  return true;
+}
+// Leiste mit den Tabellenbefehlen (einmal angelegt, je nach Cursorlage ein-
+// und ausgeblendet).
+const tblBar = document.createElement('div');
+tblBar.id = 'tblBar';
+tblBar.className = 'ctxbar tbar hidden';
+tblBar.innerHTML = ['rowAbove', 'rowBelow', 'colLeft', 'colRight', 'rowDel', 'colDel', 'tblHdr', 'tblDel']
+  .map(k => `<button type="button" class="tbtn" data-t="${k}"></button>`).join('');
+document.body.append(tblBar);
+tblBar.onmousedown = e => { if (!e.target.closest('button')) e.preventDefault(); };
+tblBar.onclick = e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  e.preventDefault();
+  tblOp(b.dataset.t);
+};
+function tblBarSync() {
+  const cell = curCell();
+  if (!cell || $('#vE').classList.contains('hidden')) { tblBar.classList.add('hidden'); return; }
+  const table = cell.closest('table');
+  tblBar.classList.remove('hidden');
+  const r = table.getBoundingClientRect();
+  const w = tblBar.offsetWidth, h = tblBar.offsetHeight;
+  let top = r.top - h - 8;
+  if (top < 8) top = Math.min(r.bottom + 8, innerHeight - h - 8);
+  tblBar.style.top = Math.max(8, top) + 'px';
+  tblBar.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + 'px';
+  const hdr = !!(table.rows[0] && table.rows[0].cells[0] && table.rows[0].cells[0].tagName === 'TH');
+  const hb = tblBar.querySelector('[data-t="tblHdr"]');
+  if (hb) hb.classList.toggle('on', hdr);
+}
+document.addEventListener('selectionchange', () => tblBarSync());
+$('#pageWrap').addEventListener('scroll', () => { if (!tblBar.classList.contains('hidden')) tblBarSync(); });
+window.addEventListener('resize', () => { if (!tblBar.classList.contains('hidden')) tblBarSync(); });
+// Raster zum Aussuchen der Tabellengroesse (8 x 6 wie das Word-Raster).
+function tblPick(e) {
+  // Der Knopf der Werkzeugleiste ruft die Aktion mit dem Klickereignis auf.
+  const btn = e && e.currentTarget && typeof e.currentTarget.getBoundingClientRect === 'function' ? e.currentTarget : $('#edTb');
+  closePops();
+  const p = $('#pop');
+  p.className = 'pop hidden';
+  p.innerHTML = '';
+  const wrap = document.createElement('div'); wrap.className = 'tblwrap';
+  const hint = document.createElement('div'); hint.className = 'tblhint'; hint.textContent = t('tblPickH');
+  const grid = document.createElement('div'); grid.className = 'tblgrid';
+  for (let r = 1; r <= 6; r++) for (let c = 1; c <= 8; c++) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'tblcell'; b.dataset.r = r; b.dataset.c = c;
+    grid.append(b);
+  }
+  const size = document.createElement('div'); size.className = 'tblsize'; size.textContent = '3 × 3';
+  wrap.append(hint, grid, size);
+  p.append(wrap);
+  grid.onmousemove = ev => {
+    const b = ev.target.closest('.tblcell');
+    if (!b) return;
+    const R = +b.dataset.r, C = +b.dataset.c;
+    grid.querySelectorAll('.tblcell').forEach(x => x.classList.toggle('on', +x.dataset.r <= R && +x.dataset.c <= C));
+    size.textContent = `${C} × ${R}`;
+  };
+  grid.onmouseleave = () => {
+    grid.querySelectorAll('.tblcell').forEach(x => x.classList.remove('on'));
+    size.textContent = '3 × 3';
+  };
+  grid.onclick = ev => {
+    const b = ev.target.closest('.tblcell');
+    if (!b) return;
+    closePops();
+    insertTable(+b.dataset.r, +b.dataset.c);
+  };
+  const r = btn.getBoundingClientRect();
+  p.style.top = r.bottom + 6 + 'px';
+  p.style.left = Math.max(8, Math.min(r.left, innerWidth - 250)) + 'px';
+  p.classList.remove('hidden');
+}
+// Spaltenbreite ziehen: am rechten Zellrand greifen und ziehen.
+let tblDrag = null;
+function applyColWidths(table, widths) {
+  let cg = table.querySelector('colgroup');
+  if (!cg) { cg = document.createElement('colgroup'); table.prepend(cg); }
+  cg.innerHTML = '';
+  widths.forEach(w => { const col = document.createElement('col'); col.style.width = w + 'px'; cg.append(col); });
+  table.style.tableLayout = 'fixed';
+  table.style.width = widths.reduce((a, b) => a + b, 0) + 'px';
+}
+page.addEventListener('pointermove', e => {
+  if (tblDrag) return;
+  const cell = e.target.closest && e.target.closest('td,th');
+  if (!cell || !tblIn(cell)) return;
+  const r = cell.getBoundingClientRect();
+  cell.style.cursor = e.clientX > r.right - 6 ? 'col-resize' : '';
+});
+page.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  const cell = e.target.closest && e.target.closest('td,th');
+  if (!cell) return;
+  const table = tblIn(cell);
+  if (!table) return;
+  const r = cell.getBoundingClientRect();
+  if (e.clientX <= r.right - 6) return;
+  e.preventDefault();
+  const widths = [...table.rows[0].cells].map(c => Math.round(c.getBoundingClientRect().width));
+  tblDrag = { table, col: [...cell.parentNode.cells].indexOf(cell), x: e.clientX, widths };
+  document.body.classList.add('tblresizing');
+});
+document.addEventListener('pointermove', e => {
+  if (!tblDrag) return;
+  const w = Math.max(TBL_MIN, tblDrag.widths[tblDrag.col] + (e.clientX - tblDrag.x));
+  const widths = tblDrag.widths.slice();
+  widths[tblDrag.col] = w;
+  applyColWidths(tblDrag.table, widths);
+});
+document.addEventListener('pointerup', () => {
+  if (!tblDrag) return;
+  const t2 = tblDrag.table;
+  tblDrag = null;
+  document.body.classList.remove('tblresizing');
+  page.dispatchEvent(new Event('input'));
+  tblBarSync();
+});
 
 // Bildmenge des Dokuments: die Data-URLs aller Bilder in der Seite, auch der
 // aus importierten HTML-Dateien. Wird bei jedem Einfuegen neu gerechnet, ein
@@ -2312,6 +2654,8 @@ document.addEventListener('pointerdown', ev => {
 }, true);
 page.addEventListener('keyup', e => { if (e.shiftKey || e.key.startsWith('Arrow')) showBar(); });
 page.addEventListener('keydown', e => {
+  // Tabulator innerhalb einer Tabelle: naechste Zelle statt Fokuswechsel.
+  if (e.key === 'Tab' && !e.ctrlKey && !e.altKey && !e.metaKey && tblTab(e.shiftKey)) { e.preventDefault(); return; }
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); newPage(); return; }
   if (S.edMarkdown && e.key === 'Enter') {
     const s = getSelection();

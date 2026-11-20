@@ -200,6 +200,8 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   volume:'<path d="M11 5 6.6 9H3v6h3.6L11 19z"/><path d="M15 9.3a4 4 0 0 1 0 5.4M17.8 6.5a8 8 0 0 1 0 11"/>',
   power:'<path d="M12 3.2v8.4"/><path d="M7.4 6.6a7 7 0 1 0 9.2 0"/>'
 };
+// Tabelle: Rahmen mit Kopf- und Trennlinien fuer den Werkzeugleisten-Knopf.
+IC.table = '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9.5 9.5v10M15 9.5v10"/>';
 const ic = (n, s = 18, sw = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 document.querySelectorAll('[data-i]').forEach(e => e.innerHTML = ic(e.dataset.i));

@@ -1999,7 +1999,7 @@ const STORY_STR = {
   stNoModel: ['Kein Schreibmodell gefunden.', 'No writing model found.', 'Geen schrijfmodel gevonden.', 'No se encontró modelo de escritura.', 'Yazma modeli bulunamadı.', 'لم يتم العثور على نموذج كتابة.'],
   stUntitled: ['Kurzgeschichte', 'Short story', 'Kort verhaal', 'Relato corto', 'Kısa hikâye', 'قصة قصيرة'],
   aiOffMsg: ['Die KI-Funktionen sind aus (Einstellungen → KI-Funktionen).', 'AI functions are off (Settings → AI functions).', 'De AI-functies staan uit (Instellingen → AI-functies).', 'Las funciones de IA están desactivadas (Ajustes → Funciones de IA).', 'YZ işlevleri kapalı (Ayarlar → YZ işlevleri).', 'وظائف الذكاء الاصطناعي مغلقة (الإعدادات ← وظائف الذكاء الاصطناعي).'],
-  s_story: ['Kurzgeschichten-Generator', 'Short story generator', 'Korteverhalengenerator', 'Generador de relatos', 'Kısa hikâye üreticisi', 'مولّد القصص القصيرة']
+  s_story: ['Kurzgeschichten-Generator (Beta)', 'Short story generator (Beta)', 'Korteverhalengenerator (Beta)', 'Generador de relatos (Beta)', 'Kısa hikâye üreticisi (Beta)', 'مولّد القصص القصيرة (Beta)']
 };
 for (const [k, v] of Object.entries(STORY_STR)) {
   window.K[k] = [v[0], v[1]];
