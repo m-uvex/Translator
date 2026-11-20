@@ -671,9 +671,14 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 [data-accent="pink"]{--accent:#f7c3dd;--accent-hover:#fbdcec;--accent-ink:#a83a72;--on-accent:#3a1028}
 :root.dark[data-accent="pink"],:root.dark [data-accent="pink"]{--accent:#e87fae;--accent-hover:#f0a5c8;--accent-ink:#f4b6d2;--on-accent:#350f22}
 @media (prefers-color-scheme:dark){:root:not(.light)[data-accent="pink"],:root:not(.light) [data-accent="pink"]{--accent:#e87fae;--accent-hover:#f0a5c8;--accent-ink:#f4b6d2;--on-accent:#350f22}}
-[data-accent="babypink"]{--accent:#ffd9e6;--accent-hover:#ffe9f1;--accent-ink:#ac3f6b;--on-accent:#3c1024}
-:root.dark[data-accent="babypink"],:root.dark [data-accent="babypink"]{--accent:#f2a6c4;--accent-hover:#f8c2d6;--accent-ink:#f7b8cf;--on-accent:#340e20}
-@media (prefers-color-scheme:dark){:root:not(.light)[data-accent="babypink"],:root:not(.light) [data-accent="babypink"]{--accent:#f2a6c4;--accent-hover:#f8c2d6;--accent-ink:#f7b8cf;--on-accent:#340e20}}
+/* Baby-Pink ist auskommentiert: Zu nah an "Pink", zwei fast gleiche
+   Farben in der Auswahl verwirren mehr als sie helfen. Zum Wiedereinbauen
+   diesen Block auskommentieren, den Eintrag ['babypink','accentBabyPink']
+   in renderer.js (Liste der Akzentfarben) und die Texte accentBabyPink.
+   [data-accent="babypink"]{--accent:#ffd9e6;--accent-hover:#ffe9f1;--accent-ink:#ac3f6b;--on-accent:#3c1024}
+   :root.dark[data-accent="babypink"],:root.dark [data-accent="babypink"]{--accent:#f2a6c4;--accent-hover:#f8c2d6;--accent-ink:#f7b8cf;--on-accent:#340e20}
+   @media (prefers-color-scheme:dark){:root:not(.light)[data-accent="babypink"],:root:not(.light) [data-accent="babypink"]{--accent:#f2a6c4;--accent-hover:#f8c2d6;--accent-ink:#f7b8cf;--on-accent:#340e20}}
+*/
 [data-accent="coral"]{--accent:#f9c1bd;--accent-hover:#fbdad8;--accent-ink:#b03a34;--on-accent:#3c1210}
 :root.dark[data-accent="coral"],:root.dark [data-accent="coral"]{--accent:#e88078;--accent-hover:#f0a29c;--accent-ink:#f2b3ad;--on-accent:#350f0d}
 @media (prefers-color-scheme:dark){:root:not(.light)[data-accent="coral"],:root:not(.light) [data-accent="coral"]{--accent:#e88078;--accent-hover:#f0a29c;--accent-ink:#f2b3ad;--on-accent:#350f0d}}

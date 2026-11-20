@@ -364,7 +364,7 @@ const K = {
   // Bilder im Text: Werkzeug, Menue am Bild und der Export, der keine Bilder kann.
   s_accent:['Akzentfarbe','Accent colour'],
   accentSky:['Himmelblau','Sky blue'], accentIndigo:['Indigo','Indigo'], accentViolet:['Violett','Violet'],
-  accentPink:['Pink','Pink'], accentBabyPink:['Baby-Pink','Baby pink'], accentCoral:['Koralle','Coral'],
+  accentPink:['Pink','Pink'], /* accentBabyPink:['Baby-Pink','Baby pink'], */ accentCoral:['Koralle','Coral'],
   accentAmber:['Amber','Amber'], accentGreen:['Grün','Green'], accentTeal:['Türkis','Teal'], accentSlate:['Grau','Slate'],
   s_groupImages:['Bilder im Text','Images in text'],
   s_imgModel:['Modell zum Beschreiben von Bildern','Model for describing images'],
@@ -426,7 +426,7 @@ const NL = {
   s_groupGeneral:'Algemeen', s_groupConn:'Verbindingen', s_groupTrans:'Vertaling',
   s_groupEdAI:'Tekstbewerking (AI)', s_edAI:'AI-functies in de editor (alles tegelijk)', s_edCtx:'Werkbalk tonen bij tekstselectie',
   s_accent:'Accentkleur', accentSky:'Hemelblauw', accentIndigo:'Indigo', accentViolet:'Violet', accentPink:'Roze',
-  accentBabyPink:'Babyroze', accentCoral:'Koraal', accentAmber:'Amber', accentGreen:'Groen', accentTeal:'Turquoise', accentSlate:'Grijs',
+  /* accentBabyPink:'Babyroze', */ accentCoral:'Koraal', accentAmber:'Amber', accentGreen:'Groen', accentTeal:'Turquoise', accentSlate:'Grijs',
   s_groupImages:'Afbeeldingen in de tekst', s_imgModel:'Model om afbeeldingen te beschrijven', imgIns:'Afbeelding invoegen',
   s_imgLimit:'Afbeeldingsgrootte bij invoegen beperken (hoogstens 3 MB per afbeelding)',
   imgTooBig:(mb, lim) => `De afbeelding is te groot: ${mb} MB. Toegestaan is hoogstens ${lim} MB per afbeelding. De grens is uit te schakelen in de instellingen onder “Afbeeldingen in de tekst”.`,
@@ -474,7 +474,7 @@ const ES = {
   s_groupGeneral:'General', s_groupConn:'Conexiones', s_groupTrans:'Traducción', s_groupFeatures:'Ajustes adicionales',
   s_groupEdAI:'Edición de texto (IA)', s_edAI:'Funciones de IA en el editor (todas a la vez)', s_edCtx:'Mostrar la barra al seleccionar texto',
   s_accent:'Color de acento', accentSky:'Azul cielo', accentIndigo:'Índigo', accentViolet:'Violeta', accentPink:'Rosa',
-  accentBabyPink:'Rosa bebé', accentCoral:'Coral', accentAmber:'Ámbar', accentGreen:'Verde', accentTeal:'Turquesa', accentSlate:'Gris',
+  /* accentBabyPink:'Rosa bebé', */ accentCoral:'Coral', accentAmber:'Ámbar', accentGreen:'Verde', accentTeal:'Turquesa', accentSlate:'Gris',
   s_groupImages:'Imágenes en el texto', s_imgModel:'Modelo para describir imágenes', imgIns:'Insertar imagen',
   s_imgLimit:'Limitar el tamaño de la imagen al insertar (máx. 3 MB por imagen)',
   imgTooBig:(mb, lim) => `La imagen es demasiado grande: ${mb} MB. Se permiten como máximo ${lim} MB por imagen. Puede desactivar el límite en los ajustes, en «Imágenes en el texto».`,
@@ -524,7 +524,7 @@ const TR = {
   s_groupGeneral:'Genel', s_groupConn:'Bağlantılar', s_groupTrans:'Çeviri', s_groupFeatures:'Ek ayarlar',
   s_groupEdAI:'Metin düzenleme (YZ)', s_edAI:'Düzenleyicideki YZ işlevleri (hepsi birden)', s_edCtx:'Metin seçildiğinde çubuğu göster',
   s_accent:'Vurgu rengi', accentSky:'Gök mavisi', accentIndigo:'Çivit', accentViolet:'Mor', accentPink:'Pembe',
-  accentBabyPink:'Bebek pembesi', accentCoral:'Mercan', accentAmber:'Amber', accentGreen:'Yeşil', accentTeal:'Turkuaz', accentSlate:'Gri',
+  /* accentBabyPink:'Bebek pembesi', */ accentCoral:'Mercan', accentAmber:'Amber', accentGreen:'Yeşil', accentTeal:'Turkuaz', accentSlate:'Gri',
   s_groupImages:'Metindeki görseller', s_imgModel:'Görselleri betimleme modeli', imgIns:'Görsel ekle',
   s_imgLimit:'Ekleme sırasında görsel boyutunu sınırla (görsel başına en fazla 3 MB)',
   imgTooBig:(mb, lim) => `Görsel çok büyük: ${mb} MB. Görsel başına en fazla ${lim} MB izin verilir. Sınırı ayarlarda “Metindeki görseller” altında kapatabilirsiniz.`,
@@ -574,7 +574,7 @@ const AR = {
   s_groupGeneral:'عام', s_groupConn:'الاتصالات', s_groupTrans:'الترجمة', s_groupFeatures:'إعدادات إضافية',
   s_groupEdAI:'تحرير النص (ذكاء اصطناعي)', s_edAI:'وظائف الذكاء الاصطناعي في المحرر (كلها دفعة واحدة)', s_edCtx:'إظهار الشريط عند تحديد النص',
   s_accent:'لون التمييز', accentSky:'أزرق سماوي', accentIndigo:'نيلي', accentViolet:'بنفسجي', accentPink:'وردي',
-  accentBabyPink:'وردي فاتح', accentCoral:'مرجاني', accentAmber:'كهرماني', accentGreen:'أخضر', accentTeal:'فيروزي', accentSlate:'رمادي',
+  /* accentBabyPink:'وردي فاتح', */ accentCoral:'مرجاني', accentAmber:'كهرماني', accentGreen:'أخضر', accentTeal:'فيروزي', accentSlate:'رمادي',
   s_groupImages:'الصور في النص', s_imgModel:'نموذج لوصف الصور', imgIns:'إدراج صورة',
   s_imgLimit:'تحديد حجم الصورة عند الإدراج (3 ميغابايت كحد أقصى لكل صورة)',
   imgTooBig:(mb, lim) => `الصورة كبيرة جداً: ${mb} ميغابايت. الحد الأقصى المسموح ${lim} ميغابايت لكل صورة. يمكنك إيقاف الحد في الإعدادات ضمن «الصور في النص».`,
@@ -915,6 +915,10 @@ const status = m => $('#status').textContent = m;
 function applyTheme() {
   const h = document.documentElement.classList; h.remove('light', 'dark');
   if (S.theme !== 'auto') h.add(S.theme);
+  // Wer noch Baby-Pink gespeichert hat, bekommt Pink statt einer Farbe ohne
+  // Palette (Abschnitt 127). Gleich in S zurueckschreiben, damit die Auswahl in
+  // den Einstellungen den richtigen Knopf markiert statt gar keinen.
+  if (S.accent === 'babypink') S.accent = 'pink';
   document.documentElement.dataset.accent = S.accent || 'sky';
 }
 
@@ -1910,7 +1914,12 @@ function drawSettings() {
     // k === 'uiMode' ? [['classic', t('o_classic')], ['icons', t('o_icons')]] :
     k === 'profanityStyle' ? [['stars', t('o_stars')], ['symbols', t('o_symbols')]] :
     k === 'helper' ? [['', t('autoModel')], ...Object.keys(caps).filter(n => caps[n].includes('completion') && !isTg(n)).map(n => [n, n])] :
-    k === 'accent' ? [['sky','accentSky'],['indigo','accentIndigo'],['violet','accentViolet'],['pink','accentPink'],['babypink','accentBabyPink'],['coral','accentCoral'],['amber','accentAmber'],['green','accentGreen'],['teal','accentTeal'],['slate','accentSlate']].map(([v, l]) => [v, t(l)]) :
+    k === 'accent' ? [['sky','accentSky'],['indigo','accentIndigo'],['violet','accentViolet'],['pink','accentPink'],
+    // Baby-Pink ist auskommentiert (zu nah an Pink, Abschnitt 127): Zum
+    // Wiedereinbauen diese Zeile einkommentieren, den babypink-Block in
+    // style.css und die Texte accentBabyPink.
+    // ['babypink','accentBabyPink'],
+    ['coral','accentCoral'],['amber','accentAmber'],['green','accentGreen'],['teal','accentTeal'],['slate','accentSlate']].map(([v, l]) => [v, t(l)]) :
     k === 'imgModel' ? [['', t('autoModel')], ...Object.keys(caps).filter(n => hasVision(n)).map(n => [n, n])] : null;
   // Zuruecksetzen ist ein reiner Icon-Button; der Name erscheint nur als Tooltip.
   // Das Icon wird direkt eingesetzt, weil reicon() nur im Editor-Scope existiert.

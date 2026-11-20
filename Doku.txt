@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.100 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.101 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1635,3 +1635,14 @@ Bis 1.15.99 war der PDF-Export mit Bildern nur behauptet: Abschnitt 94 versprach
 **Geprueft 1.15.100**, drei Faelle am Ende der Aenderungen: gedreht 480 px → 1 Seite, 180 × 360 pt, weiss rechts, rot unten links; 1200 px breit → 1 Seite, 524 × 262 pt, alle Ecken richtig, nichts beschnitten; 400 × 1600 px hoch → 1 Seite, 187,5 × 750 pt, weiss oben, rot unten. Zusaetzlich der Umbruchfall (2 Seiten, Bild ganz auf Seite 2) und die Ablage ohne `--pz`. `node --check editor.js` laeuft durch. Die PDF-Seiten wurden als Pixel geprueft, nicht mit den Augen betrachtet.
 
 **Offen.** Die Grenzen 700 × 1000 px gelten fuer A4 mit den Standardraendern von `printToPDF`; aendert sich das Papierformat in `file:save` (derzeit fest `pageSize: 'A4'`), muessen sie mit. Die Werte stehen als `PRINT_W`/`PRINT_H` in `editor.js`.
+## 127. Baby-Pink auskommentiert, Pink bleibt (1.15.101)
+
+Die Akzentfarbe gab es zehnmal, und „Pink“ und „Baby-Pink“ lagen so nah beieinander, dass in der Auswahl zwei fast gleiche Kreise standen (Nutzerhinweis mit Bildschirmfoto). Eine der beiden ist ueberzaehlig; Baby-Pink ist jetzt auskommentiert, nicht geloescht — es laesst sich mit wenigen Handgriffen zurueckholen.
+
+**Was auskommentiert ist.** In `style.css` die drei Regeln `[data-accent="babypink"]` (hell), `:root.dark[...]` und die `prefers-color-scheme`-Fassung, als Block mit einer Notiz davor. In `renderer.js` der Eintrag `['babypink','accentBabyPink']` in der Liste der Akzentfarben (Abschnitt 95) und die Texte `accentBabyPink` in allen sechs Sprachen — als Blockkommentar, weil sie mitten in einer Zeile mit anderen Texten stehen.
+
+**Gespeicherte Wahl.** Wer Baby-Pink schon gewaehlt hatte, haette danach eine Farbe ohne Palette gehabt. `applyTheme()` schreibt `babypink` beim Start auf `pink` um, und zwar in `S` selbst — sonst markierte die Auswahl gar keinen Knopf, weil sie den gespeicherten Wert vergleicht. Die Wahl bleibt also einfach Pink.
+
+**Geprueft 1.15.101** in eigenem `--user-data-dir` ueber CDP, deutsches Fenster: Die Auswahl zeigt neun Kreise (Himmelblau, Indigo, Violett, Pink, Koralle, Amber, Gruen, Tuerkis, Grau) mit den erwarteten Farben und ohne „Baby-Pink“. Mit gespeichertem `accent: 'babypink'` im `localStorage` startet die App mit `data-accent="pink"`, `--accent: #e87fae` (dunkle Pink-Fassung), und der Knopf „Pink“ ist markiert; ein Klick auf „Grau“ setzt `S.accent = 'slate'` wie erwartet. `node --check renderer.js` laeuft durch. Die Auswahl wurde nicht per Bildschirmfoto betrachtet.
+
+**Wiedereinbau.** Den CSS-Block und den Listeneintrag einkommentieren, die sechs `accentBabyPink`-Texte ebenfalls — die Notizen an beiden Stellen nennen genau diese Schritte.
