@@ -636,3 +636,7 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
    rechts die Groesse und ob es noch geladen werden muss. */
 .tagrec{display:inline-block;margin-inline-start:6px;padding:1px 7px;border-radius:999px;font-size:11px;line-height:16px;background:var(--accent);color:var(--on-accent);vertical-align:1px}
 .row.sugg{gap:10px}
+
+/* Einzelschalter unter dem ausgeschalteten Hauptschalter „KI-Funktionen im
+   Editor“: sichtbar inaktiv, aber weiter bedienbar. */
+.set.dim{opacity:.45}

@@ -366,6 +366,7 @@ const K = {
   s_edTbShorten:['Kürzen (ganzer Text)','Shorten (entire text)'], s_edTbLengthen:['Verlängern (ganzer Text)','Lengthen (entire text)'], s_edTbSum:['Zusammenfassen (ganzer Text)','Summarize (entire text)'],
   // Vorschlaege in der Sprachsuche (Modelle, die die gesuchte Sprache kennen).
   suggH:['Andere Modelle können diese Sprache','Other models support this language'], recTag:['Empfohlen','Recommended'],
+  edAIdim:['Der Hauptschalter „KI-Funktionen im Editor“ ist aus; diese Einstellung wirkt erst, wenn er wieder an ist.','The master switch “AI functions in the editor” is off; this setting takes effect only when it is on again.'],
   langGeneric:['Allgemeine Liste — die von diesem Modell unterstützten Sprachen sind nicht dokumentiert.','General list — this model’s supported languages are not documented.'],
   reset:['Zurücksetzen','Reset'], resetAll:['Alles zurücksetzen','Reset all'], autoSys:['Automatisch (System)','Automatic (system)'], autoO:['Automatisch','Automatic'], autoModel:['Automatisch','Automatic'], light:['Hell','Light'], dark:['Dunkel','Dark'],
   nllbH:['Übersetzungsmodelle','Translation models'], srvSetup:['Server einrichten','Set up server'], mInst:['Eingerichtet','Installed'], mNot:['Nicht eingerichtet','Not installed'], mLoad:[p => `Lädt … ${p} %`, p => `Downloading … ${p}%`],
@@ -400,7 +401,7 @@ const NL = {
   s_groupGeneral:'Algemeen', s_groupConn:'Verbindingen', s_groupTrans:'Vertaling',
   s_groupEdAI:'Tekstbewerking (AI)', s_edAI:'AI-functies in de editor (alles tegelijk)', s_edCtx:'Werkbalk tonen bij tekstselectie',
   s_edCtxShorten:'Inkorten', s_edCtxLengthen:'Verlengen', s_edCtxSummarize:'Samenvatten', s_edCtxProofread:'Nalezen', s_edCtxSyn:'Synoniemen', s_edCtxStyle:'Stijl', s_edCtxTr:'Vertalen (selectie)',
-  s_edTbShorten:'Inkorten (hele tekst)', s_edTbLengthen:'Verlengen (hele tekst)',   s_edTbSum:'Samenvatten (hele tekst)', suggH:'Andere modellen ondersteunen deze taal', recTag:'Aanbevolen', langGeneric:'Algemene lijst — de talen die dit model ondersteunt zijn niet gedocumenteerd.',
+  s_edTbShorten:'Inkorten (hele tekst)', s_edTbLengthen:'Verlengen (hele tekst)',   s_edTbSum:'Samenvatten (hele tekst)', suggH:'Andere modellen ondersteunen deze taal', recTag:'Aanbevolen', langGeneric:'Algemene lijst — de talen die dit model ondersteunt zijn niet gedocumenteerd.', edAIdim:'De hoofdschakelaar “AI-functies in de editor” staat uit; deze instelling werkt pas als hij weer aan staat.',
   s_history:'Vertaalgeschiedenis', s_diag:'Verbindingen (diagnose)', historyH:'Geschiedenis', historyEmpty:'Nog geen vertalingen', histLoad:'In de velden laden',
   glossColls:'Woordenlijstcollecties', glossSave:'Huidige lijst als collectie bewaren', glossNewName:n => `Collectie ${n}`,
   glossImportT:'Woordenlijst importeren', glossImported:n => `${n} items overgenomen`, glossNone:'Geen items in het bestand', glossNoFile:'Bestand kon niet worden gelezen',
@@ -437,7 +438,7 @@ const ES = {
   s_groupGeneral:'General', s_groupConn:'Conexiones', s_groupTrans:'Traducción', s_groupFeatures:'Ajustes adicionales',
   s_groupEdAI:'Edición de texto (IA)', s_edAI:'Funciones de IA en el editor (todas a la vez)', s_edCtx:'Mostrar la barra al seleccionar texto',
   s_edCtxShorten:'Acortar', s_edCtxLengthen:'Alargar', s_edCtxSummarize:'Resumir', s_edCtxProofread:'Revisar', s_edCtxSyn:'Sinónimos', s_edCtxStyle:'Estilo', s_edCtxTr:'Traducir (selección)',
-  s_edTbShorten:'Acortar (texto completo)', s_edTbLengthen:'Alargar (texto completo)',   s_edTbSum:'Resumir (texto completo)', suggH:'Otros modelos admiten este idioma', recTag:'Recomendado', langGeneric:'Lista general — no está documentado qué idiomas admite este modelo.',
+  s_edTbShorten:'Acortar (texto completo)', s_edTbLengthen:'Alargar (texto completo)',   s_edTbSum:'Resumir (texto completo)', suggH:'Otros modelos admiten este idioma', recTag:'Recomendado', langGeneric:'Lista general — no está documentado qué idiomas admite este modelo.', edAIdim:'El interruptor principal «Funciones de IA en el editor» está desactivado; este ajuste solo actúa cuando vuelve a estar activo.',
   s_history:'Historial de traducciones', s_diag:'Conexiones (diagnóstico)', historyH:'Historial', historyEmpty:'Aún no hay traducciones', histLoad:'Cargar en los campos',
   glossColls:'Colecciones de glosario', glossSave:'Guardar la lista actual como colección', glossNewName:n => `Colección ${n}`,
   glossImportT:'Importar glosario', glossImported:n => `${n} entradas añadidas`, glossNone:'No hay entradas en el archivo', glossNoFile:'No se pudo leer el archivo',
@@ -476,7 +477,7 @@ const TR = {
   s_groupGeneral:'Genel', s_groupConn:'Bağlantılar', s_groupTrans:'Çeviri', s_groupFeatures:'Ek ayarlar',
   s_groupEdAI:'Metin düzenleme (YZ)', s_edAI:'Düzenleyicideki YZ işlevleri (hepsi birden)', s_edCtx:'Metin seçildiğinde çubuğu göster',
   s_edCtxShorten:'Kısalt', s_edCtxLengthen:'Uzat', s_edCtxSummarize:'Özetle', s_edCtxProofread:'Düzelt', s_edCtxSyn:'Eş anlamlılar', s_edCtxStyle:'Stil', s_edCtxTr:'Çevir (seçim)',
-  s_edTbShorten:'Kısalt (tüm metin)', s_edTbLengthen:'Uzat (tüm metin)',   s_edTbSum:'Özetle (tüm metin)', suggH:'Diğer modeller bu dili destekliyor', recTag:'Önerilen', langGeneric:'Genel liste — bu modelin desteklediği diller belgelenmemiş.',
+  s_edTbShorten:'Kısalt (tüm metin)', s_edTbLengthen:'Uzat (tüm metin)',   s_edTbSum:'Özetle (tüm metin)', suggH:'Diğer modeller bu dili destekliyor', recTag:'Önerilen', langGeneric:'Genel liste — bu modelin desteklediği diller belgelenmemiş.', edAIdim:'“Düzenleyicideki YZ işlevleri” ana anahtarı kapalı; bu ayar ancak ana anahtar açılınca etkili olur.',
   s_history:'Çeviri geçmişi', s_diag:'Bağlantılar (tanı)', historyH:'Geçmiş', historyEmpty:'Henüz çeviri yok', histLoad:'Alanlara yükle',
   glossColls:'Sözlük koleksiyonları', glossSave:'Geçerli listeyi koleksiyon olarak kaydet', glossNewName:n => `Koleksiyon ${n}`,
   glossImportT:'Sözlük içe aktar', glossImported:n => `${n} giriş alındı`, glossNone:'Dosyada giriş yok', glossNoFile:'Dosya okunamadı',
@@ -515,7 +516,7 @@ const AR = {
   s_groupGeneral:'عام', s_groupConn:'الاتصالات', s_groupTrans:'الترجمة', s_groupFeatures:'إعدادات إضافية',
   s_groupEdAI:'تحرير النص (ذكاء اصطناعي)', s_edAI:'وظائف الذكاء الاصطناعي في المحرر (كلها دفعة واحدة)', s_edCtx:'إظهار الشريط عند تحديد النص',
   s_edCtxShorten:'تقصير', s_edCtxLengthen:'إطالة', s_edCtxSummarize:'تلخيص', s_edCtxProofread:'تدقيق', s_edCtxSyn:'مرادفات', s_edCtxStyle:'الأسلوب', s_edCtxTr:'ترجمة (تحديد)',
-  s_edTbShorten:'تقصير (النص كامل)', s_edTbLengthen:'إطالة (النص كامل)',   s_edTbSum:'تلخيص (النص كامل)', suggH:'نماذج أخرى تدعم هذه اللغة', recTag:'موصى به', langGeneric:'قائمة عامة — اللغات التي يدعمها هذا النموذج غير موثقة.',
+  s_edTbShorten:'تقصير (النص كامل)', s_edTbLengthen:'إطالة (النص كامل)',   s_edTbSum:'تلخيص (النص كامل)', suggH:'نماذج أخرى تدعم هذه اللغة', recTag:'موصى به', langGeneric:'قائمة عامة — اللغات التي يدعمها هذا النموذج غير موثقة.', edAIdim:'المفتاح الرئيسي «وظائف الذكاء الاصطناعي في المحرر» مغلق؛ لا يؤثر هذا الإعداد إلا عند تشغيله مرة أخرى.',
   s_history:'سجل الترجمات', s_diag:'الاتصالات (تشخيص)', historyH:'السجل', historyEmpty:'لا توجد ترجمات بعد', histLoad:'تحميل في الحقول',
   glossColls:'مجموعات المسرد', glossSave:'حفظ القائمة الحالية كمجموعة', glossNewName:n => `مجموعة ${n}`,
   glossImportT:'استيراد مسرد', glossImported:n => `تمت إضافة ${n} مدخلاً`, glossNone:'لا توجد مدخلات في الملف', glossNoFile:'تعذر قراءة الملف',
@@ -1811,20 +1812,27 @@ function drawSettings() {
     return `<div class="wsc">` + opts.map(([v, l]) =>
       `<button type="button" class="wsopt${cur === String(v) ? ' on' : ''}" data-setkey="${k}" data-setval="${v}"${bool ? ' data-bool="1"' : ''}><span class="ck">${ic('check', 13)}</span>${esc(l)}</button>`).join('') + '</div>';
   };
+  // Die Einzelschalter der Editor-KI haengen am Hauptschalter `edAI`. Ist er
+  // aus, bleiben sie bedienbar, sehen aber inaktiv aus: Was sie einstellen,
+  // wirkt gerade nicht, und ohne den Hinweis sieht es aus, als waere es kaputt.
+  const AI_SUB = new Set(['edCtx', 'edCtxShorten', 'edCtxLengthen', 'edCtxSummarize', 'edCtxProofread',
+    'edCtxSyn', 'edCtxStyle', 'edCtxTr', 'edTbShorten', 'edTbLengthen', 'edTbSum']);
+  const dim = k => AI_SUB.has(k) && S.edAI === false;
   const field = ([k, l, ty]) => {
     // Bei den Arbeitsplaetzen fehlt das Zuruecksetzen bewusst: die Auswahl ist
     // die Einstellung, ein Standard waere hier nur eine zweite Wahl daneben.
     const top = `<div class="top"><b>${t(l)}</b>${ty === 'workspaces' ? '' : rst(k)}</div>`;
+    const box = c => `<div class="set${dim(k) ? ' dim' : ''}"${dim(k) ? ` title="${esc(t('edAIdim'))}"` : ''}>${c}</div>`;
     if (ty === 'workspaces') {
       const on = wsList();
       const item = g => `<button type="button" class="wsopt${on.includes(g) ? ' on' : ''}" data-ws="${g}"><span class="ck">${ic('check', 13)}</span>${esc(t(g === 'tr' ? 'wsTr' : g === 'ed' ? 'wsEd' : 'wsStudy'))}</button>`;
-      return `<div class="set">${top}<div class="wsc">${['tr', 'ed', 'study'].map(item).join('')}</div></div>`;
+      return box(`${top}<div class="wsc">${['tr', 'ed', 'study'].map(item).join('')}</div>`);
     }
-    if (ty === 'bool') return `<div class="set">${top}${chips(k, [['1', t('on')], ['0', t('off')]], true)}</div>`;
-    if (lists(k)) return `<div class="set">${top}${chips(k, lists(k))}</div>`;
-    return `<div class="set">${top}` +
+    if (ty === 'bool') return box(top + chips(k, [['1', t('on')], ['0', t('off')]], true));
+    if (lists(k)) return box(top + chips(k, lists(k)));
+    return box(top +
       (ty === 'area' ? `<textarea data-k="${k}"></textarea>` :
-       `<input data-k="${k}" type="${ty}" step="${k === 'temp' ? 0.1 : 256}">`) + '</div>';
+       `<input data-k="${k}" type="${ty}" step="${k === 'temp' ? 0.1 : 256}">`));
   };
   const byKey = Object.fromEntries(FIELDS.map(f => [f[0], f]));
   $('#setBody').innerHTML = GROUPS.map(([h, ks]) => `<h3 class="sect">${t(h)}</h3>` + ks.map(k => field(byKey[k])).join('')).join('') +
