@@ -398,6 +398,9 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
    Bewertung korrigieren. Leise gehalten, damit die vier Bewertungen die
    Handlung bleiben. */
 .srseditrow{display:flex;justify-content:center;margin-top:10px}
+/* Hinweis ohne Sprachausgabe: steht in der Karte selbst, nicht in einer
+   anderen Ansicht (gleiche Farbe wie .vmsg.err). */
+.srssay{font-size:13px;line-height:1.4;color:#c9605a;margin-top:10px}
 .srsedit{width:32px;height:32px;border-radius:50%;color:var(--muted);padding:0}
 .srsedit:hover{background:var(--soft);color:var(--text)}
 .srsempty{color:var(--muted);text-align:center;display:flex;flex-direction:column;gap:4px}

@@ -895,6 +895,14 @@ function vocStatus(text, err) {
   el.classList.toggle('hidden', !text);
   el.classList.toggle('err', !!text && !!err);
 }
+// Lautsprecher in der Liste: Ohne Sprachausgabe sagt die Zeile ueber der Liste
+// (#vocMsg), was fehlt — sie steht fest ueber dem scrollenden #vocList und ist
+// damit auch bei langen Listen zu sehen. Ein Klick ohne jede Rueckmeldung liest
+// sich sonst wie ein Fehler.
+async function sayVocab(e) {
+  if (!await speakVocab(e)) return vocStatus(t('speakNone'), true);
+  if ($('#vocMsg').textContent === t('speakNone')) vocStatus('');
+}
 
 async function addFromSearch() {
   const inp = $('#vocTerm');
@@ -1369,6 +1377,7 @@ function renderSrs() {
     ${srsShow ? `<div class="srsres">${e.gender ? `<span class="vg">${genderMark(e)}</span>` : ''}${sol ? esc(sol) : `<span class="muted">${esc(t('srsNoTr'))}</span>`}</div>
       ${subLine}
       <div class="srseditrow"><button class="ib srsedit" id="srsSay" title="${esc(t('speak'))}" aria-label="${esc(t('speak'))}">${ic('volume', 16)}</button><button class="ib srsedit" id="srsEdit" title="${esc(t('edit'))}" aria-label="${esc(t('edit'))}">${ic('pencil', 16)}</button></div>
+      <div class="srssay hidden"></div>
       <div class="srsbtns">
         <button class="ghost" data-r="again">${esc(t('srsAgain'))}</button>
         <button class="ghost" data-r="hard">${esc(t('srsHard'))}</button>
@@ -1385,7 +1394,15 @@ function renderSrs() {
   const ed = box.querySelector('#srsEdit');
   if (ed) ed.onclick = () => vocOpenEdit(e.id);
   const say = box.querySelector('#srsSay');
-  if (say) say.onclick = () => speakVocab(e);
+  // Ohne Sprachausgabe sagt die Zeile in der Karte, was fehlt: die Liste ist
+  // hier nicht zu sehen und die Statuszeile des Uebersetzers liegt in einer
+  // anderen Ansicht.
+  if (say) say.onclick = async () => {
+    const ok = await speakVocab(e);
+    const m = box.querySelector('.srssay'); if (!m) return;
+    m.textContent = ok ? '' : t('speakNone');
+    m.classList.toggle('hidden', ok);
+  };
   box.querySelectorAll('[data-r]').forEach(b => b.onclick = () => {
     rate(e, b.dataset.r);
     srsShow = false;
@@ -2010,7 +2027,7 @@ function wire() {
   $('#vocTerm').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addFromSearch(); } });
   $('#vocList').addEventListener('click', e => {
     const say = e.target.closest('[data-say]');
-    if (say) return speakVocab(ST.vocab.find(v => v.id === say.dataset.say));
+    if (say) return sayVocab(ST.vocab.find(v => v.id === say.dataset.say));
     const ed = e.target.closest('[data-edit]');
     if (ed) return vocOpenEdit(ed.dataset.edit);
     const b = e.target.closest('[data-del]');
