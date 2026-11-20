@@ -36,9 +36,11 @@ PORT = int(os.environ.get("NLLB_PORT", "8765"))
 def _langs(rows):
     return [{"code": c, "name": n, "prompt": p, **({"zh": z} if z else {})} for c, n, p, z in rows]
 
-# Tencent HY-MT 1.5: die 33 Sprachen der Modellkarte, dazu fuenf chinesische
-# Minderheiten- und Dialektvarianten (bo, kk, mn, ug, yue) - zusammen 38 Codes.
-# Die fuenf uebersetzen nur aus dem Chinesischen brauchbar (Messung in Doku.txt,
+# Tencent HY-MT 1.5: die 33 Sprachen der Modellkarte, dazu vier chinesische
+# Minderheiten- und Dialektvarianten (bo, mn, ug, yue) - zusammen 37 Codes.
+# Kasachisch (kk) ist 1.15.85 entfallen: es kam auch aus dem Chinesischen nur in
+# arabischer Schrift zurueck und war damit in keiner Richtung brauchbar.
+# Die vier uebersetzen nur aus dem Chinesischen brauchbar (Messung in Doku.txt,
 # Abschnitt 110); sie bleiben in der Liste, sind als Ziel aber nur mit
 # chinesischer Quelle erlaubt (ZH_ONLY unten).
 HY_LANGS = _langs([
@@ -76,17 +78,16 @@ HY_LANGS = _langs([
     ("km", "Khmer", "Khmer", "\u9ad8\u68c9\u8bed"),
     ("my", "Burmese", "Burmese", "\u7f05\u7538\u8bed"),
     ("bo", "Tibetan", "Tibetan", "\u85cf\u8bed"),
-    ("kk", "Kazakh", "Kazakh", "\u54c8\u8428\u514b\u8bed"),
     ("mn", "Mongolian", "Mongolian", "\u8499\u53e4\u8bed"),
     ("ug", "Uyghur", "Uyghur", "\u7ef4\u543e\u5c14\u8bed"),
     ("yue", "Cantonese", "Cantonese", "\u7ca4\u8bed"),
 ])
 
-# Diese fuenf Codes liefert das Modell nur aus dem Chinesischen brauchbar; mit
+# Diese vier Codes liefert das Modell nur aus dem Chinesischen brauchbar; mit
 # deutscher oder englischer Quelle kommen fremde Schriften oder sinnfreie
 # Saetze heraus. Sie bleiben waehlbar, als Ziel aber nur bei chinesischer
 # Quelle: der Client blendet sie sonst aus, und /translate lehnt das Paar ab.
-ZH_ONLY = {"bo", "kk", "mn", "ug", "yue"}
+ZH_ONLY = {"bo", "mn", "ug", "yue"}
 for _l in HY_LANGS:
     if _l["code"] in ZH_ONLY:
         _l["zh_only"] = True

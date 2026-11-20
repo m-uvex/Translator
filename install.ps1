@@ -229,7 +229,7 @@ $chkNllb = Ctl (New-Object Windows.Forms.CheckBox) 20 312 540 26 (tr 'nllb')
 $chkNllb.Anchor = 'Top,Left,Right'
 $clbNllb = Ctl (New-Object Windows.Forms.CheckedListBox) 44 340 516 124 ''
 $clbNllb.CheckOnClick = $true; $clbNllb.Anchor = 'Top,Left,Right'; $clbNllb.Enabled = $false
-[void]$clbNllb.Items.AddRange(@('nllb:600M - schnell (ca. 2,5 GB)', 'nllb:1.3B - genauer (ca. 5,5 GB)', 'nllb:3.3B - am genauesten (ca. 17,6 GB, ~8 GB RAM, langsam)', 'hy:1.8B - HY-MT, kompakt (ca. 3,6 GB, 38 Sprachen)', 'hy:7B - HY-MT, genauer (ca. 15,2 GB, braucht ~16 GB RAM)', 'milmmt:1B - MiLMMT-46, kompakt (ca. 2,1 GB, 46 Sprachen)', 'milmmt:4B - MiLMMT-46, genauer (ca. 8,6 GB)'))
+[void]$clbNllb.Items.AddRange(@('nllb:600M - schnell (ca. 2,5 GB)', 'nllb:1.3B - genauer (ca. 5,5 GB)', 'nllb:3.3B - am genauesten (ca. 17,6 GB, ~8 GB RAM, langsam)', 'hy:1.8B - HY-MT, kompakt (ca. 3,6 GB, 37 Sprachen)', 'hy:7B - HY-MT, genauer (ca. 15,2 GB, braucht ~16 GB RAM)', 'milmmt:1B - MiLMMT-46, kompakt (ca. 2,1 GB, 46 Sprachen)', 'milmmt:4B - MiLMMT-46, genauer (ca. 8,6 GB)'))
 $clbNllb.SetItemChecked(0, $true)
 
 $chkAuto = Ctl (New-Object Windows.Forms.CheckBox) 20 478 540 26 (tr 'auto')
