@@ -1043,7 +1043,9 @@ async function translate() {
   currentMt = isMt();
   currentReq = 'tr-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
   try {
-    lastSrc = text; $('#output').textContent = '';
+    // lastTr faellt mit dem alten Text weg, damit der Lautsprecher waehrend
+    // der neuen Uebersetzung nicht den vorigen Stand vorliest.
+    lastSrc = text; lastTr = ''; $('#output').textContent = ''; updSpeakTr();
     const live = x => $('#output').textContent = x;
     lastTr = await translateCore(text, { model:S.model, src:S.src, tgt:S.tgt, style:S.style, writer:S.style.writer, ctxt:S.ctxt, gloss:S.gloss, images, onToken:live, signal:currentAbortController.signal, req:currentReq });
     histAdd(lastSrc, lastTr);
@@ -1060,11 +1062,16 @@ async function translate() {
     currentAbortController = null; currentReq = null; currentMt = false;
   }
 }
+// Lautsprecher an der Ausgabe: spricht die Uebersetzung in der Zielsprache,
+// ueber denselben Weg wie die Vokabeln (study.js: speakText) — Windows SAPI,
+// Linux spd-say bzw. espeak-ng. Sichtbar nur, wenn es etwas zu sprechen gibt.
+function updSpeakTr() { $('#speakTr').classList.toggle('hidden', !String(lastTr || '').trim()); }
 function renderOut() {
   const o = $('#output'); o.innerHTML = '';
   for (const { segment, isWordLike } of new Intl.Segmenter(undefined, { granularity:'word' }).segment(lastTr)) {
     if (isWordLike) { const s = document.createElement('span'); s.className = 'w'; s.textContent = segment; o.append(s); } else o.append(segment);
   }
+  updSpeakTr();
 }
 
 // ---------- Verlauf ----------
@@ -1535,7 +1542,7 @@ $('#input').oninput = () => {
   if (!$('#input').value.trim()) {
     inputPasted = false;
     $('#output').textContent = '';
-    lastTr = ''; lastSrc = ''; status('');
+    lastTr = ''; lastSrc = ''; status(''); updSpeakTr();
   }
 };
 $('#input').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); translate(); } };
@@ -1543,6 +1550,10 @@ $('#go').onclick = translate; $('#stopTr').onclick = stopTranslation;
 $('#copy').onclick = async () => {
   const ok = await copyText(lastTr || $('#output').textContent);
   status(t(ok ? 'copied' : 'copyErr'));
+};
+$('#speakTr').onclick = () => {
+  const txt = lastTr || $('#output').textContent;
+  if (String(txt || '').trim()) speakText(txt, S.tgt);
 };
 $('#refresh').onclick = async () => {
   if ($('#refresh').classList.contains('spinning')) return;
