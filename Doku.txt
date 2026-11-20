@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.109 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.110 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1660,7 +1660,9 @@ Bilder im Texteditor zeigten ihre Ziehpunkte schon beim Ueberfahren und behielte
 
 **Geprueft 1.15.102** in eigenem `--user-data-dir` ueber CDP, deutsches Fenster, 800×400-Testbild: Nach einem Klick in einen Absatz `sel` aus, Ziehpunkt-Deckkraft 0, `box-shadow: none`; nach einem Klick aufs Bild `sel` an, Deckkraft 1, Rahmen `rgb(140,200,245) 0 0 0 1.5px`, Zeiger `grab`. Griffzeiger bei 0 Grad: `nwse`, `nwse`, `nesw`, `nesw`; nach Drehung um 90 Grad an allen vier Griffen `ns-resize` (Rahmen dann 240 × 480 px). Klick auf „links“/„rechts“/„mitte“ setzt `data-al` und die Raender `0/170`, `170/0`, `85/85` px, der jeweilige Knopf leuchtet. Ziehen des Bildes ueber den ersten Absatz aendert die Reihenfolge von `abs1, abs2, edimg` zu `edimg, abs1, abs2`, waehrend des Zugs `grabbing`, danach wieder `grab` und `drag` entfernt. Klick in die Seitenleiste hebt die Auswahl auf (Deckkraft 0). Ohne Bildauswahl richtet „mitte“ weiter den Absatz aus (`text-align: center`). `node --check editor.js` laeuft durch.
 
-**Nicht geprueft.** Der Ausdruck der neuen Ausrichtung: Die Attributregel ist spezifischer als die Druckregel `.edimg{margin:10px auto}`, ein PDF mit linksbuendigem Bild wurde aber nicht erzeugt. Das Verschieben in Tabellen und Listen ist ebenfalls nicht getestet — dort bestimmt der Block unter dem Zeiger das Ziel, was in verschachtelten Strukturen daneben liegen kann.
+**Ausdruck der Ausrichtung.** Der Verdacht war die Spezifitaet: die Attributregeln `.edimg[data-al="left"]` und `.edimg[data-al="right"]` sind spezifischer als die Druckregel `.edimg{margin:10px auto}`, obwohl diese in `@media print` steht. Am 20. November 2026 wurde es an einem erzeugten PDF nachgemessen und bestaetigt, Zahlen und Aufbau in Abschnitt 136.
+
+**Nicht geprueft.** Das Verschieben in Tabellen und Listen — dort bestimmt der Block unter dem Zeiger das Ziel, was in verschachtelten Strukturen daneben liegen kann.
 ## 129. Obergrenze fuer alle Bilder eines Dokuments (1.15.103)
 
 Die Grenze aus Abschnitt 125 gilt je Einfuegung (3 MB). Zwanzig Bilder mit 2,9 MB kamen damit ungehindert durch und machten aus einem Dokument ueber 50 MB — die Einzelgrenze schuetzt nur gegen einzelne Ausreisser, nicht gegen die Summe.
@@ -1767,3 +1769,25 @@ Beim ersten Durchlauf mit dem alten Stand waren die Messpunkte nach dem Drehen a
 **Geprueft 1.15.109** (echte Maus, deutsches Fenster): Groesse 480 → 730 px bei einem Zug 250 px weit ueber den 10-px-Griff hinaus; Zeigerbewegung ohne gedrueckte Taste aendert nichts; Klick ohne Ziehen meldet keine Aenderung; NW-Griff 730 → 830 px; Zug ueber das Bild hinweg 830 → 680 px mit erhaltener Auswahl; nach dem Drehen um 90 Grad vergroessert der senkrechte Zug die Breite (480 → 580, Wrap 387×580, Zeiger `ns-resize`); danach verschiebt sich das Bild weiter sauber (`bild, a, b, (leer)`, keine Marke, keine `drag`-Klasse) und bleibt ausgewaehlt. Keine Ausnahmen im Renderer.
 
 `node --check editor.js` laeuft durch; die Oberflaeche wurde nicht per Bildschirmfoto betrachtet.
+
+## 136. Bildausrichtung im PDF belegt (1.15.110)
+
+In Abschnitt 124 stand bis hierher offen, ob links-, mittig- und rechtsbuendige Bilder im PDF ankommen. Der Verdacht war die Spezifitaet der Attributregeln (0,2,0) gegenueber der Druckregel `.edimg{margin:10px auto}` (0,1,0), die in `@media print` steht und damit spaeter in der Kaskade; nachgemessen war es nie.
+
+**Aufbau der Pruefung.** Ein Electron-Hilfsskript laedt die echte `index.html` mit dem echten `preload.js` in einem eigenen `userData`, legt im Editor drei Absaetze an und zieht drei Bilder von 320x200 px per `drop` hinein — also ueber den echten Weg `addImageFiles()` → `insertEdImage()` → `mkEdImage()` mit `applyImgBox()` und `bindImg()`. Ausgerichtet wird ueber die echten Leistenknoepfe (`data-tt="aL"`, `"aC"`, `"aR"`), danach wird die Auswahl per Klick aufgehoben. Exportiert wird mit demselben Aufruf wie in `main.js`: `win.webContents.printToPDF({ pageSize:'A4', printBackground:true })`; nur der Speichern-Dialog fehlt. Die Datei liegt unter `%TEMP%\uebersetzer-pdf-test\bildausrichtung.pdf`, daneben `seite1.png` (Seite 1, 1,5-fach gerendert).
+
+**Im Editor** standen die drei Rahmen bei 320x200 px mit `margin-left`/`margin-right`: links 0/330, Mitte 165/165, rechts 330/0; `data-al` war je Bild gesetzt, die Auswahl danach aus.
+
+**Im PDF** (A4, 595,9 x 842,9 pt, Inhalt von 27,8 bis 568,4 pt, also 1-cm-Raender) findet PyMuPDF mit `page.get_image_info()` drei Bilder von je 240 pt Breite (320 CSS-px mal 0,75) in diesen Kaesten:
+
+| Bild | x0 | x1 | Bezug |
+|---|---|---|---|
+| Mitte | 178,5 | 418,5 | Mitte 298,5 gegen Seitenmitte 298,0 |
+| rechts | 328,5 | 568,5 | rechte Kante = Inhaltskante 568,4 |
+| links | 27,8 | 267,8 | linke Kante = Inhaltskante 27,8 |
+
+Die Ausrichtung kommt also an: links sitzt am linken Inhaltsrand, rechts am rechten, die Mitte in der Seitenmitte. Das gerenderte Seitenbild bestaetigt es: blaues Bild am linken Rand, gruenes mittig, rotes rechtsbuendig.
+
+**Was der Test nicht abdeckt.** Gemessen wurde der PDF-Weg, nicht der Druck ueber den Systemdialog; beide benutzen dieselbe Druck-CSS. Bilder, die groesser als die bedruckbare Flaeche sind, werden vorher mit `fitImagesForPrint()` ueber `--pz` verkleinert — die Raender des Rahmens und damit die Ausrichtung bleiben davon unberuehrt, gemessen wurde dieser Fall aber nicht, weil die Testbilder kleiner als `PRINT_W`/`PRINT_H` waren. Das Verschieben in Tabellen und Listen bleibt ungeprueft (Abschnitt 124).
+
+**Nebenbei.** Fuer die Messung wurde `pymupdf` in die Doku-Venv `%APPDATA%\uebersetzer\nllb-venv` nachinstalliert; vorher waren dort nur `pymupdf_layout` und `pymupdf4llm` vorhanden, `import fitz`/`pymupdf` schlug fehl.
