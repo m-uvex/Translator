@@ -290,6 +290,7 @@ const K = {
   glossNone:['Keine Einträge in der Datei','No entries in the file'],
   glossNoFile:['Datei konnte nicht gelesen werden','Could not read the file'],
   speak:['Vorlesen','Read aloud'],
+  speakNone:['Keine Sprachausgabe vorhanden — espeak-ng oder speech-dispatcher installieren (sudo apt install espeak-ng)','No speech output available — install espeak-ng or speech-dispatcher (sudo apt install espeak-ng)'],
   diagH:['Verbindungen','Connections'], diagRefresh:['Neu messen','Measure again'],
   diagOk:['Erreichbar','Reachable'], diagFail:['Nicht erreichbar','Not reachable'],
   diagModels:['Modelle','Models'],
@@ -386,7 +387,7 @@ const NL = {
   s_history:'Vertaalgeschiedenis', s_diag:'Verbindingen (diagnose)', historyH:'Geschiedenis', historyEmpty:'Nog geen vertalingen', histLoad:'In de velden laden',
   glossColls:'Woordenlijstcollecties', glossSave:'Huidige lijst als collectie bewaren', glossNewName:n => `Collectie ${n}`,
   glossImportT:'Woordenlijst importeren', glossImported:n => `${n} items overgenomen`, glossNone:'Geen items in het bestand', glossNoFile:'Bestand kon niet worden gelezen',
-  speak:'Voorlezen', diagH:'Verbindingen', diagRefresh:'Opnieuw meten', diagOk:'Bereikbaar', diagFail:'Niet bereikbaar',
+  speak:'Voorlezen', speakNone:'Geen spraakuitvoer aanwezig — installeer espeak-ng of speech-dispatcher (sudo apt install espeak-ng)', diagH:'Verbindingen', diagRefresh:'Opnieuw meten', diagOk:'Bereikbaar', diagFail:'Niet bereikbaar',
   diagModels:'Modellen', diagLoaded:'Geladen', diagNone:'niets', diagVersion:'Versie',
   diagUnload:'Modellen vrijgeven', diagUnloaded:'Modellen vrijgegeven', diagNoUnload:'Niets geladen',
   diagOllama:'Ollama', diagNllb:'NLLB-server', diagHint:'De adressen staan in de instellingen onder „Verbindingen“.', hotkeyHint:'Snel openen vanuit elk programma: Ctrl+Shift+Spatie', hotkeyTaken:'Snel openen vanuit elk programma is bezet door een ander programma; na een herstart wordt het opnieuw geprobeerd.',
@@ -418,7 +419,7 @@ const ES = {
   s_history:'Historial de traducciones', s_diag:'Conexiones (diagnóstico)', historyH:'Historial', historyEmpty:'Aún no hay traducciones', histLoad:'Cargar en los campos',
   glossColls:'Colecciones de glosario', glossSave:'Guardar la lista actual como colección', glossNewName:n => `Colección ${n}`,
   glossImportT:'Importar glosario', glossImported:n => `${n} entradas añadidas`, glossNone:'No hay entradas en el archivo', glossNoFile:'No se pudo leer el archivo',
-  speak:'Leer en voz alta', diagH:'Conexiones', diagRefresh:'Medir de nuevo', diagOk:'Accesible', diagFail:'No accesible',
+  speak:'Leer en voz alta', speakNone:'No hay salida de voz — instala espeak-ng o speech-dispatcher (sudo apt install espeak-ng)', diagH:'Conexiones', diagRefresh:'Medir de nuevo', diagOk:'Accesible', diagFail:'No accesible',
   diagModels:'Modelos', diagLoaded:'Cargado', diagNone:'nada', diagVersion:'Versión',
   diagUnload:'Liberar modelos', diagUnloaded:'Modelos liberados', diagNoUnload:'Nada cargado',
   diagNllb:'Servidor NLLB', diagHint:'Las direcciones se ajustan en la configuración, en «Conexiones».', hotkeyHint:'Acceso rápido desde cualquier programa: Ctrl+Shift+Espacio', hotkeyTaken:'El acceso rápido desde cualquier programa está ocupado por otro programa; se volverá a intentar tras reiniciar.',
@@ -452,7 +453,7 @@ const TR = {
   s_history:'Çeviri geçmişi', s_diag:'Bağlantılar (tanı)', historyH:'Geçmiş', historyEmpty:'Henüz çeviri yok', histLoad:'Alanlara yükle',
   glossColls:'Sözlük koleksiyonları', glossSave:'Geçerli listeyi koleksiyon olarak kaydet', glossNewName:n => `Koleksiyon ${n}`,
   glossImportT:'Sözlük içe aktar', glossImported:n => `${n} giriş alındı`, glossNone:'Dosyada giriş yok', glossNoFile:'Dosya okunamadı',
-  speak:'Sesli oku', diagH:'Bağlantılar', diagRefresh:'Yeniden ölç', diagOk:'Erişilebilir', diagFail:'Erişilemiyor',
+  speak:'Sesli oku', speakNone:'Ses çıkışı yok — espeak-ng veya speech-dispatcher kurun (sudo apt install espeak-ng)', diagH:'Bağlantılar', diagRefresh:'Yeniden ölç', diagOk:'Erişilebilir', diagFail:'Erişilemiyor',
   diagModels:'Modeller', diagLoaded:'Yüklü', diagNone:'yok', diagVersion:'Sürüm',
   diagUnload:'Modelleri boşalt', diagUnloaded:'Modeller boşaltıldı', diagNoUnload:'Yüklü model yok',
   diagNllb:'NLLB sunucusu', diagHint:'Adresler ayarlarda „Bağlantılar“ altında.', hotkeyHint:'Her programdan hızlı erişim: Ctrl+Shift+Boşluk', hotkeyTaken:'Her programdan hızlı erişim başka bir program tarafından kullanılıyor; yeniden başlatmadan sonra tekrar denenecek.',
@@ -486,7 +487,7 @@ const AR = {
   s_history:'سجل الترجمات', s_diag:'الاتصالات (تشخيص)', historyH:'السجل', historyEmpty:'لا توجد ترجمات بعد', histLoad:'تحميل في الحقول',
   glossColls:'مجموعات المسرد', glossSave:'حفظ القائمة الحالية كمجموعة', glossNewName:n => `مجموعة ${n}`,
   glossImportT:'استيراد مسرد', glossImported:n => `تمت إضافة ${n} مدخلاً`, glossNone:'لا توجد مدخلات في الملف', glossNoFile:'تعذر قراءة الملف',
-  speak:'قراءة بصوت عالٍ', diagH:'الاتصالات', diagRefresh:'قياس مرة أخرى', diagOk:'متاح', diagFail:'غير متاح',
+  speak:'قراءة بصوت عالٍ', speakNone:'لا يوجد إخراج صوتي — ثبّت espeak-ng أو speech-dispatcher (sudo apt install espeak-ng)', diagH:'الاتصالات', diagRefresh:'قياس مرة أخرى', diagOk:'متاح', diagFail:'غير متاح',
   diagModels:'النماذج', diagLoaded:'محمّل', diagNone:'لا شيء', diagVersion:'الإصدار',
   diagUnload:'إفراغ النماذج', diagUnloaded:'تم إفراغ النماذج', diagNoUnload:'لا شيء محمّل',
   diagNllb:'خادم NLLB', diagHint:'تُضبط العناوين في الإعدادات ضمن «الاتصالات».', hotkeyHint:'وصول سريع من أي تطبيق: Ctrl+Shift+Space', hotkeyTaken:'وصول سريع من أي تطبيق محجوز من برنامج آخر؛ ستُعاد المحاولة بعد إعادة التشغيل.',
@@ -1551,9 +1552,12 @@ $('#copy').onclick = async () => {
   const ok = await copyText(lastTr || $('#output').textContent);
   status(t(ok ? 'copied' : 'copyErr'));
 };
-$('#speakTr').onclick = () => {
+$('#speakTr').onclick = async () => {
   const txt = lastTr || $('#output').textContent;
-  if (String(txt || '').trim()) speakText(txt, S.tgt);
+  if (!String(txt || '').trim()) return;
+  // Ohne Sprachausgabe im System sagt die Statuszeile, was fehlt, statt stumm
+  // zu bleiben (Linux ohne speech-dispatcher und espeak-ng).
+  status(await speakChecked(txt, S.tgt) ? '' : t('speakNone'));
 };
 $('#refresh').onclick = async () => {
   if ($('#refresh').classList.contains('spinning')) return;
