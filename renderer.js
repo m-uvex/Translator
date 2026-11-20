@@ -271,7 +271,7 @@ const K = {
   fmtNo:['Format nicht unterstützt','Unsupported file format'], noText:['Keine Textebene gefunden (gescanntes Dokument?). Bitte als Bild hochladen.','No text found (scanned document?). Please upload it as an image.'],
   readErr:['Datei konnte nicht gelesen werden','Could not read the file'],
   noVisionSwitch:[v => `Dieses Modell kann keine Bilder lesen. Zu ${v} wechseln, das Bilder versteht?`, v => `This model can't read images. Switch to ${v}, which can?`],
-  noVisionPull:[(v, s) => `Dieses Modell kann keine Bilder lesen. ${v} (${s}) herunterladen, das Bilder versteht?`, (v, s) => `This model can't read images. Download ${v} (${s}), which can?`],
+  noVisionPull:[(v, s) => `Dieses Modell kann keine Bilder lesen. ${v}${s ? ` (${s})` : ''} herunterladen, das Bilder versteht?`, (v, s) => `This model can't read images. Download ${v} (${s}), which can?`],
   switchTo:[v => `Zu ${v} wechseln`, v => `Switch to ${v}`], download:[v => `${v} laden`, v => `Download ${v}`], cancel:['Abbrechen','Cancel'],
   pulling:[(m, p) => `Lade ${m} … ${p}`, (m, p) => `Downloading ${m} … ${p}`], pullErr:['Herunterladen fehlgeschlagen','Download failed'],
   s_url:['Ollama-Adresse','Ollama address'], s_nllb:['NLLB-Server-Adresse','NLLB server address'], s_ui:['Anzeigesprache','Display language'], s_theme:['Darstellung','Theme'],
@@ -870,7 +870,10 @@ function filterProfanity(text, final = true, tgt = S.tgt, src = S.src) {
 
 let caps = {}, images = [], lastSrc = '', lastTr = '', busy = false, retries = 0, MODEL_OPTS = [], currentAbortController = null, currentReq = null, currentMt = false, inputPasted = false;
 const MT_PREFIX = /^(nllb|omt|hy|milmmt):/;
-const isMt = (m = S.model) => MT_PREFIX.test(m || '');
+// Welche Familien es gibt, sagt der Server (/models). Die Praefixe sind nur der
+// Rueckfall, solange die Liste noch nicht geladen ist - etwa beim Start, wenn
+// die gespeicherte Wahl schon geprueft werden muss.
+const isMt = (m = S.model) => MT_MODELS.some(x => `${x.family}:${x.id}` === String(m || '')) || MT_PREFIX.test(m || '');
 const isTg = m => /translategemma/i.test(m || '');
 const noAuto = () => isMt() || isTg(S.model);
 // Jede Familie hat ihre eigene, offizielle Sprachliste; NLLB liefert sie aus dem
@@ -924,8 +927,16 @@ function fixLangs() {
 // Familien liefern ihre Groesse mit /models, Ollama die seiner Modelle in
 // /api/tags (Byte), TranslateGemma steht fest.
 let MODEL_GB = {};
+// TranslateGemma bekommt seine Groesse aus /api/tags, nicht aus einer festen
+// Zahl: translategemma:12b ist deutlich groesser als 4b. Nur solange das Modell
+// nicht geladen ist und es um genau 4b geht, gilt der Wert aus dem Assistenten.
 const modelGb = m => isMt(m) ? ((MT_MODELS.find(x => `${x.family}:${x.id}` === m) || {}).gb || 0)
-  : isTg(m) ? 3.3 : (MODEL_GB[m] || 0);
+  : isTg(m) ? (MODEL_GB[m] || (m === TG_TAG ? TG_GB : 0)) : (MODEL_GB[m] || 0);
+// Groesse fuer Anzeigen: nur wenn eine Zahl vorliegt, sonst bleibt der Platz
+// leer statt "undefined GB" zu behaupten.
+const gbTxt = v => (v != null && isFinite(v) && +v > 0)
+  ? String(Math.round(+v * 10) / 10).replace('.', LANG === 'de' ? ',' : '.') + ' GB'
+  : '';
 
 async function loadNllb() {
   try {
@@ -1021,12 +1032,19 @@ function suggestModels(q) {
     const l = hit(list); if (!l) return;
     out.push({ value, label, gb: gb || 0, installed: !!installed, code: l[0] });
   };
-  for (const f of ['nllb', 'hy', 'milmmt']) {
+  // Die Familien kommen aus /models, nicht aus einer festen Liste: Was der
+  // Server anbietet, wird auch vorgeschlagen.
+  for (const f of [...new Set(['nllb', ...MT_MODELS.map(m => m.family)])]) {
     if (isMt(cur) && famOf(cur) === f) continue;
     const list = mtLangs(f); if (!list.length) continue;
     MT_MODELS.filter(m => m.family === f).forEach(m => add(`${f}:${m.id}`, `${m.familyLabel || f} ${m.id}`, m.gb, m.installed, list));
   }
-  if (!isTg(cur)) add('translategemma:4b', 'TranslateGemma 4b', 3.3, !!caps['translategemma:4b'], TG_LANGS);
+  // TranslateGemma: die installierte Kennung anbieten (auch 12b), sonst 4b zum
+  // Holen - Groesse aus Ollama, sofern das Modell schon da ist.
+  if (!isTg(cur)) {
+    const tag = Object.keys(caps).find(n => /translategemma/i.test(n)) || TG_TAG;
+    add(tag, 'TranslateGemma ' + (String(tag).split(':')[1] || '4b'), modelGb(tag), !!caps[tag], TG_LANGS);
+  }
   // Aehnliche Groesse zuerst; bei gleichem Abstand das kleinere Modell. Der
   // erste Eintrag traegt im Popup die Marke „Empfohlen“.
   out.sort((a, b) => Math.abs(a.gb - curGb) - Math.abs(b.gb - curGb) || a.gb - b.gb);
@@ -1049,14 +1067,18 @@ async function ensureModel(c) {
   if (isMt(c.value)) {
     const r = await fetch(S.nllb + '/models/install', { method:'POST', body:JSON.stringify({ id:c.value }) }).catch(() => null);
     if (!r || !r.ok) { status(t('mErr', 'Server')); return false; }
+    // Nach dem Warten wird der Zustand geprueft: Ein abgebrochener Download darf
+    // nicht als Erfolg durchgehen.
+    let done = false;
     for (let i = 0; i < 900; i++) {
       await new Promise(x => setTimeout(x, 2000));
       const ms = await (await fetch(S.nllb + '/models')).json().catch(() => []);
       const m = ms.find(x => `${x.family}:${x.id}` === c.value);
       if (m && m.error) { status(t('mErr', m.error)); return false; }
       if (m && m.progress != null) status(t('mLoad', Math.round(m.progress)));
-      if (m && m.installed) break;
+      if (m && m.installed) { done = true; break; }
     }
+    if (!done) { status(t('mErr', 'Server')); return false; }
     await loadModels();
   } else {
     if (!(await pullModel(c.value))) return false;
@@ -1631,7 +1653,7 @@ $('#ctx').value = S.ctxt; $('#ctx').oninput = e => { S.ctxt = e.target.value; sa
 async function visionFallback() {
   const v = Object.keys(caps).find(n => hasVision(n));
   const target = v || 'gemma3:4b';
-  const yes = await ask(v ? t('noVisionSwitch', v) : t('noVisionPull', target, '3,3 GB'), v ? t('switchTo', v) : t('download', target), t('cancel'));
+  const yes = await ask(v ? t('noVisionSwitch', v) : t('noVisionPull', target, gbTxt(MODEL_GB[target])), v ? t('switchTo', v) : t('download', target), t('cancel'));
   if (!yes) return false;
   if (!v) { if (!(await pullModel(target))) return false; await loadModels(); }
   S.pref = S.model = target; save(); fixLangs(); updModelBtn(); upd(); return true;
@@ -2010,9 +2032,10 @@ function tgRow(tag) {
   const name = String(tag || TG_TAG).split(':')[1] || TG_TAG;
   // Die Groesse ist nur fuer 4b bekannt; bei anderen Kennungen bleibt sie weg,
   // statt eine falsche Zahl zu behaupten.
-  const gb = name === '4b' ? String(TG_GB).replace('.', LANG === 'de' ? ',' : '.') + ' GB · ' : '';
-  return `<div class="mgroup"><b>TranslateGemma</b><div class="mrow"><div><b>${esc(name)}</b><div class="muted">${gb}${tag ? t('mInst') : t('mNot')}</div></div>` +
-    `<button class="ghost" data-act="${tag ? 'tg-delete' : 'tg-install'}" data-id="${esc(tag || TG_TAG)}" data-gb="${TG_GB}"${mtTgBusy ? ' disabled' : ''}>${mtTgBusy ? t('bBusy') : tag ? t('bDel') : t('bDl')}</button></div></div>`;
+  const gb = gbTxt((tag && MODEL_GB[tag]) || (name === '4b' ? TG_GB : 0));
+  const state = [gb, tag ? t('mInst') : t('mNot')].filter(Boolean).join(' · ');
+  return `<div class="mgroup"><b>TranslateGemma</b><div class="mrow"><div><b>${esc(name)}</b><div class="muted">${state}</div></div>` +
+    `<button class="ghost" data-act="${tag ? 'tg-delete' : 'tg-install'}" data-id="${esc(tag || TG_TAG)}" data-gb="${(tag && MODEL_GB[tag]) || TG_GB}"${mtTgBusy ? ' disabled' : ''}>${mtTgBusy ? t('bBusy') : tag ? t('bDel') : t('bDl')}</button></div></div>`;
 }
 async function drawMt() {
   const box = $('#mtBox'); if (!box) return;
@@ -2029,8 +2052,8 @@ async function drawMt() {
   const fam = {}, groups = {};
   list.forEach(m => { fam[m.family] = m.familyLabel || m.family; (groups[m.family] ||= []).push(m); });
   box.innerHTML = Object.entries(groups).map(([f, ms]) => `<div class="mgroup"><b>${fam[f] || f}</b>` + ms.map(m =>
-    `<div class="mrow"><div><b>${m.id}</b><div class="muted">${String(m.gb).replace('.', LANG === 'de' ? ',' : '.')} GB · ${m.downloading ? t('mLoad', Math.round((m.progress || 0) * 100)) : m.error ? t('mErr', m.error) : m.installed ? t('mInst') : t('mNot')}</div></div>` +
-    `<button class="ghost" data-act="${m.installed ? 'delete' : 'install'}" data-id="${m.family}:${m.id}" data-gb="${m.gb}"${m.downloading ? ' disabled' : ''}>${m.downloading ? t('bBusy') : m.installed ? t('bDel') : t('bDl')}</button></div>`).join('') + '</div>').join('') + tgRow(tg);
+    `<div class="mrow"><div><b>${m.id}</b><div class="muted">${[gbTxt(m.gb), m.downloading ? t('mLoad', Math.round((m.progress || 0) * 100)) : m.error ? t('mErr', m.error) : m.installed ? t('mInst') : t('mNot')].filter(Boolean).join(' · ')}</div></div>` +
+    `<button class="ghost" data-act="${m.installed ? 'delete' : 'install'}" data-id="${m.family}:${m.id}" data-gb="${m.gb == null ? '' : m.gb}"${m.downloading ? ' disabled' : ''}>${m.downloading ? t('bBusy') : m.installed ? t('bDel') : t('bDl')}</button></div>`).join('') + '</div>').join('') + tgRow(tg);
   const busyNow = list.some(m => m.downloading); clearTimeout(mtPoll);
   if (busyNow) { mtBusy = true; if ($('#settings').open) mtPoll = setTimeout(drawMt, 1500); }
   else if (mtBusy) { mtBusy = false; loadModels(); }

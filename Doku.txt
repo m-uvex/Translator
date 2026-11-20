@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.95 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.96 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1572,3 +1572,24 @@ Die Akzentfarbe war fest blau: `--accent`, `--accent-hover`, `--accent-ink` und 
 | Gruen | #bfe6c8 \| #6cc487 | #d8f0dd \| #93d5a8 | #2f7a45 \| #a5ddb6 | #0d2c18 \| #0b2816 |
 | Tuerkis | #b3e6e2 \| #5cc4ba | #d3f1ef \| #85d6ce | #1f7a72 \| #9adfd8 | #072b29 \| #062925 |
 | Grau | #d6d8de \| #9aa0ac | #e7e9ee \| #b5bac4 | #4a4f5a \| #c2c7d0 | #1b1e24 \| #16181d |
+## 123. Modell- und Statuszeilen gegen echte Quellen geprueft (1.15.96)
+
+Nach dem TranslateGemma-Fehler aus Abschnitt 116/117 (feste Kennung statt der installierten) wurden die uebrigen Zeilen der Einstellungen und der Sprachsuche durchgesehen: NLLB, HY-MT, MiLMMT, der Serverzustand und die Vorschlaege der Sprachsuche.
+
+**In Ordnung und unveraendert.** Die Modellzeilen der drei Server-Familien kommen vollstaendig aus `GET /models` (Kennung, Familienname, Groesse, `installed`, `progress`, `error`), die Groessen stehen also dort, wo sie gepflegt werden (`nllb_server.py`, FAMILIES). Die Sprachlisten holt `loadNllb()` aus `/languages` (NLLB: der echte Tokenizer, die anderen Familien: ihre Modelltabelle), inklusive `zh_only` fuer HY-MT; die Texte `noteHy`/`noteMi` nennen keine Zahl, die abweichen koennte. Der Serverzustand (`serverDown`, die Diagnosezeile `HTTP … · ms`, Zahl der Modelle und geladenes Modell) wird gemessen, nicht behauptet.
+
+**Gefunden und behoben.**
+1. `modelGb` gab fuer **jedes** TranslateGemma 3,3 GB zurueck. Bei `translategemma:12b` ist das falsch; jetzt gilt die Groesse aus `/api/tags`, und nur fuer ein nicht installiertes 4b der Wert aus dem Assistenten.
+2. Die **Sprachsuche** schlug TranslateGemma fest als `translategemma:4b` mit 3,3 GB vor und prueft „installiert“ gegen genau diese Kennung. Wer 12b installiert hatte, sah trotzdem „4b · herunterladen“. Jetzt wird die tatsaechlich installierte Kennung vorgeschlagen, mit ihrer Groesse und ihrem Zustand; nur ohne Treffer kommt 4b als Download.
+3. Die Familienliste der Vorschlaege war `['nllb','hy','milmmt']` fest eingebaut, und `isMt()` erkannte Modelle nur an den Praefixen `nllb|omt|hy|milmmt`. Eine vom Server neu angebotene Familie waere als allgemeines Ollama-Modell behandelt und an Ollama geschickt worden. Jetzt kommen die Familien aus `/models` (`new Set(['nllb', ...MT_MODELS.map(m => m.family)])`), und `isMt()` prueft zuerst gegen diese Liste; die Praefixe bleiben nur der Rueckfall, solange `/models` noch nicht geladen ist (Start, Server aus).
+4. Die Modellzeile schrieb `${m.gb} GB` ohne Pruefung: Fehlt im Servereintrag eine Groesse, stand dort „undefined GB“. Jetzt zeigt eine Hilfsfunktion `gbTxt()` die Groesse nur bei einer echten Zahl, und `data-gb` bleibt dann leer (die Nachfrage bei Modellen ueber 10 GB entfaellt damit statt mit `NaN` zu rechnen). Dieselbe Funktion nutzt die TranslateGemma-Zeile, sodass dort die Groesse des installierten Tags steht.
+5. Die Rueckfrage nach einem Bildmodell behauptete „(3,3 GB)“ fuer `gemma3:4b`, auch wenn das Modell nicht geladen und die Groesse damit unbekannt war. Die Klammer erscheint jetzt nur mit bekannter Groesse.
+6. `ensureModel()` schaltete nach dem Warten auf einen Download auch dann um, wenn das Modell nie installiert wurde (die Schleife lief 900 × 2 s und fiel danach einfach durch). Jetzt wird der letzte Zustand geprueft; ohne `installed` gibt es eine Fehlermeldung und keinen Wechsel.
+
+**Geprueft 1.15.96** mit gestubbten Antworten in eigenem `--user-data-dir` (echtes `fetch` ersetzt, danach wiederhergestellt):
+- `/models` mit einem NLLB-Eintrag **ohne** `gb`, HY-MT 1.8B mit 3,6 GB und einer zusaetzlichen Familie `omt:1B` (4,5 GB): Die Einstellungen zeigen fuer 600M nur „Eingerichtet“ (kein „undefined“), fuer omt „4,5 GB“; die Sprachsuche nach „german“ schlaegt `omt:1B` (4,5 GB, installiert), `hy:1.8B` (3,6 GB) und `nllb:600M` vor — die neue Familie wird also erkannt und angeboten.
+- `/api/tags` mit `translategemma:12b` (8,1 GB): Die Zeile zeigt „12b · 8,1 GB · Eingerichtet“, `modelGb('translategemma:12b')` ist 8,1, `modelGb('translategemma:4b')` bleibt 3,3 (nicht installiert). Die Sprachsuche bietet `translategemma:12b` mit 8,1 GB und `installed: true` an; bei aktuell gewaehltem HY-MT fehlt die HY-Familie in den Vorschlaegen, bei gewaehltem TranslateGemma fehlt TranslateGemma.
+- `isMt('omt:1B')` ist wahr, `isMt('llama3:8b')` falsch.
+- Rueckfrage ohne Groesse: „… gemma3:4b herunterladen, das Bilder versteht?“ (keine Klammer), mit Groesse: „… gemma3:4b (3,3 GB) …“.
+- `ensureModel({value:'hy:7B', installed:false})` mit einem Stub, der nach dem Download `installed: true` meldet: liefert `true`, schaltet von `gemma3:4b` auf `hy:7B`.
+- Nicht ausgefuehrt: der Fall „Download wird nie fertig“ (die Schleife wartet bis zu 30 Minuten) — die Pruefung danach ist eine Zustandsabfrage auf `/models`, nicht getestet, sondern nur gelesen.
