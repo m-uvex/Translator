@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.68 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.69 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1289,5 +1289,13 @@ Der Ruheknopf der Gruppenreihe (`gNone`, Tooltip „Gruppe: ohne Geschlechtsanga
 Die Figuren sind jetzt groesser gezeichnet: Koepfe r 4,0 statt 3,0 (Mittelpunkte 6,1 und 17,9, cy 8,4), Schulterboegen 9,8 breit und 5,2 hoch statt 9,2 und 4,6, mit 1,0 Einheit Luft zwischen den beiden Boegen. Damit stehen die Figuren so gross wie die Nachbarn und nur ein Hauch leichter als die Paare mit Pfeilen. Die Boegen sind mit denselben Verhaeltnissen gebaut wie vorher (Steuerpunkte 0,565 × Hoehe und 0,435 × Breite), sonst sehen sie wie Wellen aus; ein Zwischenstand, in dem sich die beiden Boegen in der Mitte durchdrangen, ist verworfen (las sich als X).
 
 Der Versatz aus der Schwerpunktmessung ist neu bestimmt: `translate(0 0.82)` statt `0.37`. Am gerasterten Zeichen gemessen (Tinte samt runden Enden): 22,9 × 15,5 px im 24er-Kasten, Schwerpunkt auf 12/12, kein Randkontakt (0,5 px Luft zur linken Kante). Die uebrigen drei Zeichen der Reihe und die Regeln aus Abschnitt 5 (24 px, Strich 1,35, runde Enden) sind unveraendert.
+
+## 100. Belegter Kurzbefehl: die Einstellungen sagen es (1.15.69)
+
+`globalShortcut.register()` liefert `false`, wenn ein anderes Programm die Kombination schon haelt — es wirft nicht. `main.js` hat den Rueckgabewert bis 1.15.68 verworfen (`try { … } catch {}`), und die Zeile am Ende der Einstellungen behauptete deshalb „Schnellaufruf aus jedem Programm: Strg+Shift+Leertaste“ auch dann, wenn der Kurzbefehl gar nicht wirkte. Neu: `hotkeyOk` haelt den Rueckgabewert, `ipcMain.handle('app:hotkey')` gibt ihn heraus, `preload.js` reicht ihn als `window.api.hotkeyOk()` weiter. Der Renderer fragt ihn beim Start einmal ab; solange die Antwort aussteht, gilt die zuversichtliche Fassung (`hotkeyHint`), danach die passende: `hotkeyTaken` nennt **keinen** Tastenkuerzel mehr, sondern sagt, dass ein anderes Programm die Kombination belegt und dass es nach einem Neustart erneut versucht wird. Beim Neuzeichnen der Einstellungen waehlt `hotkeyKey()` den Schluessel; ein bereits gezeichneter Absatz (`[data-htk]`) wird beim Eintreffen der Antwort umgestellt.
+
+Einen zweiten Versuch waehrend der Laufzeit gibt es nicht: `register()` laeuft nur beim Start, und genau das steht im Text. Wer den Kurzbefehl spaeter erneut versuchen will (etwa beim Fokussieren des Fensters), muss `hotkeyOk` mitziehen und die Zeile neu setzen, sonst bleibt sie stehen.
+
+Geprueft 1.15.69: zwei Instanzen mit getrennten Profilen gestartet — die erste bekam den Kurzbefehl, die zweite nicht; in der zweiten meldet `window.api.hotkeyOk()` `false` und der Absatz traegt den Text ohne Tastenkuerzel, in der ersten `true` und die Zeile mit „Strg+Shift+Leertaste“. Danach gebaut, still installiert, App neu gestartet.
 
 Geprueft 1.15.68: Zeichen im Browser neben den drei Nachbarn in der 32-px-Karte und vergroessert angesehen (mehrere Fassungen, siehe oben die verworfene), danach gebaut, still installiert und im laufenden Build nachgemessen (Tintenkasten ohne Strichbreite): 21,6 × 14,1 px statt 19,2 × 12,9, Mitte 16,0/16,3 im 32-px-Knopf, die drei Nachbarn unveraendert bei 19,3 × 12,7, 19,3 × 9,0 und 16,2 × 10,2.

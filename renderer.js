@@ -293,7 +293,7 @@ const K = {
   diagUnload:['Modelle entladen','Unload models'], diagUnloaded:['Modelle entladen','Models unloaded'],
   diagNoUnload:['Nichts geladen','Nothing loaded'],
   diagOllama:['Ollama','Ollama'], diagNllb:['NLLB-Server','NLLB server'],
-  diagHint:['Die Adressen stehen in den Einstellungen unter „Verbindungen“.','The addresses are set in the settings under “Connections”.'], hotkeyHint:['Schnellaufruf aus jedem Programm: Strg+Shift+Leertaste','Quick access from any app: Ctrl+Shift+Space'],
+  diagHint:['Die Adressen stehen in den Einstellungen unter „Verbindungen“.','The addresses are set in the settings under “Connections”.'], hotkeyHint:['Schnellaufruf aus jedem Programm: Strg+Shift+Leertaste','Quick access from any app: Ctrl+Shift+Space'], hotkeyTaken:['Der Schnellaufruf aus jedem Programm ist von einem anderen Programm belegt; nach einem Neustart wird es erneut versucht.','Quick access from any app is taken by another program; it is tried again after a restart.'],
   startTr:['Übersetzer öffnen','Open translator'], startEd:['Textbearbeitung öffnen','Open text editor'], startStudy:['Lernen öffnen','Open study'], startLast:['Zuletzt verwendetes öffnen','Open last used'],
   // Namen der Arbeitsplatz-Gruppen fuer die Kaestchen in den Einstellungen.
   wsTr:['Übersetzer','Translator'], wsEd:['Textbearbeitung','Text editor'], wsStudy:['Lernen','Study'],
@@ -385,7 +385,7 @@ const NL = {
   speak:'Voorlezen', diagH:'Verbindingen', diagRefresh:'Opnieuw meten', diagOk:'Bereikbaar', diagFail:'Niet bereikbaar',
   diagModels:'Modellen', diagLoaded:'Geladen', diagNone:'niets', diagVersion:'Versie',
   diagUnload:'Modellen vrijgeven', diagUnloaded:'Modellen vrijgegeven', diagNoUnload:'Niets geladen',
-  diagOllama:'Ollama', diagNllb:'NLLB-server', diagHint:'De adressen staan in de instellingen onder „Verbindingen“.', hotkeyHint:'Snel openen vanuit elk programma: Ctrl+Shift+Spatie',
+  diagOllama:'Ollama', diagNllb:'NLLB-server', diagHint:'De adressen staan in de instellingen onder „Verbindingen“.', hotkeyHint:'Snel openen vanuit elk programma: Ctrl+Shift+Spatie', hotkeyTaken:'Snel openen vanuit elk programma is bezet door een ander programma; na een herstart wordt het opnieuw geprobeerd.',
   startTr:'Vertaler openen', startEd:'Tekstbewerking openen', startLast:'Laatst gebruikte openen', wsTr:'Vertaler', wsEd:'Tekstbewerking', wsStudy:'Leren',
   reset:'Herstellen', resetAll:'Alles herstellen', autoSys:'Automatisch (systeem)', autoO:'Automatisch', autoModel:'Automatisch', light:'Licht', dark:'Donker',
   nllbH:'NLLB-200', mInst:'Geïnstalleerd', mNot:'Niet geïnstalleerd', mLoad:p => `Downloaden … ${p} %`, mErr:e => `Fout: ${e}`, bDl:'Downloaden', bDel:'Verwijderen', bBusy:'Bezig …',
@@ -417,7 +417,7 @@ const ES = {
   speak:'Leer en voz alta', diagH:'Conexiones', diagRefresh:'Medir de nuevo', diagOk:'Accesible', diagFail:'No accesible',
   diagModels:'Modelos', diagLoaded:'Cargado', diagNone:'nada', diagVersion:'Versión',
   diagUnload:'Liberar modelos', diagUnloaded:'Modelos liberados', diagNoUnload:'Nada cargado',
-  diagNllb:'Servidor NLLB', diagHint:'Las direcciones se ajustan en la configuración, en «Conexiones».', hotkeyHint:'Acceso rápido desde cualquier programa: Ctrl+Shift+Espacio',
+  diagNllb:'Servidor NLLB', diagHint:'Las direcciones se ajustan en la configuración, en «Conexiones».', hotkeyHint:'Acceso rápido desde cualquier programa: Ctrl+Shift+Espacio', hotkeyTaken:'El acceso rápido desde cualquier programa está ocupado por otro programa; se volverá a intentar tras reiniciar.',
   startTr:'Abrir traductor', startEd:'Abrir editor', startLast:'Abrir último usado', wsTr:'Traductor', wsEd:'Editor', wsStudy:'Aprendizaje',
   reset:'Restablecer', resetAll:'Restablecer todo', autoSys:'Automático (sistema)', autoO:'Automático', autoModel:'Automático', light:'Claro', dark:'Oscuro',
   nllbH:'NLLB-200', mInst:'Instalado', mNot:'No instalado', mLoad:p => `Descargando … ${p} %`, mErr:e => `Error: ${e}`, bDl:'Descargar', bDel:'Eliminar', bBusy:'Descargando …',
@@ -451,7 +451,7 @@ const TR = {
   speak:'Sesli oku', diagH:'Bağlantılar', diagRefresh:'Yeniden ölç', diagOk:'Erişilebilir', diagFail:'Erişilemiyor',
   diagModels:'Modeller', diagLoaded:'Yüklü', diagNone:'yok', diagVersion:'Sürüm',
   diagUnload:'Modelleri boşalt', diagUnloaded:'Modeller boşaltıldı', diagNoUnload:'Yüklü model yok',
-  diagNllb:'NLLB sunucusu', diagHint:'Adresler ayarlarda „Bağlantılar“ altında.', hotkeyHint:'Her programdan hızlı erişim: Ctrl+Shift+Boşluk',
+  diagNllb:'NLLB sunucusu', diagHint:'Adresler ayarlarda „Bağlantılar“ altında.', hotkeyHint:'Her programdan hızlı erişim: Ctrl+Shift+Boşluk', hotkeyTaken:'Her programdan hızlı erişim başka bir program tarafından kullanılıyor; yeniden başlatmadan sonra tekrar denenecek.',
   startTr:'Çevirmeni aç', startEd:'Metin düzenleyiciyi aç', startLast:'Son kullanılanı aç', wsTr:'Çevirmen', wsEd:'Editör', wsStudy:'Öğrenme',
   reset:'Sıfırla', resetAll:'Tümünü sıfırla', autoSys:'Otomatik (sistem)', autoO:'Otomatik', autoModel:'Otomatik', light:'Açık', dark:'Koyu',
   nllbH:'NLLB-200', mInst:'Yüklü', mNot:'Yüklü değil', mLoad:p => `İndiriliyor … %${p}`, mErr:e => `Hata: ${e}`, bDl:'İndir', bDel:'Sil', bBusy:'İndiriliyor …',
@@ -485,7 +485,7 @@ const AR = {
   speak:'قراءة بصوت عالٍ', diagH:'الاتصالات', diagRefresh:'قياس مرة أخرى', diagOk:'متاح', diagFail:'غير متاح',
   diagModels:'النماذج', diagLoaded:'محمّل', diagNone:'لا شيء', diagVersion:'الإصدار',
   diagUnload:'إفراغ النماذج', diagUnloaded:'تم إفراغ النماذج', diagNoUnload:'لا شيء محمّل',
-  diagNllb:'خادم NLLB', diagHint:'تُضبط العناوين في الإعدادات ضمن «الاتصالات».', hotkeyHint:'وصول سريع من أي تطبيق: Ctrl+Shift+Space',
+  diagNllb:'خادم NLLB', diagHint:'تُضبط العناوين في الإعدادات ضمن «الاتصالات».', hotkeyHint:'وصول سريع من أي تطبيق: Ctrl+Shift+Space', hotkeyTaken:'وصول سريع من أي تطبيق محجوز من برنامج آخر؛ ستُعاد المحاولة بعد إعادة التشغيل.',
   startTr:'فتح المترجم', startEd:'فتح المحرر', startLast:'فتح آخر مستخدم', wsTr:'المترجم', wsEd:'المحرر', wsStudy:'التعلّم',
   reset:'إعادة تعيين', resetAll:'إعادة تعيين الكل', autoSys:'تلقائي (النظام)', autoO:'تلقائي', autoModel:'تلقائي', light:'فاتح', dark:'داكن',
   nllbH:'NLLB-200', mInst:'مثبت', mNot:'غير مثبت', mLoad:p => `جاري التنزيل … ${p} %`, mErr:e => `خطأ: ${e}`, bDl:'تنزيل', bDel:'حذف', bBusy:'جاري التنزيل …',
@@ -1533,6 +1533,12 @@ const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['start','s_s
   // Zum Reaktivieren ['uiMode','s_uiMode','uiMode'] hier wieder aufnehmen.
   ['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['profanityStyle','s_profanityStyle','profanityStyle'],['edMarkdown','s_mdMode','bool'],['edSpellAnim','s_spellAnim','bool'],['autoCopy','s_autoCopy','bool'],['autoCopyTyped','s_autoCopyTyped','bool'],['historyOn','s_history','bool'],['diagOn','s_diag','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['csvSrs','s_csvSrs','bool'],['storyOn','s_story','bool'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number']];
 const GROUPS = [['s_groupGeneral',['uiLang','theme','start','workspace']],['s_groupStudy',['csvSrs','storyOn']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped','historyOn','diagOn']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
+// Der systemweite Kurzbefehl kann von einem anderen Programm belegt sein:
+// globalShortcut.register() scheitert dann still. main.js meldet ueber
+// `app:hotkey`, ob die Registrierung geklappt hat; bis die Antwort da ist,
+// steht die zuversichtliche Zeile, danach der Hinweis ohne Tastenkuerzel.
+let hotkeyOk = null;
+const hotkeyKey = () => hotkeyOk === false ? 'hotkeyTaken' : 'hotkeyHint';
 function drawSettings() {
   const lists = k =>
     k === 'uiLang' ? [['auto', t('autoO')], ['de','Deutsch'], ['en','English'], ['nl','Nederlands'], ['es','Español'], ['tr','Türkçe'], ['ar','العربية']] :
@@ -1570,7 +1576,7 @@ function drawSettings() {
   };
   const byKey = Object.fromEntries(FIELDS.map(f => [f[0], f]));
   $('#setBody').innerHTML = GROUPS.map(([h, ks]) => `<h3 class="sect">${t(h)}</h3>` + ks.map(k => field(byKey[k])).join('')).join('') +
-    `<h3 class="sect">${t('nllbH')}</h3><div id="mtBox"></div><p class="muted" data-t="hotkeyHint"></p>`;
+    `<h3 class="sect">${t('nllbH')}</h3><div id="mtBox"></div><p class="muted" data-htk="1" data-t="${hotkeyKey()}"></p>`;
   $('#setBody').querySelectorAll('[data-k]').forEach(el => { const v = S[el.dataset.k]; el.value = el.dataset.bool ? (v ? '1' : '0') : v; });
   applyI18n();
   drawMt();
@@ -1598,6 +1604,13 @@ $('#setBody').addEventListener('input', e => {
   if (k === 'theme') applyTheme(); if (k === 'uiLang') renderAll(); if (k === 'uiMode') drawStyles(); if (k === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (k === 'workspace' && window.edWorkspace) window.edWorkspace(); if (k === 'storyOn' && window.studyStorySync) window.studyStorySync(); if (k === 'historyOn') drawHist(); if (k === 'diagOn') applyDiag();
 });
 $('#setBody').addEventListener('change', e => { if (e.target.dataset.k === 'url' || e.target.dataset.k === 'nllb') { retries = 0; loadModels(); } });
+try {
+  window.api.hotkeyOk().then(v => {
+    hotkeyOk = !!v;
+    const p = document.querySelector('#setBody [data-htk]');
+    if (p) { p.dataset.t = hotkeyKey(); p.textContent = t(hotkeyKey()); }
+  }).catch(() => {});
+} catch {}
 $('#setBody').onclick = e => {
   const act = e.target.closest('[data-act]'); if (act) return mtAction(act);
   const wsBtn = e.target.closest('[data-ws]');

@@ -27,6 +27,9 @@ contextBridge.exposeInMainWorld('api', {
   // eingestellte Adresse und startet nur einen lokalen Server.
   ollamaUrl: u => ipcRenderer.send('ollama:url', u),
   onRequestClose: cb => ipcRenderer.on('app:request-close', () => cb()),
+  // Ob der systemweite Kurzbefehl wirklich registriert wurde (ein anderes
+  // Programm kann ihn belegt haben); die Einstellungen richten sich danach.
+  hotkeyOk: () => ipcRenderer.invoke('app:hotkey'),
   forceQuit: () => ipcRenderer.invoke('app:forceQuit'),
   winMinimize: () => ipcRenderer.invoke('win:minimize'),
   winToggleMax: () => ipcRenderer.invoke('win:toggleMax'),

@@ -576,6 +576,11 @@ ipcMain.handle('win:close', () => { if (win && !win.isDestroyed()) win.close(); 
 // nach vorn. Der Kurzbefehl zeigt immer, er versteckt nicht: ein verstecktes
 // Fenster ohne Tray-Symbol waere nicht mehr zu erreichen.
 const HOTKEY = 'CommandOrControl+Shift+Space';
+// Ist die Kombination schon von einem anderen Programm belegt, liefert
+// globalShortcut.register() false, ohne einen Fehler zu werfen. Der Renderer
+// fragt den Wert ueber `app:hotkey` ab und zeigt in den Einstellungen dann
+// keinen Tastenkuerzel mehr an, sondern einen Hinweis.
+let hotkeyOk = false;
 let tray = null;
 function showWindow() {
   if (!win || win.isDestroyed()) return;
@@ -608,6 +613,7 @@ function createTray() {
 }
 
 let forceQuit = false;
+ipcMain.handle('app:hotkey', () => hotkeyOk);
 ipcMain.handle('app:forceQuit', () => {
   forceQuit = true;
   if (win && !win.isDestroyed()) win.close();
@@ -619,7 +625,7 @@ app.whenReady().then(() => {
   startOllama(); startNllb(); createTray();
   // Der Kurzbefehl ist eine Zusatzleistung: Ist er schon von einem anderen
   // Programm belegt, laeuft die App ohne ihn weiter.
-  try { globalShortcut.register(HOTKEY, showWindow); } catch {}
+  try { hotkeyOk = globalShortcut.register(HOTKEY, showWindow); } catch { hotkeyOk = false; }
   const icon = resPath('build', IS_WIN ? 'icon.ico' : 'icon.png');
   win = new BrowserWindow({ width: 1280, height: 820, minWidth: 980, minHeight: 600, autoHideMenuBar: true, frame: false,
     ...(fs.existsSync(icon) ? { icon } : {}),
