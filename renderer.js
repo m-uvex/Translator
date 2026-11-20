@@ -1506,12 +1506,14 @@ function drawStyles() {
   // die Reihe, die den gespeicherten Zustand beschreibt. Ohne Gruppe ist das die
   // erste Reihe („ohne Angabe“ = unknown); die Gruppenreihe markiert dann
   // nichts, weil „keine Gruppe“ bereits durch den Strich oben dargestellt wird.
-  const groupKey = key => key === 'gender' ? 'genderGroup' : key === 'writer' ? 'writerGroup' : null;
+  const GROUP_OF = { gender:'genderGroup', writer:'writerGroup' };
+  const MAIN_OF = { genderGroup:'gender', writerGroup:'writer' };
   const sel = (key, v) => {
-    const gk = groupKey(key);
-    if (!gk) return S.style[key] === v;
-    if (key === gk) return S.style[key] === v && v !== 'none';
-    return S.style[key] === v && S.style[gk] === 'none';
+    // Erste Reihe: markiert nur, solange keine Gruppe gewaehlt ist.
+    if (GROUP_OF[key]) return S.style[key] === v && S.style[GROUP_OF[key]] === 'none';
+    // Gruppenreihe: ihr "keine Gruppe" wird nie markiert, das zeigt schon der Strich oben.
+    if (MAIN_OF[key]) return S.style[key] === v && v !== 'none';
+    return S.style[key] === v;
   };
   // `size` steuert nur die Zeichen-Größe (die Knöpfe bleiben 32 px); die
   // Strichstärke wird mitgerechnet, damit sie optisch gleich bleibt.
