@@ -1,8 +1,8 @@
 {
  "name": "uebersetzer",
- "version": "1.15.78",
+ "version": "1.15.79",
  "private": true,
- "description": "Lokaler Übersetzer und Texteditor mit Ollama, NLLB-200 und Omnilingual MT",
+ "description": "Lokaler Übersetzer und Texteditor mit Ollama, NLLB-200, HY-MT, MiLMMT-46 und TranslateGemma",
  "author": "Janek",
  "main": "main.js",
  "scripts": {
@@ -64,7 +64,7 @@
    "icon": "build/icon.png",
    "maintainer": "Janek",
    "synopsis": "Lokaler Übersetzer und Texteditor",
-   "description": "Lokaler Übersetzer und Texteditor mit Ollama, NLLB-200 und Omnilingual MT; läuft vollständig offline.",
+   "description": "Lokaler Übersetzer und Texteditor mit Ollama, NLLB-200, HY-MT, MiLMMT-46 und TranslateGemma; läuft vollständig offline.",
    "desktop": {
     "entry": {
      "Name": "Übersetzer",

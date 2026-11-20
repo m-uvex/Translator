@@ -259,6 +259,8 @@ const K = {
   glossary:['Glossar','Glossary'], addEntry:['+ Eintrag','+ Entry'], term:['Begriff','Term'], termT:['Übersetzung','Translation'], remove:['Entfernen','Remove'],
   noteNllb:['NLLB-200 übersetzt direkt, ohne Wahl der Übersetzungsweise, Zusammenhang und Glossar. Diese Möglichkeiten gibt es nur mit allgemeinen Ollama-Modellen (z. B. Gemma 3).','NLLB-200 translates directly, without style options, context and glossary. Those need a general-purpose Ollama model (e.g. Gemma 3).'],
   noteTg:['TranslateGemma ist auf reine Übersetzung trainiert und folgt keinen Anweisungen zu Übersetzungsweise, Zusammenhang oder Glossar. Dafür bitte ein allgemeines Modell (z. B. gemma3:4b) wählen.','TranslateGemma is trained purely for translation and ignores style, context and glossary instructions. Choose a general-purpose model (e.g. gemma3:4b) for those.'],
+  noteHy:['HY-MT übersetzt direkt; Glossar und Zusammenhang fließen in die Anweisung ein, die Übersetzungsweise (Stil, Anrede) nicht.','HY-MT translates directly; glossary and context go into the instruction, style and address form do not.'],
+  noteMi:['MiLMMT-46 übersetzt direkt, ohne Übersetzungsweise, Zusammenhang und Glossar. Diese Möglichkeiten gibt es nur mit allgemeinen Ollama-Modellen.','MiLMMT-46 translates directly, without style options, context and glossary. Those need a general-purpose Ollama model.'],
   visionTip:['Kann Bilder lesen','Can read images'], thinkTip:['Denkfähig – das Denken wird für Übersetzungen abgeschaltet','Reasoning model – thinking is turned off for translations'],
   translating:['Übersetze …','Translating …'], noModel:['Kein Modell gewählt','No model selected'], noModels:['Keine Modelle gefunden','No models found'], waitOllama:['Warte auf Ollama …','Waiting for Ollama …'],
   needSrc:['Dieses Modell braucht eine feste Ausgangssprache','This model needs a fixed source language'], error:[m => `Fehler: ${m}`, m => `Error: ${m}`],
@@ -356,7 +358,7 @@ const K = {
   s_csvSrs:['Lernstände in Export-Dateien schreiben','Include practice state in exported files'],
   s_groupStudy:['Lesen und Vokabeln','Reading and vocabulary'],
   reset:['Zurücksetzen','Reset'], resetAll:['Alles zurücksetzen','Reset all'], autoSys:['Automatisch (System)','Automatic (system)'], autoO:['Automatisch','Automatic'], autoModel:['Automatisch','Automatic'], light:['Hell','Light'], dark:['Dunkel','Dark'],
-  nllbH:['NLLB-200','NLLB-200'], mInst:['Eingerichtet','Installed'], mNot:['Nicht eingerichtet','Not installed'], mLoad:[p => `Lädt … ${p} %`, p => `Downloading … ${p}%`],
+  nllbH:['Übersetzungsmodelle','Translation models'], mInst:['Eingerichtet','Installed'], mNot:['Nicht eingerichtet','Not installed'], mLoad:[p => `Lädt … ${p} %`, p => `Downloading … ${p}%`],
   mErr:[e => `Fehler: ${e}`, e => `Error: ${e}`], bDl:['Herunterladen','Download'], bDel:['Löschen','Delete'], bBusy:['Lädt …','Downloading …'],
   // Wortwahl vorlaeufig: "miteingerichtet" ist kein Standardwort. Falls es
   // stoert, sind "wird mitinstalliert" oder "richtet sich mit ein" die
@@ -375,6 +377,8 @@ const NL = {
   context:'Context', ctxPh:'bijv. “Tekst uit de handleiding van een koffiemachine”', glossary:'Woordenlijst', addEntry:'+ Item', term:'Term', termT:'Vertaling', remove:'Verwijderen',
   noteNllb:'NLLB-200 vertaalt direct, zonder stijlopties, context en woordenlijst. Die zijn er alleen met algemene Ollama-modellen (bijv. Gemma 3).',
   noteTg:'TranslateGemma is puur getraind op vertalen en negeert stijl-, context- en woordenlijstinstructies. Kies daarvoor een algemeen model (bijv. gemma3:4b).',
+  noteHy:'HY-MT vertaalt direct; woordenlijst en context gaan mee in de opdracht, stijl en aanspreekvorm niet.',
+  noteMi:'MiLMMT-46 vertaalt direct, zonder stijl, context en woordenlijst. Die zijn er alleen met algemene Ollama-modellen.',
   visionTip:'Kan afbeeldingen lezen', thinkTip:'Redeneermodel – denken wordt uitgezet bij vertalingen', translating:'Bezig met vertalen …', noModel:'Geen model gekozen', noModels:'Geen modellen gevonden', waitOllama:'Wachten op Ollama …',
   needSrc:'Dit model heeft een vaste brontaal nodig', error:m => `Fout: ${m}`, loadAlts:'Alternatieven laden …', noAlts:'Geen alternatieven gevonden', altErr:'Verzoek mislukt', adjusting:'Zin aanpassen …', adjErr:'Aanpassen mislukt',
   nllbNoAlt:'Woordalternatieven zijn er alleen met Ollama-modellen', needHelper:'Voor woordalternatieven is een algemeen model nodig (bijv. gemma3:4b)', fmtNo:'Bestandsformaat niet ondersteund',
@@ -393,7 +397,7 @@ const NL = {
   diagOllama:'Ollama', diagNllb:'NLLB-server', diagHint:'De adressen staan in de instellingen onder „Verbindingen“.', hotkeyHint:'Snel openen vanuit elk programma: Ctrl+Shift+Spatie', hotkeyTaken:'Snel openen vanuit elk programma is bezet door een ander programma; na een herstart wordt het opnieuw geprobeerd.',
   startTr:'Vertaler openen', startEd:'Tekstbewerking openen', startLast:'Laatst gebruikte openen', wsTr:'Vertaler', wsEd:'Tekstbewerking', wsStudy:'Leren',
   reset:'Herstellen', resetAll:'Alles herstellen', autoSys:'Automatisch (systeem)', autoO:'Automatisch', autoModel:'Automatisch', light:'Licht', dark:'Donker',
-  nllbH:'NLLB-200', mInst:'Geïnstalleerd', mNot:'Niet geïnstalleerd', mLoad:p => `Downloaden … ${p} %`, mErr:e => `Fout: ${e}`, bDl:'Downloaden', bDel:'Verwijderen', bBusy:'Bezig …',
+  nllbH:'Vertaalmodellen', mInst:'Geïnstalleerd', mNot:'Niet geïnstalleerd', mLoad:p => `Downloaden … ${p} %`, mErr:e => `Fout: ${e}`, bDl:'Downloaden', bDel:'Verwijderen', bBusy:'Bezig …',
   serverDown:'De vertaalserver is niet bereikbaar. Die wordt door de installatiewizard (Installieren.bat) geïnstalleerd en start met de app.',
   confBig:(id, gb) => `${id} is ${gb} GB groot en heeft veel werkgeheugen en tijd nodig. Toch downloaden?`, confDel:id => `${id} echt verwijderen? Je kunt het later opnieuw downloaden.`
 };
@@ -407,6 +411,8 @@ const ES = {
   context:'Contexto', ctxPh:'p. ej. “Texto del manual de una cafetera”', glossary:'Glosario', addEntry:'+ Entrada', term:'Término', termT:'Traducción', remove:'Eliminar',
   noteNllb:'NLLB-200 traduce directamente, sin opciones de estilo, contexto ni glosario. Estas funciones solo están disponibles con modelos de Ollama de uso general (p. ej. Gemma 3).',
   noteTg:'TranslateGemma está entrenado puramente para traducir e ignora las instrucciones de estilo, contexto y glosario. Elige un modelo general (p. ej. gemma3:4b).',
+  noteHy:'HY-MT traduce directamente; el glosario y el contexto entran en la instrucción, el estilo y el trato no.',
+  noteMi:'MiLMMT-46 traduce directamente, sin estilo, contexto ni glosario. Eso solo existe con modelos generales de Ollama.',
   visionTip:'Puede leer imágenes', thinkTip:'Modelo de razonamiento – el pensamiento se desactiva para traducir', translating:'Traduciendo …', noModel:'Ningún modelo elegido', noModels:'No se encontraron modelos', waitOllama:'Esperando a Ollama …',
   needSrc:'Este modelo necesita un idioma de origen fijo', error:m => `Error: ${m}`, loadAlts:'Cargando alternativas …', noAlts:'Sin alternativas encontradas', altErr:'Error en la solicitud', adjusting:'Ajustando frase …', adjErr:'Error al ajustar',
   nllbNoAlt:'Las alternativas de palabras solo están disponibles con modelos Ollama', needHelper:'Se necesita un modelo general (p. ej. gemma3:4b) para alternativas', fmtNo:'Formato no soportado',
@@ -425,7 +431,7 @@ const ES = {
   diagNllb:'Servidor NLLB', diagHint:'Las direcciones se ajustan en la configuración, en «Conexiones».', hotkeyHint:'Acceso rápido desde cualquier programa: Ctrl+Shift+Espacio', hotkeyTaken:'El acceso rápido desde cualquier programa está ocupado por otro programa; se volverá a intentar tras reiniciar.',
   startTr:'Abrir traductor', startEd:'Abrir editor', startLast:'Abrir último usado', wsTr:'Traductor', wsEd:'Editor', wsStudy:'Aprendizaje',
   reset:'Restablecer', resetAll:'Restablecer todo', autoSys:'Automático (sistema)', autoO:'Automático', autoModel:'Automático', light:'Claro', dark:'Oscuro',
-  nllbH:'NLLB-200', mInst:'Instalado', mNot:'No instalado', mLoad:p => `Descargando … ${p} %`, mErr:e => `Error: ${e}`, bDl:'Descargar', bDel:'Eliminar', bBusy:'Descargando …',
+  nllbH:'Modelos de traducción', mInst:'Instalado', mNot:'No instalado', mLoad:p => `Descargando … ${p} %`, mErr:e => `Error: ${e}`, bDl:'Descargar', bDel:'Eliminar', bBusy:'Descargando …',
   serverDown:'El servidor de traducción no está disponible. Se instala con el asistente y se inicia con la app.',
   confBig:(id, gb) => `${id} tiene un tamaño de ${gb} GB y requiere bastante memoria y tiempo. ¿Descargar igualmente?`, confDel:id => `¿Realmente eliminar ${id}? Puedes descargarlo nuevamente más tarde.`,
   stopTr:'Detener', stopped:'Traducción detenida', on:'Activado', off:'Desactivado', s_bootModel:'Precargar último modelo al iniciar', s_profanity:'Filtro de malas palabras', s_profanityStyle:'Sustitución de palabras malsonantes', s_autoCopy:'Copiar la salida automáticamente', s_autoCopyTyped:'Copiar la salida solo con texto tecleado', o_stars:'Asteriscos (****)', o_symbols:'Símbolos (@#$%&!)', s_mdMode:'Markdown dinámico en el editor', s_spellAnim:'Animar las ondulaciones ortográficas',
@@ -441,6 +447,8 @@ const TR = {
   context:'Bağlam', ctxPh:'ör. “Bir kahve makinesi kılavuzundan metin”', glossary:'Sözlük', addEntry:'+ Giriş', term:'Kavram', termT:'Çeviri', remove:'Kaldır',
   noteNllb:'NLLB-200 doğrudan çevirir; stil, bağlam ve sözlük içermez. Bu özellikler sadece genel Ollama modellerinde (ör. Gemma 3) mevcuttur.',
   noteTg:'TranslateGemma saf çeviri için eğitilmiştir ve stil/bağlam/sözlük yönergelerini dikkate almaz. Bunlar için genel bir model (ör. gemma3:4b) seçin.',
+  noteHy:'HY-MT doğrudan çevirir; sözlük ve bağlam yönergeye girer, üslup ve hitap biçimi girmez.',
+  noteMi:'MiLMMT-46 doğrudan çevirir; stil, bağlam ve sözlük yoktur. Bunlar yalnızca genel Ollama modellerinde vardır.',
   visionTip:'Görselleri okuyabilir', thinkTip:'Düşünme modeli – çevirilerde düşünme kapatılır', translating:'Çevriliyor …', noModel:'Model seçilmedi', noModels:'Model bulunamadı', waitOllama:'Ollama bekleniyor …',
   needSrc:'Bu model sabit bir kaynak dil gerektirir', error:m => `Hata: ${m}`, loadAlts:'Alternatifler yükleniyor …', noAlts:'Alternatif bulunamadı', altErr:'İstek başarısız', adjusting:'Cümle uyarlanıyor …', adjErr:'Uyarlanamadı',
   nllbNoAlt:'Kelime alternatifleri yalnızca Ollama modellerinde kullanılabilir', needHelper:'Kelime alternatifleri için genel bir model (ör. gemma3:4b) gerekir', fmtNo:'Format desteklenmiyor',
@@ -459,7 +467,7 @@ const TR = {
   diagNllb:'NLLB sunucusu', diagHint:'Adresler ayarlarda „Bağlantılar“ altında.', hotkeyHint:'Her programdan hızlı erişim: Ctrl+Shift+Boşluk', hotkeyTaken:'Her programdan hızlı erişim başka bir program tarafından kullanılıyor; yeniden başlatmadan sonra tekrar denenecek.',
   startTr:'Çevirmeni aç', startEd:'Metin düzenleyiciyi aç', startLast:'Son kullanılanı aç', wsTr:'Çevirmen', wsEd:'Editör', wsStudy:'Öğrenme',
   reset:'Sıfırla', resetAll:'Tümünü sıfırla', autoSys:'Otomatik (sistem)', autoO:'Otomatik', autoModel:'Otomatik', light:'Açık', dark:'Koyu',
-  nllbH:'NLLB-200', mInst:'Yüklü', mNot:'Yüklü değil', mLoad:p => `İndiriliyor … %${p}`, mErr:e => `Hata: ${e}`, bDl:'İndir', bDel:'Sil', bBusy:'İndiriliyor …',
+  nllbH:'Çeviri modelleri', mInst:'Yüklü', mNot:'Yüklü değil', mLoad:p => `İndiriliyor … %${p}`, mErr:e => `Hata: ${e}`, bDl:'İndir', bDel:'Sil', bBusy:'İndiriliyor …',
   serverDown:'Çeviri sunucusuna ulaşılamıyor. Kurulum sihirbazı ile kurulur ve uygulamayla birlikte başlar.',
   confBig:(id, gb) => `${id} boyutu ${gb} GB ve çok bellek gerektirir. Yine de indirilsin mi?`, confDel:id => `${id} gerçekten silinsin mi? Daha sonra tekrar indirebilirsiniz.`,
   stopTr:'Durdur', stopped:'Çeviri durduruldu', on:'Açık', off:'Kapalı', s_bootModel:'Başlangıçta son kullanılan modeli ön yükle', s_profanity:'Küfür filtresini etkinleştir', s_profanityStyle:'Küfürlerin değiştirilmesi', s_autoCopy:'Çıktıyı otomatik kopyala', s_autoCopyTyped:'Çıktıyı yalnızca yazılan metinde kopyala', o_stars:'Yıldızlar (****)', o_symbols:'Semboller (@#$%&!)', s_mdMode:'Editörde dinamik Markdown', s_spellAnim:'Yazım dalgalarını canlandır',
@@ -475,6 +483,8 @@ const AR = {
   context:'السياق', ctxPh:'مثال: “نص من دليل مستخدم آلة القهوة”', glossary:'المسرد', addEntry:'+ إضافة', term:'المصطلح', termT:'الترجمة', remove:'إزالة',
   noteNllb:'يترجم NLLB-200 مباشرة دون خيارات الأسلوب أو السياق أو المسرد. هذه الميزات متاحة فقط مع نماذج Ollama العامة (مثل Gemma 3).',
   noteTg:'تم تدريب TranslateGemma للترجمة البحتة ويتجاهل تعليمات الأسلوب والسياق. اختر نموذجاً عاماً (مثل gemma3:4b).',
+  noteHy:'يترجم HY-MT مباشرة؛ يدخل القاموس والسياق في التعليمات، أما الأسلوب وصيغة المخاطبة فلا.',
+  noteMi:'يترجم MiLMMT-46 مباشرة، دون أسلوب أو سياق أو قاموس. هذه الخيارات متاحة فقط مع نماذج Ollama العامة.',
   visionTip:'يمكنه قراءة الصور', thinkTip:'نموذج استنتاجي – يتم إيقاف التفكير أثناء الترجمة', translating:'جاري الترجمة …', noModel:'لم يتم اختيار نموذج', noModels:'لم يتم العثور على نماذج', waitOllama:'في انتظار Ollama …',
   needSrc:'يحتاج هذا النموذج إلى لغة مصدر محددة', error:m => `خطأ: ${m}`, loadAlts:'جاري تحميل البدائل …', noAlts:'لم يتم العثور على بدائل', altErr:'فشل الطلب', adjusting:'جاري ضبط الجملة …', adjErr:'فشل التعديل',
   nllbNoAlt:'بدائل الكلمات متاحة فقط مع نماذج Ollama', needHelper:'يلزم نموذج عام (مثل gemma3:4b) لبدائل الكلمات', fmtNo:'التنسيق غير مدعوم',
@@ -493,7 +503,7 @@ const AR = {
   diagNllb:'خادم NLLB', diagHint:'تُضبط العناوين في الإعدادات ضمن «الاتصالات».', hotkeyHint:'وصول سريع من أي تطبيق: Ctrl+Shift+Space', hotkeyTaken:'وصول سريع من أي تطبيق محجوز من برنامج آخر؛ ستُعاد المحاولة بعد إعادة التشغيل.',
   startTr:'فتح المترجم', startEd:'فتح المحرر', startLast:'فتح آخر مستخدم', wsTr:'المترجم', wsEd:'المحرر', wsStudy:'التعلّم',
   reset:'إعادة تعيين', resetAll:'إعادة تعيين الكل', autoSys:'تلقائي (النظام)', autoO:'تلقائي', autoModel:'تلقائي', light:'فاتح', dark:'داكن',
-  nllbH:'NLLB-200', mInst:'مثبت', mNot:'غير مثبت', mLoad:p => `جاري التنزيل … ${p} %`, mErr:e => `خطأ: ${e}`, bDl:'تنزيل', bDel:'حذف', bBusy:'جاري التنزيل …',
+  nllbH:'نماذج الترجمة', mInst:'مثبت', mNot:'غير مثبت', mLoad:p => `جاري التنزيل … ${p} %`, mErr:e => `خطأ: ${e}`, bDl:'تنزيل', bDel:'حذف', bBusy:'جاري التنزيل …',
   serverDown:'خادم الترجمة غير متاح. يتم تثبيته عبر المعالج ويعمل مع التطبيق.',
   confBig:(id, gb) => `حجم ${id} هو ${gb} غيغابايت ويتطلب ذاكرة ووقت. هل تريد التنزيل؟`, confDel:id => `هل تريد حقاً حذف ${id}؟ يمكنك تنزيله لاحقاً.`,
   stopTr:'إيقاف', stopped:'تم إيقاف الترجمة', on:'مفعّل', off:'معطّل', s_bootModel:'تحميل النموذج مسبقاً عند البدء', s_profanity:'فلتر الكلمات البذيئة', s_profanityStyle:'استبدال الكلمات البذيئة', s_autoCopy:'نسخ الناتج تلقائياً', s_autoCopyTyped:'نسخ الناتج فقط عند الكتابة يدوياً', o_stars:'نجوم (****)', o_symbols:'رموز (@#$%&!)', s_mdMode:'ماركداون ديناميكي في المحرر', s_spellAnim:'تحريك موجات التدقيق الإملائي',
@@ -527,19 +537,31 @@ function applyI18n() {
 }
 
 const OLLAMA_LANGS = [['de','Deutsch','German'],['en','English','English'],['fr','Français','French'],['es','Español','Spanish'],['it','Italiano','Italian'],['pt','Português','Portuguese'],['nl','Nederlands','Dutch'],['pl','Polski','Polish'],['cs','Čeština','Czech'],['sv','Svenska','Swedish'],['da','Dansk','Danish'],['no','Norsk','Norwegian'],['fi','Suomi','Finnish'],['tr','Türkçe','Turkish'],['ru','Русский','Russian'],['uk','Українська','Ukrainian'],['el','Ελληνικά','Greek'],['ro','Română','Romanian'],['hu','Magyar','Hungarian'],['zh','中文','Chinese'],['ja','日本語','Japanese'],['ko','한국어','Korean'],['ar','العربية','Arabic'],['hi','हिन्दी','Hindi'],['id','Bahasa Indonesia','Indonesian'],['vi','Tiếng Việt','Vietnamese']];
-let NLLB_LANGS = [], MT_MODELS = [];
-const nllbName = c => (NLLB_LANGS.find(l => l[0] === c) || [0, c])[1];
+// TranslateGemma: die offizielle Liste. Google nennt 55 Sprachen (der WMT24++-Satz);
+// regionale Varianten derselben Sprache (Arabisch EG/SA, Franzoesisch CA/FR,
+// Portugiesisch BR/PT, Swahili KE/TZ, Chinesisch CN/TW) sind auf einen Eintrag
+// zusammengefasst, Chinesisch bleibt in Kurz- und Langzeichen getrennt. Mehr
+// Sprachen als diese bietet die App bei TranslateGemma nicht an.
+const TG_LANGS = [['en','English','English'],['de','Deutsch','German'],['fr','Français','French'],['es','Español','Spanish'],['it','Italiano','Italian'],['pt','Português','Portuguese'],['nl','Nederlands','Dutch'],['da','Dansk','Danish'],['no','Norsk','Norwegian'],['sv','Svenska','Swedish'],['fi','Suomi','Finnish'],['is','Íslenska','Icelandic'],['pl','Polski','Polish'],['cs','Čeština','Czech'],['sk','Slovenčina','Slovak'],['sl','Slovenščina','Slovenian'],['hr','Hrvatski','Croatian'],['sr','Српски','Serbian'],['bg','Български','Bulgarian'],['ro','Română','Romanian'],['el','Ελληνικά','Greek'],['et','Eesti','Estonian'],['lv','Latviešu','Latvian'],['lt','Lietuvių','Lithuanian'],['ru','Русский','Russian'],['uk','Українська','Ukrainian'],['ca','Català','Catalan'],['fa','فارسی','Persian'],['ar','العربية','Arabic'],['he','עברית','Hebrew'],['hi','हिन्दी','Hindi'],['bn','বাংলা','Bengali'],['gu','ગુજરાતી','Gujarati'],['kn','ಕನ್ನಡ','Kannada'],['ml','മലയാളം','Malayalam'],['mr','मराठी','Marathi'],['pa','ਪੰਜਾਬੀ','Punjabi'],['ta','தமிழ்','Tamil'],['te','తెలుగు','Telugu'],['ur','اردو','Urdu'],['th','ไทย','Thai'],['vi','Tiếng Việt','Vietnamese'],['id','Bahasa Indonesia','Indonesian'],['ms','Bahasa Melayu','Malay'],['fil','Filipino','Filipino'],['sw','Kiswahili','Swahili'],['zu','isiZulu','Zulu'],['zh','中文','Chinese'],['zh-Hant','中文（繁體）','Traditional Chinese'],['ja','日本語','Japanese'],['ko','한국어','Korean'],['tr','Türkçe','Turkish']];
+let NLLB_LANGS = [], MT_MODELS = [], MT_LANGS = {};
+const famOf = m => String(m || '').split(':')[0];
+const mtLangs = fam => MT_LANGS[fam] || [];
+const nllbName = c => (NLLB_LANGS.find(l => l[0] === c) || TG_LANGS.find(l => l[0] === c) ||
+  Object.values(MT_LANGS).flat().find(l => l[0] === c) || [0, c])[1];
 let DN = null;
 const dn = () => { const l = LANG === 'nl' ? 'nl' : LANG === 'de' ? 'de' : 'en'; if (!DN || DN.__l !== l) { DN = new Intl.DisplayNames([l], { type:'language' }); DN.__l = l; } return DN; };
 function langLabel(c) {
   if (c === 'auto') return t('auto');
   const [iso, script] = c.split('_');
   let n; try { n = dn().of(iso); } catch { n = null; }
-  if (!n) n = nllbName(c);
+  // Intl kennt nicht jede Sprache (z. B. Tibetisch) und gibt dann den Code zurueck;
+  // in dem Fall greift der Name aus der Sprachliste der Familie.
+  if (!n || n === iso) n = nllbName(c);
   if (script && script !== 'Latn') { try { n += ` (${new Intl.DisplayNames([LANG], { type:'script' }).of(script)})`; } catch {} }
   return n || c;
 }
-const engName = c => (OLLAMA_LANGS.find(l => l[0] === c) || [0, 0, c])[2] || nllbName(c);
+const engName = c => (OLLAMA_LANGS.find(l => l[0] === c) || TG_LANGS.find(l => l[0] === c) || [0, 0, c])[2] ||
+  (Object.values(MT_LANGS).flat().find(l => l[0] === c) || [0, 0, 0])[2] || nllbName(c);
 
 // Jede Gruppe: Ueberschrift/Label, Optionsliste [Wert, Icon, Prompt-Satz].
 // Die Prompt-Saetze landen in userPromptFor; die Icons in der Icon-Seitenleiste.
@@ -748,10 +770,13 @@ function filterProfanity(text, final = true, tgt = S.tgt, src = S.src) {
 }
 
 let caps = {}, images = [], lastSrc = '', lastTr = '', busy = false, retries = 0, MODEL_OPTS = [], currentAbortController = null, currentReq = null, currentMt = false, inputPasted = false;
-const isMt = (m = S.model) => /^(nllb|omt):/.test(m || '');
+const MT_PREFIX = /^(nllb|omt|hy|milmmt):/;
+const isMt = (m = S.model) => MT_PREFIX.test(m || '');
 const isTg = m => /translategemma/i.test(m || '');
 const noAuto = () => isMt() || isTg(S.model);
-const activeLangs = () => isMt() ? NLLB_LANGS : OLLAMA_LANGS;
+// Jede Familie hat ihre eigene, offizielle Sprachliste; NLLB liefert sie aus dem
+// Tokenizer, HY-MT und MiLMMT-46 aus dem Python-Server, TranslateGemma aus TG_LANGS.
+const activeLangs = () => isMt() ? mtLangs(famOf(S.model)) : isTg(S.model) ? TG_LANGS : OLLAMA_LANGS;
 const pinsOf = () => S.pins[isMt() ? 'nllb' : 'ollama'];
 const isThinking = m => (caps[m] || []).includes('thinking');
 const hasVision = m => (caps[m] || []).includes('vision') && !isTg(m);
@@ -762,8 +787,9 @@ function fixLangs() {
   const L = activeLangs(); if (!L.length) return;
   const has = c => L.some(l => l[0] === c);
   if (isMt()) {
-    if (!has(S.src)) S.src = has('deu_Latn') ? 'deu_Latn' : L[0][0];
-    if (!has(S.tgt)) S.tgt = has('eng_Latn') ? 'eng_Latn' : L[0][0];
+    // NLLB kennt die Tokenizer-Codes (deu_Latn), die Chat-Familien ISO-Codes (de).
+    if (!has(S.src)) S.src = has('deu_Latn') ? 'deu_Latn' : has('de') ? (S.tgt === 'de' ? 'en' : 'de') : L[0][0];
+    if (!has(S.tgt)) S.tgt = has('eng_Latn') ? 'eng_Latn' : has('en') ? 'en' : L[0][0];
   } else {
     if (S.src === 'auto' && isTg(S.model)) S.src = S.tgt === 'de' ? 'en' : 'de';
     else if (S.src !== 'auto' && !has(S.src)) S.src = 'auto';
@@ -776,9 +802,19 @@ async function loadNllb() {
   try {
     const r = await fetch(S.nllb + '/languages'); if (!r.ok) throw 0;
     NLLB_LANGS = (await r.json()).map(l => [l.code, l.name, l.name]);
+    MT_LANGS = { nllb: NLLB_LANGS };
     MT_MODELS = await (await fetch(S.nllb + '/models')).json();
+    // Jede weitere Familie bringt ihre eigene, offizielle Sprachliste mit. Sie
+    // wird einmal beim Laden geholt, damit activeLangs() synchron bleibt.
+    for (const f of [...new Set(MT_MODELS.map(m => m.family))]) {
+      if (f === 'nllb') continue;
+      try {
+        const rr = await fetch(`${S.nllb}/languages?family=${encodeURIComponent(f)}`);
+        if (rr.ok) MT_LANGS[f] = (await rr.json()).map(l => [l.code, l.name, l.name]);
+      } catch { }
+    }
     return true;
-  } catch { NLLB_LANGS = []; MT_MODELS = []; return false; }
+  } catch { NLLB_LANGS = []; MT_MODELS = []; MT_LANGS = {}; return false; }
 }
 async function loadModels() {
   caps = {}; let ollamaUp = false;
@@ -793,7 +829,7 @@ async function loadModels() {
   const waiting = !ollamaUp || (/nllb=1/.test(location.search) && !nllbUp);
   if (waiting && retries++ < 40) setTimeout(loadModels, 3000);
   MODEL_OPTS = Object.keys(caps).filter(n => caps[n].includes('completion')).map(n => ({ value:n, label:n, vision:hasVision(n), thinking:isThinking(n) }));
-  MT_MODELS.filter(m => m.installed).forEach(m => MODEL_OPTS.push({ value:`${m.family}:${m.id}`, label:`${m.family === 'nllb' ? 'NLLB-200' : 'Omnilingual MT'} ${m.id}` }));
+  MT_MODELS.filter(m => m.installed).forEach(m => MODEL_OPTS.push({ value:`${m.family}:${m.id}`, label:`${m.familyLabel || m.family} ${m.id}` }));
   if (!ollamaUp && S.pref && !isMt(S.pref) && !MODEL_OPTS.some(o => o.value === S.pref)) MODEL_OPTS.unshift({ value:S.pref, label:S.pref });
   if (!MODEL_OPTS.length) { S.model = ''; updModelBtn(); return status(ollamaUp ? t('noModels') : t('waitOllama')); }
   S.model = MODEL_OPTS.some(o => o.value === S.pref) ? S.pref : MODEL_OPTS[0].value;
@@ -862,7 +898,8 @@ function ask(text, yes, no) {
   });
 }
 
-const engineOf = m => /^nllb:/.test(m) ? 'nllb' : /^omt:/.test(m) ? 'omt' : isTg(m) ? 'tg' : 'llm';
+// Familie des Modells: 'nllb', 'omt', 'hy', 'milmmt' (Python-Server), 'tg' oder 'llm'.
+const engineOf = m => MT_PREFIX.test(m || '') ? famOf(m) : isTg(m) ? 'tg' : 'llm';
 const stripStars = (out, src) => (src.includes('**') ? out : out.replace(/\*\*/g, ''));
 // Saetze zu Geschlecht und Zahl der beteiligten Personen, als Stichpunkte.
 // Sie kommen aus `STY` (gender/writer, beide Reihen) und sind immer nur dann
@@ -938,11 +975,14 @@ function helperModel() {
 }
 async function translateCore(text, o) {
   const eng = engineOf(o.model), fin = x => filterProfanity(stripStars(x, text), true, o.tgt, o.src);
-  if (eng === 'nllb' || eng === 'omt') {
+  if (isMt(o.model)) {
     const out = [];
+    // Glossar und Zusammenhang gehen mit; der Server setzt sie nur dort ein, wo
+    // die Modellvorlage es vorsieht (HY-MT), sonst bleiben sie draussen.
+    const gl = (o.gloss || []).filter(g => (g.s || '').trim() && (g.t || '').trim());
     for (const line of text.split('\n')) {
       if (!line.trim()) { out.push(''); continue; }
-      const r = await fetch(S.nllb + '/translate', { method:'POST', body:JSON.stringify({ text:line, src:o.src, tgt:o.tgt, model:o.model, req:o.req }), signal:o.signal });
+      const r = await fetch(S.nllb + '/translate', { method:'POST', body:JSON.stringify({ text:line, src:o.src, tgt:o.tgt, model:o.model, req:o.req, gloss:gl, ctxt:o.ctxt || '' }), signal:o.signal });
       if (!r.ok) throw new Error((await r.json()).error || r.status);
       out.push((await r.json()).translation); if (o.onToken) o.onToken(fin(out.join('\n')));
     }
@@ -1288,9 +1328,14 @@ document.addEventListener('mousedown', e => {
 function upd() {
   $('#srcBtn').textContent = S.src === 'auto' ? t('auto') : langLabel(S.src);
   $('#tgtBtn').textContent = langLabel(S.tgt);
-  const n = isMt(), tg = isTg(S.model), lim = n || tg;
-  $('#llmOnly').classList.toggle('hidden', lim); $('#nllbNote').classList.toggle('hidden', !lim);
-  $('#nllbNote').textContent = t(n ? 'noteNllb' : 'noteTg');
+  const n = isMt(), tg = isTg(S.model), fam = n ? famOf(S.model) : '', lim = n || tg;
+  // HY-MT reicht Glossar und Zusammenhang ueber eigene Vorlagen weiter; die
+  // Uebersetzungsweise (Stil, Anrede) bleibt auch dort aussen vor.
+  const hy = fam === 'hy';
+  $('#llmOnly').classList.toggle('hidden', lim && !hy);
+  $('#styles').classList.toggle('hidden', lim);
+  $('#nllbNote').classList.toggle('hidden', !lim);
+  $('#nllbNote').textContent = t(!n ? 'noteTg' : hy ? 'noteHy' : fam === 'milmmt' ? 'noteMi' : 'noteNllb');
   $('#output').classList.toggle('plain', n || (tg && !helperModel()));
 }
 $('#srcBtn').onclick = e => langPop(e.currentTarget, 'src'); $('#tgtBtn').onclick = e => langPop(e.currentTarget, 'tgt'); $('#modelBtn').onclick = e => modelPop(e.currentTarget);
@@ -1685,8 +1730,8 @@ let mtPoll = null, mtBusy = false;
 async function drawMt() {
   const box = $('#mtBox'); if (!box) return;
   let list; try { list = await (await fetch(S.nllb + '/models')).json(); } catch { box.innerHTML = `<div class="muted">${t('serverDown')}</div>`; return; }
-  const fam = { nllb:'NLLB-200' }, groups = {};
-  list.forEach(m => (groups[m.family] ||= []).push(m));
+  const fam = {}, groups = {};
+  list.forEach(m => { fam[m.family] = m.familyLabel || m.family; (groups[m.family] ||= []).push(m); });
   box.innerHTML = Object.entries(groups).map(([f, ms]) => `<div class="mgroup"><b>${fam[f] || f}</b>` + ms.map(m =>
     `<div class="mrow"><div><b>${m.id}</b><div class="muted">${String(m.gb).replace('.', LANG === 'de' ? ',' : '.')} GB · ${m.downloading ? t('mLoad', Math.round((m.progress || 0) * 100)) : m.error ? t('mErr', m.error) : m.installed ? t('mInst') : t('mNot')}</div></div>` +
     `<button class="ghost" data-act="${m.installed ? 'delete' : 'install'}" data-id="${m.family}:${m.id}" data-gb="${m.gb}"${m.downloading ? ' disabled' : ''}>${m.downloading ? t('bBusy') : m.installed ? t('bDel') : t('bDl')}</button></div>`).join('') + '</div>').join('');

@@ -16,16 +16,100 @@ darauf vorbereitet (omt:-Praefix, engineOf, isMt, drawMt).
 import gc, json, os, re, shutil, sys, threading, time
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 HERE = Path(__file__).resolve().parent
 PORT = int(os.environ.get("NLLB_PORT", "8765"))
 
 # Die Repo-IDs sind hier zentral gepflegt.
+#
+# `kind` sagt, wie der Server das Modell bedient: "seq2seq" sind die alten
+# NLLB-Modelle (eigener Tokenizer-Bos je Zielsprache, zeilenweise), "chat" sind
+# reine Sprachmodelle, die eine Anweisung bekommen (HY-MT, MiLMMT). `langs`
+# traegt bei den Chat-Familien die offizielle Sprachliste der Modellkarte; nur
+# diese Paare bietet die App dann an. NLLB erzeugt seine Liste weiter aus dem
+# Tokenizer (langs: None).
+#
+# Die Namen in `prompt` sind genau die Schreibweisen aus der Modellkarte. Sie
+# landen im Prompt und duerfen nicht uebersetzt werden; `zh` ist der chinesische
+# Name fuer die chinesische Vorlage von HY-MT.
+def _langs(rows):
+    return [{"code": c, "name": n, "prompt": p, **({"zh": z} if z else {})} for c, n, p, z in rows]
+
+# Tencent HY-MT 1.5: 33 Sprachen, dazu fuenf chinesische Minderheiten- und
+# Dialektvarianten (bo, kk, mn, ug, yue) - zusammen 38 Codes.
+HY_LANGS = _langs([
+    ("zh", "Chinese", "Chinese", "\u4e2d\u6587"),
+    ("zh-Hant", "Traditional Chinese", "Traditional Chinese", "\u7e41\u4f53\u4e2d\u6587"),
+    ("en", "English", "English", "\u82f1\u8bed"),
+    ("ja", "Japanese", "Japanese", "\u65e5\u8bed"),
+    ("ko", "Korean", "Korean", "\u97e9\u8bed"),
+    ("fr", "French", "French", "\u6cd5\u8bed"),
+    ("de", "German", "German", "\u5fb7\u8bed"),
+    ("es", "Spanish", "Spanish", "\u897f\u73ed\u7259\u8bed"),
+    ("pt", "Portuguese", "Portuguese", "\u8461\u8404\u7259\u8bed"),
+    ("it", "Italian", "Italian", "\u610f\u5927\u5229\u8bed"),
+    ("nl", "Dutch", "Dutch", "\u8377\u5170\u8bed"),
+    ("pl", "Polish", "Polish", "\u6ce2\u5170\u8bed"),
+    ("cs", "Czech", "Czech", "\u6377\u514b\u8bed"),
+    ("ru", "Russian", "Russian", "\u4fc4\u8bed"),
+    ("uk", "Ukrainian", "Ukrainian", "\u4e4c\u514b\u5170\u8bed"),
+    ("tr", "Turkish", "Turkish", "\u571f\u8033\u5176\u8bed"),
+    ("ar", "Arabic", "Arabic", "\u963f\u62c9\u4f2f\u8bed"),
+    ("he", "Hebrew", "Hebrew", "\u5e0c\u4f2f\u6765\u8bed"),
+    ("fa", "Persian", "Persian", "\u6ce2\u65af\u8bed"),
+    ("hi", "Hindi", "Hindi", "\u5370\u5730\u8bed"),
+    ("bn", "Bengali", "Bengali", "\u5b5f\u52a0\u62c9\u8bed"),
+    ("gu", "Gujarati", "Gujarati", "\u53e4\u5409\u62c9\u7279\u8bed"),
+    ("mr", "Marathi", "Marathi", "\u9a6c\u62c9\u5730\u8bed"),
+    ("ta", "Tamil", "Tamil", "\u6cf0\u7c73\u5c14\u8bed"),
+    ("te", "Telugu", "Telugu", "\u6cf0\u5362\u56fa\u8bed"),
+    ("ur", "Urdu", "Urdu", "\u4e4c\u5c14\u90fd\u8bed"),
+    ("th", "Thai", "Thai", "\u6cf0\u8bed"),
+    ("vi", "Vietnamese", "Vietnamese", "\u8d8a\u5357\u8bed"),
+    ("id", "Indonesian", "Indonesian", "\u5370\u5c3c\u8bed"),
+    ("ms", "Malay", "Malay", "\u9a6c\u6765\u8bed"),
+    ("tl", "Filipino", "Filipino", "\u83f2\u5f8b\u5bbe\u8bed"),
+    ("km", "Khmer", "Khmer", "\u9ad8\u68c9\u8bed"),
+    ("my", "Burmese", "Burmese", "\u7f05\u7538\u8bed"),
+    ("bo", "Tibetan", "Tibetan", "\u85cf\u8bed"),
+    ("kk", "Kazakh", "Kazakh", "\u54c8\u8428\u514b\u8bed"),
+    ("mn", "Mongolian", "Mongolian", "\u8499\u53e4\u8bed"),
+    ("ug", "Uyghur", "Uyghur", "\u7ef4\u543e\u5c14\u8bed"),
+    ("yue", "Cantonese", "Cantonese", "\u7ca4\u8bed"),
+])
+
+# Xiaomi MiLMMT-46 (v1.0): 46 Sprachen. Die Namen sind die der Modellkarte;
+# die Vorlage des Modells verlangt genau diese Schreibweisen ("Tagalog",
+# "Chinese (Simplified)" usw.).
+MI_LANGS = _langs([(c, n, n, "") for c, n in [
+    ("ar", "Arabic"), ("az", "Azerbaijani"), ("bg", "Bulgarian"), ("bn", "Bengali"),
+    ("ca", "Catalan"), ("cs", "Czech"), ("da", "Danish"), ("de", "German"),
+    ("el", "Greek"), ("en", "English"), ("es", "Spanish"), ("fa", "Persian"),
+    ("fi", "Finnish"), ("fr", "French"), ("he", "Hebrew"), ("hi", "Hindi"),
+    ("hr", "Croatian"), ("hu", "Hungarian"), ("id", "Indonesian"), ("it", "Italian"),
+    ("ja", "Japanese"), ("kk", "Kazakh"), ("km", "Khmer"), ("ko", "Korean"),
+    ("lo", "Lao"), ("ms", "Malay"), ("my", "Burmese"), ("nl", "Dutch"),
+    ("no", "Norwegian"), ("pl", "Polish"), ("pt", "Portuguese"), ("ro", "Romanian"),
+    ("ru", "Russian"), ("sk", "Slovak"), ("sl", "Slovenian"), ("sv", "Swedish"),
+    ("ta", "Tamil"), ("th", "Thai"), ("tl", "Tagalog"), ("tr", "Turkish"),
+    ("ur", "Urdu"), ("uz", "Uzbek"), ("vi", "Vietnamese"), ("yue", "Cantonese"),
+    ("zh", "Chinese (Simplified)"), ("zh-Hant", "Chinese (Traditional)"),
+]])
+
 FAMILIES = {
-    "nllb": {"label": "NLLB-200", "models": {
+    "nllb": {"label": "NLLB-200", "kind": "seq2seq", "langs": None, "models": {
         "600M": {"repo": "facebook/nllb-200-distilled-600M", "gb": 2.5, "dtype": "float32"},
         "1.3B": {"repo": "facebook/nllb-200-distilled-1.3B", "gb": 5.5, "dtype": "float32"},
         "3.3B": {"repo": "facebook/nllb-200-3.3B", "gb": 17.6, "dtype": "bfloat16"},
+    }},
+    "hy": {"label": "HY-MT", "kind": "chat", "langs": HY_LANGS, "models": {
+        "1.8B": {"repo": "tencent/HY-MT1.5-1.8B", "gb": 3.6, "dtype": "bfloat16"},
+        "7B": {"repo": "tencent/HY-MT1.5-7B", "gb": 15.2, "dtype": "bfloat16"},
+    }},
+    "milmmt": {"label": "MiLMMT-46", "kind": "chat", "langs": MI_LANGS, "models": {
+        "1B": {"repo": "xiaomi-research/MiLMMT-46-1B-v1.0", "gb": 2.1, "dtype": "bfloat16"},
+        "4B": {"repo": "xiaomi-research/MiLMMT-46-4B-v1.0", "gb": 8.6, "dtype": "bfloat16"},
     }},
     # ------------------------------------------------------------------
     # Omnilingual MT (Meta) - derzeit NICHT verfuegbar.
@@ -59,7 +143,7 @@ LANGF = STATE_DIR / "nllb-languages.json"
 CODE = re.compile(r"^[a-z]{3}_[A-Z][a-z]{3}$")
 lock = threading.RLock()
 jobs = {}
-cur = {"id": None, "tok": None, "model": None}
+cur = {"id": None, "tok": None, "model": None, "fam": None}
 # Laufende Uebersetzungen, die der Client abgebrochen hat. Die IDs kommen mit
 # /translate und werden von /cancel gesetzt; die StoppingCriteria in
 # translate_line pruefen die Menge waehrend model.generate.
@@ -126,7 +210,7 @@ def delete(full):
         if jobs.get(full, {}).get("running"): raise RuntimeError("Download laeuft noch")
         fam, mid, m = find(full)
         if not m: raise RuntimeError(f"Unbekanntes Modell: {full}")
-        if cur["id"] == full: cur.update(id=None, tok=None, model=None); gc.collect()
+        if cur["id"] == full: cur.update(id=None, tok=None, model=None, fam=None); gc.collect()
         shutil.rmtree(cache_dir(m["repo"]), ignore_errors=True)
         mark(full, False)
 
@@ -134,7 +218,7 @@ def model_info():
     inst = installed(); out = []
     for full, fam, mid, m in all_models():
         j = jobs.get(full, {}); run = bool(j.get("running"))
-        out.append({"family": fam, "id": mid, "gb": m["gb"], "installed": full in inst and not run,
+        out.append({"family": fam, "familyLabel": FAMILIES[fam]["label"], "id": mid, "gb": m["gb"], "installed": full in inst and not run,
                     "downloading": run,
                     "progress": min(0.99, blobs_size(m["repo"]) / (m["gb"] * 1e9)) if run else None,
                     "error": j.get("error")})
@@ -155,21 +239,86 @@ def languages():
     LANGF.write_text(json.dumps(langs, ensure_ascii=False), "utf-8")
     return langs
 
+def lang_list(fam):
+    """Sprachliste einer Familie. NLLB kommt aus dem Tokenizer, die Chat-Familien
+    bringen ihre offizielle Liste mit."""
+    f = FAMILIES.get(fam)
+    if not f: return None
+    return languages() if f["kind"] == "seq2seq" else [dict(x) for x in f["langs"]]
+
+def lang_name(fam, code, chinese=False):
+    for l in FAMILIES[fam]["langs"] or []:
+        if l["code"] == code:
+            return (l.get("zh") or l["prompt"]) if chinese else l["prompt"]
+    return code
+
+def prompt_for(fam, text, src, tgt, gloss=None, ctxt=None):
+    """Prompt nach der Vorlage der jeweiligen Modellkarte.
+
+    HY-MT hat zwei Vorlagen: chinesisch, sobald Chinesisch beteiligt ist, sonst
+    englisch. Fuer beide gibt es zusaetzlich eine Terminologie- und eine
+    Zusammenhang-Vorlage, die hier mit den Eintraegen des Glossars bzw. dem
+    Zusammenhangstext gefuellt werden.
+
+    MiLMMT-46 kennt nur die eine Zeile "Translate this from X to Y"; Glossar und
+    Zusammenhang bleiben dort aussen vor, statt sie als Fremdanweisung
+    anzuhaengen (die Modellkarte sieht das nicht vor).
+    """
+    text = "" if text is None else str(text)
+    if fam == "hy":
+        gl = [g for g in (gloss or []) if str(g.get("s") or "").strip() and str(g.get("t") or "").strip()]
+        ctx = (ctxt or "").strip()
+        zh = src.startswith("zh") or tgt.startswith("zh")
+        tn = lang_name(fam, tgt, zh)
+        # Die Terminologie-Vorlage der Modellkarte ist chinesisch formuliert
+        # („参考下面的翻译：“ / „X 翻译成 Y“). Sie wird fuer beide Zielsprachen so
+        # gesetzt, weil HY-MT nur diese Fassung kennt; die Anweisung darunter
+        # bleibt englisch, wenn kein Chinesisch beteiligt ist.
+        head = ""
+        if gl:
+            head = "参考下面的翻译：\n" + "\n".join(f'{str(g["s"]).strip()} 翻译成 {str(g["t"]).strip()}' for g in gl) + "\n\n"
+        if ctx:
+            if zh:
+                return head + f"{ctx}\n参考上面的信息，把下面的文本翻译成{tn}，注意不需要翻译上文，也不要额外解释：\n{text}"
+            return head + f"{ctx}\nWith the information above in mind, translate the following segment into {tn}, without additional explanation.\n\n{text}"
+        if zh:
+            return head + f"将以下文本翻译为{tn}，注意只需要输出翻译后的结果，不要额外解释：\n\n{text}"
+        return head + f"Translate the following segment into {tn}, without additional explanation.\n\n{text}"
+    sn, tn = lang_name(fam, src), lang_name(fam, tgt)
+    return f"Translate this from {sn} to {tn}:\n{sn}: {text}\n{tn}:"
+
+def load_chat(repo, kw):
+    # MiLMMT ist ein Gemma-3-Modell mit Bildturm, HY-MT ein reines Sprachmodell.
+    # Je nach transformers-Fassung heisst die Klasse anders; der Bildturm bleibt
+    # ungenutzt, generate() laeuft allein ueber input_ids.
+    import transformers
+    err = None
+    for name in ("AutoModelForCausalLM", "AutoModelForImageTextToText", "AutoModelForMultimodalLM"):
+        cls = getattr(transformers, name, None)
+        if not cls: continue
+        try: return cls.from_pretrained(repo, local_files_only=True, **kw)
+        except Exception as e: err = e
+    raise err
+
 def load(full):
     if cur["id"] == full: return
     import torch
-    from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+    from transformers import AutoTokenizer
     fam, mid, m = find(full)
     if not m: raise RuntimeError(f"Unbekanntes Modell: {full}")
-    cur.update(id=None, tok=None, model=None); gc.collect()
+    cur.update(id=None, tok=None, model=None, fam=None); gc.collect()
     repo = m["repo"]; tok = AutoTokenizer.from_pretrained(repo, local_files_only=True)
     kw = {"low_cpu_mem_usage": True}
     if m["dtype"] == "bfloat16": kw["dtype"] = torch.bfloat16
-    try: model = AutoModelForSeq2SeqLM.from_pretrained(repo, local_files_only=True, **kw)
-    except TypeError:
-        if "dtype" in kw: kw["torch_dtype"] = kw.pop("dtype")
-        model = AutoModelForSeq2SeqLM.from_pretrained(repo, local_files_only=True, **kw)
-    cur.update(id=full, tok=tok, model=model.eval())
+    if FAMILIES[fam]["kind"] == "seq2seq":
+        from transformers import AutoModelForSeq2SeqLM
+        try: model = AutoModelForSeq2SeqLM.from_pretrained(repo, local_files_only=True, **kw)
+        except TypeError:
+            if "dtype" in kw: kw["torch_dtype"] = kw.pop("dtype")
+            model = AutoModelForSeq2SeqLM.from_pretrained(repo, local_files_only=True, **kw)
+    else:
+        model = load_chat(repo, kw)
+    cur.update(id=full, tok=tok, model=model.eval(), fam=fam)
 
 # Modell aus dem Speicher nehmen. Der Server laeuft weiter, die naechste
 # Anfrage laedt es erneut - das dauert beim ersten Mal 20 bis 40 s, gibt aber
@@ -177,7 +326,7 @@ def load(full):
 def unload():
     with lock:
         had = cur["id"]
-        cur.update(id=None, tok=None, model=None)
+        cur.update(id=None, tok=None, model=None, fam=None)
     gc.collect()
     try:
         import torch
@@ -186,16 +335,35 @@ def unload():
         pass
     return had
 
-def translate_line(text, src, tgt, req=None):
+def translate_line(text, src, tgt, req=None, gloss=None, ctxt=None):
     import torch
     from transformers import StoppingCriteria, StoppingCriteriaList
-    tok, model = cur["tok"], cur["model"]; tok.src_lang = src
-    enc = tok(text, return_tensors="pt", truncation=True, max_length=512)
+    tok, model = cur["tok"], cur["model"]
 
     class Cancel(StoppingCriteria):
         def __call__(self, input_ids, scores, **kwargs):
             return bool(req and req in cancelled)
 
+    if FAMILIES[cur["fam"]]["kind"] != "seq2seq":
+        p = prompt_for(cur["fam"], text, src, tgt, gloss, ctxt)
+        # HY-MT traegt seine Sonderzeichen im Chat-Template; MiLMMT hat nur eine
+        # Vorlage, die den Inhalt unveraendert aneinanderhaengt. Fehlt sie, geht
+        # der Prompt so wie er ist an den Tokenizer.
+        try:
+            p = tok.apply_chat_template([{"role": "user", "content": p}], tokenize=False, add_generation_prompt=True)
+        except Exception:
+            pass
+        enc = tok(p, return_tensors="pt", truncation=True, max_length=4096)
+        n = int(enc["input_ids"].shape[1])
+        pad = tok.pad_token_id if tok.pad_token_id is not None else tok.eos_token_id
+        with torch.no_grad():
+            out = model.generate(**enc, do_sample=False, num_beams=1, pad_token_id=pad,
+                                 max_new_tokens=min(1024, max(64, n * 2)),
+                                 stopping_criteria=StoppingCriteriaList([Cancel()]))
+        return tok.decode(out[0][n:], skip_special_tokens=True).strip()
+
+    tok.src_lang = src
+    enc = tok(text, return_tensors="pt", truncation=True, max_length=512)
     with torch.no_grad():
         out = model.generate(**enc, forced_bos_token_id=tok.convert_tokens_to_ids(tgt), num_beams=4,
                              max_new_tokens=int(enc["input_ids"].shape[1] * 2 + 16),
@@ -213,7 +381,11 @@ class Handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(204); self._cors(); self.send_header("Content-Length", "0"); self.end_headers()
     def do_GET(self):
-        if self.path == "/languages": self._json(200, LANGS)
+        if self.path.startswith("/languages"):
+            q = parse_qs(urlparse(self.path).query)
+            L = lang_list((q.get("family") or ["nllb"])[0])
+            if L is None: return self._json(404, {"error": "unbekannte Familie"})
+            return self._json(200, L)
         elif self.path == "/models": self._json(200, model_info())
         elif self.path == "/health": self._json(200, {"ok": True, "loaded": cur["id"], "port": PORT})
         else: self._json(404, {"error": "not found"})
@@ -238,7 +410,8 @@ class Handler(BaseHTTPRequestHandler):
                     load(full)
                 return self._json(200, {"ok": True, "loaded": full})
             if self.path == "/translate":
-                codes = {l["code"] for l in LANGS}
+                if not m: return self._json(400, {"error": "unbekanntes Modell"})
+                codes = {l["code"] for l in (lang_list(fam) or [])}
                 if d.get("src") not in codes or d.get("tgt") not in codes: return self._json(400, {"error": "unbekannte Sprache"})
                 if full not in installed(): return self._json(400, {"error": "Modell nicht installiert"})
                 req = d.get("req")
@@ -250,7 +423,7 @@ class Handler(BaseHTTPRequestHandler):
                     out = []
                     for l in d.get("text", "").split("\n"):
                         if req and req in cancelled: break
-                        out.append(translate_line(l, d["src"], d["tgt"], req) if l.strip() else "")
+                        out.append(translate_line(l, d["src"], d["tgt"], req, d.get("gloss"), d.get("ctxt")) if l.strip() else "")
                     res = "\n".join(out)
                 aborted = bool(req and req in cancelled)
                 if req: cancelled.discard(req)
