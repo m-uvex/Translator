@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.70 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.71 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1303,6 +1303,14 @@ Im Infobereich klickt man das Symbol ohnehin an; dort fehlte die Tastenkombinati
 `createTray()` laeuft in `whenReady` vor der Registrierung des Kurzbefehls, `hotkeyOk` ist zu diesem Zeitpunkt also noch false. Nach `globalShortcut.register()` setzt `if (tray) tray.setToolTip(trayTip())` den Text erneut. Wer die Reihenfolge aendert, muss diesen Nachlauf mitnehmen, sonst steht im Tooltip nur „Übersetzer“. Der Tooltip ist deutsch wie das Tray-Menue, weil beides dem Betriebssystem gehoert und nicht der sechssprachigen Oberflaeche.
 
 Geprueft 1.15.70: gebaut, still installiert, App gestartet; `app:hotkey` meldet im laufenden Build `true`, es wird also der Text mit Kuerzel gesetzt. Ein Tray mit genau diesem Text laesst sich anlegen, `setToolTip` laeuft ohne Fehler durch (33 Zeichen). Ablesen laesst sich der Tooltip nicht: Electron hat kein `getToolTip`, und die Werkzeuge hier sehen nur Browserinhalte, nicht den Infobereich.
+
+## 102. Das Zeichen war verzerrt: lieber als Ganzes skalieren (1.15.71)
+
+Die Fassung aus 1.15.68 vergroesserte Kopf und Schulterbogen **einzeln**: Koepfe r 4,0 bei 9,8 breiten Boegen. Im Bild sass danach ein 8 px breiter Kopf auf einer 9,8 px breiten Schulter; die Figur las sich als zwei Kreise mit duennem Bogen darunter — gross und verzerrt, genau das Gegenteil des Ziels. Richtig ist, die bewaehrte Form als Ganzes zu skalieren: `translate(12 12.41) scale(1.1) translate(-12 -12)` um die urspruenglichen Werte (Koepfe r 3,0, Boegen 9,2 breit, 4,6 hoch). Damit waechst alles im selben Verhaeltnis, die Proportionen bleiben, und die Figur ist rund ein Zehntel groesser als am Anfang.
+
+Der Schwerpunktversatz waechst mit: 0,37 x 1,1 = 0,41, daher `translate(12 12.41)`. Wer die Groesse aendern will, aendert **nur** die 1.1 und rechnet den Versatz mit (0,37 x Faktor); die Form selbst bleibt unberuehrt. Das ist die Regel fuer alle vier Gruppenzeichen: nicht Koepfe und Boegen einzeln nachziehen, sondern den ganzen Glyphen skalieren, sonst kippt die Proportion.
+
+Geprueft 1.15.71: alle Fassungen (alt, verzerrt, 1,06x, 1,10x, 1,14x) im Browser nebeneinander in der 32-px-Karte und auf 96 px angesehen; 1,10x gewaehlt. Danach gebaut, still installiert und im laufenden Build nachgemessen: Tintenkasten 21,1 x 14,2 px (vorher 21,6 x 14,1 bei der verzerrten Fassung, 19,2 x 12,9 am Anfang), Mitte 16,0/16,5 im 32-px-Knopf; die Nachbarn unveraendert 19,3 x 12,7 / 19,3 x 9,0 / 16,2 x 10,2.
 
 Geprueft 1.15.69: zwei Instanzen mit getrennten Profilen gestartet — die erste bekam den Kurzbefehl, die zweite nicht; in der zweiten meldet `window.api.hotkeyOk()` `false` und der Absatz traegt den Text ohne Tastenkuerzel, in der ersten `true` und die Zeile mit „Strg+Shift+Leertaste“. Danach gebaut, still installiert, App neu gestartet.
 
