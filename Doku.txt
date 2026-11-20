@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.67 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.68 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1281,3 +1281,13 @@ Geprueft 1.15.66: `node --check main.js`, gebaut, still installiert. Danach mit 
 Sie ist kein Feld: `hotkeyHint` steht weder in `FIELDS` noch in `D`, wird also von „Alles zuruecksetzen“ nicht angefasst. `drawSettings()` haengt sie hinter den NLLB-Block (nach `#mtBox`), damit sie unabhaengig von der Zahl der Einstellungen ganz unten steht; uebersetzt wird sie ueber `data-t` und `applyI18n()` wie die uebrigen Beschriftungen. Die Tastenbezeichnung ist sprachabhaengig (deutsch „Strg“, sonst „Ctrl“); die Kombination selbst ist auf beiden Systemen dieselbe, weil `CommandOrControl` unter Windows und Linux immer Ctrl bedeutet. Wer den Kurzbefehl in `main.js` aendert, muss diesen Text in allen sechs Woerterbuechern mitziehen — eine gemeinsame Quelle gibt es nicht, weil der Renderer den Main-Prozess nicht fragen kann, ohne einen neuen IPC-Kanal anzulegen.
 
 Geprueft 1.15.67: gebaut, still installiert, App gestartet; im Einstellungsdialog ueber das DevTools-Protokoll geprueft, dass die Zeile als letzter Absatz von `#setBody` steht, den Text „Schnellaufruf aus jedem Programm: Strg+Shift+Leertaste“ traegt und in allen sechs Sprachen gefuellt ist.
+
+## 99. Zwei Personen fuer „ohne Geschlechtsangabe“ sind groesser gezeichnet (1.15.68)
+
+Der Ruheknopf der Gruppenreihe (`gNone`, Tooltip „Gruppe: ohne Geschlechtsangabe“) bestand aus zwei Koepfen mit Schulterboegen, die im 32-px-Kreis schmaler wirkten als die drei Nachbarn: `gMixed`, `gMale` und `gFemale` tragen Pfeile und Kreuze, die bis an den Rand des Kastens reichen. Gemessen in der laufenden App (Tinten-Ausdehnung bei 24 px): vorher 19,2 × 12,9 px, die Nachbarn 19,3 × 12,7 (gemischt), 19,3 × 9,0 (maennlich), 16,2 × 10,2 (weiblich). Der Kasten war also nicht kleiner — die Figuren darin wirkten aber wie eine verkleinerte Ausgabe der Personen-Symbole aus der Reihe darueber (dort r 5 im 18er-Kasten, hier r 3 im 24er).
+
+Die Figuren sind jetzt groesser gezeichnet: Koepfe r 4,0 statt 3,0 (Mittelpunkte 6,1 und 17,9, cy 8,4), Schulterboegen 9,8 breit und 5,2 hoch statt 9,2 und 4,6, mit 1,0 Einheit Luft zwischen den beiden Boegen. Damit stehen die Figuren so gross wie die Nachbarn und nur ein Hauch leichter als die Paare mit Pfeilen. Die Boegen sind mit denselben Verhaeltnissen gebaut wie vorher (Steuerpunkte 0,565 × Hoehe und 0,435 × Breite), sonst sehen sie wie Wellen aus; ein Zwischenstand, in dem sich die beiden Boegen in der Mitte durchdrangen, ist verworfen (las sich als X).
+
+Der Versatz aus der Schwerpunktmessung ist neu bestimmt: `translate(0 0.82)` statt `0.37`. Am gerasterten Zeichen gemessen (Tinte samt runden Enden): 22,9 × 15,5 px im 24er-Kasten, Schwerpunkt auf 12/12, kein Randkontakt (0,5 px Luft zur linken Kante). Die uebrigen drei Zeichen der Reihe und die Regeln aus Abschnitt 5 (24 px, Strich 1,35, runde Enden) sind unveraendert.
+
+Geprueft 1.15.68: Zeichen im Browser neben den drei Nachbarn in der 32-px-Karte und vergroessert angesehen (mehrere Fassungen, siehe oben die verworfene), danach gebaut, still installiert und im laufenden Build nachgemessen (Tintenkasten ohne Strichbreite): 21,6 × 14,1 px statt 19,2 × 12,9, Mitte 16,0/16,3 im 32-px-Knopf, die drei Nachbarn unveraendert bei 19,3 × 12,7, 19,3 × 9,0 und 16,2 × 10,2.
