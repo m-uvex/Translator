@@ -364,6 +364,9 @@ const K = {
   s_edCtxShorten:['Kürzen','Shorten'], s_edCtxLengthen:['Verlängern','Lengthen'], s_edCtxSummarize:['Zusammenfassen','Summarize'],
   s_edCtxProofread:['Probelesen','Proofread'], s_edCtxSyn:['Sinnverwandte Wörter','Synonyms'], s_edCtxStyle:['Ausdrucksweise','Style'], s_edCtxTr:['Übersetzen (Auswahl)','Translate (selection)'],
   s_edTbShorten:['Kürzen (ganzer Text)','Shorten (entire text)'], s_edTbLengthen:['Verlängern (ganzer Text)','Lengthen (entire text)'], s_edTbSum:['Zusammenfassen (ganzer Text)','Summarize (entire text)'],
+  // Vorschlaege in der Sprachsuche (Modelle, die die gesuchte Sprache kennen).
+  suggH:['Andere Modelle können diese Sprache','Other models support this language'], recTag:['Empfohlen','Recommended'],
+  langGeneric:['Allgemeine Liste — die von diesem Modell unterstützten Sprachen sind nicht dokumentiert.','General list — this model’s supported languages are not documented.'],
   reset:['Zurücksetzen','Reset'], resetAll:['Alles zurücksetzen','Reset all'], autoSys:['Automatisch (System)','Automatic (system)'], autoO:['Automatisch','Automatic'], autoModel:['Automatisch','Automatic'], light:['Hell','Light'], dark:['Dunkel','Dark'],
   nllbH:['Übersetzungsmodelle','Translation models'], srvSetup:['Server einrichten','Set up server'], mInst:['Eingerichtet','Installed'], mNot:['Nicht eingerichtet','Not installed'], mLoad:[p => `Lädt … ${p} %`, p => `Downloading … ${p}%`],
   mErr:[e => `Fehler: ${e}`, e => `Error: ${e}`], bDl:['Herunterladen','Download'], bDel:['Löschen','Delete'], bBusy:['Lädt …','Downloading …'],
@@ -397,7 +400,7 @@ const NL = {
   s_groupGeneral:'Algemeen', s_groupConn:'Verbindingen', s_groupTrans:'Vertaling',
   s_groupEdAI:'Tekstbewerking (AI)', s_edAI:'AI-functies in de editor (alles tegelijk)', s_edCtx:'Werkbalk tonen bij tekstselectie',
   s_edCtxShorten:'Inkorten', s_edCtxLengthen:'Verlengen', s_edCtxSummarize:'Samenvatten', s_edCtxProofread:'Nalezen', s_edCtxSyn:'Synoniemen', s_edCtxStyle:'Stijl', s_edCtxTr:'Vertalen (selectie)',
-  s_edTbShorten:'Inkorten (hele tekst)', s_edTbLengthen:'Verlengen (hele tekst)', s_edTbSum:'Samenvatten (hele tekst)',
+  s_edTbShorten:'Inkorten (hele tekst)', s_edTbLengthen:'Verlengen (hele tekst)',   s_edTbSum:'Samenvatten (hele tekst)', suggH:'Andere modellen ondersteunen deze taal', recTag:'Aanbevolen', langGeneric:'Algemene lijst — de talen die dit model ondersteunt zijn niet gedocumenteerd.',
   s_history:'Vertaalgeschiedenis', s_diag:'Verbindingen (diagnose)', historyH:'Geschiedenis', historyEmpty:'Nog geen vertalingen', histLoad:'In de velden laden',
   glossColls:'Woordenlijstcollecties', glossSave:'Huidige lijst als collectie bewaren', glossNewName:n => `Collectie ${n}`,
   glossImportT:'Woordenlijst importeren', glossImported:n => `${n} items overgenomen`, glossNone:'Geen items in het bestand', glossNoFile:'Bestand kon niet worden gelezen',
@@ -434,7 +437,7 @@ const ES = {
   s_groupGeneral:'General', s_groupConn:'Conexiones', s_groupTrans:'Traducción', s_groupFeatures:'Ajustes adicionales',
   s_groupEdAI:'Edición de texto (IA)', s_edAI:'Funciones de IA en el editor (todas a la vez)', s_edCtx:'Mostrar la barra al seleccionar texto',
   s_edCtxShorten:'Acortar', s_edCtxLengthen:'Alargar', s_edCtxSummarize:'Resumir', s_edCtxProofread:'Revisar', s_edCtxSyn:'Sinónimos', s_edCtxStyle:'Estilo', s_edCtxTr:'Traducir (selección)',
-  s_edTbShorten:'Acortar (texto completo)', s_edTbLengthen:'Alargar (texto completo)', s_edTbSum:'Resumir (texto completo)',
+  s_edTbShorten:'Acortar (texto completo)', s_edTbLengthen:'Alargar (texto completo)',   s_edTbSum:'Resumir (texto completo)', suggH:'Otros modelos admiten este idioma', recTag:'Recomendado', langGeneric:'Lista general — no está documentado qué idiomas admite este modelo.',
   s_history:'Historial de traducciones', s_diag:'Conexiones (diagnóstico)', historyH:'Historial', historyEmpty:'Aún no hay traducciones', histLoad:'Cargar en los campos',
   glossColls:'Colecciones de glosario', glossSave:'Guardar la lista actual como colección', glossNewName:n => `Colección ${n}`,
   glossImportT:'Importar glosario', glossImported:n => `${n} entradas añadidas`, glossNone:'No hay entradas en el archivo', glossNoFile:'No se pudo leer el archivo',
@@ -473,7 +476,7 @@ const TR = {
   s_groupGeneral:'Genel', s_groupConn:'Bağlantılar', s_groupTrans:'Çeviri', s_groupFeatures:'Ek ayarlar',
   s_groupEdAI:'Metin düzenleme (YZ)', s_edAI:'Düzenleyicideki YZ işlevleri (hepsi birden)', s_edCtx:'Metin seçildiğinde çubuğu göster',
   s_edCtxShorten:'Kısalt', s_edCtxLengthen:'Uzat', s_edCtxSummarize:'Özetle', s_edCtxProofread:'Düzelt', s_edCtxSyn:'Eş anlamlılar', s_edCtxStyle:'Stil', s_edCtxTr:'Çevir (seçim)',
-  s_edTbShorten:'Kısalt (tüm metin)', s_edTbLengthen:'Uzat (tüm metin)', s_edTbSum:'Özetle (tüm metin)',
+  s_edTbShorten:'Kısalt (tüm metin)', s_edTbLengthen:'Uzat (tüm metin)',   s_edTbSum:'Özetle (tüm metin)', suggH:'Diğer modeller bu dili destekliyor', recTag:'Önerilen', langGeneric:'Genel liste — bu modelin desteklediği diller belgelenmemiş.',
   s_history:'Çeviri geçmişi', s_diag:'Bağlantılar (tanı)', historyH:'Geçmiş', historyEmpty:'Henüz çeviri yok', histLoad:'Alanlara yükle',
   glossColls:'Sözlük koleksiyonları', glossSave:'Geçerli listeyi koleksiyon olarak kaydet', glossNewName:n => `Koleksiyon ${n}`,
   glossImportT:'Sözlük içe aktar', glossImported:n => `${n} giriş alındı`, glossNone:'Dosyada giriş yok', glossNoFile:'Dosya okunamadı',
@@ -512,7 +515,7 @@ const AR = {
   s_groupGeneral:'عام', s_groupConn:'الاتصالات', s_groupTrans:'الترجمة', s_groupFeatures:'إعدادات إضافية',
   s_groupEdAI:'تحرير النص (ذكاء اصطناعي)', s_edAI:'وظائف الذكاء الاصطناعي في المحرر (كلها دفعة واحدة)', s_edCtx:'إظهار الشريط عند تحديد النص',
   s_edCtxShorten:'تقصير', s_edCtxLengthen:'إطالة', s_edCtxSummarize:'تلخيص', s_edCtxProofread:'تدقيق', s_edCtxSyn:'مرادفات', s_edCtxStyle:'الأسلوب', s_edCtxTr:'ترجمة (تحديد)',
-  s_edTbShorten:'تقصير (النص كامل)', s_edTbLengthen:'إطالة (النص كامل)', s_edTbSum:'تلخيص (النص كامل)',
+  s_edTbShorten:'تقصير (النص كامل)', s_edTbLengthen:'إطالة (النص كامل)',   s_edTbSum:'تلخيص (النص كامل)', suggH:'نماذج أخرى تدعم هذه اللغة', recTag:'موصى به', langGeneric:'قائمة عامة — اللغات التي يدعمها هذا النموذج غير موثقة.',
   s_history:'سجل الترجمات', s_diag:'الاتصالات (تشخيص)', historyH:'السجل', historyEmpty:'لا توجد ترجمات بعد', histLoad:'تحميل في الحقول',
   glossColls:'مجموعات المسرد', glossSave:'حفظ القائمة الحالية كمجموعة', glossNewName:n => `مجموعة ${n}`,
   glossImportT:'استيراد مسرد', glossImported:n => `تمت إضافة ${n} مدخلاً`, glossNone:'لا توجد مدخلات في الملف', glossNoFile:'تعذر قراءة الملف',
@@ -805,6 +808,12 @@ const noAuto = () => isMt() || isTg(S.model);
 // Jede Familie hat ihre eigene, offizielle Sprachliste; NLLB liefert sie aus dem
 // Tokenizer, HY-MT und MiLMMT-46 aus dem Python-Server, TranslateGemma aus TG_LANGS.
 const activeLangs = () => isMt() ? mtLangs(famOf(S.model)) : isTg(S.model) ? TG_LANGS : OLLAMA_LANGS;
+// Die allgemeine Liste bleibt fuer alles, wovon das Programm die Sprachen nicht
+// kennt: fremde Ollama-Modelle und allgemeine LLMs, deren Hersteller keine Liste
+// der unterstuetzten Sprachen veroeffentlicht (Gemma 3 nennt nur „ueber 140
+// Sprachen“, Qwen3.5 zaehlt 201 Sprachen ohne Codes auf). Fuer die vier
+// Uebersetzungsfamilien steht dagegen die offizielle Liste, siehe langTable().
+const langTable = m => isMt(m) ? mtLangs(famOf(m)) : isTg(m) ? TG_LANGS : null;
 // Fuenf Minderheitensprachen von HY-MT uebersetzen nur mit chinesischer Quelle
 // brauchbar. Sie bleiben als Ausgangssprache waehlbar, erscheinen als Ziel aber
 // nur, wenn die Quelle Chinesisch ist; der Server lehnt andere Paare mit 400 ab.
@@ -836,6 +845,13 @@ function fixLangs() {
   save();
 }
 
+// Groesse in GB je Modell, fuer die Empfehlung „aehnlich gross“. Die Server-
+// Familien liefern ihre Groesse mit /models, Ollama die seiner Modelle in
+// /api/tags (Byte), TranslateGemma steht fest.
+let MODEL_GB = {};
+const modelGb = m => isMt(m) ? ((MT_MODELS.find(x => `${x.family}:${x.id}` === m) || {}).gb || 0)
+  : isTg(m) ? 3.3 : (MODEL_GB[m] || 0);
+
 async function loadNllb() {
   try {
     const r = await fetch(S.nllb + '/languages'); if (!r.ok) throw 0;
@@ -862,6 +878,7 @@ async function loadModels() {
   caps = {}; let ollamaUp = false;
   try {
     const { models } = await (await fetch(S.url + '/api/tags')).json(); ollamaUp = true;
+    MODEL_GB = {}; models.forEach(m => { MODEL_GB[m.name] = (m.size || 0) / 1e9; });
     await Promise.all(models.map(async m => {
       caps[m.name] = ['completion'];
       try { const j = await (await fetch(S.url + '/api/show', { method:'POST', body:JSON.stringify({ model:m.name }) })).json(); if (j.capabilities) caps[m.name] = j.capabilities; } catch {}
@@ -918,6 +935,73 @@ async function chat(messages, { stream, format, onToken, model, signal, options 
   }
   return strip(acc);
 }
+// Modelle, deren Sprachen das Programm kennt, mit Groesse und Zustand. Nur
+// daraus entstehen Vorschlaege; fremde Ollama-Modelle sind nicht dabei, weil
+// niemand weiss, was sie koennen.
+function suggestModels(q) {
+  const cur = S.model, curGb = modelGb(cur), out = [];
+  const hit = list => list.find(l => langHit(l, q));
+  const add = (value, label, gb, installed, list) => {
+    if (value === cur) return;
+    const l = hit(list); if (!l) return;
+    out.push({ value, label, gb: gb || 0, installed: !!installed, code: l[0] });
+  };
+  for (const f of ['nllb', 'hy', 'milmmt']) {
+    if (isMt(cur) && famOf(cur) === f) continue;
+    const list = mtLangs(f); if (!list.length) continue;
+    MT_MODELS.filter(m => m.family === f).forEach(m => add(`${f}:${m.id}`, `${m.familyLabel || f} ${m.id}`, m.gb, m.installed, list));
+  }
+  if (!isTg(cur)) add('translategemma:4b', 'TranslateGemma 4b', 3.3, !!caps['translategemma:4b'], TG_LANGS);
+  // Aehnliche Groesse zuerst; bei gleichem Abstand das kleinere Modell. Der
+  // erste Eintrag traegt im Popup die Marke „Empfohlen“.
+  out.sort((a, b) => Math.abs(a.gb - curGb) - Math.abs(b.gb - curGb) || a.gb - b.gb);
+  return out;
+}
+// Intl.DisplayNames kennt „bo“ (Tibetisch) nicht und gibt den Code zurueck.
+// Damit die Suche in der Anzeigesprache trotzdem trifft, stehen hier die Namen
+// der Sprachlisten in den Sprachen der Oberflaeche.
+const LANG_ALIAS = { bo:['Tibetisch', 'Tibetaans', 'Tibetano', 'Tibetçe', 'التبتية'] };
+const langHit = (l, q) => [langLabel(l[0]), engName(l[0]), l[1], l[2], l[0], ...(LANG_ALIAS[l[0]] || [])]
+  .some(s => String(s || '').toLowerCase().includes(q));
+
+// Laedt das vorgeschlagene Modell, falls noetig, schaltet darauf um und setzt
+// die gesuchte Sprache. Server-Modelle laufen ueber /models/install, dessen
+// Fortschritt derselbe ist wie in den Einstellungen; TranslateGemma ueber
+// pullModel wie jeder andere Ollama-Download.
+async function ensureModel(c) {
+  if (c.installed) { S.pref = S.model = c.value; save(); return true; }
+  status(t('bBusy'));
+  if (isMt(c.value)) {
+    const r = await fetch(S.nllb + '/models/install', { method:'POST', body:JSON.stringify({ id:c.value }) }).catch(() => null);
+    if (!r || !r.ok) { status(t('mErr', 'Server')); return false; }
+    for (let i = 0; i < 900; i++) {
+      await new Promise(x => setTimeout(x, 2000));
+      const ms = await (await fetch(S.nllb + '/models')).json().catch(() => []);
+      const m = ms.find(x => `${x.family}:${x.id}` === c.value);
+      if (m && m.error) { status(t('mErr', m.error)); return false; }
+      if (m && m.progress != null) status(t('mLoad', Math.round(m.progress)));
+      if (m && m.installed) break;
+    }
+    await loadModels();
+  } else {
+    if (!(await pullModel(c.value))) return false;
+    await loadModels();
+  }
+  status('');
+  S.pref = S.model = c.value; save();
+  return true;
+}
+
+async function applySuggestion(c, q, obj, key, done) {
+  closePops();
+  if (!(await ensureModel(c))) return;
+  const L = langTable(S.model) || [];
+  const l = L.find(x => langHit(x, q)) || L.find(x => x[0] === c.code);
+  if (l) obj[key] = l[0];
+  fixLangs(); updModelBtn(); upd(); save();
+  if (done) done();
+}
+
 async function pullModel(tag) {
   try {
     const r = await fetch(S.url + '/api/pull', { method:'POST', body:JSON.stringify({ model:tag, stream:true }) });
@@ -1347,9 +1431,34 @@ function langPop(btn, key, o = {}) {
     const autoOk = isSrc && !na && (!q || t('auto').toLowerCase().includes(q) || 'auto'.includes(q));
     const pinned = items.filter(l => pins.includes(l[0])), rest = items.filter(l => !pins.includes(l[0]));
     list.innerHTML = '';
+    // Allgemeine Liste nur da, wo das Programm die Sprachen nicht kennt; der
+    // Hinweis sagt das offen, statt eine offizielle Liste vorzutäuschen.
+    if (o.hint && !langTable(S.model) && !q) {
+      const hint = document.createElement('div'); hint.className = 'muted';
+      hint.style.padding = '4px 10px 6px'; hint.textContent = t('langGeneric');
+      list.append(hint);
+    }
     if (autoOk) add(['auto', t('auto'), 'auto'], false);
     pinned.forEach(l => add(l, true)); if (pinned.length && rest.length) list.append(document.createElement('hr')); rest.forEach(l => add(l, false));
     if (!list.children.length) list.innerHTML = `<div class="muted" style="padding:6px 10px">${t('noHits')}</div>`;
+    // Kennt das aktuelle Modell die eingetippte Sprache nicht, andere aber
+    // schon, schlaegt die App diese Modelle vor (Nutzerwunsch).
+    if (q.length >= 2 && !items.length) addSuggest(q);
+  };
+  const addSuggest = q => {
+    const cands = suggestModels(q); if (!cands.length) return;
+    const head = document.createElement('div');
+    head.className = 'muted'; head.style.padding = '8px 10px 2px';
+    head.textContent = t('suggH');
+    list.append(head);
+    cands.forEach((c, i) => {
+      const r = document.createElement('div'); r.className = 'row sugg';
+      const gb = c.gb ? `${c.gb.toFixed(1).replace('.', ',')} GB` : '';
+      r.innerHTML = `<span>${esc(c.label)}${i === 0 ? `<span class="tagrec">${esc(t('recTag'))}</span>` : ''}</span>`
+        + `<span class="muted">${gb}${c.installed ? '' : ' · ' + esc(t('bDl'))}</span>`;
+      r.onclick = ev => { ev.stopPropagation(); applySuggestion(c, q, obj, key, done); };
+      list.append(r);
+    });
   };
   search.oninput = draw; draw();
   const r = btn.getBoundingClientRect(); Object.assign(p.style, { left:Math.min(r.left, innerWidth - 260) + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden'); search.focus();
@@ -1382,8 +1491,8 @@ function upd() {
 }
 // Die Ziel-Liste laesst die fuenf HY-MT-Sprachen weg, solange die Quelle nicht
 // Chinesisch ist; nach jeder Quellwahl wird die Zielsprache gleich mitgeprueft.
-$('#srcBtn').onclick = e => langPop(e.currentTarget, 'src', { done: () => { fixLangs(); upd(); } });
-$('#tgtBtn').onclick = e => langPop(e.currentTarget, 'tgt', { langs: tgtLangs() });
+$('#srcBtn').onclick = e => langPop(e.currentTarget, 'src', { hint: true, done: () => { fixLangs(); upd(); } });
+$('#tgtBtn').onclick = e => langPop(e.currentTarget, 'tgt', { hint: true, langs: tgtLangs() });
 $('#modelBtn').onclick = e => modelPop(e.currentTarget);
 $('#swap').onclick = () => { if (S.src === 'auto') return; [S.src, S.tgt] = [S.tgt, S.src]; if (lastTr) { $('#input').value = lastTr; inputPasted = false; lastTr = ''; $('#output').textContent = ''; count(); } fixLangs(); upd(); };
 

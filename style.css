@@ -631,3 +631,8 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .diagrow>span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .diagpill{border-radius:999px;padding:1px 8px;font-size:12px;background:var(--card);color:var(--muted);border:1px solid var(--line)}
 .diagpill.ok{background:var(--accent);color:var(--on-accent);border-color:transparent}
+
+/* Vorschlagszeilen der Sprachsuche: Marke „Empfohlen“ neben dem Modellnamen,
+   rechts die Groesse und ob es noch geladen werden muss. */
+.tagrec{display:inline-block;margin-inline-start:6px;padding:1px 7px;border-radius:999px;font-size:11px;line-height:16px;background:var(--accent);color:var(--on-accent);vertical-align:1px}
+.row.sugg{gap:10px}
