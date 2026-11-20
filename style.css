@@ -645,8 +645,9 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 /* Bilder im Text: Der Rahmen traegt die Groesse des sichtbaren Bildes, das Bild
    darin wird gedreht und gespiegelt; die vier Ecken sind Ziehpunkte. */
 .edimg{position:relative;display:block;margin:12px auto;user-select:none;border-radius:2px}
-.edimg img{position:absolute;display:block;max-width:none;transform-origin:center center;pointer-events:auto;cursor:grab}
+.edimg img{position:absolute;display:block;max-width:none;transform-origin:center center;cursor:grab}
 .edimg.drag img{cursor:grabbing}
+.dropmark{position:fixed;height:2px;border-radius:1px;background:var(--accent-ink);pointer-events:none;z-index:40}
 .edimg[data-al="left"]{margin-left:0;margin-right:auto}
 .edimg[data-al="right"]{margin-left:auto;margin-right:0}
 .edimg .hnd{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--card);border:1.5px solid var(--accent-ink);box-shadow:0 1px 3px #0003;opacity:0;transition:opacity .12s;z-index:3}

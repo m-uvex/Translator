@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.107 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.108 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1721,3 +1721,27 @@ Die Bildauswahl (Abschnitt 128) merkte sich den Rahmen in `imgSel`. Wurde das Bi
 - Gegenprobe: Ein ausgewaehltes Bild laesst sich weiter ueber die Leiste ausrichten (`data-al="left"`, `margin-left: 0px`, Knopf markiert).
 
 `node --check editor.js` laeuft durch; die Oberflaeche wurde nicht per Bildschirmfoto betrachtet. Die erste Testwiederholung lief noch gegen den alten Stand im Entwicklungsfenster (kein Neuladen) und zeigte den Fehler weiter — erst nach `Page.reload` kamen die neuen Werte.
+## 134. Bildänderungen aus 1.15.102 durchgesehen (1.15.108)
+
+Die Bildbearbeitung aus Abschnitt 124–133 wurde aufgeraeumt: gleiche Funktion, weniger Wege, keine Sonderfaelle, die nichts mehr tun.
+
+**Auswahl.** Aus vier Funktionen (`selectImg`, `deselectImg`, `pruneImgSel` und dem direkten Setzen von `imgSel`) wurden zwei: `clearImgSel(refresh)` nimmt die Auswahl zurueck und zeichnet auf Wunsch die Leiste neu, `selImg()` liefert das ausgewaehlte Bild nur, solange es noch in der Seite haengt (und raeumt sonst auf). `selectImg()` bricht frueh ab, wenn dasselbe Bild schon gewaehlt ist. Das Loeschen im Bildmenue, der Klick ausserhalb, `updTb()`, `alignImg()` und `initImages()` benutzen nur noch diese beiden. Der fruehere Sonderfall „pruefen und dabei die Leiste zeichnen“ in `updTb()` ist damit weg.
+
+**Gemeinsame Helfer.** `topChild(node)` (Block unter einem Knoten) wird jetzt vom Einfuegen **und** vom Verschieben benutzt; vorher stand die Schleife zweimal da. `addHandles(wrap)` legt die vier Ziehpunkte an — vorher war dieselbe Schleife in `mkEdImage()` und in `initImages()`.
+
+**Verschieben per Zeiger, drei echte Fehler.** Beim ersten Test mit echter Maus (CDP-`Input.dispatchMouseEvent`, nicht nur mit erzeugten Pointer-Events) zeigte sich:
+
+1. Ohne `preventDefault()` auf dem `pointerdown` begann der Browser beim Ziehen seine eigene Textauswahl bzw. seinen Bild-Zug; danach kamen kaum noch `pointermove` an, und `wrap.classList` blieb auf `drag` stehen (Zeiger haengt auf `grabbing`). Jetzt wird der Zug am Bild mit `preventDefault()` begonnen.
+2. `setPointerCapture()` auf dem Bild greift hier nicht zuverlaessig; die Bewegungen kamen nur an, solange der Zeiger ueber dem Bild stand. Die Zuhoerer fuer `pointermove`, `pointerup` und `pointercancel` liegen jetzt am `document`, der Zug funktioniert damit auch ueber Text und Leiste hinweg. `lostpointercapture` als Notausstieg ist weggefallen, weil es ohne Capture nichts mehr zu verlieren gibt.
+3. Das Bild sprang schon waehrend des Ziehens um. Bei grossen Bildern verschiebt sein eigenes Gewicht die Absaetze unter dem Zeiger, das Ziel lief dem Zeiger davon und der Zug endete oft wieder an der alten Stelle. Jetzt steht waehrend des Ziehens nur eine 2-px-Marke an der Zielstelle (`#page`-fremd, `position:fixed` am `body`), das Bild folgt einmal beim Loslassen. Die Marke kann so weder gespeichert noch gedruckt werden und aendert kein Layout; sie wird beim Loslassen und bei `pointercancel` entfernt.
+
+**Weggefallen.** `pointer-events:auto` am Bild (Vorgabewert), die doppelte Aufraeumroutine im Zieh-Ende (jetzt `stop()`), `selectImg()` ein zweites Mal nach dem Zug (das Bild war durch den `pointerdown` schon gewaehlt) und die Suche nach dem Einfuegeblock in `insertEdImage()` zugunsten von `topChild()`.
+
+**Zusammenspiel geprueft** (1.15.108, eigenes `--user-data-dir`, echte Maus- und Tastaturereignisse ueber CDP):
+- Groesse am SO-Griff: 480 px → 550 px, Auswahl bleibt.
+- Verschieben: Reihenfolge `a, b, bild, (leer)` → `bild, a, b, (leer)`; danach Bild weiter ausgewaehlt, keine Marke, keine `drag`-Klasse, keine Textauswahl. `innerHTML` der Seite enthaelt keine Marke.
+- Klick in einen Absatz hebt die Bildauswahl auf; „Rechts“ richtet danach den Text aus (`text-align: right`, `data-al` bleibt unberuehrt).
+- Rechtsklick → „Löschen“: kein `.edimg`, keine Auswahl; Klick in den Absatz, „Mitte“ → `text-align: center`.
+- Rueckgaengig (Grenze, unveraendert): Ein Verschieben ist keine Bearbeitung im Undo-Stapel von Chromium. `Strg+Z` nach einem Zug nimmt die *vorherige Textaenderung* zurueck, das Bild bleibt, wo es liegt. Getestet: Text „Zwei##ter“ → nach dem Zug `Strg+Z` → „Zweiter Absatz.“, Reihenfolge unveraendert. Ein eigener Undo-Stapel waere noetig; bewusst nicht eingebaut, weil er nur fuer Bilder gelten wuerde.
+
+`node --check editor.js` laeuft durch; die Oberflaeche wurde nicht per Bildschirmfoto betrachtet. Zwei Testlaeufe mit erzeugten `PointerEvent`s zeigten den Zug scheinbar funktionsfaehig, obwohl er es nicht war — erst echte Eingaben ueber CDP brachten die drei Fehler ans Licht.

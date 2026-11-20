@@ -900,9 +900,9 @@ const TB = [
 const IMG_AL = { justifyLeft:'left', justifyCenter:'center', justifyRight:'right' };
 function alignImg(command) {
   const al = IMG_AL[command];
-  pruneImgSel();
-  if (!al || !imgSel) return false;
-  imgSel.dataset.al = al;
+  const wrap = selImg();
+  if (!al || !wrap) return false;
+  wrap.dataset.al = al;
   page.dispatchEvent(new Event('input'));
   updTb();
   return true;
@@ -946,13 +946,13 @@ function renderTb() {
   });
 }
 function updTb() {
-  pruneImgSel();
   // Steht ein Bild in Auswahl, gibt es keine Textauswahl: dann zeigen die drei
   // Ausrichtungs-Knoepfe die Ausrichtung des Bildes.
-  if (imgSel) {
+  const wrap = selImg();
+  if (wrap) {
     tb.querySelectorAll('[data-cmd]').forEach(b => {
       const al = IMG_AL[b.dataset.cmd];
-      b.classList.toggle('on', !!al && (imgSel.dataset.al || 'center') === al);
+      b.classList.toggle('on', !!al && (wrap.dataset.al || 'center') === al);
     });
     return;
   }
@@ -1270,7 +1270,8 @@ function applyImgBox(wrap) {
 // sichtbar und richten die Ausrichtungs-Knoepfe das Bild statt des Textes aus.
 let imgSel = null;
 function selectImg(wrap) {
-  page.querySelectorAll('.edimg.sel').forEach(w => { if (w !== wrap) w.classList.remove('sel'); });
+  if (imgSel === wrap) return;
+  clearImgSel();
   wrap.classList.add('sel');
   imgSel = wrap;
   // Wer ein Bild anklickt, waehlt keinen Text mehr aus; eine gemerkte
@@ -1278,23 +1279,45 @@ function selectImg(wrap) {
   ED.sel = null;
   updTb();
 }
-// Wird der ausgewaehlte Rahmen entfernt (Loeschen ueber das Bildmenue,
-// Rueckgaengig, Dokumentwechsel), zeigt `imgSel` sonst auf einen Knoten, der
-// nicht mehr im Dokument haengt - und die Ausrichtungs-Knoepfe der Leiste
-// richteten ins Leere statt den Text aus (Abschnitt 133).
-function pruneImgSel() {
-  if (!imgSel || page.contains(imgSel)) return false;
-  imgSel.classList.remove('sel');
-  imgSel = null;
-  return true;
+// Nimmt die Bildauswahl zurueck. `refresh` zeichnet die Leiste neu; noetig nur,
+// wenn sie schon steht und ihren Zustand wechseln soll.
+function clearImgSel(refresh) {
+  if (imgSel) { imgSel.classList.remove('sel'); imgSel = null; }
+  if (refresh) updTb();
 }
-// Ein Klick in eine Zeile, in die Seitenleiste oder in eine andere Ansicht hebt
-// die Bildauswahl auf (Abschnitt 128).
-function deselectImg() {
-  if (!imgSel) return;
-  imgSel.classList.remove('sel');
-  imgSel = null;
-  updTb();
+// Das ausgewaehlte Bild, sofern es noch im Dokument steht: Nach Loeschen
+// (Bildmenue), Rueckgaengig oder einem Neuaufbau der Seite haengt der gemerkte
+// Rahmen sonst ausserhalb und die Leiste richtete ins Leere (Abschnitt 133).
+function selImg() {
+  if (imgSel && !page.contains(imgSel)) clearImgSel();
+  return imgSel;
+}
+
+// Der Block der Seite, in dem ein Knoten steckt: das direkte Kind von #page.
+// Fuer Knoten ausserhalb der Seite gibt es keinen Block (null).
+function topChild(n) {
+  while (n && n !== page && !page.contains(n)) n = n.parentNode;
+  while (n && n !== page && n.parentNode !== page) n = n.parentNode;
+  return !n || n === page ? null : n;
+}
+
+// Block unter dem Zeiger und ob das Bild davor oder dahinter gehoert. Ueber dem
+// Bild selbst gibt es kein Ziel - dort steht es ja schon.
+function blockUnder(x, y) {
+  let at = null;
+  try { const r = document.caretRangeFromPoint(x, y); at = r && r.startContainer; } catch {}
+  const node = topChild(at) || topChild(document.elementFromPoint(x, y));
+  if (!node || node.classList.contains('edimg')) return null;
+  const b = node.getBoundingClientRect();
+  return { node, before: y < b.top + b.height / 2, rect: b };
+}
+
+// Die vier Ziehpunkte; Groesse und Position setzt applyImgBox.
+function addHandles(wrap) {
+  ['nw','ne','sw','se'].forEach(p => {
+    const h = document.createElement('span');
+    h.className = 'hnd ' + p; h.dataset.h = p; wrap.append(h);
+  });
 }
 
 // Ziehen an einer Ecke aendert die Breite; die Hoehe folgt aus dem Seiten-
@@ -1325,39 +1348,54 @@ function bindImg(wrap) {
     selectImg(wrap);
     const img = wrap.querySelector('img');
     if (!img || ev.target !== img || ev.button !== 0) return;
+    // Ohne preventDefault beginnt der Browser beim Ziehen seine eigene
+    // Auswahl bzw. einen Bild-Zug; dann kommen keine pointermove mehr an.
+    ev.preventDefault();
     // Bild wie ein Wort verschieben: erst ab ein paar Pixeln Bewegung, damit ein
-    // Klick zum Auswaehlen nichts verschiebt. Ziel ist der Block unter dem
-    // Zeiger; obere oder untere Haelfte entscheidet, wohin das Bild kommt.
-    const blockAt = (x, y) => {
-      let n = null;
-      try { const r = document.caretRangeFromPoint(x, y); n = r && r.startContainer; } catch {}
-      if (!n) n = document.elementFromPoint(x, y) || null;
-      while (n && n.parentNode && n.parentNode !== page) n = n.parentNode;
-      if (!n || n === page || n === wrap || wrap.contains(n)) return null;
-      const b = n.getBoundingClientRect();
-      return { node:n, before: y < b.top + b.height / 2 };
-    };
+    // Klick zum Auswaehlen nichts verschiebt. Waehrend des Ziehens steht nur
+    // eine Marke an der Zielstelle; das Bild folgt erst beim Loslassen. Wuerde
+    // es schon beim Ziehen umspringen, verschoebe sein eigenes Gewicht die
+    // Absaetze unter dem Zeiger und das Ziel liefe dem Zeiger davon.
     const x0 = ev.clientX, y0 = ev.clientY;
-    let moving = false;
-    try { img.setPointerCapture(ev.pointerId); } catch {}
+    let moving = false, mark = null, drop = null;
+    const unmark = () => { if (mark) mark.remove(); mark = null; };
+    // Am Dokument horchen statt am Bild: pointer capture kann verloren gehen,
+    // dann kaemen die Bewegungen ueber anderen Elementen nicht mehr an und der
+    // Zug bliebe haengen.
+    const stop = () => {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', end);
+      document.removeEventListener('pointercancel', cancel);
+    };
     const move = e2 => {
       if (!moving && Math.hypot(e2.clientX - x0, e2.clientY - y0) < 5) return;
       if (!moving) { moving = true; wrap.classList.add('drag'); }
-      const to = blockAt(e2.clientX, e2.clientY);
-      if (to) { if (to.before) to.node.before(wrap); else to.node.after(wrap); }
+      const to = blockUnder(e2.clientX, e2.clientY);
+      if (!to) return;
+      drop = to;
+      // Die Marke liegt ueber der Seite, nicht in ihr: so kann sie weder
+      // gespeichert noch gedruckt werden und verschiebt kein Layout.
+      if (!mark) { mark = document.createElement('div'); mark.className = 'dropmark'; document.body.append(mark); }
+      const b = to.rect;
+      Object.assign(mark.style, {
+        left: b.left + 'px', width: b.width + 'px',
+        top: (to.before ? b.top - 2 : b.bottom) + 'px'
+      });
     };
-    const up = () => {
-      img.removeEventListener('pointermove', move);
-      img.removeEventListener('pointerup', up);
-      img.removeEventListener('pointercancel', up);
+    const end = () => {
+      stop(); unmark();
       if (!moving) return;
+      moving = false;
       wrap.classList.remove('drag');
+      const to = drop; drop = null;
+      if (!to) return;
+      if (to.before) to.node.before(wrap); else to.node.after(wrap);
       page.dispatchEvent(new Event('input'));
-      selectImg(wrap);
     };
-    img.addEventListener('pointermove', move);
-    img.addEventListener('pointerup', up);
-    img.addEventListener('pointercancel', up);
+    const cancel = () => { stop(); unmark(); moving = false; drop = null; wrap.classList.remove('drag'); };
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', end);
+    document.addEventListener('pointercancel', cancel);
   });
 }
 
@@ -1371,9 +1409,7 @@ function mkEdImage(spec) {
   img.dataset.w = String(Math.round(w)); img.dataset.r = String(r);
   img.dataset.rot = '0'; img.dataset.fx = '0'; img.dataset.fy = '0';
   wrap.append(img);
-  ['nw','ne','sw','se'].forEach(p => {
-    const h = document.createElement('span'); h.className = 'hnd ' + p; h.dataset.h = p; wrap.append(h);
-  });
+  addHandles(wrap);
   applyImgBox(wrap); bindImg(wrap);
   return wrap;
 }
@@ -1381,13 +1417,8 @@ function mkEdImage(spec) {
 // Das Bild kommt als eigener Block an die Stelle des Cursors; danach bleibt ein
 // leerer Absatz stehen, sonst kann der Cursor nicht unter das Bild.
 function insertEdImage(wrap) {
-  let host = null;
   const s = getSelection();
-  if (s && s.rangeCount) {
-    let n = s.anchorNode;
-    while (n && n.parentNode !== page) n = n.parentNode;
-    if (n && n !== page) host = n;
-  }
+  const host = topChild(s && s.rangeCount ? s.anchorNode : null);
   if (host) host.after(wrap); else page.append(wrap);
   const p = document.createElement('p'); p.innerHTML = '<br>';
   wrap.after(p);
@@ -1435,13 +1466,11 @@ async function addImageFiles(files) {
 function initImages() {
   // Nach jedem Neuaufbau der Seite (Dokumentwechsel, Import, Neu) gibt es keine
   // Bildauswahl mehr: die Rahmen sind andere Knoten.
-  imgSel = null;
+  clearImgSel();
   page.querySelectorAll('img').forEach(im => {
     const wrap = im.closest('.edimg');
     if (wrap) {
-      if (!wrap.querySelector('.hnd')) {
-        ['nw','ne','sw','se'].forEach(p => { const h = document.createElement('span'); h.className = 'hnd ' + p; h.dataset.h = p; wrap.append(h); });
-      }
+      if (!wrap.querySelector('.hnd')) addHandles(wrap);
       if (!im.dataset.r) {
         const nw = im.naturalWidth || 0, nh = im.naturalHeight || 0;
         im.dataset.w = im.dataset.w || String(Math.min(nw || IMG_ED_W, IMG_ED_W));
@@ -1478,7 +1507,7 @@ function imgMenu(img, ev) {
   });
   row('x', t('imgMenuDel'), () => {
     // Die Auswahl darf nicht auf dem entfernten Rahmen stehen bleiben.
-    if (imgSel === wrap) { imgSel = null; wrap.classList.remove('sel'); }
+    if (imgSel === wrap) clearImgSel();
     wrap.remove();
     updTb();
   });
@@ -2257,7 +2286,7 @@ page.addEventListener('mouseup', () => setTimeout(showBar, 0));
 document.addEventListener('pointerdown', ev => {
   const t = ev.target;
   if (t && t.closest && (t.closest('.edimg') || t.closest('#tb') || t.closest('#pop'))) return;
-  deselectImg();
+  clearImgSel(true);
 }, true);
 page.addEventListener('keyup', e => { if (e.shiftKey || e.key.startsWith('Arrow')) showBar(); });
 page.addEventListener('keydown', e => {
