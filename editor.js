@@ -879,6 +879,17 @@ const TB = [
   ['btn','link','link', addLink], ['btn','img','image', () => $('#edImgFile').click()], ['btn','clear','eraser', () => { cmd('removeFormat'); cmd('formatBlock', 'p'); }], ['sep'],
   ['btn','shortenAll','shorten', () => allOp('shorten')], ['btn','lengthenAll','lengthen', () => allOp('lengthen')], ['btn','summarizeAll','summarize', () => allOp('summarize')]
 ];
+// Die drei Ausrichtungs-Knoepfe richten ein ausgewaehltes Bild aus; ohne
+// Bildauswahl arbeiten sie wie bisher am Absatz (Abschnitt 128).
+const IMG_AL = { justifyLeft:'left', justifyCenter:'center', justifyRight:'right' };
+function alignImg(command) {
+  const al = IMG_AL[command];
+  if (!al || !imgSel) return false;
+  imgSel.dataset.al = al;
+  page.dispatchEvent(new Event('input'));
+  updTb();
+  return true;
+}
 function renderTb() {
   const cur = {};
   tb.querySelectorAll('[data-sel]').forEach(s => { cur[s.dataset.sel] = s.value; });
@@ -901,7 +912,7 @@ function renderTb() {
       };
     } else {
       el = document.createElement('button'); el.className = 'ib'; el.dataset.i = icon; el.dataset.tt = k; el.onmousedown = e => e.preventDefault();
-      if (kind === 'tog') { el.dataset.cmd = a; el.onclick = () => cmd(a); } else el.onclick = a;
+      if (kind === 'tog') { el.dataset.cmd = a; el.onclick = () => { if (!alignImg(a)) cmd(a); }; } else el.onclick = a;
     }
     tb.append(el);
   }
@@ -918,6 +929,15 @@ function renderTb() {
   });
 }
 function updTb() {
+  // Steht ein Bild in Auswahl, gibt es keine Textauswahl: dann zeigen die drei
+  // Ausrichtungs-Knoepfe die Ausrichtung des Bildes.
+  if (imgSel) {
+    tb.querySelectorAll('[data-cmd]').forEach(b => {
+      const al = IMG_AL[b.dataset.cmd];
+      b.classList.toggle('on', !!al && (imgSel.dataset.al || 'center') === al);
+    });
+    return;
+  }
   // Nur auswerten, wenn die Auswahl in der Seite liegt. Steht sie in einem
   // anderen contenteditable (etwa im Woerterbuch-Dialog), meldet
   // document.queryCommandState den Zustand dieses Elements, und die
@@ -1215,12 +1235,28 @@ function applyImgBox(wrap) {
     const p = h.dataset.h;
     h.style.left = (p.includes('w') ? -5 : bw - 5) + 'px';
     h.style.top = (p.includes('n') ? -5 : bh - 5) + 'px';
+    // Der Zeiger zeigt, wohin das Ziehen wirkt: bei 90/270 Grad aendert sich
+    // die Breite in der Senkrechten, also ein senkrechter Doppelpfeil.
+    h.style.cursor = q ? 'ns-resize' : ((p === 'nw' || p === 'se') ? 'nwse-resize' : 'nesw-resize');
   });
 }
 
+// Das ausgewaehlte Bild. Nur solange es eines gibt, sind Rahmen und Ziehpunkte
+// sichtbar und richten die Ausrichtungs-Knoepfe das Bild statt des Textes aus.
+let imgSel = null;
 function selectImg(wrap) {
   page.querySelectorAll('.edimg.sel').forEach(w => { if (w !== wrap) w.classList.remove('sel'); });
   wrap.classList.add('sel');
+  imgSel = wrap;
+  updTb();
+}
+// Ein Klick in eine Zeile, in die Seitenleiste oder in eine andere Ansicht hebt
+// die Bildauswahl auf (Abschnitt 128).
+function deselectImg() {
+  if (!imgSel) return;
+  imgSel.classList.remove('sel');
+  imgSel = null;
+  updTb();
 }
 
 // Ziehen an einer Ecke aendert die Breite; die Hoehe folgt aus dem Seiten-
@@ -1247,7 +1283,44 @@ function bindImg(wrap) {
       h.addEventListener('pointermove', move); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
     });
   });
-  wrap.addEventListener('pointerdown', () => selectImg(wrap));
+  wrap.addEventListener('pointerdown', ev => {
+    selectImg(wrap);
+    const img = wrap.querySelector('img');
+    if (!img || ev.target !== img || ev.button !== 0) return;
+    // Bild wie ein Wort verschieben: erst ab ein paar Pixeln Bewegung, damit ein
+    // Klick zum Auswaehlen nichts verschiebt. Ziel ist der Block unter dem
+    // Zeiger; obere oder untere Haelfte entscheidet, wohin das Bild kommt.
+    const blockAt = (x, y) => {
+      let n = null;
+      try { const r = document.caretRangeFromPoint(x, y); n = r && r.startContainer; } catch {}
+      if (!n) n = document.elementFromPoint(x, y) || null;
+      while (n && n.parentNode && n.parentNode !== page) n = n.parentNode;
+      if (!n || n === page || n === wrap || wrap.contains(n)) return null;
+      const b = n.getBoundingClientRect();
+      return { node:n, before: y < b.top + b.height / 2 };
+    };
+    const x0 = ev.clientX, y0 = ev.clientY;
+    let moving = false;
+    try { img.setPointerCapture(ev.pointerId); } catch {}
+    const move = e2 => {
+      if (!moving && Math.hypot(e2.clientX - x0, e2.clientY - y0) < 5) return;
+      if (!moving) { moving = true; wrap.classList.add('drag'); }
+      const to = blockAt(e2.clientX, e2.clientY);
+      if (to) { if (to.before) to.node.before(wrap); else to.node.after(wrap); }
+    };
+    const up = () => {
+      img.removeEventListener('pointermove', move);
+      img.removeEventListener('pointerup', up);
+      img.removeEventListener('pointercancel', up);
+      if (!moving) return;
+      wrap.classList.remove('drag');
+      page.dispatchEvent(new Event('input'));
+      selectImg(wrap);
+    };
+    img.addEventListener('pointermove', move);
+    img.addEventListener('pointerup', up);
+    img.addEventListener('pointercancel', up);
+  });
 }
 
 function mkEdImage(spec) {
@@ -2117,6 +2190,14 @@ page.addEventListener('contextmenu', e => {
   e.preventDefault(); imgMenu(im, e);
 });
 page.addEventListener('mouseup', () => setTimeout(showBar, 0));
+// Klick ausserhalb des Bildes (Text, Seitenleiste, andere Ansicht) hebt die
+// Bildauswahl auf. Die Werkzeugleiste und das Kontextmenue sind ausgenommen,
+// sonst waere jeder Knopfdruck schon eine Abwahl.
+document.addEventListener('pointerdown', ev => {
+  const t = ev.target;
+  if (t && t.closest && (t.closest('.edimg') || t.closest('#tb') || t.closest('#pop'))) return;
+  deselectImg();
+}, true);
 page.addEventListener('keyup', e => { if (e.shiftKey || e.key.startsWith('Arrow')) showBar(); });
 page.addEventListener('keydown', e => {
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); newPage(); return; }
