@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.118 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.119 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1967,3 +1967,21 @@ Die vier Sprachobjekte `NL`, `ES`, `TR` und `AR` in `renderer.js` deckten nur de
 **Geprüft im laufenden Fenster.** Die installierte App (1.15.118) wurde mit `--remote-debugging-port=9333` gestartet, über CDP `LANG` auf `nl`, `es`, `tr` und `ar` gesetzt, jeweils `applyI18n()` aufgerufen und danach die `title`-Attribute der 19 Knöpfe ausgelesen (`[data-tt="…"]`). In allen vier Sprachen stand der Text aus der Tabelle oben am Knopf, und keiner der 76 Werte war mit dem englischen identisch – der Rückfall auf Englisch ist damit für diese Schlüssel weg. Die gespeicherte Einstellung `S.uiLang` blieb unberührt (nur `LANG` und `applyI18n()` im Speicher), die App stand nach der Prüfung wieder in ihrer vorherigen Sprache.
 
 **Offen.** Die übrigen Schlüssel dieser Ansichten (`vocTitle`, `vocCount`, `vocEmpty`, `srsTitle`, `srsAgain`, `srsGood`, `vocAdd`, `lib*` und die Editor-Texte) fehlen in den vier Objekten weiterhin und fallen auf Englisch zurück; sie waren nicht Teil dieser Aufgabe. Die RTL-Darstellung im arabischen Fenster wurde nur über `dir="rtl"` gesetzt, nicht visuell geprüft.
+
+## 144. Vokabeln, Üben und Lesen: alle übrigen Texte in NL, ES, TR, AR (1.15.119)
+
+Nach Abschnitt 143 waren in diesen Ansichten nur die 19 Tooltips übersetzt; alle Fließtexte fielen weiter auf Englisch zurück. Nachgetragen sind 90 Schlüssel in `renderer.js` (ein Block am Ende jedes Sprachobjekts, Marke „Vokabeln, Ueben und Lesen“) und acht `X()`-Zeilen in `editor.js`, die bisher nur Deutsch, Englisch und Niederländisch hatten.
+
+- **Vokabelliste:** `vocTitle`, `vocAdd`, `vocCount`, `vocabDue`, `vocOther`, `vocTermL`, `vocTermPh`, `vocTransL`, `vocCtxL`, `vocEdit`, `vocEmpty`, `vocEmptyHint`, `vocNeedTerm`, `vocNoHit`, `vocFindPh`, `vocFilterH`, `vocSortH`, `vocSortAz`, `vocSortZa`, `vocSortNew`, `vocSortDue`, `vocFAll`, `vocFDue`, `vocFOpen`, `vocFMastered`, `vocFCtx`, `vocSelN`, `vocSelDelQ`, `vocFillDo`, `vocFillNone`, `vocFillAsk`, `vocFillDone`, `vocFillRun`, `csvErr`, `csvDone`, `learnLang`, `nativeLang`
+- **Üben:** `srsTitle`, `srsAgain`, `srsHard`, `srsGood`, `srsEasy`, `srsReveal`, `srsNone`, `srsDone`, `srsAllMastered`, `srsMastered`, `srsMasteredHint`, `srsNoTr`, `srsCheck`, `srsRight`, `srsWrong`, `srsChars`, `srsTypeIn`, `studyModelT`, `studyModelAuto`, `studyNoModel`
+- **Endlosrunde:** `repStop`, `repEndless`, `repAgain`, `repTypeIn`, `repStreak`, `repNone`
+- **Lesen und Wörter antippen:** `readTitle`, `readEnd`, `readToVoc`, `readToLib`, `pickHint`, `wordTr`, `wordErr`, `libToReadDone`
+- **Lesetexte:** `txTitleL`, `txTitlePh`, `txCatL`, `txBodyL`, `txBodyPh`, `txFileL`, `txPasteL`, `txOkL`, `txNeedText`, `txClipEmpty`, `txEmpty`, `txEmptyHint`, `txUntitled`, `txNoRead`, `txDelQ`, `txSaved`, `txtAdded`, `txtDone`, `txtErr`
+
+Die acht Zeilen in `editor.js` betreffen Texte, die in den Dialogen dieser Ansichten erscheinen: `save` (Knopf im Dialog „Vokabel bearbeiten“), `yes` (Rückfrage beim Löschen) und die sechs Tonangaben der Geschichte (`st_pro`, `st_casual`, `st_concise`, `st_formal`, `st_creative`, `st_simple`), die im Studium-Dialog „Geschichte“ stehen.
+
+**Geprüft im laufenden Fenster.** Die installierte App (1.15.119) lief mit `--remote-debugging-port=9333`; über CDP wurde `LANG` auf `nl`, `es`, `tr` und `ar` gesetzt, `applyI18n()` aufgerufen und je Schlüssel geprüft, ob er im jeweiligen Sprachobjekt steht (`NL`, `ES`, `TR`, `AR`) und welchen Text das Fenster zeigt – bei den 19 Schlüsseln mit `data-t` direkt aus dem DOM (`textContent`), sonst über `t()` mit Beispielwerten (`t(k, 2, 1, 'x')`, damit auch die Pluralfunktionen wirklich rechnen). Ergebnis: 98 von 98 Schlüsseln in allen vier Sprachen gesetzt und nicht leer, davon 19 direkt aus dem DOM gelesen. Die gespeicherte Einstellung `S.uiLang` blieb unberührt; nach der Prüfung stand das Fenster wieder auf Deutsch.
+
+Zehn Werte sind absichtlich mit dem Englischen buchstabengleich und deshalb kein Rückfall: `vocSortAz` („A–Z“) und `vocSortZa` („Z–A“) in allen vier Sprachen, `vocFilterH` im Niederländischen („Filter“) und `st_formal` im Spanischen („Formal“).
+
+**Offen.** Im Editor bleiben `styleNew`, `styleEdit`, `styleName`, `styleIcon`, `styleInstr`, `styleInstrPh`, `styleCopy`, `styleDelete`, `styleConfDel`, `del`, `close`, `sumTitle`, `insTop`, `replAll` und `noChanges` ohne ES/TR/AR; sie gehören zur Textbearbeitung und waren nicht Teil dieser Aufgabe.

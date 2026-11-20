@@ -138,10 +138,10 @@ X('styleInstrPh','z. B. „Schreibe wie ein Pirat: bildhaft, mit Seemannsausdrü
 X('styleCopy','Anweisung kopieren','Copy instructions','Instructie kopieren');
 X('styleDelete','Löschen','Delete','Verwijderen');
 X('styleConfDel', (n) => `Ausdrucksweise „${n}" löschen?`, (n) => `Delete style "${n}"?`, (n) => `Stijl "${n}" verwijderen?`);
-X('save','Speichern','Save','Opslaan'); X('del','Löschen','Delete','Verwijderen'); X('close','Schließen','Close','Sluiten'); X('yes','Ja','Yes','Ja');
+X('save','Speichern','Save','Opslaan','Guardar','Kaydet','حفظ'); X('del','Löschen','Delete','Verwijderen'); X('close','Schließen','Close','Sluiten'); X('yes','Ja','Yes','Ja','Sí','Evet','نعم');
 // "Fachlich" meint eher fachspezifisch; gemeint ist der geschaeftliche Ton.
 // Alternative, falls es stoert: "Professionell" (wie im Englischen).
-X('st_pro','Fachlich','Professional','Professioneel'); X('st_casual','Locker','Casual','Los'); X('st_concise','Knapp','Concise','Beknopt'); X('st_formal','Gehoben','Formal','Formeel'); X('st_creative','Einfallsreich','Creative','Creatief'); X('st_simple','Einfach','Simple','Eenvoudig');
+X('st_pro','Fachlich','Professional','Professioneel','Técnico','Teknik','تخصصي'); X('st_casual','Locker','Casual','Los','Informal','Günlük','غير رسمي'); X('st_concise','Knapp','Concise','Beknopt','Conciso','Kısa','موجز'); X('st_formal','Gehoben','Formal','Formeel','Formal','Resmî','فصيح'); X('st_creative','Einfallsreich','Creative','Creatief','Creativo','Yaratıcı','إبداعي'); X('st_simple','Einfach','Simple','Eenvoudig','Sencillo','Basit','بسيط');
 X('confNew','Aktuelles Dokument verwerfen und ein neues beginnen?','Discard the current document and start a new one?','Huidig document verwerpen en een nieuw beginnen?','¿Descartar el documento actual y comenzar uno nuevo?','Mevcut belgeyi atıp yenisine başlansın mı?','هل تريد تجاهل المستند الحالي وبدء مستند جديد؟');
 X('confDiscard','Ungespeicherte Änderungen an diesem Dokument verwerfen?','Discard unsaved changes to this document?','Niet-opgeslagen wijzigingen in dit document verwerpen?','¿Descartar los cambios no guardados en este documento?','Bu belgedeki kaydedilmemiş değişiklikler atılsın mı?','هل تريد تجاهل التغييرات غير المحفوظة في هذا المستند؟');
 X('confQuitDiscard','Ungespeicherte Änderungen verwerfen und das Programm beenden?','Discard unsaved changes and quit?','Niet-opgeslagen wijzigingen verwerpen en afsluiten?','¿Descartar los cambios no guardados y salir?','Kaydedilmemiş değişiklikleri atıp çıkılsın mı?','هل تريد تجاهل التغييرات غير المحفوظة والخروج؟');
