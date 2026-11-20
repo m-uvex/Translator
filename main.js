@@ -583,10 +583,17 @@ function showWindow() {
   win.show(); win.focus();
 }
 function createTray() {
-  const icon = resPath('build', IS_WIN ? 'icon.ico' : 'icon.png');
+  // Auf beiden Systemen das PNG: Das ICO liegt nur im Archiv (app.asar), und
+  // resPath zeigt im gepackten Betrieb auf app.asar.unpacked, wo nur icon.png
+  // liegt (siehe asarUnpack). Mit dem ICO brach die Existenzpruefung ab, und
+  // die App lief ohne Symbol im Infobereich. Windows skaliert das PNG selbst
+  // auf die Groesse des Infobereichs.
+  const icon = resPath('build', 'icon.png');
   if (!fs.existsSync(icon)) return;
+  const img = nativeImage.createFromPath(icon);
+  if (img.isEmpty()) return;
   try {
-    tray = new Tray(nativeImage.createFromPath(icon));
+    tray = new Tray(img);
     tray.setToolTip('Übersetzer');
     tray.setContextMenu(Menu.buildFromTemplate([
       { label: 'Öffnen', click: showWindow },

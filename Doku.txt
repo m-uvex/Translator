@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.65 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.66 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1263,3 +1263,13 @@ Diese Iteration buendelt acht Punkte aus der Vorschlagsliste und einen gemeldete
 **Vorgemerkt, nicht Teil dieser Iteration:** Uebersetzung speichern/exportieren (Punkt 3), Entwurf ueber den Neustart retten (6), Einstellungen und Ablage sichern (12) sowie CSP und Navigationssperre (13).
 
 Geprueft 1.15.62 bis 1.15.65: `node --check` fuer `main.js`, `renderer.js`, `preload.js`, `study.js` und `editor.js`, `python -m py_compile` fuer `nllb_server.py`; danach gebaut, still installiert und gestartet (Naeheres im Abschnitt „Geprueft“ der jeweiligen Iteration, hier: Build und Start ohne Fehler).
+
+## 97. Das Tray-Symbol lag ausserhalb des Pakets (1.15.66)
+
+`createTray()` nahm unter Windows `resPath('build', 'icon.ico')`. `resPath()` ersetzt im gepackten Betrieb `app.asar` durch `app.asar.unpacked`, in `asarUnpack` steht aber nur `build/icon.png`; die Existenzpruefung brach deshalb ab, und die App lief ohne Symbol im Infobereich. Auffallen konnte das nur am fehlenden Symbol, weil `createTray()` still zurueckkehrt. Im Quellordner (`npm start`) trat der Fehler nicht auf, weil dort beide Dateien liegen — er entstand erst durch das Bauen.
+
+Das Tray nimmt jetzt auf beiden Systemen `build/icon.png` (512 px, in `asarUnpack`, also im Paket vorhanden). Windows skaliert das Bild selbst auf die Groesse des Infobereichs; ein eigenes `nativeImage.resize()` waere bei 125 Prozent Bildschirmskalierung unschaerfer als die Skalierung des Systems. Zusaetzlich prueft `createTray()` `nativeImage.isEmpty()`, damit eine leere Datei nicht zu einem unsichtbaren Knopf fuehrt. Das ICO wird nur noch fuer die exe gebraucht (rcedit) und bleibt im Archiv.
+
+Das Fenster-Icon in `new BrowserWindow({ icon })` steht weiterhin auf `icon.ico`; im gepackten Betrieb existiert dieser Pfad nicht, Windows nimmt dann das in die exe geschriebene Icon aus derselben Datei. Wer das Fenster-Icon aus dem Paket laden will, muss `build/icon.ico` in `asarUnpack` aufnehmen.
+
+Geprueft 1.15.66: `node --check main.js`, gebaut, still installiert. Danach mit dem mitgelieferten Electron eine Probe gestartet, die genau `resources/app.asar.unpacked/build/icon.png` laedt und daraus ein echtes Tray anlegt: Datei vorhanden, Bild nicht leer (512×512), Tray angelegt, kein Fehler. Die App laeuft anschliessend mit vier Prozessen. Das Symbol selbst wurde nicht am Bildschirm abgelesen, sondern ueber genau diesen Aufruf nachgewiesen.
