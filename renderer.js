@@ -72,10 +72,11 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // ist die Korrektur aus einer Pixelmessung (Tinten-Schwerpunkt gegen 12/12) —
   // eine mittige Bounding-Box allein wirkte schief im Highlighter-Kreis, weil
   // Pfeile oben und Haken unten verschieden viel Tinte tragen.
-  // Dieselbe Form wie frueher, nur als Ganzes 1,1-fach: Koepfe und Boegen
-  // einzeln zu vergroessern verzerrte die Figur (Koepfe breiter als die Boegen).
-  // Der Schwerpunktversatz 0,37 waechst mit der Skalierung (0,37 x 1,1 = 0,41).
-  gNone:'<g transform="translate(12 12.41) scale(1.1) translate(-12 -12)"><circle cx="7" cy="8.6" r="3"/><circle cx="17" cy="8.6" r="3"/><path d="M2.4 18.5c0-2.6 2-4.6 4.6-4.6s4.6 2 4.6 4.6"/><path d="M12.4 18.5c0-2.6 2-4.6 4.6-4.6s4.6 2 4.6 4.6"/></g>',
+  // Dieselbe Form wie frueher, als Ganzes skaliert: Koepfe und Boegen einzeln
+  // zu vergroessern verzerrte die Figur (Koepfe breiter als die Boegen). Der
+  // Faktor 0,94 ist der Wunschstand: ein Hauch kleiner als die Urform.
+  // Der Schwerpunktversatz 0,37 waechst mit der Skalierung (0,37 x 0,94 = 0,35).
+  gNone:'<g transform="translate(12 12.35) scale(0.94) translate(-12 -12)"><circle cx="7" cy="8.6" r="3"/><circle cx="17" cy="8.6" r="3"/><path d="M2.4 18.5c0-2.6 2-4.6 4.6-4.6s4.6 2 4.6 4.6"/><path d="M12.4 18.5c0-2.6 2-4.6 4.6-4.6s4.6 2 4.6 4.6"/></g>',
   gMixed:'<g transform="translate(0.55 0.62)"><circle cx="5.4" cy="11.2" r="3"/><path d="M5.4 14.2v4.2M2.9 16.3h5"/><circle cx="16.2" cy="11.2" r="3"/><path d="M18.3 9.1l3.4-3.4M21.7 5.7h-2.4M21.7 5.7v2.4"/></g>',
   gMale:'<g transform="translate(-0.19 0.18)"><circle cx="5.4" cy="13.3" r="3"/><path d="M7.5 11.1l3.4-3.4M10.9 7.7h-2.4M10.9 7.7v2.4"/><circle cx="16.2" cy="13.3" r="3"/><path d="M18.3 10.7l3.4-3.4M21.7 7.3h-2.4M21.7 7.3v2.4"/></g>',
   gFemale:'<g transform="translate(0 0.34)"><circle cx="6.9" cy="9.9" r="3"/><path d="M6.9 12.9v4.2M4.4 15h5"/><circle cx="17.1" cy="9.9" r="3"/><path d="M17.1 12.9v4.2M14.6 15h5"/></g>',

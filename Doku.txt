@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.71 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.72 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1311,6 +1311,8 @@ Die Fassung aus 1.15.68 vergroesserte Kopf und Schulterbogen **einzeln**: Koepfe
 Der Schwerpunktversatz waechst mit: 0,37 x 1,1 = 0,41, daher `translate(12 12.41)`. Wer die Groesse aendern will, aendert **nur** die 1.1 und rechnet den Versatz mit (0,37 x Faktor); die Form selbst bleibt unberuehrt. Das ist die Regel fuer alle vier Gruppenzeichen: nicht Koepfe und Boegen einzeln nachziehen, sondern den ganzen Glyphen skalieren, sonst kippt die Proportion.
 
 Geprueft 1.15.71: alle Fassungen (alt, verzerrt, 1,06x, 1,10x, 1,14x) im Browser nebeneinander in der 32-px-Karte und auf 96 px angesehen; 1,10x gewaehlt. Danach gebaut, still installiert und im laufenden Build nachgemessen: Tintenkasten 21,1 x 14,2 px (vorher 21,6 x 14,1 bei der verzerrten Fassung, 19,2 x 12,9 am Anfang), Mitte 16,0/16,5 im 32-px-Knopf; die Nachbarn unveraendert 19,3 x 12,7 / 19,3 x 9,0 / 16,2 x 10,2.
+
+**Endstand (1.15.72).** Gewuenscht war ein Hauch kleiner als die Urform, nicht groesser. Der Faktor ist deshalb `scale(0.94)` statt `1.1`; der Versatz 0,37 x 0,94 = 0,35 steht als `translate(12 12.35)`. Verglichen wurden Urform, 1,10 (der zu grosse Stand), 0,98, 0,94 und 0,90 im Browser in der 32-px-Karte und auf 96 px; 0,94 ist der Schritt, der als „ein winziges bisschen kleiner“ liest, 0,90 wird sichtbar kleiner als die Nachbarn. Im installierten Build nachgemessen: 18,0 x 12,1 px, Mitte 16,0/16,4 (Urform 19,2 x 12,9, Nachbar „gemischt“ 19,3 x 12,7). Wer die Groesse weiter drehen will, aendert nur die 0,94 und rechnet 0,37 x Faktor fuer den Versatz.
 
 Geprueft 1.15.69: zwei Instanzen mit getrennten Profilen gestartet — die erste bekam den Kurzbefehl, die zweite nicht; in der zweiten meldet `window.api.hotkeyOk()` `false` und der Absatz traegt den Text ohne Tastenkuerzel, in der ersten `true` und die Zeile mit „Strg+Shift+Leertaste“. Danach gebaut, still installiert, App neu gestartet.
 
