@@ -1582,7 +1582,7 @@ $('#setBody').addEventListener('input', e => {
   let v = e.target.type === 'number' ? +e.target.value : e.target.value;
   if (e.target.dataset.bool) v = v === '1';
   S[k] = v; save();
-  if (k === 'theme') applyTheme(); if (k === 'uiLang') renderAll(); if (k === 'uiMode') drawStyles(); if (k === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (k === 'workspace' && window.edWorkspace) window.edWorkspace(); if (k === 'storyOn' && window.studyStorySync) window.studyStorySync();
+  if (k === 'theme') applyTheme(); if (k === 'uiLang') renderAll(); if (k === 'uiMode') drawStyles(); if (k === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (k === 'workspace' && window.edWorkspace) window.edWorkspace(); if (k === 'storyOn' && window.studyStorySync) window.studyStorySync(); if (k === 'historyOn') drawHist();
 });
 $('#setBody').addEventListener('change', e => { if (e.target.dataset.k === 'url' || e.target.dataset.k === 'nllb') { retries = 0; loadModels(); } });
 $('#setBody').onclick = e => {
@@ -1606,15 +1606,15 @@ $('#setBody').onclick = e => {
     let v = pick.dataset.setval;
     v = pick.dataset.bool ? v === '1' : ty === 'number' ? +v : v;
     S[key] = v; save();
-    if (key === 'theme') applyTheme(); if (key === 'uiLang') renderAll(); if (key === 'uiMode') drawStyles(); if (key === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (key === 'workspace' && window.edWorkspace) window.edWorkspace(); if (key === 'storyOn' && window.studyStorySync) window.studyStorySync();
+    if (key === 'theme') applyTheme(); if (key === 'uiLang') renderAll(); if (key === 'uiMode') drawStyles(); if (key === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (key === 'workspace' && window.edWorkspace) window.edWorkspace(); if (key === 'storyOn' && window.studyStorySync) window.studyStorySync(); if (key === 'historyOn') drawHist();
     drawSettings();
     return;
   }
   const k = e.target.closest('[data-r]')?.dataset.r; if (!k) return;
-  S[k] = D[k]; save(); if (k === 'theme') applyTheme(); if (k === 'uiLang') renderAll(); if (k === 'uiMode') drawStyles(); if (k === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (k === 'workspace' && window.edWorkspace) window.edWorkspace(); if (k === 'storyOn' && window.studyStorySync) window.studyStorySync();
+  S[k] = D[k]; save(); if (k === 'theme') applyTheme(); if (k === 'uiLang') renderAll(); if (k === 'uiMode') drawStyles(); if (k === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (k === 'workspace' && window.edWorkspace) window.edWorkspace(); if (k === 'storyOn' && window.studyStorySync) window.studyStorySync(); if (k === 'historyOn') drawHist();
   drawSettings(); if (k === 'url' || k === 'nllb') { retries = 0; loadModels(); }
 };
-$('#resetAll').onclick = () => { for (const [k] of FIELDS) S[k] = D[k]; save(); applyTheme(); renderAll(); drawSettings(); retries = 0; loadModels(); if (window.edWorkspace) window.edWorkspace(); if (window.studyStorySync) window.studyStorySync(); };
+$('#resetAll').onclick = () => { for (const [k] of FIELDS) S[k] = D[k]; save(); applyTheme(); renderAll(); drawHist(); drawSettings(); retries = 0; loadModels(); if (window.edWorkspace) window.edWorkspace(); if (window.studyStorySync) window.studyStorySync(); };
 $('#openSettings').onclick = () => { drawSettings(); $('#settings').showModal(); };
 $('#closeSet').onclick = () => $('#settings').close(); $('#settings').addEventListener('close', () => clearTimeout(mtPoll));
 
