@@ -293,7 +293,7 @@ const K = {
   diagUnload:['Modelle entladen','Unload models'], diagUnloaded:['Modelle entladen','Models unloaded'],
   diagNoUnload:['Nichts geladen','Nothing loaded'],
   diagOllama:['Ollama','Ollama'], diagNllb:['NLLB-Server','NLLB server'],
-  diagHint:['Die Adressen stehen in den Einstellungen unter „Verbindungen“.','The addresses are set in the settings under “Connections”.'],
+  diagHint:['Die Adressen stehen in den Einstellungen unter „Verbindungen“.','The addresses are set in the settings under “Connections”.'], hotkeyHint:['Schnellaufruf aus jedem Programm: Strg+Shift+Leertaste','Quick access from any app: Ctrl+Shift+Space'],
   startTr:['Übersetzer öffnen','Open translator'], startEd:['Textbearbeitung öffnen','Open text editor'], startStudy:['Lernen öffnen','Open study'], startLast:['Zuletzt verwendetes öffnen','Open last used'],
   // Namen der Arbeitsplatz-Gruppen fuer die Kaestchen in den Einstellungen.
   wsTr:['Übersetzer','Translator'], wsEd:['Textbearbeitung','Text editor'], wsStudy:['Lernen','Study'],
@@ -385,7 +385,7 @@ const NL = {
   speak:'Voorlezen', diagH:'Verbindingen', diagRefresh:'Opnieuw meten', diagOk:'Bereikbaar', diagFail:'Niet bereikbaar',
   diagModels:'Modellen', diagLoaded:'Geladen', diagNone:'niets', diagVersion:'Versie',
   diagUnload:'Modellen vrijgeven', diagUnloaded:'Modellen vrijgegeven', diagNoUnload:'Niets geladen',
-  diagOllama:'Ollama', diagNllb:'NLLB-server', diagHint:'De adressen staan in de instellingen onder „Verbindingen“.',
+  diagOllama:'Ollama', diagNllb:'NLLB-server', diagHint:'De adressen staan in de instellingen onder „Verbindingen“.', hotkeyHint:'Snel openen vanuit elk programma: Ctrl+Shift+Spatie',
   startTr:'Vertaler openen', startEd:'Tekstbewerking openen', startLast:'Laatst gebruikte openen', wsTr:'Vertaler', wsEd:'Tekstbewerking', wsStudy:'Leren',
   reset:'Herstellen', resetAll:'Alles herstellen', autoSys:'Automatisch (systeem)', autoO:'Automatisch', autoModel:'Automatisch', light:'Licht', dark:'Donker',
   nllbH:'NLLB-200', mInst:'Geïnstalleerd', mNot:'Niet geïnstalleerd', mLoad:p => `Downloaden … ${p} %`, mErr:e => `Fout: ${e}`, bDl:'Downloaden', bDel:'Verwijderen', bBusy:'Bezig …',
@@ -417,7 +417,7 @@ const ES = {
   speak:'Leer en voz alta', diagH:'Conexiones', diagRefresh:'Medir de nuevo', diagOk:'Accesible', diagFail:'No accesible',
   diagModels:'Modelos', diagLoaded:'Cargado', diagNone:'nada', diagVersion:'Versión',
   diagUnload:'Liberar modelos', diagUnloaded:'Modelos liberados', diagNoUnload:'Nada cargado',
-  diagNllb:'Servidor NLLB', diagHint:'Las direcciones se ajustan en la configuración, en «Conexiones».',
+  diagNllb:'Servidor NLLB', diagHint:'Las direcciones se ajustan en la configuración, en «Conexiones».', hotkeyHint:'Acceso rápido desde cualquier programa: Ctrl+Shift+Espacio',
   startTr:'Abrir traductor', startEd:'Abrir editor', startLast:'Abrir último usado', wsTr:'Traductor', wsEd:'Editor', wsStudy:'Aprendizaje',
   reset:'Restablecer', resetAll:'Restablecer todo', autoSys:'Automático (sistema)', autoO:'Automático', autoModel:'Automático', light:'Claro', dark:'Oscuro',
   nllbH:'NLLB-200', mInst:'Instalado', mNot:'No instalado', mLoad:p => `Descargando … ${p} %`, mErr:e => `Error: ${e}`, bDl:'Descargar', bDel:'Eliminar', bBusy:'Descargando …',
@@ -451,7 +451,7 @@ const TR = {
   speak:'Sesli oku', diagH:'Bağlantılar', diagRefresh:'Yeniden ölç', diagOk:'Erişilebilir', diagFail:'Erişilemiyor',
   diagModels:'Modeller', diagLoaded:'Yüklü', diagNone:'yok', diagVersion:'Sürüm',
   diagUnload:'Modelleri boşalt', diagUnloaded:'Modeller boşaltıldı', diagNoUnload:'Yüklü model yok',
-  diagNllb:'NLLB sunucusu', diagHint:'Adresler ayarlarda „Bağlantılar“ altında.',
+  diagNllb:'NLLB sunucusu', diagHint:'Adresler ayarlarda „Bağlantılar“ altında.', hotkeyHint:'Her programdan hızlı erişim: Ctrl+Shift+Boşluk',
   startTr:'Çevirmeni aç', startEd:'Metin düzenleyiciyi aç', startLast:'Son kullanılanı aç', wsTr:'Çevirmen', wsEd:'Editör', wsStudy:'Öğrenme',
   reset:'Sıfırla', resetAll:'Tümünü sıfırla', autoSys:'Otomatik (sistem)', autoO:'Otomatik', autoModel:'Otomatik', light:'Açık', dark:'Koyu',
   nllbH:'NLLB-200', mInst:'Yüklü', mNot:'Yüklü değil', mLoad:p => `İndiriliyor … %${p}`, mErr:e => `Hata: ${e}`, bDl:'İndir', bDel:'Sil', bBusy:'İndiriliyor …',
@@ -485,7 +485,7 @@ const AR = {
   speak:'قراءة بصوت عالٍ', diagH:'الاتصالات', diagRefresh:'قياس مرة أخرى', diagOk:'متاح', diagFail:'غير متاح',
   diagModels:'النماذج', diagLoaded:'محمّل', diagNone:'لا شيء', diagVersion:'الإصدار',
   diagUnload:'إفراغ النماذج', diagUnloaded:'تم إفراغ النماذج', diagNoUnload:'لا شيء محمّل',
-  diagNllb:'خادم NLLB', diagHint:'تُضبط العناوين في الإعدادات ضمن «الاتصالات».',
+  diagNllb:'خادم NLLB', diagHint:'تُضبط العناوين في الإعدادات ضمن «الاتصالات».', hotkeyHint:'وصول سريع من أي تطبيق: Ctrl+Shift+Space',
   startTr:'فتح المترجم', startEd:'فتح المحرر', startLast:'فتح آخر مستخدم', wsTr:'المترجم', wsEd:'المحرر', wsStudy:'التعلّم',
   reset:'إعادة تعيين', resetAll:'إعادة تعيين الكل', autoSys:'تلقائي (النظام)', autoO:'تلقائي', autoModel:'تلقائي', light:'فاتح', dark:'داكن',
   nllbH:'NLLB-200', mInst:'مثبت', mNot:'غير مثبت', mLoad:p => `جاري التنزيل … ${p} %`, mErr:e => `خطأ: ${e}`, bDl:'تنزيل', bDel:'حذف', bBusy:'جاري التنزيل …',
@@ -1570,7 +1570,7 @@ function drawSettings() {
   };
   const byKey = Object.fromEntries(FIELDS.map(f => [f[0], f]));
   $('#setBody').innerHTML = GROUPS.map(([h, ks]) => `<h3 class="sect">${t(h)}</h3>` + ks.map(k => field(byKey[k])).join('')).join('') +
-    `<h3 class="sect">${t('nllbH')}</h3><div id="mtBox"></div>`;
+    `<h3 class="sect">${t('nllbH')}</h3><div id="mtBox"></div><p class="muted" data-t="hotkeyHint"></p>`;
   $('#setBody').querySelectorAll('[data-k]').forEach(el => { const v = S[el.dataset.k]; el.value = el.dataset.bool ? (v ? '1' : '0') : v; });
   applyI18n();
   drawMt();
