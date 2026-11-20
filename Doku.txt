@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.103 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.104 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1676,3 +1676,14 @@ Die Grenze aus Abschnitt 125 gilt je Einfuegung (3 MB). Zwanzig Bilder mit 2,9 M
 **Seiteneffekt beim Pruefen.** Ein Dokument mit rund 20 MB Bilddaten macht den Renderer traege: Zwei Testlaeufe, die viele grosse Bilder in einem Zug einsetzten und danach weitere Schritte ausfuehrten, liefen in eine Zeitueberschreitung; einzelne Schritte mit kurzen Pausen liefen durch. Das ist kein Fehler der Grenze, aber ein Hinweis darauf, dass sehr grosse Dokumente im Editor zaeh sind.
 
 **Offen.** Die Grenze gilt ab dem Einfuegen; ein Dokument, das schon mehr Bilder enthaelt (etwa aus einer importierten HTML-Datei), wird nicht nachtraeglich beschnitten. Eine Anzeige des belegten Budgets gibt es nicht — die Meldung nennt die Summe erst, wenn sie ueberschritten waere.
+## 130. Werkzeugleisten-Funktionen unter einer Ueberschrift (1.15.104)
+
+Abschnitt 124 hatte die sieben Funktionen der Leiste bei Textauswahl in eine Karte gelegt; die drei Knoepfe der Werkzeugleiste („Kuerzen (ganzer Text)“, „Verlaengern (ganzer Text)“, „Zusammenfassen (ganzer Text)“) standen danach weiter als drei eigene Karten daneben. Die Gruppe „Textbearbeitung (KI)“ war damit halb zusammengefasst.
+
+**Neu:** Die drei Werkzeugleisten-Funktionen sitzen in einer zweiten Karte derselben Bauart: Ueberschrift „Werkzeugleiste: ganzer Text“, darunter durch eine feine Linie getrennt je eine Zeile mit Namen links und An/Aus rechts. Beide Karten entstehen jetzt aus einer gemeinsamen Funktion `subCard(title, keys, resetKey)`; nur die Karte der Auswahl-Leiste uebergibt mit `edCtx` einen Hauptschalter, den sie ueber den Zeilen zeigt, die Werkzeugleisten-Karte hat keinen. In `GROUPS` steht statt der drei Schluessel `{tb:1}`, und `drawSettings` entscheidet je Eintrag zwischen `barField()` und `tbField()`.
+
+Ist der Hauptschalter „KI-Funktionen im Editor“ aus, werden beide Karten ausgegraut und tragen denselben Tooltip wie bisher; die Zeilen bleiben bedienbar. Schluessel, gespeicherte Werte und das Verhalten der drei Knoepfe in der Leiste sind unveraendert.
+
+**Geprueft 1.15.104** in eigenem `--user-data-dir` ueber CDP, deutsches Fenster: Unter „Textbearbeitung (KI)“ stehen zwei Karten — „Leiste bei Textauswahl zeigen“ mit den sieben Zeilen (Kuerzen, Verlaengern, Zusammenfassen, Probelesen, Sinnverwandte Woerter, Ausdrucksweise, Uebersetzen (Auswahl)) und „Werkzeugleiste: ganzer Text“ mit Kuerzen/Verlaengern/Zusammenfassen (ganzer Text). Einzelkarten mit „ganzer Text“ gibt es nicht mehr. „Verlaengern“ auf Aus setzt `S.edTbLengthen = false` und markiert „Aus“ in der Karte; Hauptschalter aus graut beide Karten aus. `node --check renderer.js` laeuft durch. Die Karten wurden nicht per Bildschirmfoto betrachtet.
+
+**Nachzutragen.** Abschnitt 124 beschreibt `barField()` als eigene Funktion; sie ist jetzt ein Aufruf von `subCard()`. Das Verhalten dort ist unveraendert.

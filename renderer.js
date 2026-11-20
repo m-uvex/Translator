@@ -389,6 +389,7 @@ const K = {
   s_groupEdAI:['Textbearbeitung (KI)','Text editing (AI)'],
   s_edAI:['KI-Funktionen im Editor (alle auf einmal)','AI functions in the editor (all at once)'],
   s_edCtx:['Leiste bei Textauswahl zeigen','Show the bar when text is selected'],
+  s_edTbGroup:['Werkzeugleiste: ganzer Text','Toolbar: whole text'],
   s_edCtxShorten:['Kürzen','Shorten'], s_edCtxLengthen:['Verlängern','Lengthen'], s_edCtxSummarize:['Zusammenfassen','Summarize'],
   s_edCtxProofread:['Probelesen','Proofread'], s_edCtxSyn:['Sinnverwandte Wörter','Synonyms'], s_edCtxStyle:['Ausdrucksweise','Style'], s_edCtxTr:['Übersetzen (Auswahl)','Translate (selection)'],
   s_edTbShorten:['Kürzen (ganzer Text)','Shorten (entire text)'], s_edTbLengthen:['Verlängern (ganzer Text)','Lengthen (entire text)'], s_edTbSum:['Zusammenfassen (ganzer Text)','Summarize (entire text)'],
@@ -427,7 +428,7 @@ const NL = {
   s_url:'Ollama-adres', s_nllb:'Adres van NLLB-server', s_ui:'Weergavetaal', s_theme:'Thema', s_start:'Openen bij starten', s_workspace:'Zichtbare werkplekken',
   s_helper:'Model voor woordalternatieven (bij TranslateGemma/NLLB)', s_sys:'Systeemprompt', s_temp:'Temperatuur (lager = consistenter)', s_ctx:'Contextlengte (num_ctx)',
   s_groupGeneral:'Algemeen', s_groupConn:'Verbindingen', s_groupTrans:'Vertaling',
-  s_groupEdAI:'Tekstbewerking (AI)', s_edAI:'AI-functies in de editor (alles tegelijk)', s_edCtx:'Werkbalk tonen bij tekstselectie',
+  s_groupEdAI:'Tekstbewerking (AI)', s_edAI:'AI-functies in de editor (alles tegelijk)', s_edCtx:'Werkbalk tonen bij tekstselectie', s_edTbGroup:'Werkbalk: hele tekst',
   s_accent:'Accentkleur', accentSky:'Hemelblauw', accentIndigo:'Indigo', accentViolet:'Violet', accentPink:'Roze',
   /* accentBabyPink:'Babyroze', */ accentCoral:'Koraal', accentAmber:'Amber', accentGreen:'Groen', accentTeal:'Turquoise', accentSlate:'Grijs',
   s_groupImages:'Afbeeldingen in de tekst', s_imgModel:'Model om afbeeldingen te beschrijven', imgIns:'Afbeelding invoegen',
@@ -477,7 +478,7 @@ const ES = {
   s_url:'Dirección de Ollama', s_nllb:'Dirección del servidor NLLB', s_ui:'Idioma de visualización', s_theme:'Tema', s_start:'Abrir al inicio', s_workspace:'Espacios visibles',
   s_helper:'Modelo para alternativas de palabras (TranslateGemma/NLLB)', s_sys:'Prompt del sistema', s_temp:'Temperatura (menor = más consistente)', s_ctx:'Longitud de contexto (num_ctx)',
   s_groupGeneral:'General', s_groupConn:'Conexiones', s_groupTrans:'Traducción', s_groupFeatures:'Ajustes adicionales',
-  s_groupEdAI:'Edición de texto (IA)', s_edAI:'Funciones de IA en el editor (todas a la vez)', s_edCtx:'Mostrar la barra al seleccionar texto',
+  s_groupEdAI:'Edición de texto (IA)', s_edAI:'Funciones de IA en el editor (todas a la vez)', s_edCtx:'Mostrar la barra al seleccionar texto', s_edTbGroup:'Barra de herramientas: todo el texto',
   s_accent:'Color de acento', accentSky:'Azul cielo', accentIndigo:'Índigo', accentViolet:'Violeta', accentPink:'Rosa',
   /* accentBabyPink:'Rosa bebé', */ accentCoral:'Coral', accentAmber:'Ámbar', accentGreen:'Verde', accentTeal:'Turquesa', accentSlate:'Gris',
   s_groupImages:'Imágenes en el texto', s_imgModel:'Modelo para describir imágenes', imgIns:'Insertar imagen',
@@ -529,7 +530,7 @@ const TR = {
   s_url:'Ollama adresi', s_nllb:'NLLB sunucu adresi', s_ui:'Arayüz dili', s_theme:'Tema', s_start:'Başlangıçta aç', s_workspace:'Görünür çalışma alanları',
   s_helper:'Kelime alternatifleri modeli (TranslateGemma/NLLB için)', s_sys:'Sistem komutu', s_temp:'Sıcaklık (düşük = daha tutarlı)', s_ctx:'Bağlam uzunluğu (num_ctx)',
   s_groupGeneral:'Genel', s_groupConn:'Bağlantılar', s_groupTrans:'Çeviri', s_groupFeatures:'Ek ayarlar',
-  s_groupEdAI:'Metin düzenleme (YZ)', s_edAI:'Düzenleyicideki YZ işlevleri (hepsi birden)', s_edCtx:'Metin seçildiğinde çubuğu göster',
+  s_groupEdAI:'Metin düzenleme (YZ)', s_edAI:'Düzenleyicideki YZ işlevleri (hepsi birden)', s_edCtx:'Metin seçildiğinde çubuğu göster', s_edTbGroup:'Araç çubuğu: tüm metin',
   s_accent:'Vurgu rengi', accentSky:'Gök mavisi', accentIndigo:'Çivit', accentViolet:'Mor', accentPink:'Pembe',
   /* accentBabyPink:'Bebek pembesi', */ accentCoral:'Mercan', accentAmber:'Amber', accentGreen:'Yeşil', accentTeal:'Turkuaz', accentSlate:'Gri',
   s_groupImages:'Metindeki görseller', s_imgModel:'Görselleri betimleme modeli', imgIns:'Görsel ekle',
@@ -581,7 +582,7 @@ const AR = {
   s_url:'عنوان Ollama', s_nllb:'عنوان خادم NLLB', s_ui:'لغة الواجهة', s_theme:'المظهر', s_start:'الفتح عند البدء', s_workspace:'مساحات العمل المرئية',
   s_helper:'نموذج بدائل الكلمات (مع TranslateGemma/NLLB)', s_sys:'توجيه النظام', s_temp:'درجة الحرارة (أقل = أكثر دقة)', s_ctx:'طول السياق (num_ctx)',
   s_groupGeneral:'عام', s_groupConn:'الاتصالات', s_groupTrans:'الترجمة', s_groupFeatures:'إعدادات إضافية',
-  s_groupEdAI:'تحرير النص (ذكاء اصطناعي)', s_edAI:'وظائف الذكاء الاصطناعي في المحرر (كلها دفعة واحدة)', s_edCtx:'إظهار الشريط عند تحديد النص',
+  s_groupEdAI:'تحرير النص (ذكاء اصطناعي)', s_edAI:'وظائف الذكاء الاصطناعي في المحرر (كلها دفعة واحدة)', s_edCtx:'إظهار الشريط عند تحديد النص', s_edTbGroup:'شريط الأدوات: النص كله',
   s_accent:'لون التمييز', accentSky:'أزرق سماوي', accentIndigo:'نيلي', accentViolet:'بنفسجي', accentPink:'وردي',
   /* accentBabyPink:'وردي فاتح', */ accentCoral:'مرجاني', accentAmber:'كهرماني', accentGreen:'أخضر', accentTeal:'فيروزي', accentSlate:'رمادي',
   s_groupImages:'الصور في النص', s_imgModel:'نموذج لوصف الصور', imgIns:'إدراج صورة',
@@ -1911,7 +1912,7 @@ const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['accent','s_
   ['edCtxShorten','s_edCtxShorten','bool'],['edCtxLengthen','s_edCtxLengthen','bool'],['edCtxSummarize','s_edCtxSummarize','bool'],
   ['edCtxProofread','s_edCtxProofread','bool'],['edCtxSyn','s_edCtxSyn','bool'],['edCtxStyle','s_edCtxStyle','bool'],['edCtxTr','s_edCtxTr','bool'],
   ['edTbShorten','s_edTbShorten','bool'],['edTbLengthen','s_edTbLengthen','bool'],['edTbSum','s_edTbSum','bool']];
-const GROUPS = [['s_groupGeneral',['uiLang','theme','accent','start','workspace']],['s_groupStudy',['studyAI','studyWord','storyOn','csvSrs']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped','historyOn','diagOn']],['s_groupImages',['imgModel','imgLimit','imgTotalLimit']],['s_groupEdAI',['edAI',{bar:1},'edTbShorten','edTbLengthen','edTbSum']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
+const GROUPS = [['s_groupGeneral',['uiLang','theme','accent','start','workspace']],['s_groupStudy',['studyAI','studyWord','storyOn','csvSrs']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped','historyOn','diagOn']],['s_groupImages',['imgModel','imgLimit','imgTotalLimit']],['s_groupEdAI',['edAI',{bar:1},{tb:1}]],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
 // Der systemweite Kurzbefehl kann von einem anderen Programm belegt sein:
 // globalShortcut.register() scheitert dann still. main.js meldet ueber
 // `app:hotkey`, ob die Registrierung geklappt hat; bis die Antwort da ist,
@@ -1983,15 +1984,21 @@ function drawSettings() {
   // zur Leiste war in der langen Liste nicht zu sehen (wie bei den sichtbaren
   // Arbeitsplaetzen, die auch eine Karte mit mehreren Pillen sind).
   const BAR_SUB = ['edCtxShorten', 'edCtxLengthen', 'edCtxSummarize', 'edCtxProofread', 'edCtxSyn', 'edCtxStyle', 'edCtxTr'];
-  const barField = () => {
+  const TB_SUB = ['edTbShorten', 'edTbLengthen', 'edTbSum'];
+  const anaus = k => chips(k, [['1', t('on')], ['0', t('off')]], true);
+  // Eine Karte mit Ueberschrift und mehreren An/Aus-Zeilen: die Funktionen der
+  // Leiste bei Textauswahl und die der Werkzeugleiste sind gleich gebaut, nur
+  // die erste hat einen eigenen Hauptschalter ueber den Zeilen.
+  const subCard = (title, keys, resetKey) => {
     const off = S.edAI === false;
-    const anaus = k => chips(k, [['1', t('on')], ['0', t('off')]], true);
-    const head = `<div class="top"><b>${t('s_edCtx')}</b>${rst('edCtx')}</div>` + anaus('edCtx');
-    const rows = BAR_SUB.map(k => `<div class="subrow"><span>${esc(t(byKey[k][1]))}</span>${anaus(k)}</div>`).join('');
+    const head = `<div class="top"><b>${esc(t(title))}</b>${resetKey ? rst(resetKey) : ''}</div>` + (resetKey ? anaus(resetKey) : '');
+    const rows = keys.map(k => `<div class="subrow"><span>${esc(t(byKey[k][1]))}</span>${anaus(k)}</div>`).join('');
     return `<div class="set set-bar${off ? ' dim' : ''}"${off ? ` title="${esc(t('edAIdim'))}"` : ''}>${head}<div class="barsub">${rows}</div></div>`;
   };
+  const barField = () => subCard('s_edCtx', BAR_SUB, 'edCtx');
+  const tbField = () => subCard('s_edTbGroup', TB_SUB);
   const byKey = Object.fromEntries(FIELDS.map(f => [f[0], f]));
-  $('#setBody').innerHTML = GROUPS.map(([h, ks]) => `<h3 class="sect">${t(h)}</h3>` + ks.map(k => typeof k === 'string' ? field(byKey[k]) : barField()).join('')).join('') +
+  $('#setBody').innerHTML = GROUPS.map(([h, ks]) => `<h3 class="sect">${t(h)}</h3>` + ks.map(k => typeof k === 'string' ? field(byKey[k]) : (k.bar ? barField() : tbField())).join('')).join('') +
     `<h3 class="sect">${t('nllbH')}</h3><div id="mtBox"></div><p class="muted" data-htk="1" data-t="${hotkeyKey()}"></p>`;
   $('#setBody').querySelectorAll('[data-k]').forEach(el => { const v = S[el.dataset.k]; el.value = el.dataset.bool ? (v ? '1' : '0') : v; });
   applyI18n();
