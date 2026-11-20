@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.90 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.91 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1474,3 +1474,16 @@ Die Zeile „TranslateGemma“ in den Einstellungen fragte Ollama nur, *ob* irge
 **Neu:** zwei getrennte Zuordnungen `GROUP_OF = { gender:'genderGroup', writer:'writerGroup' }` und `MAIN_OF` als Umkehrung. Erste Reihe markiert nur, solange die Gruppe `none` ist; die Gruppenreihe markiert ihr `none` nie. Die Personen-Angabe hat damit genau einen leuchtenden Knopf: entweder die Einzelperson-Reihe (mit „ohne Angabe“ als Strich) oder die Gruppenreihe.
 
 **Geprueft 1.15.90** in eigenem `--user-data-dir` ueber CDP (Klasse `on` an `#styles [data-k]`): Ausgangszustand markiert `type=natural`, `formal=standard`, `gender=unknown`, `writer=unknown` — und **kein** `genderGroup=none` mehr. Klick auf `genderGroup=mixed` → nur `genderGroup=mixed`; Klick auf `gender=female` → nur `gender=female` (Gruppe faellt auf none); Klick auf `genderGroup=female` → nur `genderGroup=female`; Klick auf `genderGroup=none` → nur `gender=unknown`; `writer=unknown` → nur `writer=unknown`. `node --check renderer.js` laeuft durch.
+## 118. Set-up-Wizard mit neuer Modellliste wirklich geprueft (1.15.91)
+
+Bis 1.15.82 war die erweiterte Modellliste des Wizards nur ueber den PowerShell-Parser geprueft, nie im laufenden Fenster (so steht es in Abschnitt 111). Nachgeholt mit einem echten Start von `install.ps1` und einer Messung ueber `EnumChildWindows` (Klasse, Text, Rechteck, `WS_VSCROLL` je Kindfenster), dazu ein `PrintWindow`-Bildschirmfoto des Dialogs.
+
+**Was dabei klemmte.**
+1. Die Python-Liste war 124 px hoch, bei 20 px Zeilenhoehe also sechs sichtbare Zeilen — der siebte Eintrag (`milmmt:4B`) lag unter der Kante und war nur per Scrollen zu sehen. Nicht falsch, aber die Liste sieht dann unvollstaendig aus.
+2. Die Titelzeile war 320 px breit und endete damit bei x = 340, waehrend „Sprache:“ bei x = 330 beginnt — 10 px echte Ueberlappung. Im deutschen Titel faellt das nicht auf, weil der Text links steht; in den laengeren Uebersetzungen (niederlaendisch, spanisch, tuerkisch, arabisch) haette er unter dem Label gelegen.
+
+**Aenderung.** Die Liste steht jetzt auf 148 px; bei 20 px Zeilenhoehe passen alle sieben Eintraege ohne Scrollbalken hinein. Damit rueckten die vier Schalter und der Knopf um 24 px nach unten (Autostart 502, Desktop 540, Startmenue 568, Installieren 606, Fortschrittsbalken 652, Status 664, Protokoll 690), das Fenster wuchs von 580 × 788 auf 580 × 812 (Mindestgroesse 560 × 772). Der Titel ist nur noch 296 px breit und laesst 14 px Luft bis „Sprache:“.
+
+**Ergebnis der Messung (1.15.91, deutsches Fenster).** Client 580 × 812, Fenster 596 × 851. Die sieben Eintraege sitzen in einer Liste bei y = 340, Hoehe 144 (7 × 20 px), ohne vertikalen Scrollbalken; die Ollama-Liste bleibt bei 64 px und drei Eintraegen. Die Ueberlappungspruefung ueber alle Kindfenster liefert eine leere Liste, die unterste Kante liegt bei y = 790 und damit 22 px ueber dem Fensterrand. Das Bildschirmfoto zeigt alle sieben Zeilen (nllb:600M, 1.3B, 3.3B, hy:1.8B, hy:7B, milmmt:1B, milmmt:4B) samt Beschriftung „37 Sprachen“ bei hy:1.8B, darunter die drei Schalter, den Installieren-Knopf und das Protokollfeld, ohne Abschneiden oder Ueberlagerung. Das Fenster ist mit 851 px hoeher als ein 768-px-Bildschirm; das war es mit 827 px vorher schon, der Zuwachs betraegt 24 px.
+
+**Nicht geprueft:** ein Installationslauf aus diesem Dialog (er haette die vorhandene Installation angefasst). Der Wizard wurde geoeffnet, vermessen, fotografiert und wieder geschlossen.

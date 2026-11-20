@@ -182,8 +182,8 @@ function tr($k) { if ($script:L.ContainsKey($k)) { return $script:L[$k] } else {
 
 # ---------- Oberflaeche (resizable) ----------
 $f = New-Object Windows.Forms.Form
-$f.Text = tr 'title'; $f.ClientSize = New-Object Drawing.Size(580, 788)
-$f.MinimumSize = New-Object Drawing.Size(560, 748)
+$f.Text = tr 'title'; $f.ClientSize = New-Object Drawing.Size(580, 812)
+$f.MinimumSize = New-Object Drawing.Size(560, 772)
 $f.StartPosition = 'CenterScreen'
 $f.FormBorderStyle = 'Sizable'; $f.MaximizeBox = $true
 $f.Font = New-Object Drawing.Font('Segoe UI', 10)
@@ -194,7 +194,7 @@ function Ctl($c, $x, $y, $w, $h, $t) {
 }
 
 # Header-Zeile: Titel links, Sprachwahl rechts
-$h = Ctl (New-Object Windows.Forms.Label) 20 14 320 30 (tr 'heading')
+$h = Ctl (New-Object Windows.Forms.Label) 20 14 296 30 (tr 'heading')
 $h.Font = New-Object Drawing.Font('Segoe UI', 15, [Drawing.FontStyle]::Bold)
 $h.Anchor = 'Top,Left'
 
@@ -227,28 +227,28 @@ $clbModels.SetItemChecked(0, $true); $clbModels.SetItemChecked(1, $true)
 
 $chkNllb = Ctl (New-Object Windows.Forms.CheckBox) 20 312 540 26 (tr 'nllb')
 $chkNllb.Anchor = 'Top,Left,Right'
-$clbNllb = Ctl (New-Object Windows.Forms.CheckedListBox) 44 340 516 124 ''
+$clbNllb = Ctl (New-Object Windows.Forms.CheckedListBox) 44 340 516 148 ''
 $clbNllb.CheckOnClick = $true; $clbNllb.Anchor = 'Top,Left,Right'; $clbNllb.Enabled = $false
 [void]$clbNllb.Items.AddRange(@('nllb:600M - schnell (ca. 2,5 GB)', 'nllb:1.3B - genauer (ca. 5,5 GB)', 'nllb:3.3B - am genauesten (ca. 17,6 GB, ~8 GB RAM, langsam)', 'hy:1.8B - HY-MT, kompakt (ca. 3,6 GB, 37 Sprachen)', 'hy:7B - HY-MT, genauer (ca. 15,2 GB, braucht ~16 GB RAM)', 'milmmt:1B - MiLMMT-46, kompakt (ca. 2,1 GB, 46 Sprachen)', 'milmmt:4B - MiLMMT-46, genauer (ca. 8,6 GB)'))
 $clbNllb.SetItemChecked(0, $true)
 
-$chkAuto = Ctl (New-Object Windows.Forms.CheckBox) 20 478 540 26 (tr 'auto')
+$chkAuto = Ctl (New-Object Windows.Forms.CheckBox) 20 502 540 26 (tr 'auto')
 $chkAuto.Anchor = 'Top,Left,Right'
-$chkDesk = Ctl (New-Object Windows.Forms.CheckBox) 20 516 540 26 (tr 'desk')
+$chkDesk = Ctl (New-Object Windows.Forms.CheckBox) 20 540 540 26 (tr 'desk')
 $chkDesk.Anchor = 'Top,Left,Right'
-$chkStart = Ctl (New-Object Windows.Forms.CheckBox) 20 544 540 26 (tr 'start')
+$chkStart = Ctl (New-Object Windows.Forms.CheckBox) 20 568 540 26 (tr 'start')
 $chkStart.Anchor = 'Top,Left,Right'
 foreach ($c in $chkOllama, $chkAuto, $chkDesk, $chkStart) { $c.Checked = $true }
 $chkAuto.Enabled = $false
 $chkNllb.Add_CheckedChanged({ $clbNllb.Enabled = $chkNllb.Checked; $chkAuto.Enabled = $chkNllb.Checked })
 
-$btn = Ctl (New-Object Windows.Forms.Button) 20 582 540 38 (tr 'install')
+$btn = Ctl (New-Object Windows.Forms.Button) 20 606 540 38 (tr 'install')
 $btn.Anchor = 'Top,Left,Right'
-$bar = Ctl (New-Object Windows.Forms.ProgressBar) 20 628 540 8 ''
+$bar = Ctl (New-Object Windows.Forms.ProgressBar) 20 652 540 8 ''
 $bar.Style = 'Marquee'; $bar.Visible = $false; $bar.Anchor = 'Top,Left,Right'
-$lblStatus = Ctl (New-Object Windows.Forms.Label) 20 640 540 22 ''
+$lblStatus = Ctl (New-Object Windows.Forms.Label) 20 664 540 22 ''
 $lblStatus.ForeColor = [Drawing.Color]::Gray; $lblStatus.Anchor = 'Top,Left,Right'
-$txtLog = Ctl (New-Object Windows.Forms.TextBox) 20 666 540 100 ''
+$txtLog = Ctl (New-Object Windows.Forms.TextBox) 20 690 540 100 ''
 $txtLog.Multiline = $true; $txtLog.ReadOnly = $true; $txtLog.ScrollBars = 'Vertical'; $txtLog.Anchor = 'Top,Bottom,Left,Right'
 
 # ---------- Hilfsfunktionen ----------
