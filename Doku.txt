@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.92 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.93 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1494,3 +1494,24 @@ Seit 1.15.83 haengen die elf Einzelschalter der Gruppe „Textbearbeitung (KI)�
 **Umsetzung.** `drawSettings` markiert die Zeilen mit `dim(k)` — das sind alle elf Schluessel der Gruppe ausser `edAI` selbst — wenn `S.edAI === false`: die Karte bekommt die Klasse `.set.dim` (CSS: `opacity:.45`) und einen Tooltip mit dem neuen Text `edAIdim` in allen sechs Sprachen, der sagt, dass der Hauptschalter aus ist und die Einstellung erst wieder wirkt, wenn er an ist. Bedienbar bleiben die Knoepfe bewusst: `opacity` blockiert keine Klicks, und wer eine Einzelwahl umstellt, waehrend alles aus ist, soll das ohne Umweg ueber den Hauptschalter tun koennen. Der Hauptschalter selbst wird nie ausgegraut. Da der Klick-Handler `drawSettings()` neu aufbaut, verschwindet die Ausgrauung sofort beim Umlegen und erscheint ebenso sofort.
 
 **Geprueft 1.15.92** in eigenem `--user-data-dir` ueber CDP: Mit `edAI` an traegt keine Zeile `.set.dim`; nach dem Umschalten auf „Aus“ tragen genau elf Zeilen die Klasse (Leiste bei Textauswahl, Kuerzen/Verlaengern/Zusammenfassen/Probelesen/Sinnverwandte Woerter/Ausdrucksweise/Uebersetzen (Auswahl), Kuerzen/Verlaengern/Zusammenfassen (ganzer Text)), `getComputedStyle(...).opacity` ist `0.45`. Ein Klick auf den gedimmten Schalter „Leiste bei Textauswahl zeigen“ setzt `S.edCtx` weiterhin auf `false` (Bedienbarkeit), die Ausgrauung bleibt. Zurueck auf „An“: keine Zeile mehr gedimmt. `node --check renderer.js` laeuft durch. Optisch per Bildschirmfoto wurde der Dialog nicht geprueft.
+## 120. Eigener Hauptschalter fuer die KI-Funktionen im Lese-Arbeitsplatz (1.15.93)
+
+Der Hauptschalter aus Abschnitt 117 galt nur fuer den Editor. Im Lese-Arbeitsplatz gibt es zwei weitere KI-Funktionen, die ein Modell fragen: die Wortuebersetzung (Klick auf ein Wort, markierte Wendung, „Wort hinzufuegen“ in der Vokabelliste, „fehlende Uebersetzungen nachtragen“) und den Kurzgeschichten-Generator. Beide liefen bisher ohne Hauptschalter; nur der Generator hatte mit `storyOn` einen eigenen Schalter.
+
+**Entscheidung: eigener Hauptschalter `studyAI`** statt Mitbenutzung von `edAI`. Gruende:
+1. Andere Taetigkeit, anderes Publikum. Wer liest und Woerter nachschlaegt, ist Lernender; wer im Editor kuerzt oder umschreibt, ist Schreibender. Ein ausgegrauter Editor soll das Nachschlagen nicht mit abschalten und umgekehrt.
+2. Der Editor-Hauptschalter ist mit elf Einzelfunktionen und der Auswahl-Leiste ein Textbearbeitungs-Werkzeug; ein gemeinsamer Schalter haette zwei verschiedene Funktionsgruppen in einer Einstellung vermischt, und die Ausgrauung aus Abschnitt 119 waere ueber zwei Gruppen gelaufen.
+3. Beide Lesefunktionen benutzen dasselbe Modell (`studyModel()` ueber `llmJson`/`window.trChat`), ein gemeinsamer Schalter fuer sie ist also folgerichtig.
+4. Die Uebersetzungsfunktionen der App (Uebersetzen-Fenster, NLLB/HY) bleiben unberuehrt — der Lese-Arbeitsplatz hat mit ihnen nichts zu tun.
+
+**Einstellungen.** Die Gruppe „Lesen und Vokabeln“ enthaelt jetzt vier Zeilen in dieser Reihenfolge: `studyAI` „KI-Funktionen im Lese-Arbeitsplatz (alle auf einmal)“ (neu, Standard an), `studyWord` „Wortuebersetzung beim Antippen“ (neu, Standard an), `storyOn` „Kurzgeschichten-Generator“ (bisher, Standard aus) und `csvSrs` (keine KI, bleibt unberuehrt). Ist `studyAI` aus, werden `studyWord` und `storyOn` ausgegraut (`.set.dim`, Deckkraft 0.45) und tragen den Tooltip `studyAIdim` in allen sechs Sprachen; bedienbar bleiben sie wie beim Editor. `csvSrs` wird nie ausgegraut, weil es kein Modell benutzt.
+
+**Wirkung zur Laufzeit.** `study.js` prueft den Hauptschalter an jeder Stelle, die ein Modell fragt: `translateTerm` wirft `aioff` (die Aufrufer zeigen `studyAIoff` statt einer generischen Fehlermeldung), `fillMissingTranslations` bricht mit derselben Meldung ab, `storyStart`/`storyGenerate` verweigern den Lauf, und `renderStoryBtn` blendet den Generator-Knopf aus, solange der Hauptschalter aus ist. `pickWord`/`pickPhrase` respektieren zusaetzlich `studyWord`: ist die Wortuebersetzung einzeln aus, tut ein Klick auf ein Wort nichts (die uebrigen Wege — Vokabelliste, Nachtragen — bleiben, weil sie ausdrueckliche Aktionen sind). Bestehende Installationen haben `studyAI`/`studyWord` nicht in `localStorage`; die Vorgabe `!== false` haelt sie an, es aendert sich also nichts, bis jemand den Schalter umlegt.
+
+**Geprueft 1.15.93** in eigenem `--user-data-dir` ueber CDP, deutsches Fenster:
+- Gruppe „Lesen und Vokabeln“ zeigt die vier Zeilen in der genannten Reihenfolge, anfangs keine ausgegraut.
+- `studyAI` auf „Aus“: genau „Wortuebersetzung beim Antippen“ und „Kurzgeschichten-Generator“ gedimmt, Tooltip beginnt „Der Hauptschalter ‚KI-Funktionen im Lese-Arbeitsplatz‘ …“, `csvSrs` unveraendert. Zurueck auf „An“: nichts mehr gedimmt.
+- Editor-Hauptschalter `edAI` auf „Aus“: keine Zeile der Lesegruppe wird gedimmt (und umgekehrt), die beiden Schalter sind also getrennt.
+- Generator-Knopf `#txStory` mit `storyOn` an: sichtbar bei `studyAI` an, ausgeblendet bei `studyAI` aus, wieder sichtbar nach dem Einschalten.
+- Wortuebersetzung mit `studyAI` aus: „Wort hinzufuegen“ im Vokabel-Arbeitsplatz meldet „Die KI-Funktionen im Lese-Arbeitsplatz sind aus (Einstellungen → KI-Funktionen im Lese-Arbeitsplatz).“ und legt keinen Eintrag an (`ST.vocab` bleibt leer), es geht also keine Modellanfrage raus.
+- `node --check renderer.js` und `node --check study.js` laufen durch. Optisch per Bildschirmfoto wurde der Dialog nicht geprueft.

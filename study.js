@@ -176,7 +176,13 @@ function cleanTranslation(tr) {
   return out.join(' / ');
 }
 
+// Der Lese-Arbeitsplatz hat einen eigenen Hauptschalter: Wortuebersetzung und
+// Kurzgeschichten-Generator sind KI-Funktionen des Lesens, nicht des Editors.
+// Ist er aus, wird kein Modell gefragt; `aioff` traegt die Meldung nach aussen.
+const studyAI = () => S.studyAI !== false;
+
 async function translateTerm(term, ctx, pair, single) {
+  if (!studyAI()) throw new Error('aioff');
   const P = pair || curPair();
   const key = nrm(term) + '|' + nrm(ctx) + '|' + P.src + '>' + P.tgt + (single ? '|one' : '');
   if (wordCache.has(key)) return wordCache.get(key);
@@ -811,6 +817,7 @@ function usePair(P) {
 }
 
 async function pickWord(el) {
+  if (S.studyWord === false) return;
   const term = el.dataset.w || el.textContent;
   const pair = pairForPick();
   let ctx = '';
@@ -824,7 +831,7 @@ async function pickWord(el) {
   let res;
   try { res = await translateTerm(term, ctx, pair); }
   catch (e) {
-    const msg = e.message === 'nomodel' ? t('studyNoModel') : t('wordErr');
+    const msg = e.message === 'aioff' ? t('studyAIoff') : e.message === 'nomodel' ? t('studyNoModel') : t('wordErr');
     window.trStatus(msg);
     chipFail(el, msg);
     return;
@@ -838,6 +845,7 @@ async function pickWord(el) {
 
 // Mehrere Woerter markieren: ganze Wendung uebersetzen (Redewendungen).
 async function pickPhrase(sel) {
+  if (S.studyWord === false) return;
   const phrase = sel.toString().trim().replace(/\s+/g, ' ');
   if (!phrase || phrase.split(/\s+/).length < 2) return;
   const host = sel.anchorNode && sel.anchorNode.parentElement;
@@ -852,7 +860,7 @@ async function pickPhrase(sel) {
   let res;
   try { res = await translateTerm(phrase, ctx, pair); }
   catch (e) {
-    const msg = e.message === 'nomodel' ? t('studyNoModel') : t('wordErr');
+    const msg = e.message === 'aioff' ? t('studyAIoff') : e.message === 'nomodel' ? t('studyNoModel') : t('wordErr');
     window.trStatus(msg);
     chipFail(anchor0, msg);
     return;
@@ -911,7 +919,7 @@ async function addFromSearch() {
   vocStatus(t('wordTr'));
   let res;
   try { res = await translateTerm(term, ''); }
-  catch (e) { vocStatus(e.message === 'nomodel' ? t('studyNoModel') : t('wordErr'), true); return; }
+  catch (e) { vocStatus(e.message === 'aioff' ? t('studyAIoff') : e.message === 'nomodel' ? t('studyNoModel') : t('wordErr'), true); return; }
   vocStatus('');
   addVocab(term, res, '', null);
   inp.value = '';
@@ -925,6 +933,7 @@ async function addFromSearch() {
 async function fillMissingTranslations() {
   const todo = ST.vocab.filter(e => inPair(e) && !String(e.translation || '').trim());
   if (!todo.length) { vocStatus(t('vocFillNone')); return; }
+  if (!studyAI()) { vocStatus(t('studyAIoff'), true); return; }
   if (!studyModel()) { vocStatus(t('studyNoModel'), true); return; }
   if (!await ask(t('vocFillAsk', todo.length), t('vocFillDo'), t('cancel'))) return;
   let done = 0, fails = 0;
@@ -1885,6 +1894,10 @@ function storyOpen() {
 function storyStart() {
   if (ST_SLOTS.some(s => !storySel[s[0]])) return;
   const msg = $('#stMsg');
+  if (!studyAI()) {
+    if (msg) { msg.textContent = t('studyAIoff'); msg.classList.remove('hidden'); msg.classList.add('err'); }
+    return;
+  }
   if (!storyModel()) {
     if (msg) { msg.textContent = t('stNoModel'); msg.classList.remove('hidden'); msg.classList.add('err'); }
     return;
@@ -1911,6 +1924,7 @@ async function storyGenerate(id) {
   persist('texts'); renderTexts();
   const lang = tx.src;
   try {
+    if (!studyAI()) throw new Error('aioff');
     const mdl = storyModel();
     if (!mdl) throw new Error('nomodel');
     const [lo, hi, p1, p2] = ST_LEN[tx.len] || ST_LEN.mid;
@@ -1950,7 +1964,7 @@ async function storyGenerate(id) {
 // Generator laeuft - deshalb hier gleich mit auffrischen.
 function renderStoryBtn() {
   const b = $('#txStory'); if (!b) return;
-  b.classList.toggle('hidden', !S.storyOn);
+  b.classList.toggle('hidden', !S.storyOn || !studyAI());
   renderStudyModel();
 }
 window.studyStorySync = renderStoryBtn;
@@ -1982,6 +1996,7 @@ const STORY_STR = {
   stRetry: ['Klicken: noch einmal versuchen', 'Click to try again', 'Klik om het opnieuw te proberen', 'Haz clic para reintentar', 'Yeniden denemek için tıkla', 'انقر للمحاولة مجدداً'],
   stNoModel: ['Kein Schreibmodell gefunden.', 'No writing model found.', 'Geen schrijfmodel gevonden.', 'No se encontró modelo de escritura.', 'Yazma modeli bulunamadı.', 'لم يتم العثور على نموذج كتابة.'],
   stUntitled: ['Kurzgeschichte', 'Short story', 'Kort verhaal', 'Relato corto', 'Kısa hikâye', 'قصة قصيرة'],
+  studyAIoff: ['Die KI-Funktionen im Lese-Arbeitsplatz sind aus (Einstellungen → KI-Funktionen im Lese-Arbeitsplatz).', 'The AI functions in the reading workspace are off (Settings → AI functions in the reading workspace).', 'De AI-functies in de leeswerkplek staan uit (Instellingen → AI-functies in de leeswerkplek).', 'Las funciones de IA del espacio de lectura están desactivadas (Ajustes → Funciones de IA en el espacio de lectura).', 'Okuma çalışma alanındaki YZ işlevleri kapalı (Ayarlar → Okuma çalışma alanındaki YZ işlevleri).', 'وظائف الذكاء الاصطناعي في مساحة القراءة مغلقة (الإعدادات ← وظائف الذكاء الاصطناعي في مساحة القراءة).'],
   s_story: ['Kurzgeschichten-Generator', 'Short story generator', 'Korteverhalengenerator', 'Generador de relatos', 'Kısa hikâye üreticisi', 'مولّد القصص القصيرة']
 };
 for (const [k, v] of Object.entries(STORY_STR)) {
