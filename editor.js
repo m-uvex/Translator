@@ -591,8 +591,18 @@ function showSummary(txt) {
 }
 
 const BAR = [['shorten','shorten'],['lengthen','lengthen'],['summarize','summarize'],['proofread','proofread'],['synonyms','synonyms'],['styleB','wand'],['translateSel','languages']];
+// Die KI-Funktionen des Editors lassen sich in den Einstellungen einzeln
+// abschalten ("Textbearbeitung (KI)"); `edAI` nimmt alle auf einmal. Die
+// Uebersetzungsfunktionen der App haengen bewusst nicht daran: Sie bleiben
+// erreichbar, auch wenn hier alles aus ist.
+const BAR_SET = { shorten:'edCtxShorten', lengthen:'edCtxLengthen', summarize:'edCtxSummarize', proofread:'edCtxProofread', synonyms:'edCtxSyn', styleB:'edCtxStyle', translateSel:'edCtxTr' };
+const TB_SET = { shortenAll:'edTbShorten', lengthenAll:'edTbLengthen', summarizeAll:'edTbSum' };
+const aiOn = k => S.edAI !== false && S[k] !== false;
+const barItems = () => S.edCtx === false ? [] : BAR.filter(([k]) => aiOn(BAR_SET[k]));
 function buildBar() {
-  bar.innerHTML = BAR.map(([k, i]) => `<button class="ib" data-k="${k}" data-i="${i}" data-tt="${k}"></button>`).join('') + '<span class="spin"></span>';
+  const items = barItems();
+  bar.innerHTML = items.map(([k, i]) => `<button class="ib" data-k="${k}" data-i="${i}" data-tt="${k}"></button>`).join('') + '<span class="spin"></span>';
+  if (!items.length) bar.classList.add('hidden');
   bar.onmousedown = e => e.preventDefault();
   bar.onclick = e => {
     const b = e.target.closest('button'); if (!b || ED.busy) return; const k = b.dataset.k;
@@ -600,8 +610,12 @@ function buildBar() {
   };
   applyI18n(); reicon();
 }
+// Die Einstellungen melden jede Aenderung hierher (renderer.js), damit Leiste
+// und Werkzeugleiste sofort umschalten und nicht erst nach einem Neustart.
+window.edAISync = () => { buildBar(); renderTb(); hideBar(); };
 function hideBar() { bar.classList.add('hidden'); }
 function showBar() {
+  if (!barItems().length) return hideBar();
   if (ED.busy && !bar.classList.contains('hidden')) return;
   const s = getSelection();
   if (!s.rangeCount || s.isCollapsed || !page.contains(s.anchorNode) || !page.contains(s.focusNode)) return hideBar();
@@ -869,7 +883,9 @@ function renderTb() {
   const cur = {};
   tb.querySelectorAll('[data-sel]').forEach(s => { cur[s.dataset.sel] = s.value; });
   tb.innerHTML = '';
-  for (const [kind, k, icon, a] of TB) {
+  const items = TB.filter(([kind, k]) => !(TB_SET[k] && !aiOn(TB_SET[k])));
+  while (items.length && items[items.length - 1][0] === 'sep') items.pop();
+  for (const [kind, k, icon, a] of items) {
     let el;
     if (kind === 'sep' || kind === 'gap') { el = document.createElement('span'); el.className = kind; }
     else if (kind === 'sel') {
