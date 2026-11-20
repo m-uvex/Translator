@@ -1137,6 +1137,14 @@ Object.assign(IC, {
 });
 const IMG_ED_W = 480;        // Anzeigebreite beim Einfuegen
 const IMG_ED_MAX = 1600;     // laengste Kante der gespeicherten Fassung
+// Obergrenze je eingefuegtem Bild. Das Verkleinern oben haelt Fotos meist
+// darunter; die Grenze faengt den Rest ab (etwa rauschige PNGs), damit Dokument
+// und Ablage nicht unkontrolliert wachsen. Abschaltbar in den Einstellungen.
+const IMG_LIMIT_MB = 3;
+const IMG_LIMIT = IMG_LIMIT_MB * 1024 * 1024;
+// Groesse einer Data-URL in Byte (Base64: 4 Zeichen = 3 Byte).
+const dataUrlBytes = u => Math.max(0, Math.floor((String(u).length - String(u).indexOf(',') - 1) * 3 / 4));
+const mbText = b => (Math.round(b / 1048576 * 10) / 10).toFixed(1).replace('.', LANG === 'de' ? ',' : '.');
 const imgReady = im => (im.complete && im.naturalWidth) ? Promise.resolve()
   : new Promise(res => { im.onload = res; im.onerror = res; });
 
@@ -1144,15 +1152,23 @@ const imgReady = im => (im.complete && im.naturalWidth) ? Promise.resolve()
 // ein einziges Foto aus einer Kamera leicht zehn Megabyte im Dokument.
 async function imgDataFromFile(file) {
   const url = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result)); fr.onerror = rej; fr.readAsDataURL(file); });
+  // Die Grenze prueft die Fassung, die wirklich im Dokument landet: Erst nach
+  // dem Verkleinern ist die Groesse aussagekraeftig.
+  const check = spec => {
+    if (S.imgLimit === false) return spec;
+    const bytes = dataUrlBytes(spec.src);
+    if (bytes > IMG_LIMIT) { const e = new Error('toolarge'); e.bytes = bytes; throw e; }
+    return spec;
+  };
   const im = new Image(); im.src = url; await imgReady(im);
   const nw = im.naturalWidth || 1, nh = im.naturalHeight || 1;
   const k = Math.min(1, IMG_ED_MAX / Math.max(nw, nh));
-  if (k >= 1 && url.length < 1.2e6) return { src:url, w:nw, h:nh };
+  if (k >= 1 && url.length < 1.2e6) return check({ src:url, w:nw, h:nh });
   const cv = document.createElement('canvas');
   cv.width = Math.max(1, Math.round(nw * k)); cv.height = Math.max(1, Math.round(nh * k));
   cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
   const type = /png|gif|webp/i.test(file.type) ? 'image/png' : 'image/jpeg';
-  return { src:cv.toDataURL(type, 0.92), w:cv.width, h:cv.height };
+  return check({ src:cv.toDataURL(type, 0.92), w:cv.width, h:cv.height });
 }
 
 // Rahmen um ein Bild: Groesse des sichtbaren Bildes, das Bild darin zentriert.
@@ -1252,7 +1268,14 @@ async function addImageFiles(files) {
     try {
       const spec = await imgDataFromFile(f);
       insertEdImage(mkEdImage(spec));
-    } catch { edStatus(t('readErr')); }
+      // Eine alte Ablehnung nicht stehen lassen: das Bild ist jetzt drin.
+      edStatus('');
+    } catch (e) {
+      // Zu grosse Bilder werden abgelehnt und benannt: Groesse, Grenze und der
+      // Weg zum Abschalten stehen in der Meldung.
+      if (e && e.message === 'toolarge') edStatus(t('imgTooBig', mbText(e.bytes), IMG_LIMIT_MB));
+      else edStatus(t('readErr'));
+    }
   }
 }
 
