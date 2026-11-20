@@ -36,8 +36,11 @@ PORT = int(os.environ.get("NLLB_PORT", "8765"))
 def _langs(rows):
     return [{"code": c, "name": n, "prompt": p, **({"zh": z} if z else {})} for c, n, p, z in rows]
 
-# Tencent HY-MT 1.5: 33 Sprachen, dazu fuenf chinesische Minderheiten- und
-# Dialektvarianten (bo, kk, mn, ug, yue) - zusammen 38 Codes.
+# Tencent HY-MT 1.5: die 33 Sprachen der Modellkarte. Die Karte nennt zusaetzlich
+# fuenf chinesische Minderheiten- und Dialektvarianten (bo, kk, mn, ug, yue);
+# sie fehlen hier bewusst, weil das 1.8B sie nur aus dem Chinesischen brauchbar
+# uebersetzt und mit deutscher oder englischer Quelle in fremder Schrift oder
+# sinnfrei antwortet (Messung in Doku.txt, Abschnitt 110).
 HY_LANGS = _langs([
     ("zh", "Chinese", "Chinese", "\u4e2d\u6587"),
     ("zh-Hant", "Traditional Chinese", "Traditional Chinese", "\u7e41\u4f53\u4e2d\u6587"),
@@ -72,11 +75,6 @@ HY_LANGS = _langs([
     ("tl", "Filipino", "Filipino", "\u83f2\u5f8b\u5bbe\u8bed"),
     ("km", "Khmer", "Khmer", "\u9ad8\u68c9\u8bed"),
     ("my", "Burmese", "Burmese", "\u7f05\u7538\u8bed"),
-    ("bo", "Tibetan", "Tibetan", "\u85cf\u8bed"),
-    ("kk", "Kazakh", "Kazakh", "\u54c8\u8428\u514b\u8bed"),
-    ("mn", "Mongolian", "Mongolian", "\u8499\u53e4\u8bed"),
-    ("ug", "Uyghur", "Uyghur", "\u7ef4\u543e\u5c14\u8bed"),
-    ("yue", "Cantonese", "Cantonese", "\u7ca4\u8bed"),
 ])
 
 # Xiaomi MiLMMT-46 (v1.0): 46 Sprachen. Die Namen sind die der Modellkarte;
