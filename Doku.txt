@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.94 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.95 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1538,3 +1538,37 @@ Schriftfarben wurden also schon vorher uebernommen, Textmarker nicht. Behoben du
 - Export als Markdown bei einem Bild: Dialog offen, Text „Dieses Dokument enthaelt ein Bild …“, Knoepfe „Abbrechen“, „Trotzdem exportieren“, „Bilder beschreiben“ (sichtbar, weil `gemma3:4b` installiert ist). Mit einem Testmodell statt des echten: die Markdown-Ausgabe enthielt `[Bild: Ein blaues Rechteck auf weissem Grund.]` und kein `<img>`; „Trotzdem exportieren“ ergab nur den Text ohne Bild; „Abbrechen“ exportierte nichts. Export als Text zeigt dieselbe Rueckfrage.
 - Einstellungen: Gruppe „Bilder im Text“ mit „Modell zum Beschreiben von Bildern“, Auswahl „Automatisch“ (voreingestellt) plus die drei installierten Modelle mit Bilderkennung.
 - Der echte Modellaufruf fuer die Bildbeschreibung wurde nicht mit einem Bild durchgespielt (dafuer haette `gemma3:4b` laden muessen); geprueft ist der Weg bis zur Modellabfrage mit ersetzter Antwort. Der PDF-Export mit eingebetteten Bildern wurde nicht ueber den Dateidialog der App ausgeloest, sondern ueber denselben `printToPDF`-Aufruf mit denselben Regeln.
+## 122. Waehlbare Akzentfarbe mit Farbkreisen und eigenen Dunkelwerten (1.15.95)
+
+Die Akzentfarbe war fest blau: `--accent`, `--accent-hover`, `--accent-ink` und `--on-accent` standen einmal fuer hell und einmal fuer dunkel in `style.css`. Jetzt gibt es zehn Varianten, die in den Einstellungen unter „Akzentfarbe“ als Pillen mit Farbkreis stehen.
+
+**Varianten.** Himmelblau (Vorgabe, die bisherigen Werte), Indigo, Violett, Pink, Baby-Pink, Koralle, Amber, Gruen, Tuerkis, Grau. Jede Variante hat vier Werte — `--accent` (Fuellfarbe), `--accent-hover` (hellere Fassung fuer Hover), `--accent-ink` (Textton auf Karten und Seiten), `--on-accent` (Schrift auf der Fuellfarbe) — und zwar getrennt fuer hell und dunkel. Die Paletten liegen als CSS-Regeln auf `data-accent`, das `applyTheme()` am Wurzelelement setzt; die dunklen Fassungen greifen ueber `:root.dark` und ueber die Systemeinstellung (`prefers-color-scheme: dark` bei `theme: auto`). Damit schaltet ein Themenwechsel die Farben mit um, ohne dass JavaScript Farben nachrechnen muss.
+
+**Kontraste.** Jede Variante wurde fuer beide Modi nachgerechnet (WCAG-Verhaeltnis): `--accent-ink` gegen den Seitenhintergrund (hell `#f7f7f8`, dunkel `#171717`) und `--on-accent` gegen `--accent`. Kleinster Wert: Himmelblau hell mit 4,60 (wie bisher), groesster 12,63. Alle zwanzig Paare liegen ueber 4,5; im Dunkelmodus sind die Fuellfarben kraeftiger und die Texttoene heller, im Hellmodus umgekehrt. Die Werte stehen auch in der Doku-Tabelle unten, damit spaetere Aenderungen nicht unbemerkt unter die Grenze rutschen.
+
+**Farbkreise.** Die Wahlpillen der Akzentfarbe tragen statt des Kaestchens einen 20-px-Kreis mit `data-accent` derselben Variante; er liest damit `--accent` aus derselben Palette und zeigt automatisch die helle oder dunkle Fassung. Der gewaehlte Eintrag bekommt einen Ring in `--accent-ink`.
+
+**Highlighter beim Hovern.** Der Hover der Werkzeugleiste (`.tb .ib:hover`), der Kontextleiste, der Umschalter und der Vokalbel-Knopf nutzen `--accent-hover`. Weil jede Variante ihre eigene hellere Fassung mitbringt, ist der Hover jetzt nicht mehr fest blau, sondern folgt der gewaehlten Farbe: Baby-Pink hell `#ffe9f1` auf `#ffd9e6`, Pink dunkel `#f0a5c8` auf `#e87fae` usw. Auch die uebrigen davon abgeleiteten Stellen (Auswahlfarbe, `.w:hover` der anklickbaren Woerter, `.rw:hover`, `wsopt.on`) mischen mit `--accent` und ziehen mit. Die eigene Palette des Textmarkers (`MARK_TONES`, Amber bis Violett) bleibt unveraendert: Sie faerbt den Text, nicht die Oberflaeche.
+
+**Geprueft 1.15.95** in eigenem `--user-data-dir` ueber CDP:
+- Fuer alle zehn Varianten in hell und dunkel die berechneten Werte von `--accent`, `--accent-hover`, `--accent-ink` und `--on-accent` gelesen: jede Variante liefert ihre eigenen Werte, hell und dunkel verschieden.
+- Kontraste aus den berechneten RGB-Werten: `ink`/Seitenhintergrund 4,60 bis 7,67 (hell) bzw. 9,67 bis 11,88 (dunkel), `on-accent`/`accent` 8,83 bis 12,63 (hell) bzw. 5,84 bis 8,97 (dunkel) — alle ueber 4,5.
+- Einstellungen: zehn Kreise mit 20 px, jeder in seiner Farbe; nach Umschalten auf dunkel zeigen dieselben Kreise die dunklen Fassungen.
+- Klick auf „Baby-Pink“ setzt `S.accent`, `--accent` wechselt von `#5aa9e0` auf `#f2a6c4` (dunkle Fassung, das Testprofil lief im Dunkelmodus), der aktive Leistenknopf nimmt `rgb(242,166,196)` an, genau eine Pille ist markiert.
+- Die Hover-Regel der Werkzeugleiste ist `background: var(--accent-hover); color: var(--on-accent)` — sie zeigt also auf den mitwechselnden Wert.
+- Optisch per Bildschirmfoto wurde der Dialog nicht geprueft (Breite der Pillenreihe nur ueber die vorhandene Umbruchregel `.wsc-sw{flex-wrap:wrap}` abgesichert).
+
+**Farbwerte (hell | dunkel)**
+
+| Variante | `--accent` | `--accent-hover` | `--accent-ink` | `--on-accent` |
+| --- | --- | --- | --- | --- |
+| Himmelblau | #9ccff5 \| #5aa9e0 | #cfe7fb \| #82bdea | #2a74b5 \| #8cc8f5 | #0e2a44 \| #08213a |
+| Indigo | #c3ccf7 \| #7f8cec | #dfe4fb \| #9fabf3 | #3b46a8 \| #b3bcf7 | #131a3f \| #101532 |
+| Violett | #d8c6f7 \| #ab86ec | #e9defb \| #c1a6f3 | #6b3fb0 \| #cbb3f7 | #241038 \| #1c0f33 |
+| Pink | #f7c3dd \| #e87fae | #fbdcec \| #f0a5c8 | #a83a72 \| #f4b6d2 | #3a1028 \| #350f22 |
+| Baby-Pink | #ffd9e6 \| #f2a6c4 | #ffe9f1 \| #f8c2d6 | #ac3f6b \| #f7b8cf | #3c1024 \| #340e20 |
+| Koralle | #f9c1bd \| #e88078 | #fbdad8 \| #f0a29c | #b03a34 \| #f2b3ad | #3c1210 \| #350f0d |
+| Amber | #f8d9a8 \| #e0a94f | #fbe9cd \| #ecc27f | #8a5a12 \| #f0cd8a | #3a2606 \| #33200a |
+| Gruen | #bfe6c8 \| #6cc487 | #d8f0dd \| #93d5a8 | #2f7a45 \| #a5ddb6 | #0d2c18 \| #0b2816 |
+| Tuerkis | #b3e6e2 \| #5cc4ba | #d3f1ef \| #85d6ce | #1f7a72 \| #9adfd8 | #072b29 \| #062925 |
+| Grau | #d6d8de \| #9aa0ac | #e7e9ee \| #b5bac4 | #4a4f5a \| #c2c7d0 | #1b1e24 \| #16181d |

@@ -362,6 +362,10 @@ const K = {
   s_studyAI:['KI-Funktionen im Lese-Arbeitsplatz (alle auf einmal)','AI functions in the reading workspace (all at once)'],
   s_studyWord:['Wortübersetzung beim Antippen','Translate words on tap'],
   // Bilder im Text: Werkzeug, Menue am Bild und der Export, der keine Bilder kann.
+  s_accent:['Akzentfarbe','Accent colour'],
+  accentSky:['Himmelblau','Sky blue'], accentIndigo:['Indigo','Indigo'], accentViolet:['Violett','Violet'],
+  accentPink:['Pink','Pink'], accentBabyPink:['Baby-Pink','Baby pink'], accentCoral:['Koralle','Coral'],
+  accentAmber:['Amber','Amber'], accentGreen:['Grün','Green'], accentTeal:['Türkis','Teal'], accentSlate:['Grau','Slate'],
   s_groupImages:['Bilder im Text','Images in text'],
   s_imgModel:['Modell zum Beschreiben von Bildern','Model for describing images'],
   imgIns:['Bild einfügen','Insert image'],
@@ -418,6 +422,8 @@ const NL = {
   s_helper:'Model voor woordalternatieven (bij TranslateGemma/NLLB)', s_sys:'Systeemprompt', s_temp:'Temperatuur (lager = consistenter)', s_ctx:'Contextlengte (num_ctx)',
   s_groupGeneral:'Algemeen', s_groupConn:'Verbindingen', s_groupTrans:'Vertaling',
   s_groupEdAI:'Tekstbewerking (AI)', s_edAI:'AI-functies in de editor (alles tegelijk)', s_edCtx:'Werkbalk tonen bij tekstselectie',
+  s_accent:'Accentkleur', accentSky:'Hemelblauw', accentIndigo:'Indigo', accentViolet:'Violet', accentPink:'Roze',
+  accentBabyPink:'Babyroze', accentCoral:'Koraal', accentAmber:'Amber', accentGreen:'Groen', accentTeal:'Turquoise', accentSlate:'Grijs',
   s_groupImages:'Afbeeldingen in de tekst', s_imgModel:'Model om afbeeldingen te beschrijven', imgIns:'Afbeelding invoegen',
   imgMenuRotL:'Naar links draaien', imgMenuRotR:'Naar rechts draaien', imgMenuFlipH:'Horizontaal spiegelen', imgMenuFlipV:'Verticaal spiegelen',
   imgMenuReset:'Herstellen', imgMenuDel:'Verwijderen',
@@ -462,6 +468,8 @@ const ES = {
   s_helper:'Modelo para alternativas de palabras (TranslateGemma/NLLB)', s_sys:'Prompt del sistema', s_temp:'Temperatura (menor = más consistente)', s_ctx:'Longitud de contexto (num_ctx)',
   s_groupGeneral:'General', s_groupConn:'Conexiones', s_groupTrans:'Traducción', s_groupFeatures:'Ajustes adicionales',
   s_groupEdAI:'Edición de texto (IA)', s_edAI:'Funciones de IA en el editor (todas a la vez)', s_edCtx:'Mostrar la barra al seleccionar texto',
+  s_accent:'Color de acento', accentSky:'Azul cielo', accentIndigo:'Índigo', accentViolet:'Violeta', accentPink:'Rosa',
+  accentBabyPink:'Rosa bebé', accentCoral:'Coral', accentAmber:'Ámbar', accentGreen:'Verde', accentTeal:'Turquesa', accentSlate:'Gris',
   s_groupImages:'Imágenes en el texto', s_imgModel:'Modelo para describir imágenes', imgIns:'Insertar imagen',
   imgMenuRotL:'Girar a la izquierda', imgMenuRotR:'Girar a la derecha', imgMenuFlipH:'Voltear horizontalmente', imgMenuFlipV:'Voltear verticalmente',
   imgMenuReset:'Restablecer', imgMenuDel:'Eliminar',
@@ -508,6 +516,8 @@ const TR = {
   s_helper:'Kelime alternatifleri modeli (TranslateGemma/NLLB için)', s_sys:'Sistem komutu', s_temp:'Sıcaklık (düşük = daha tutarlı)', s_ctx:'Bağlam uzunluğu (num_ctx)',
   s_groupGeneral:'Genel', s_groupConn:'Bağlantılar', s_groupTrans:'Çeviri', s_groupFeatures:'Ek ayarlar',
   s_groupEdAI:'Metin düzenleme (YZ)', s_edAI:'Düzenleyicideki YZ işlevleri (hepsi birden)', s_edCtx:'Metin seçildiğinde çubuğu göster',
+  s_accent:'Vurgu rengi', accentSky:'Gök mavisi', accentIndigo:'Çivit', accentViolet:'Mor', accentPink:'Pembe',
+  accentBabyPink:'Bebek pembesi', accentCoral:'Mercan', accentAmber:'Amber', accentGreen:'Yeşil', accentTeal:'Turkuaz', accentSlate:'Gri',
   s_groupImages:'Metindeki görseller', s_imgModel:'Görselleri betimleme modeli', imgIns:'Görsel ekle',
   imgMenuRotL:'Sola döndür', imgMenuRotR:'Sağa döndür', imgMenuFlipH:'Yatay aynala', imgMenuFlipV:'Dikey aynala',
   imgMenuReset:'Sıfırla', imgMenuDel:'Sil',
@@ -554,6 +564,8 @@ const AR = {
   s_helper:'نموذج بدائل الكلمات (مع TranslateGemma/NLLB)', s_sys:'توجيه النظام', s_temp:'درجة الحرارة (أقل = أكثر دقة)', s_ctx:'طول السياق (num_ctx)',
   s_groupGeneral:'عام', s_groupConn:'الاتصالات', s_groupTrans:'الترجمة', s_groupFeatures:'إعدادات إضافية',
   s_groupEdAI:'تحرير النص (ذكاء اصطناعي)', s_edAI:'وظائف الذكاء الاصطناعي في المحرر (كلها دفعة واحدة)', s_edCtx:'إظهار الشريط عند تحديد النص',
+  s_accent:'لون التمييز', accentSky:'أزرق سماوي', accentIndigo:'نيلي', accentViolet:'بنفسجي', accentPink:'وردي',
+  accentBabyPink:'وردي فاتح', accentCoral:'مرجاني', accentAmber:'كهرماني', accentGreen:'أخضر', accentTeal:'فيروزي', accentSlate:'رمادي',
   s_groupImages:'الصور في النص', s_imgModel:'نموذج لوصف الصور', imgIns:'إدراج صورة',
   imgMenuRotL:'تدوير إلى اليسار', imgMenuRotR:'تدوير إلى اليمين', imgMenuFlipH:'انعكاس أفقي', imgMenuFlipV:'انعكاس رأسي',
   imgMenuReset:'إعادة الضبط', imgMenuDel:'حذف',
@@ -672,6 +684,8 @@ const D = { url:'http://localhost:11434', nllb:'http://127.0.0.1:8765', model:''
   // Bevorzugtes Modell zum Beschreiben von Bildern; '' heisst: das erste
   // installierte Modell mit Bilderkennung.
   imgModel:'',
+  // Akzentfarbe (Schluessel aus den Paletten in style.css).
+  accent:'sky',
   // KI-Funktionen im Texteditor: Hauptschalter, die Kontextleiste und jede
   // Funktion einzeln. Die Uebersetzungsfunktionen der App bleiben davon
   // unberuehrt (Nutzerwunsch).
@@ -879,7 +893,14 @@ const pinsOf = () => S.pins[isMt() ? 'nllb' : 'ollama'];
 const isThinking = m => (caps[m] || []).includes('thinking');
 const hasVision = m => (caps[m] || []).includes('vision') && !isTg(m);
 const status = m => $('#status').textContent = m;
-function applyTheme() { const h = document.documentElement.classList; h.remove('light', 'dark'); if (S.theme !== 'auto') h.add(S.theme); }
+// Theme und Akzentfarbe haengen zusammen: Die Paletten in style.css liegen auf
+// `data-accent`, die dunklen Fassungen greifen ueber :root.dark bzw. die
+// Systemeinstellung. Deshalb nur das Attribut setzen, kein Inline-Style.
+function applyTheme() {
+  const h = document.documentElement.classList; h.remove('light', 'dark');
+  if (S.theme !== 'auto') h.add(S.theme);
+  document.documentElement.dataset.accent = S.accent || 'sky';
+}
 
 function fixLangs() {
   const L = activeLangs(); if (!L.length) return;
@@ -1827,7 +1848,7 @@ $('#refresh').onclick = async () => {
   try { await loadModels(); } finally { $('#refresh').classList.remove('spinning'); }
 };
 
-const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['start','s_start','start'],['workspace','s_workspace','workspaces'],
+const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['accent','s_accent','accent'],['start','s_start','start'],['workspace','s_workspace','workspaces'],
   // Klassik-Layout vorerst deaktiviert (Nutzerwunsch): Symbol-Layout ist fest.
   // Zum Reaktivieren ['uiMode','s_uiMode','uiMode'] hier wieder aufnehmen.
   ['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['profanityStyle','s_profanityStyle','profanityStyle'],['edMarkdown','s_mdMode','bool'],['edSpellAnim','s_spellAnim','bool'],['autoCopy','s_autoCopy','bool'],['autoCopyTyped','s_autoCopyTyped','bool'],['historyOn','s_history','bool'],['diagOn','s_diag','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['csvSrs','s_csvSrs','bool'],['studyAI','s_studyAI','bool'],['studyWord','s_studyWord','bool'],['storyOn','s_story','bool'],['imgModel','s_imgModel','imgModel'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number'],
@@ -1838,7 +1859,7 @@ const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['start','s_s
   ['edCtxShorten','s_edCtxShorten','bool'],['edCtxLengthen','s_edCtxLengthen','bool'],['edCtxSummarize','s_edCtxSummarize','bool'],
   ['edCtxProofread','s_edCtxProofread','bool'],['edCtxSyn','s_edCtxSyn','bool'],['edCtxStyle','s_edCtxStyle','bool'],['edCtxTr','s_edCtxTr','bool'],
   ['edTbShorten','s_edTbShorten','bool'],['edTbLengthen','s_edTbLengthen','bool'],['edTbSum','s_edTbSum','bool']];
-const GROUPS = [['s_groupGeneral',['uiLang','theme','start','workspace']],['s_groupStudy',['studyAI','studyWord','storyOn','csvSrs']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped','historyOn','diagOn']],['s_groupImages',['imgModel']],['s_groupEdAI',['edAI','edCtx','edCtxShorten','edCtxLengthen','edCtxSummarize','edCtxProofread','edCtxSyn','edCtxStyle','edCtxTr','edTbShorten','edTbLengthen','edTbSum']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
+const GROUPS = [['s_groupGeneral',['uiLang','theme','accent','start','workspace']],['s_groupStudy',['studyAI','studyWord','storyOn','csvSrs']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped','historyOn','diagOn']],['s_groupImages',['imgModel']],['s_groupEdAI',['edAI','edCtx','edCtxShorten','edCtxLengthen','edCtxSummarize','edCtxProofread','edCtxSyn','edCtxStyle','edCtxTr','edTbShorten','edTbLengthen','edTbSum']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
 // Der systemweite Kurzbefehl kann von einem anderen Programm belegt sein:
 // globalShortcut.register() scheitert dann still. main.js meldet ueber
 // `app:hotkey`, ob die Registrierung geklappt hat; bis die Antwort da ist,
@@ -1854,6 +1875,7 @@ function drawSettings() {
     // k === 'uiMode' ? [['classic', t('o_classic')], ['icons', t('o_icons')]] :
     k === 'profanityStyle' ? [['stars', t('o_stars')], ['symbols', t('o_symbols')]] :
     k === 'helper' ? [['', t('autoModel')], ...Object.keys(caps).filter(n => caps[n].includes('completion') && !isTg(n)).map(n => [n, n])] :
+    k === 'accent' ? [['sky','accentSky'],['indigo','accentIndigo'],['violet','accentViolet'],['pink','accentPink'],['babypink','accentBabyPink'],['coral','accentCoral'],['amber','accentAmber'],['green','accentGreen'],['teal','accentTeal'],['slate','accentSlate']].map(([v, l]) => [v, t(l)]) :
     k === 'imgModel' ? [['', t('autoModel')], ...Object.keys(caps).filter(n => hasVision(n)).map(n => [n, n])] : null;
   // Zuruecksetzen ist ein reiner Icon-Button; der Name erscheint nur als Tooltip.
   // Das Icon wird direkt eingesetzt, weil reicon() nur im Editor-Scope existiert.
@@ -1863,8 +1885,12 @@ function drawSettings() {
   // links, Zuruecksetzen oben rechts, die Wahl darunter.
   const chips = (k, opts, bool) => {
     const cur = bool ? (S[k] ? '1' : '0') : String(S[k] ?? '');
-    return `<div class="wsc">` + opts.map(([v, l]) =>
-      `<button type="button" class="wsopt${cur === String(v) ? ' on' : ''}" data-setkey="${k}" data-setval="${v}"${bool ? ' data-bool="1"' : ''}><span class="ck">${ic('check', 13)}</span>${esc(l)}</button>`).join('') + '</div>';
+    // Bei der Akzentfarbe zeigt ein Kreis die Farbe; er traegt denselben
+    // data-accent-Schluessel wie die Palette in style.css und wird dadurch
+    // automatisch hell bzw. dunkel eingefaerbt.
+    const sw = k === 'accent';
+    return `<div class="wsc${sw ? ' wsc-sw' : ''}">` + opts.map(([v, l]) =>
+      `<button type="button" class="wsopt${cur === String(v) ? ' on' : ''}${sw ? ' swopt' : ''}" data-setkey="${k}" data-setval="${v}"${bool ? ' data-bool="1"' : ''}><span class="ck">${ic('check', 13)}</span>${sw ? `<span class="swd" data-accent="${v}"></span>` : ''}${esc(l)}</button>`).join('') + '</div>';
   };
   // Die Einzelschalter der Editor-KI haengen am Hauptschalter `edAI`. Ist er
   // aus, bleiben sie bedienbar, sehen aber inaktiv aus: Was sie einstellen,
@@ -1921,7 +1947,7 @@ $('#setBody').addEventListener('input', e => {
   let v = e.target.type === 'number' ? +e.target.value : e.target.value;
   if (e.target.dataset.bool) v = v === '1';
   S[k] = v; save();
-  if (k === 'theme') applyTheme(); if (k === 'uiLang') renderAll(); if (k === 'uiMode') drawStyles(); if (k === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (k === 'workspace' && window.edWorkspace) window.edWorkspace(); if (k === 'storyOn' && window.studyStorySync) window.studyStorySync(); if (/^study(AI|Word)$/.test(k) && window.studyStorySync) window.studyStorySync(); if (k === 'historyOn') drawHist(); if (k === 'diagOn') applyDiag(); if (/^ed(AI|Ctx|Tb)/.test(k) && window.edAISync) window.edAISync();
+  if (k === 'theme' || k === 'accent') applyTheme(); if (k === 'uiLang') renderAll(); if (k === 'uiMode') drawStyles(); if (k === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (k === 'workspace' && window.edWorkspace) window.edWorkspace(); if (k === 'storyOn' && window.studyStorySync) window.studyStorySync(); if (/^study(AI|Word)$/.test(k) && window.studyStorySync) window.studyStorySync(); if (k === 'historyOn') drawHist(); if (k === 'diagOn') applyDiag(); if (/^ed(AI|Ctx|Tb)/.test(k) && window.edAISync) window.edAISync();
 });
 $('#setBody').addEventListener('change', e => { if (e.target.dataset.k === 'url' || e.target.dataset.k === 'nllb') { retries = 0; loadModels(); } });
 try {
@@ -1952,12 +1978,12 @@ $('#setBody').onclick = e => {
     let v = pick.dataset.setval;
     v = pick.dataset.bool ? v === '1' : ty === 'number' ? +v : v;
     S[key] = v; save();
-    if (key === 'theme') applyTheme(); if (key === 'uiLang') renderAll(); if (key === 'uiMode') drawStyles(); if (key === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (key === 'workspace' && window.edWorkspace) window.edWorkspace();     if (key === 'storyOn' && window.studyStorySync) window.studyStorySync(); if (/^study(AI|Word)$/.test(key) && window.studyStorySync) window.studyStorySync(); if (key === 'historyOn') drawHist(); if (key === 'diagOn') applyDiag(); if (/^ed(AI|Ctx|Tb)/.test(key) && window.edAISync) window.edAISync();
+    if (key === 'theme' || key === 'accent') applyTheme(); if (key === 'uiLang') renderAll(); if (key === 'uiMode') drawStyles(); if (key === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (key === 'workspace' && window.edWorkspace) window.edWorkspace();     if (key === 'storyOn' && window.studyStorySync) window.studyStorySync(); if (/^study(AI|Word)$/.test(key) && window.studyStorySync) window.studyStorySync(); if (key === 'historyOn') drawHist(); if (key === 'diagOn') applyDiag(); if (/^ed(AI|Ctx|Tb)/.test(key) && window.edAISync) window.edAISync();
     drawSettings();
     return;
   }
   const k = e.target.closest('[data-r]')?.dataset.r; if (!k) return;
-  S[k] = D[k]; save(); if (k === 'theme') applyTheme(); if (k === 'uiLang') renderAll(); if (k === 'uiMode') drawStyles(); if (k === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (k === 'workspace' && window.edWorkspace) window.edWorkspace(); if (k === 'storyOn' && window.studyStorySync) window.studyStorySync(); if (/^study(AI|Word)$/.test(k) && window.studyStorySync) window.studyStorySync(); if (k === 'historyOn') drawHist(); if (k === 'diagOn') applyDiag(); if (/^ed(AI|Ctx|Tb)/.test(k) && window.edAISync) window.edAISync();
+  S[k] = D[k]; save(); if (k === 'theme' || k === 'accent') applyTheme(); if (k === 'uiLang') renderAll(); if (k === 'uiMode') drawStyles(); if (k === 'edSpellAnim' && window.edSpellAnim) window.edSpellAnim(); if (k === 'workspace' && window.edWorkspace) window.edWorkspace(); if (k === 'storyOn' && window.studyStorySync) window.studyStorySync(); if (/^study(AI|Word)$/.test(k) && window.studyStorySync) window.studyStorySync(); if (k === 'historyOn') drawHist(); if (k === 'diagOn') applyDiag(); if (/^ed(AI|Ctx|Tb)/.test(k) && window.edAISync) window.edAISync();
   drawSettings(); if (k === 'url' || k === 'nllb') { retries = 0; loadModels(); }
 };
 $('#resetAll').onclick = () => { for (const [k] of FIELDS) S[k] = D[k]; save(); applyTheme(); renderAll(); drawHist(); drawSettings(); retries = 0;   loadModels(); if (window.edWorkspace) window.edWorkspace(); if (window.studyStorySync) window.studyStorySync(); applyDiag(); };
