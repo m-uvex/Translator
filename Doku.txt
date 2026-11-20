@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.110 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.111 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1791,3 +1791,19 @@ Die Ausrichtung kommt also an: links sitzt am linken Inhaltsrand, rechts am rech
 **Was der Test nicht abdeckt.** Gemessen wurde der PDF-Weg, nicht der Druck ueber den Systemdialog; beide benutzen dieselbe Druck-CSS. Bilder, die groesser als die bedruckbare Flaeche sind, werden vorher mit `fitImagesForPrint()` ueber `--pz` verkleinert — die Raender des Rahmens und damit die Ausrichtung bleiben davon unberuehrt, gemessen wurde dieser Fall aber nicht, weil die Testbilder kleiner als `PRINT_W`/`PRINT_H` waren. Das Verschieben in Tabellen und Listen bleibt ungeprueft (Abschnitt 124).
 
 **Nebenbei.** Fuer die Messung wurde `pymupdf` in die Doku-Venv `%APPDATA%\uebersetzer\nllb-venv` nachinstalliert; vorher waren dort nur `pymupdf_layout` und `pymupdf4llm` vorhanden, `import fitz`/`pymupdf` schlug fehl.
+
+## 137. Tooltips in Werkzeugleiste, Kontext-Leiste und Einstellungen geprueft (1.15.111)
+
+Anlass war die Meldung, in Tooltips stehe noch ein roher Schluessel wie `img` statt eines Textes. Der Fall aus 1.15.106 (Bildknopf) war behoben; offen war, ob es weitere gibt.
+
+**Pruefung im laufenden Fenster**, nicht nur im Quelltext: Electron mit `--remote-debugging-port`, ueber CDP in einem leeren `--user-data-dir` (Vorgabezustand, deutsch) und im benutzten Profil. Ausgelesen wurden alle Elemente mit `data-tt` in `.tb` (25), `#ctxBar` (7) und `#settings` (28); je Element `title` gegen `dataset.tt` gestellt (gleich = roher Schluessel) und jedes `title` gegen die Schluesselmengen von `K`, `NL`, `ES`, `TR`, `AR`. Ergebnis in allen sechs Sprachen: `roh: []`, `ohneK: []`.
+
+**Zusaetzliche Gegenproben.**
+- Alle 163 `title`-Attribute der ganzen App auf die Form eines Schluessels geprueft (kleingeschrieben, ASCII, ohne Leerzeichen) — keins.
+- Alle Textknoten der drei Bereiche gegen die Vereinigung aller fuenf Tabellen geprueft — keins.
+- Alle Ansichten einmal geoeffnet (104 `data-tt`) und die Sprache ueber die Oberflaeche (`data-setkey="uiLang"`) auf `de`, `en`, `nl`, `es`, `tr`, `ar` gestellt, danach Einstellungen neu geoeffnet und die Titel erneut gelesen.
+- Zustandsabhaengige Tooltips: der Titel der ausgegrauten Einstellungs-Karten entsteht erst bei `aiAll = false` und ist uebersetzt; das Popup der Ausdrucksweise (`st_`-Schluessel) ebenfalls.
+
+**Beispiel Bildknopf** (`data-tt="imgIns"`): „Bild einfuegen", „Insert image", „Afbeelding invoegen", „Insertar imagen", „Gorsel ekle", in der arabischen Fassung entsprechend.
+
+**Ergebnis.** In Werkzeugleiste, Kontext-Leiste und Einstellungen ist kein roher Schluessel mehr vorhanden; Korrekturen waren dort nicht noetig. Gefunden wurde nur eine Luecke ausserhalb dieser drei Bereiche: 19 Tooltip-Schluessel der Vokabel- und Studium-Ansichten (`navVoc`, `navSrs`, `navTxt`, `vocSelectT`, `csvImp`, `csvExp`, `pickT`, `txAdd`, `txtImp`, `txtExp`, `repStartT`, `srsTypeT`, `vocSelAll`, `vocSelDel`, `vocSelEnd`, `vocFillT`, `vocFilterT`, `vocSearchT`, `vocFindClear`) fehlen in `NL`, `ES`, `TR` und `AR` und fallen dort auf Englisch zurueck — das ist ein unuebersetzter Text, kein roher Schluessel. Nicht geaendert, weil nicht Gegenstand der Meldung.
