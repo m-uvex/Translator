@@ -52,6 +52,19 @@ function readCfg() {
   return {};
 }
 
+// Ein Flag schreiben, ohne die uebrigen Werte der Datei zu verlieren. Das
+// Benutzerprofil hat Vorrang vor dem Programmordner (readCfg), deshalb landet
+// der Autostart dort und ueberlebt auch ein Update, das den Programmordner leert.
+function writeCfg(patch) {
+  const f = path.join(app.getPath('userData'), 'config.json');
+  let cur = {};
+  try { cur = JSON.parse(fs.readFileSync(f, 'utf8')) || {}; } catch {}
+  try {
+    fs.mkdirSync(path.dirname(f), { recursive: true });
+    fs.writeFileSync(f, JSON.stringify(Object.assign({}, cur, patch)));
+  } catch {}
+}
+
 function killTree(c) {
   if (!c || !c.pid) return;
   try {
@@ -258,6 +271,9 @@ function setupNllb(sender) {
     say('Starte den Server ...');
     startNllb(true);
     if (!(await waitNllb(60000))) { say('Der Server antwortet nicht.'); return { ok: false, error: 'server' }; }
+    // Ohne dieses Flag liefe der Server nur bis zum naechsten Programmstart:
+    // startNllb(true) erzwingt ihn nur fuer diesen Lauf.
+    writeCfg({ nllbAutostart: true });
     say('Fertig.');
     return { ok: true };
   })().finally(() => { nllbSetupJob = null; });
