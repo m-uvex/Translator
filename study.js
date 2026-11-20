@@ -50,14 +50,13 @@ function legacySpeak(s, lang) {
     return true;
   } catch { return false; }
 }
-// Fuer Knoepfe, die auch sagen sollen, warum nichts kommt: Wartet auf die
-// Antwort des Hauptprozesses und liefert false, wenn weder SAPI (Windows) bzw.
-// spd-say/espeak-ng (Linux) noch die Web-Speech-Schnittstelle sprechen koennen.
-// Unter Linux ohne speech-dispatcher und espeak-ng ist genau das der Fall; ohne
-// diese Rueckmeldung bliebe der Knopf stumm und ohne Erklaerung.
-async function speakChecked(text, code) {
+// Die eine Stelle, die ueber Systemweg und Rueckfall entscheidet. Liefert
+// Promise<boolean>: true, wenn wirklich gesprochen wurde. Der Ausgabeknopf
+// wertet das aus (ohne Sprachausgabe sagt er, was fehlt), die kleinen
+// Lautsprecher an den Vokabeln ignorieren es.
+async function speakText(text, code) {
   const s = String(text || '').trim();
-  if (!s) return true;
+  if (!s) return false;
   const lang = speechLang(code);
   try {
     if (window.api && window.api.ttsSpeak) {
@@ -69,20 +68,6 @@ async function speakChecked(text, code) {
   // Luege (getVoices() ist in Electron leer, siehe oben).
   const voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
   return voices.length ? legacySpeak(s, lang) : false;
-}
-function speakText(text, code) {
-  const s = String(text || '').trim();
-  if (!s) return false;
-  const lang = speechLang(code);
-  try {
-    if (window.api && window.api.ttsSpeak) {
-      window.api.ttsSpeak(s, lang)
-        .then(r => { if (!r || !r.ok) legacySpeak(s, lang); })
-        .catch(() => legacySpeak(s, lang));
-      return true;
-    }
-  } catch {}
-  return legacySpeak(s, lang);
 }
 const speakVocab = e => !!e && speakText(e.term, e.src || S.studySrc);
 

@@ -1557,7 +1557,7 @@ $('#speakTr').onclick = async () => {
   if (!String(txt || '').trim()) return;
   // Ohne Sprachausgabe im System sagt die Statuszeile, was fehlt, statt stumm
   // zu bleiben (Linux ohne speech-dispatcher und espeak-ng).
-  status(await speakChecked(txt, S.tgt) ? '' : t('speakNone'));
+  status(await speakText(txt, S.tgt) ? '' : t('speakNone'));
 };
 $('#refresh').onclick = async () => {
   if ($('#refresh').classList.contains('spinning')) return;
