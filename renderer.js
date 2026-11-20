@@ -1899,16 +1899,24 @@ let mtPoll = null, mtBusy = false, mtTgBusy = false;
 // Der Eintrag steht trotzdem in dieser Liste, damit sich das Modell nachtraeglich
 // holen laesst, wenn es im Assistenten nicht gewaehlt wurde.
 const TG_TAG = 'translategemma:4b', TG_GB = 3.3;
+// Angezeigt und geloescht wird das Modell, das wirklich in Ollama liegt, nicht
+// fest 4b: Wer sich translategemma:12b selbst geholt hat, soll die Zeile nicht
+// als „4b eingerichtet“ lesen und beim Loeschen auch nicht 4b treffen. Ohne
+// Treffer bietet die Zeile 4b zum Herunterladen an.
 async function tgInstalled() {
   try {
     const j = await (await fetch(S.url + '/api/tags')).json();
-    return (j.models || []).some(m => /translategemma/i.test(m.name || m.model || ''));
-  } catch { return false; }
+    const m = (j.models || []).find(x => /translategemma/i.test(x.name || x.model || ''));
+    return m ? (m.name || m.model) : '';
+  } catch { return ''; }
 }
-function tgRow(on) {
-  const gb = String(TG_GB).replace('.', LANG === 'de' ? ',' : '.');
-  return `<div class="mgroup"><b>TranslateGemma</b><div class="mrow"><div><b>4b</b><div class="muted">${gb} GB · ${on ? t('mInst') : t('mNot')}</div></div>` +
-    `<button class="ghost" data-act="${on ? 'tg-delete' : 'tg-install'}" data-id="${TG_TAG}" data-gb="${TG_GB}"${mtTgBusy ? ' disabled' : ''}>${mtTgBusy ? t('bBusy') : on ? t('bDel') : t('bDl')}</button></div></div>`;
+function tgRow(tag) {
+  const name = String(tag || TG_TAG).split(':')[1] || TG_TAG;
+  // Die Groesse ist nur fuer 4b bekannt; bei anderen Kennungen bleibt sie weg,
+  // statt eine falsche Zahl zu behaupten.
+  const gb = name === '4b' ? String(TG_GB).replace('.', LANG === 'de' ? ',' : '.') + ' GB · ' : '';
+  return `<div class="mgroup"><b>TranslateGemma</b><div class="mrow"><div><b>${esc(name)}</b><div class="muted">${gb}${tag ? t('mInst') : t('mNot')}</div></div>` +
+    `<button class="ghost" data-act="${tag ? 'tg-delete' : 'tg-install'}" data-id="${esc(tag || TG_TAG)}" data-gb="${TG_GB}"${mtTgBusy ? ' disabled' : ''}>${mtTgBusy ? t('bBusy') : tag ? t('bDel') : t('bDl')}</button></div></div>`;
 }
 async function drawMt() {
   const box = $('#mtBox'); if (!box) return;
@@ -1939,8 +1947,9 @@ async function mtAction(b) {
     mtTgBusy = false; loadModels(); await drawMt(); return;
   }
   if (act === 'tg-delete') {
-    if (!confirm(t('confDel', TG_TAG))) return;
-    try { await fetch(S.url + '/api/delete', { method:'DELETE', body:JSON.stringify({ model:TG_TAG }) }); } catch {}
+    const tag = id || TG_TAG;
+    if (!confirm(t('confDel', tag))) return;
+    try { await fetch(S.url + '/api/delete', { method:'DELETE', body:JSON.stringify({ model:tag }) }); } catch {}
     loadModels(); await drawMt(); return;
   }
   if (act === 'setup') {
