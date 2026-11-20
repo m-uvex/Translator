@@ -141,13 +141,13 @@ function studyModelPop(btn) {
 }
 const langName = c => (!c || c === 'auto') ? 'the source language' : (window.trEngName ? window.trEngName(c) : c);
 
-async function llmJson(prompt) {
+async function llmJson(prompt, purpose = 'study-word') {
   const mdl = studyModel();
   if (!mdl) throw new Error('nomodel');
   const out = await window.trChat([
     { role: 'system', content: 'You are a bilingual dictionary. Reply with JSON only, no explanations.' },
     { role: 'user', content: prompt }
-  ], { model: mdl, format: 'json' });
+  ], { model: mdl, format: 'json', purpose });
   try { return JSON.parse(out); } catch { return {}; }
 }
 
@@ -1938,7 +1938,7 @@ async function storyGenerate(id) {
         `- Surprise the reader with the ending; do not give it away early.\n` +
         `- Give the story a fitting title in ${langName(lang)}.\n` +
         `Reply as JSON: {"title": "...", "story": "..."}` }
-    ], { model: mdl, format: 'json' });
+    ], { model: mdl, format: 'json', purpose: 'story' });
     let title = '', story = '';
     try {
       const j = JSON.parse(out);

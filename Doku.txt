@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.111 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.112 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1701,7 +1701,7 @@ Der Schalter hiess „KI-Funktionen im Lese-Arbeitsplatz (alle auf einmal)“ �
 
 **Geprueft 1.15.105** in eigenem `--user-data-dir` ueber CDP, deutsches Fenster: Die Einstellungen zeigen die Gruppen Allgemein → KI-Funktionen → Lesen und Vokabeln …; der Schalter traegt den Titel „KI-Funktionen (alle auf einmal)“, darunter den Hinweistext, und eine Zeile `studyAI` gibt es nicht mehr. Editor, Text markiert: mit `aiAll` an sieben Eintraege in der Kontext-Leiste (kuerzen, verlaengern, zusammenfassen, probelesen, Synonyme, Ausdruck, uebersetzen), mit `aiAll` aus ist die Leiste versteckt und leer; die drei KI-Knoepfe der Werkzeugleiste fehlen dann und sind nach dem Wiedereinschalten zurueck. `studyWord` und die beiden Editor-Karten sind bei ausgeschaltetem Schalter ausgegraut (`dim`). Kurzgeschichten-Knopf (`#txStory`) bei `storyOn` an und `aiAll` aus versteckt, mit `aiAll` an sichtbar. Migration: `localStorage` mit `{studyAI:false}` und ohne `aiAll` geladen ergibt `S.aiAll === false`, `S.studyAI === undefined`. `node --check` laeuft fuer alle drei Skripte durch. Die Oberflaeche wurde nicht per Bildschirmfoto betrachtet.
 
-**Offen.** Die Ausnahme „Uebersetzen bleibt“ ist nicht als Liste im Code hinterlegt, sondern strukturell: der Uebersetzungsweg ruft `chat()` ohne Schalterpruefung. Wer spaeter eine Funktion baut, die wie Uebersetzen immer verfuegbar sein soll, muss das im Code begruenden — eine explizite Ausnahmeliste gibt es nicht.
+**Offen.** Die Ausnahme „Uebersetzen bleibt“ ist nicht als Liste im Code hinterlegt, sondern strukturell: der Uebersetzungsweg ruft `chat()` ohne Schalterpruefung. Wer spaeter eine Funktion baut, die wie Uebersetzen immer verfuegbar sein soll, muss das im Code begruenden — eine explizite Ausnahmeliste gibt es nicht. **Seit 1.15.112 gibt es sie:** `AI_ALLOWED` in `renderer.js`, siehe Abschnitt 138.
 ## 132. Tooltip des Bild-Knopfes sagt, was er tut (1.15.106)
 
 Der Knopf zum Einfuegen von Bildern in der Werkzeugleiste hiess im Tooltip „img“. Ursache: In der Liste `TB` ist der zweite Eintrag jeder Zeile zugleich der Schluessel fuer Symbol und Tooltip, und dort stand `img` — ein Bezeichner, den es in den Texten nicht gibt, also zeigte `t()` den Schluessel selbst an.
@@ -1807,3 +1807,39 @@ Anlass war die Meldung, in Tooltips stehe noch ein roher Schluessel wie `img` st
 **Beispiel Bildknopf** (`data-tt="imgIns"`): „Bild einfuegen", „Insert image", „Afbeelding invoegen", „Insertar imagen", „Gorsel ekle", in der arabischen Fassung entsprechend.
 
 **Ergebnis.** In Werkzeugleiste, Kontext-Leiste und Einstellungen ist kein roher Schluessel mehr vorhanden; Korrekturen waren dort nicht noetig. Gefunden wurde nur eine Luecke ausserhalb dieser drei Bereiche: 19 Tooltip-Schluessel der Vokabel- und Studium-Ansichten (`navVoc`, `navSrs`, `navTxt`, `vocSelectT`, `csvImp`, `csvExp`, `pickT`, `txAdd`, `txtImp`, `txtExp`, `repStartT`, `srsTypeT`, `vocSelAll`, `vocSelDel`, `vocSelEnd`, `vocFillT`, `vocFilterT`, `vocSearchT`, `vocFindClear`) fehlen in `NL`, `ES`, `TR` und `AR` und fallen dort auf Englisch zurueck — das ist ein unuebersetzter Text, kein roher Schluessel. Nicht geaendert, weil nicht Gegenstand der Meldung.
+
+## 138. Hauptschalter mit Erlaubnisliste statt struktureller Luecke (1.15.112)
+
+Bis 1.15.111 galt `aiAll` dort, wo jemand daran gedacht hatte: `aiOn()` und `studyAI()` fuer die Oberflaeche, `edRun()`, `edRunProofread()`, `edRunSynonyms()` und `translateTerm()` als eigene Waechter. Abschnitt 131 hielt als offen fest, dass die Ausnahme „Uebersetzen bleibt“ nicht im Code steht, sondern strukturell — `chat()` prueft nichts, weil dort auch das Uebersetzen laeuft. Wer eine Modellanfrage ohne eigene Pruefung baute, rutschte durch.
+
+**Drei echte Luecken beim Nachzaehlen.** Alle drei liefen mit ausgeschaltetem Hauptschalter weiter und erreichten ein Modell: die Ersatzwoerter im Ausgabefeld (`#output`-Klick, `chat()` mit dem Hilfsmodell), das Umschreiben nach einer Ersatzwahl (`reword()`), und das Vorwaermen beim Start (`warmupModel()` → `/api/generate` bzw. `/load`). Die Ersatzwoerter fragten sogar sichtbar ein Modell, weil der Klick keinen Schalter kannte.
+
+**Neu: eine Erlaubnisliste an der einzigen Durchlassstelle.** In `renderer.js` steht vor `chat()`:
+
+- `const AI_ALLOWED = new Set(['translate']);` — die einzige Modell-Ausnahme.
+- `aiAllowed(purpose)` — wahr, solange `S.aiAll !== false`, sonst nur fuer Zwecke aus der Liste.
+- `aiGate(purpose)` — wirft `Error('aioff')` mit `aiOff = true` und dem Zweck; `chat()` ruft es als erste Zeile.
+
+Jeder Aufruf nennt seinen Zweck: `translate` (alle Wege in `translateCore`, auch die Stueckelung langer Texte), `alts` und `reword` (Ersatzwoerter), `editor-op`, `editor-proofread`, `editor-synonyms`, `image-describe`, `study-word` (`llmJson`), `story`, `warmup`. Ein Aufruf **ohne** Zweck ist ebenfalls gesperrt; die Liste ist damit fail-closed, und eine kuenftige Funktion ist aus, bis jemand ihren Zweck ausdruecklich eintraegt. Die drei Waechter in `edRun*()` sind weggefallen (dieselbe Pruefung an drei Stellen), `describeInto()` fragt `aiAllowed('image-describe')`, `studyAI()` bleibt nur fuer die Oberflaeche (Knopf ausblenden, Meldung). Editor-Fehler zeigen bei `e.aiOff` die Meldung `studyAIoff` statt „Fehler: aioff“.
+
+**Modellfrei und deshalb nicht in der Liste:** Rechtschreibung (`spell:*`), Woerterbuch samt Import/Export, Verlauf, Export, Dokumentenablage, Glossar und die Modellliste (`/api/tags`, `/api/show`). Das Vorwaermen zaehlt dagegen als Modellaufruf und ist aus.
+
+**Sichtbar.** `imgModel` („Modell zum Beschreiben von Bildern“) und `bootModel` („Letztes Modell beim Hochfahren vorwaermen“) gehoeren jetzt zur gedimmten Gruppe: Mit ausgeschaltetem Hauptschalter tragen sie `dim` und den Tooltip `aiAlldim`, weil beide wirklich nicht mehr wirken.
+
+**Geprueft 1.15.112 mit gestubbten Antworten.** Eigener Ollama/NLLB-Ersatz auf `127.0.0.1:4599` (`/api/tags`, `/api/show`, `/api/chat` mit und ohne Stream, `/api/generate`, `/translate`, `/languages`, `/models`), der jede Anfrage protokolliert; eigenes `--user-data-dir`, Zugriff ueber CDP, `S.url`/`S.nllb` auf den Stub gesetzt, Modell `stub:1`.
+
+| Fall mit `aiAll = false` | Ergebnis |
+|---|---|
+| Uebersetzen de→en | Ausgabe „STUB-ANTWORT“, genau **1** `POST /api/chat` |
+| `trChat` ohne Zweck | `aioff` (aiOff), kein Request |
+| `editor-op`, `editor-synonyms`, `study-word`, `story`, `image-describe`, `alts`, `warmup` | je `aioff` (aiOff), kein Request |
+| `translate` | Antwort des Stubs |
+| `warmupModel('stub:1')` | 0 `POST /api/generate` |
+| Klick auf ein Wort der Ausgabe | Meldung „Die KI-Funktionen sind aus (Einstellungen → KI-Funktionen).“, 0 neue Requests |
+| Kurzgeschichten-Knopf | versteckt |
+| gedimmte Karten | Wortuebersetzung, Kurzgeschichten, Vorwaermen, Bildbeschreibung, Editor-Gruppe |
+| Editor-Leiste, Klick auf „Kuerzen“ nach dem Umlegen im laufenden Fenster | Statuszeile zeigt dieselbe Meldung, Text unveraendert, 0 Requests |
+
+Mit `aiAll = true` laufen dieselben Zwecke: `editor-op`, `study-word`, ein Aufruf ohne Zweck und die Ersatzwoerter (Popup „AlternativA AlternativB“), Uebersetzen weiterhin „STUB-ANTWORT“. Die Zahlen stammen aus dem Protokoll des Stubs, nicht aus der Konsole der App.
+
+`node --check` laeuft fuer `renderer.js`, `editor.js` und `study.js` durch; die Oberflaeche wurde nicht per Bildschirmfoto betrachtet.

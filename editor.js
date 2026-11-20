@@ -233,24 +233,23 @@ const STYLE_ICONS = [
 ];
 const edStatus = m => { const e = $('#sbStatus'); if (e) e.textContent = m || ''; };
 
+// Die Schalterpruefung sitzt nicht mehr hier, sondern in `chat()` selbst
+// (renderer.js: `AI_ALLOWED`). Jeder Aufruf nennt nur noch seinen Zweck.
 async function edRun(instr, text, json) {
-  if (aiBlocked()) throw new Error(t('aiAlldim'));
   const m = writeModel(); if (!m) throw new Error(t('noWrite'));
-  return chat([{ role:'system', content:json ? 'You are a writing assistant. Answer only with valid JSON.' : EDSYS }, { role:'user', content:`${instr}\n\n<text>\n${text}\n</text>` }], { model:m, format:json ? 'json' : undefined });
+  return chat([{ role:'system', content:json ? 'You are a writing assistant. Answer only with valid JSON.' : EDSYS }, { role:'user', content:`${instr}\n\n<text>\n${text}\n</text>` }], { model:m, format:json ? 'json' : undefined, purpose:'editor-op' });
 }
 async function edRunProofread(text) {
-  if (aiBlocked()) throw new Error(t('aiAlldim'));
   const m = writeModel(); if (!m) throw new Error(t('noWrite'));
-  return chat([{ role:'system', content:PROOFREAD_SYS }, { role:'user', content:`${proofreadPrompt()}\n\n<text>\n${text}\n</text>` }], { model:m });
+  return chat([{ role:'system', content:PROOFREAD_SYS }, { role:'user', content:`${proofreadPrompt()}\n\n<text>\n${text}\n</text>` }], { model:m, purpose:'editor-proofread' });
 }
 // Nur die Markierung, direkt im Auftrag - kein Satzkontext, kein Tag-Wrapper.
 // Kurzer Prompt = schnelle Antwort.
 async function edRunSynonyms(text) {
-  if (aiBlocked()) throw new Error(t('aiAlldim'));
   const m = writeModel(); if (!m) throw new Error(t('noWrite'));
   const w = String(text).replace(/"/g, "'");
   const instr = `Give up to 5 ${langHint()} synonyms that could replace the word "${w}" in a sentence. Same part of speech and grammatical form. No translations, no explanations, no duplicates. Output JSON: {"synonyms":["..."]}`;
-  return chat([{ role:'system', content:SYNONYM_SYS }, { role:'user', content:instr }], { model:m, format:'json', options:{ num_predict:200 } });
+  return chat([{ role:'system', content:SYNONYM_SYS }, { role:'user', content:instr }], { model:m, format:'json', options:{ num_predict:200 }, purpose:'editor-synonyms' });
 }
 function replaceRange(range, text) {
   page.focus();
@@ -299,7 +298,7 @@ async function withBusy(fn) {
   try {
     cleanMarks();
     await fn();
-  } catch (e) { edStatus(t('error', String(e.message).slice(0, 100))); }
+  } catch (e) { edStatus(e.aiOff ? t('studyAIoff') : t('error', String(e.message).slice(0, 100))); }
   finally {
     cleanMarks();
     unmarkProcessing(page);
@@ -602,10 +601,9 @@ const BAR = [['shorten','shorten'],['lengthen','lengthen'],['summarize','summari
 const BAR_SET = { shorten:'edCtxShorten', lengthen:'edCtxLengthen', summarize:'edCtxSummarize', proofread:'edCtxProofread', synonyms:'edCtxSyn', styleB:'edCtxStyle', translateSel:'edCtxTr' };
 const TB_SET = { shortenAll:'edTbShorten', lengthenAll:'edTbLengthen', summarizeAll:'edTbSum' };
 const aiOn = k => S.aiAll !== false && S.edAI !== false && S[k] !== false;
-// Jede Modellanfrage des Editors prueft den softwareweiten Schalter selbst —
-// so gilt er auch fuer kuenftige Funktionen, die den Umweg ueber die Leisten
-// nicht nehmen.
-const aiBlocked = () => S.aiAll === false;
+// Der softwareweite Schalter wird bei jeder Modellanfrage in `chat()` geprueft
+// (renderer.js: `AI_ALLOWED`); hier steht nur, ob eine Modellwahl ueberhaupt
+// sinnvoll ist.
 const barItems = () => S.edCtx === false ? [] : BAR.filter(([k]) => aiOn(BAR_SET[k]));
 function buildBar() {
   const items = barItems();
@@ -1555,7 +1553,7 @@ function imgWarn(n, kind, withVision) {
 // Beschreibungen fuer den Export: Im Klon wird jedes Bild durch einen Absatz
 // mit der Beschreibung ersetzt, das Original bleibt unberuehrt.
 async function describeInto(root) {
-  const mdl = aiBlocked() ? '' : imgModel();
+  const mdl = aiAllowed('image-describe') ? imgModel() : '';
   const lang = S.uiLang === 'auto' ? 'German' : S.uiLang;
   for (const im of [...root.querySelectorAll('.edimg img, img')]) {
     let txt = '';
@@ -1565,7 +1563,7 @@ async function describeInto(root) {
       if (b64 && mdl) {
         const out = await window.trChat([
           { role:'user', content:'Describe this image in one short, factual sentence. Answer in ' + lang + ' and return the sentence only.', images:[b64] }
-        ], { model:mdl });
+        ], { model:mdl, purpose:'image-describe' });
         txt = String(out || '').replace(/\s+/g, ' ').trim().slice(0, 300);
       }
     } catch {}

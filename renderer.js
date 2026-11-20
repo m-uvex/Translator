@@ -1019,7 +1019,7 @@ async function loadModels() {
 const modelIcons = o => (o.vision ? `<span class="mi" title="${t('visionTip')}">${ic('eye', 15)}</span>` : '') + (o.thinking ? `<span class="mi" title="${t('thinkTip')}">${ic('bulb', 15)}</span>` : '');
 
 function warmupModel(model) {
-  if (!model) return;
+  if (!model || !aiAllowed('warmup')) return;
   if (isMt(model)) {
     fetch(S.nllb + '/load', { method:'POST', body:JSON.stringify({ id:model }) }).catch(() => {});
   } else {
@@ -1039,7 +1039,27 @@ function modelPop(btn) {
   const r = btn.getBoundingClientRect(); Object.assign(p.style, { left:Math.max(8, r.right - 300) + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden');
 }
 
-async function chat(messages, { stream, format, onToken, model, signal, options } = {}) {
+// ---------- Softwareweiter Hauptschalter: eine Erlaubnisliste ----------
+// Jede Modellanfrage der App laeuft durch `chat()` - auch die des Editors und
+// der Vokabeln, die ueber `window.trChat` hereinkommen. Dort entscheidet allein
+// diese Liste, was bei `aiAll = false` weiterlaufen darf. Es ist eine
+// Erlaubnisliste: Was nicht drinsteht - auch jede kuenftige Funktion - ist aus,
+// solange der Hauptschalter aus ist. Die Schluessel sind die Zwecke, die der
+// Aufrufer mitgibt (`purpose`); ein Aufruf ohne Zweck ist ebenfalls aus.
+// Modellfrei und deshalb gar nicht hier: Rechtschreibung, Woerterbuch, Verlauf,
+// Export und Dokumentenablage rufen kein Modell und brauchen keine Ausnahme.
+const AI_ALLOWED = new Set(['translate']);
+const aiAllowed = purpose => S.aiAll !== false || AI_ALLOWED.has(purpose);
+function aiGate(purpose) {
+  if (aiAllowed(purpose)) return;
+  const e = new Error('aioff');
+  e.aiOff = true; e.purpose = purpose;
+  throw e;
+}
+window.aiAllowed = aiAllowed; window.AI_ALLOWED = AI_ALLOWED;
+
+async function chat(messages, { purpose, stream, format, onToken, model, signal, options } = {}) {
+  aiGate(purpose);
   const mdl = model || S.model;
   const body = { model:mdl, messages, stream:!!stream, options:{ temperature:S.temp, num_ctx:S.numctx, ...(options || {}) } };
   if (format) body.format = format;
@@ -1247,7 +1267,7 @@ async function translateCore(text, o) {
     }
     return fin(out.join('\n'));
   }
-  const opt = { stream:!!o.onToken, onToken:o.onToken ? x => o.onToken(filterProfanity(stripStars(x, text), false, o.tgt, o.src)) : undefined, model:o.model, signal:o.signal };
+  const opt = { purpose:'translate', stream:!!o.onToken, onToken:o.onToken ? x => o.onToken(filterProfanity(stripStars(x, text), false, o.tgt, o.src)) : undefined, model:o.model, signal:o.signal };
   const parts = textChunks(text, chunkChars());
   // TranslateGemma bekommt sein eigenes Prompt-Format, aber dieselbe Stueckelung:
   // ein langer Text wurde auch hier abgeschnitten.
@@ -1519,6 +1539,7 @@ $('#glossImp').onclick = glossImport;
 $('#output').addEventListener('click', async e => {
   const w = e.target.closest('.w'); if (!w || busy) return;
   if (isMt()) return status(t('nllbNoAlt'));
+  if (!aiAllowed('alts')) return status(t('studyAIoff'));
   const hm = helperModel(); if (!hm) return status(t('needHelper'));
   const word = w.textContent, n = [...$('#output').querySelectorAll('.w')].filter(x => x.textContent === word).indexOf(w) + 1;
   const p = $('#alt'), r = w.getBoundingClientRect(); closePops();
@@ -1526,7 +1547,7 @@ $('#output').addEventListener('click', async e => {
   Object.assign(p.style, { left:Math.min(r.left, innerWidth - 340) + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden');
   try {
     const out = await chat([{ role:'system', content:'You are a translation assistant. Answer only with valid JSON.' }, { role:'user', content:
-      `Source${S.src !== 'auto' ? ' (' + engName(S.src) + ')' : ''}: ${lastSrc || '(image)'}\nTranslation (${engName(S.tgt)}): ${lastTr}\n\nGive up to 6 alternative ${engName(S.tgt)} words or short phrases that could replace the word "${word}"${n > 1 ? ` (occurrence #${n})` : ''} in this translation, with the same meaning in context or close synonyms, most likely first. Respond as JSON: {"alternatives":["..."]}` }], { format:'json', model:hm });
+      `Source${S.src !== 'auto' ? ' (' + engName(S.src) + ')' : ''}: ${lastSrc || '(image)'}\nTranslation (${engName(S.tgt)}): ${lastTr}\n\nGive up to 6 alternative ${engName(S.tgt)} words or short phrases that could replace the word "${word}"${n > 1 ? ` (occurrence #${n})` : ''} in this translation, with the same meaning in context or close synonyms, most likely first. Respond as JSON: {"alternatives":["..."]}` }], { format:'json', model:hm, purpose:'alts' });
     const alts = (JSON.parse(out).alternatives || []).filter(a => typeof a === 'string' && a.toLowerCase() !== word.toLowerCase());
     p.innerHTML = alts.length ? '' : `<div class="muted" style="padding:4px 8px">${t('noAlts')}</div>`;
     alts.forEach(a => { const d = document.createElement('div'); d.className = 'row'; d.textContent = a; d.onclick = () => reword(word, a, n, hm); p.append(d); });
@@ -1536,7 +1557,7 @@ async function reword(word, alt, n, hm) {
   closePops(); busy = true; $('#output').classList.add('busy'); status(t('adjusting'));
   try {
     lastTr = filterProfanity(await chat([{ role:'system', content:S.sys }, { role:'user', content:
-      `Here is a ${engName(S.tgt)} translation:\n<text>\n${lastTr}\n</text>\n\nReplace the word "${word}"${n > 1 ? ` (occurrence #${n})` : ''} with "${alt}" and change only what grammar requires (articles, inflection, word order, punctuation) so the text stays fluent. Keep everything else unchanged. Output only the revised text.` }], { model:hm }), true, S.tgt, S.src);
+      `Here is a ${engName(S.tgt)} translation:\n<text>\n${lastTr}\n</text>\n\nReplace the word "${word}"${n > 1 ? ` (occurrence #${n})` : ''} with "${alt}" and change only what grammar requires (articles, inflection, word order, punctuation) so the text stays fluent. Keep everything else unchanged. Output only the revised text.` }], { model:hm, purpose:'reword' }), true, S.tgt, S.src);
     renderOut(); status(''); maybeAutoCopy();
   } catch { status(t('adjErr')); }
   busy = false; $('#output').classList.remove('busy');
@@ -1961,7 +1982,9 @@ function drawSettings() {
   const AI_SUB = new Set(['edCtx', 'edCtxShorten', 'edCtxLengthen', 'edCtxSummarize', 'edCtxProofread',
     'edCtxSyn', 'edCtxStyle', 'edCtxTr', 'edTbShorten', 'edTbLengthen', 'edTbSum']);
   // Zeilen, die eine KI-Funktion einschalten, egal in welchem Arbeitsplatz.
-  const STUDY_SUB = new Set(['studyWord', 'storyOn']);
+  // `imgModel` und `bootModel` gehoeren dazu, seit der Hauptschalter auch das
+  // Beschreiben von Bildern und das Vorwaermen des Modells abschaltet.
+  const STUDY_SUB = new Set(['studyWord', 'storyOn', 'imgModel', 'bootModel']);
   // Liefert den Tooltip-Schluessel, wenn eine Zeile gerade uebersteuert wird.
   // Der softwareweite Schalter `aiAll` steht ueber allem, `edAI` nur ueber den
   // Editor-Funktionen.
