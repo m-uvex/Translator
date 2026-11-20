@@ -193,9 +193,9 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   sgCompass:'<circle cx="12" cy="12" r="8.4"/><path d="m15 9-1.8 4.2L9 15l1.8-4.2z"/>',
   // Schwert mit Griff und Parierstange.
   sgSword:'<path d="M19.4 4.2h-3L5.8 14.8l3.4 3.4L19.4 7.2z"/><path d="M4.2 13.6 10.4 19.8"/><path d="M3.6 21.2 5.6 19.2"/>',
-  // Ordner fuer die Glossar-Sammlungen, ein Pulssignal fuer die Diagnose-Seite,
-  // ein Lautsprecher fuers Vorlesen und ein Ausschalter fuers Entladen.
-  folder:'<path d="M3.2 6.4h5.6l1.8 2h10.2v11.2H3.2z"/>',
+  // Ein Pulssignal fuer die Diagnose-Seite, ein Lautsprecher fuers Vorlesen und
+  // ein Ausschalter fuers Entladen. (Das Ordnersymbol der Glossar-Sammlungen ist
+  // in 1.15.74 dem Exportsymbol gewichen und entfallen.)
   activity:'<path d="M3 12h3.4l2.6-7 4 14 2.6-7H21"/>',
   volume:'<path d="M11 5 6.6 9H3v6h3.6L11 19z"/><path d="M15 9.3a4 4 0 0 1 0 5.4M17.8 6.5a8 8 0 0 1 0 11"/>',
   power:'<path d="M12 3.2v8.4"/><path d="M7.4 6.6a7 7 0 1 0 9.2 0"/>'
@@ -1170,6 +1170,9 @@ function glossDrop(id) {
 function glossPop(btn) {
   closePops();
   const p = $('#pop'); p.innerHTML = '';
+  // Merker fuer das Umschalten: ein zweiter Klick auf denselben Knopf schliesst
+  // das Popup wieder (siehe Handler an #glossPick und den mousedown-Listener).
+  p.dataset.opener = btn && btn.id ? btn.id : '';
   const head = txt => { const h = document.createElement('div'); h.className = 'ph'; h.textContent = txt; p.append(h); };
   const row = (label, cur, what, onDel) => {
     const r = document.createElement('div'); r.className = 'row' + (cur ? ' sel' : '');
@@ -1199,7 +1202,11 @@ async function glossImport() {
   drawGloss();
   status(t(n ? 'glossImported' : 'glossNone', n));
 }
-$('#glossPick').onclick = e => glossPop(e.currentTarget);
+$('#glossPick').onclick = e => {
+  const p = $('#pop');
+  if (!p.classList.contains('hidden') && p.dataset.opener === 'glossPick') return closePops();
+  glossPop(e.currentTarget);
+};
 $('#glossImp').onclick = glossImport;
 
 $('#output').addEventListener('click', async e => {
@@ -1257,8 +1264,19 @@ function langPop(btn, key, o = {}) {
   search.oninput = draw; draw();
   const r = btn.getBoundingClientRect(); Object.assign(p.style, { left:Math.min(r.left, innerWidth - 260) + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden'); search.focus();
 }
-function closePops() { ['#pop', '#alt', '#cm'].forEach(x => $(x).classList.add('hidden')); }
-document.addEventListener('mousedown', e => { if (!e.target.closest('.pop,.pill,.w,.ctxbar')) closePops(); });
+function closePops() {
+  ['#pop', '#alt', '#cm'].forEach(x => $(x).classList.add('hidden'));
+  $('#pop').dataset.opener = '';
+}
+document.addEventListener('mousedown', e => {
+  if (e.target.closest('.pop,.pill,.w,.ctxbar')) return;
+  // Der Knopf, der das Popup geoeffnet hat, schliesst es selbst: sonst wuerde
+  // mousedown schliessen und der gleich folgende Klick es wieder oeffnen — ein
+  // zweiter Klick auf den Ordner ging deshalb nicht zu.
+  const p = $('#pop'), opener = p.dataset.opener;
+  if (opener && !p.classList.contains('hidden') && e.target.closest('#' + opener)) return;
+  closePops();
+});
 function upd() {
   $('#srcBtn').textContent = S.src === 'auto' ? t('auto') : langLabel(S.src);
   $('#tgtBtn').textContent = langLabel(S.tgt);
