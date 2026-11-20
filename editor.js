@@ -878,13 +878,15 @@ document.addEventListener('mousedown', e => { if (!e.target.closest('#colPop,[da
 window.addEventListener('resize', () => colPop.classList.add('hidden'));
 window.addEventListener('scroll', () => colPop.classList.add('hidden'), true);
 
+// Der zweite Eintrag jeder Zeile ist der Schluessel fuer Symbol und Tooltip;
+// 'imgIns' traegt "Bild einfuegen" in allen Sprachen.
 const TB = [
   ['btn','fNew','filenew', () => newDoc()], ['btn','fOpen','folder', () => $('#edFile').click()], ['btn','fSave','save', e => savePop(e.currentTarget)], ['sep'],
   ['btn','undo','undo', () => cmd('undo')], ['btn','redo','redo', () => cmd('redo')], ['sep'], ['sel','font'], ['sel','size'], ['sel','heading'], ['sep'],
   ['tog','bold','bold','bold'], ['tog','italic','italic','italic'], ['tog','underline','underline','underline'], ['tog','strike','strike','strikeThrough'], ['btn','hl','marker', () => paint('mark')], ['btn','ink','textColor', () => paint('ink')], ['sep'],
   ['tog','ul','ul','insertUnorderedList'], ['tog','ol','ol','insertOrderedList'], ['btn','quote','quote', () => cmd('formatBlock', document.queryCommandValue('formatBlock') === 'blockquote' ? 'p' : 'blockquote')], ['sep'],
   ['tog','aL','alignL','justifyLeft'], ['tog','aC','alignC','justifyCenter'], ['tog','aR','alignR','justifyRight'], ['tog','aJ','alignJ','justifyFull'], ['sep'],
-  ['btn','link','link', addLink], ['btn','img','image', () => $('#edImgFile').click()], ['btn','clear','eraser', () => { cmd('removeFormat'); cmd('formatBlock', 'p'); }], ['sep'],
+  ['btn','link','link', addLink], ['btn','imgIns','image', () => $('#edImgFile').click()], ['btn','clear','eraser', () => { cmd('removeFormat'); cmd('formatBlock', 'p'); }], ['sep'],
   ['btn','shortenAll','shorten', () => allOp('shorten')], ['btn','lengthenAll','lengthen', () => allOp('lengthen')], ['btn','summarizeAll','summarize', () => allOp('summarize')]
 ];
 // Die drei Ausrichtungs-Knoepfe richten ein ausgewaehltes Bild aus; ohne

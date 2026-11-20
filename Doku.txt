@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 20. November 2026, App-Version 1.15.105 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 20. November 2026, App-Version 1.15.106 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -1700,3 +1700,10 @@ Der Schalter hiess „KI-Funktionen im Lese-Arbeitsplatz (alle auf einmal)“ �
 **Geprueft 1.15.105** in eigenem `--user-data-dir` ueber CDP, deutsches Fenster: Die Einstellungen zeigen die Gruppen Allgemein → KI-Funktionen → Lesen und Vokabeln …; der Schalter traegt den Titel „KI-Funktionen (alle auf einmal)“, darunter den Hinweistext, und eine Zeile `studyAI` gibt es nicht mehr. Editor, Text markiert: mit `aiAll` an sieben Eintraege in der Kontext-Leiste (kuerzen, verlaengern, zusammenfassen, probelesen, Synonyme, Ausdruck, uebersetzen), mit `aiAll` aus ist die Leiste versteckt und leer; die drei KI-Knoepfe der Werkzeugleiste fehlen dann und sind nach dem Wiedereinschalten zurueck. `studyWord` und die beiden Editor-Karten sind bei ausgeschaltetem Schalter ausgegraut (`dim`). Kurzgeschichten-Knopf (`#txStory`) bei `storyOn` an und `aiAll` aus versteckt, mit `aiAll` an sichtbar. Migration: `localStorage` mit `{studyAI:false}` und ohne `aiAll` geladen ergibt `S.aiAll === false`, `S.studyAI === undefined`. `node --check` laeuft fuer alle drei Skripte durch. Die Oberflaeche wurde nicht per Bildschirmfoto betrachtet.
 
 **Offen.** Die Ausnahme „Uebersetzen bleibt“ ist nicht als Liste im Code hinterlegt, sondern strukturell: der Uebersetzungsweg ruft `chat()` ohne Schalterpruefung. Wer spaeter eine Funktion baut, die wie Uebersetzen immer verfuegbar sein soll, muss das im Code begruenden — eine explizite Ausnahmeliste gibt es nicht.
+## 132. Tooltip des Bild-Knopfes sagt, was er tut (1.15.106)
+
+Der Knopf zum Einfuegen von Bildern in der Werkzeugleiste hiess im Tooltip „img“. Ursache: In der Liste `TB` ist der zweite Eintrag jeder Zeile zugleich der Schluessel fuer Symbol und Tooltip, und dort stand `img` — ein Bezeichner, den es in den Texten nicht gibt, also zeigte `t()` den Schluessel selbst an.
+
+**Neu:** Die Zeile lautet `['btn','imgIns','image', …]`. Der Schluessel `imgIns` war schon vorhanden („Bild einfügen“) und liegt in allen sechs Sprachen vor; er wird jetzt fuer den Tooltip benutzt. Das Symbol bleibt `image`, der Klick oeffnet weiter den Dateiwaehler. Ein Kommentar an der Liste `TB` sagt, dass der zweite Eintrag der Textschluessel ist.
+
+**Geprueft 1.15.106** in eigenem `--user-data-dir` ueber CDP: Der Knopf ist ueber `data-tt="imgIns"` zu finden, sein `title` lautet „Bild einfügen“, ein Knopf mit `data-tt="img"` existiert nicht mehr, und ein Klick auf ihn loest den Dateiwaehler aus (der `click` von `#edImgFile` wurde dafuer abgefangen und gezaehlt). Die Texte der anderen Sprachen wurden nicht einzeln im Fenster umgeschaltet, sondern nur im Woerterbuch geprueft (je ein Eintrag fuer de/en, nl, es, tr, ar).
