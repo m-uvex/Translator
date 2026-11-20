@@ -1881,7 +1881,7 @@ const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['accent','s_
   ['edCtxShorten','s_edCtxShorten','bool'],['edCtxLengthen','s_edCtxLengthen','bool'],['edCtxSummarize','s_edCtxSummarize','bool'],
   ['edCtxProofread','s_edCtxProofread','bool'],['edCtxSyn','s_edCtxSyn','bool'],['edCtxStyle','s_edCtxStyle','bool'],['edCtxTr','s_edCtxTr','bool'],
   ['edTbShorten','s_edTbShorten','bool'],['edTbLengthen','s_edTbLengthen','bool'],['edTbSum','s_edTbSum','bool']];
-const GROUPS = [['s_groupGeneral',['uiLang','theme','accent','start','workspace']],['s_groupStudy',['studyAI','studyWord','storyOn','csvSrs']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped','historyOn','diagOn']],['s_groupImages',['imgModel']],['s_groupEdAI',['edAI','edCtx','edCtxShorten','edCtxLengthen','edCtxSummarize','edCtxProofread','edCtxSyn','edCtxStyle','edCtxTr','edTbShorten','edTbLengthen','edTbSum']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
+const GROUPS = [['s_groupGeneral',['uiLang','theme','accent','start','workspace']],['s_groupStudy',['studyAI','studyWord','storyOn','csvSrs']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped','historyOn','diagOn']],['s_groupImages',['imgModel']],['s_groupEdAI',['edAI',{bar:1},'edTbShorten','edTbLengthen','edTbSum']],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
 // Der systemweite Kurzbefehl kann von einem anderen Programm belegt sein:
 // globalShortcut.register() scheitert dann still. main.js meldet ueber
 // `app:hotkey`, ob die Registrierung geklappt hat; bis die Antwort da ist,
@@ -1942,8 +1942,21 @@ function drawSettings() {
       (ty === 'area' ? `<textarea data-k="${k}"></textarea>` :
        `<input data-k="${k}" type="${ty}" step="${k === 'temp' ? 0.1 : 256}">`));
   };
+  // Die Funktionen der Leiste bei Textauswahl stehen in einer einzigen Karte:
+  // oben der Schalter, ob die Leiste ueberhaupt erscheint, darunter die sieben
+  // Funktionen. Vorher hatte jede Funktion ihre eigene Karte; die Zugehoerigkeit
+  // zur Leiste war in der langen Liste nicht zu sehen (wie bei den sichtbaren
+  // Arbeitsplaetzen, die auch eine Karte mit mehreren Pillen sind).
+  const BAR_SUB = ['edCtxShorten', 'edCtxLengthen', 'edCtxSummarize', 'edCtxProofread', 'edCtxSyn', 'edCtxStyle', 'edCtxTr'];
+  const barField = () => {
+    const off = S.edAI === false;
+    const anaus = k => chips(k, [['1', t('on')], ['0', t('off')]], true);
+    const head = `<div class="top"><b>${t('s_edCtx')}</b>${rst('edCtx')}</div>` + anaus('edCtx');
+    const rows = BAR_SUB.map(k => `<div class="subrow"><span>${esc(t(byKey[k][1]))}</span>${anaus(k)}</div>`).join('');
+    return `<div class="set set-bar${off ? ' dim' : ''}"${off ? ` title="${esc(t('edAIdim'))}"` : ''}>${head}<div class="barsub">${rows}</div></div>`;
+  };
   const byKey = Object.fromEntries(FIELDS.map(f => [f[0], f]));
-  $('#setBody').innerHTML = GROUPS.map(([h, ks]) => `<h3 class="sect">${t(h)}</h3>` + ks.map(k => field(byKey[k])).join('')).join('') +
+  $('#setBody').innerHTML = GROUPS.map(([h, ks]) => `<h3 class="sect">${t(h)}</h3>` + ks.map(k => typeof k === 'string' ? field(byKey[k]) : barField()).join('')).join('') +
     `<h3 class="sect">${t('nllbH')}</h3><div id="mtBox"></div><p class="muted" data-htk="1" data-t="${hotkeyKey()}"></p>`;
   $('#setBody').querySelectorAll('[data-k]').forEach(el => { const v = S[el.dataset.k]; el.value = el.dataset.bool ? (v ? '1' : '0') : v; });
   applyI18n();

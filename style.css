@@ -698,3 +698,11 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
   border:1px solid color-mix(in srgb,var(--text) 25%,transparent);
   box-shadow:inset 0 0 0 1px #ffffff66}
 .wsopt.swopt.on{outline:2px solid var(--accent-ink);outline-offset:1px}
+
+/* Leiste bei Textauswahl: eine Karte mit dem Schalter oben und den sieben
+   Funktionen darunter. Die Trennlinie trennt beides, die Zeilen bleiben
+   kompakt, damit die Karte nicht hoeher wird als zwei einzelne. */
+.set-bar .barsub{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.set-bar .subrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.set-bar .subrow>span{font-size:13.5px;color:var(--text)}
+.set-bar .subrow .wsc{flex:0 0 auto}
