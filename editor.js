@@ -3035,6 +3035,10 @@ function splitBlockAt(host, r) {
 // Absatzes). insertHTML wird bewusst nicht benutzt - Chromium schiebt eine
 // eingefuegte Tabelle sonst vor den Text, der in Word davor stand.
 function pasteBlocks(nodes) {
+  // Word legt zwischen die Bloecke reine Leerzeichen-Textknoten. Sie wuerden
+  // in der Seite als Textknoten zwischen den Bloecken landen (im HTML etwa
+  // "<p>…</p> <table…") und dort nur Leerraum erzeugen (Abschnitt 158).
+  nodes = nodes.filter(n => !(n.nodeType === 3 && !n.textContent.trim()));
   if (!nodes.length) return;
   const zelle = curCell();
   if (zelle) {
