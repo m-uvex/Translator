@@ -886,7 +886,7 @@ window.addEventListener('scroll', () => colPop.classList.add('hidden'), true);
 // 'imgIns' traegt "Bild einfuegen" in allen Sprachen.
 const TB = [
   ['btn','fNew','filenew', () => newDoc()], ['btn','fOpen','folder', () => $('#edFile').click()], ['btn','fSave','save', e => savePop(e.currentTarget)], ['sep'],
-  ['btn','undo','undo', () => cmd('undo')], ['btn','redo','redo', () => cmd('redo')], ['sep'], ['sel','font'], ['sel','size'], ['sel','heading'], ['sep'],
+  ['btn','undo','undo', () => edUndo()], ['btn','redo','redo', () => edRedoStep()], ['sep'], ['sel','font'], ['sel','size'], ['sel','heading'], ['sep'],
   ['tog','bold','bold','bold'], ['tog','italic','italic','italic'], ['tog','underline','underline','underline'], ['tog','strike','strike','strikeThrough'], ['btn','hl','marker', () => paint('mark')], ['btn','ink','textColor', () => paint('ink')], ['sep'],
   ['tog','ul','ul','insertUnorderedList'], ['tog','ol','ol','insertOrderedList'], ['btn','quote','quote', () => cmd('formatBlock', document.queryCommandValue('formatBlock') === 'blockquote' ? 'p' : 'blockquote')], ['sep'],
   ['tog','aL','alignL','justifyLeft'], ['tog','aC','alignC','justifyCenter'], ['tog','aR','alignR','justifyRight'], ['tog','aJ','alignJ','justifyFull'], ['sep'],
@@ -1058,6 +1058,7 @@ function applyDocEntry(e) {
   try { localStorage.setItem('edDocId', ED.docId || ''); } catch {}
   page.innerHTML = e.html || '<p><br></p>';
   initImages();
+  edReset();
   page.dispatchEvent(new Event('input'));
   page.scrollTop = 0;
 }
@@ -1299,40 +1300,126 @@ function selImg() {
   return imgSel;
 }
 
-// ---------- Rueckgaengig fuer Bild- und Tabellenbefehle ----------
-// Bilder (Drehen, Spiegeln, Groesse, Ausrichtung) und Tabellen (Einfuegen,
-// Zeilen, Spalten, Kopfzeile, Breiten) aendern nur das DOM; der
-// Rueckgaengig-Stapel des Browsers bekommt davon nichts mit. Deshalb merkt sich
-// der Editor jeden solchen Schritt selbst: Strg+Z nimmt ihn zurueck, solange
-// danach kein Text getippt wurde. Tippen leert den Stapel, damit Strg+Z dann
-// wieder ganz normal den Text trifft.
-const edHist = [];
-let edPulse = false;  // laeuft gerade ein eigenes input-Ereignis?
-let edHistOn = false; // war die letzte Aenderung ein eigener Schritt?
-const edRedo = [];    // zurueckgenommene Bildschritte, zuletzt oben
+// ---------- Ein Stapel fuer alles: Text, Bilder und Tabellen ----------
+// Text aendert der Browser in seinem eigenen Rueckgaengig-Stapel, Bilder und
+// Tabellen nur das DOM. Zwei Stapel lassen sich nicht in eine Reihenfolge
+// bringen: der Browser-Stapel ist von aussen weder lesbar noch sortierbar, und
+// ein Tabellenschritt, der Zellinhalt neu schreibt, wirft ihn weg. Deshalb
+// merkt sich der Editor den Zustand der Seite selbst - HTML plus Cursor - und
+// benutzt fuer Text, Bilder und Tabellen denselben Weg (Abschnitt 154).
+const edStates = [];     // Zustaende; der letzte ist der aktuelle Stand
+let edPos = 0;           // Index des aktuellen Zustands
+let edPulse = false;     // laeuft gerade ein eigenes input-Ereignis?
+let edGroupAt = 0;       // Zeitpunkt der letzten Textaenderung
+let edGroupBlock = null; // Block, in dem gerade getippt wird
+const ED_STEPS = 60;     // so viele Zustaende bleiben erhalten
+const ED_BYTES = 24e6;   // und hoechstens so viel HTML (Bilder als Data-URL)
 // Eigenes input-Ereignis: meldet die Aenderung zum Speichern, ohne dass der
-// Horchposten sie fuer eine Textaenderung haelt (der wuerde den Stapel leeren).
+// Horchposten sie fuer eine Textaenderung haelt.
 function ownInput() { edPulse = true; page.dispatchEvent(new Event('input')); }
-function edTouch(entry) {
-  // Bildschritte merken sich auch den Zustand danach: Strg+Umschalt+Z setzt
-  // ihn wieder. Ein neuer Schritt macht die alte Wiederhol-Kette ungueltig.
-  if (entry.kind === 'img' && !entry.deleted) entry.after = imgSnap(entry.wrap);
-  edRedo.length = 0;
-  edHist.push(entry);
-  if (edHist.length > 30) edHist.shift();
-  edHistOn = true;
+
+// Cursor als Pfad von #page aus (Indizes in childNodes). Nach einem
+// Neuschreiben des Inhalts sind das andere Knoten; der Pfad trifft dieselbe
+// Stelle wieder.
+function nodePath(n) {
+  const p = [];
+  while (n && n !== page) {
+    const par = n.parentNode;
+    if (!par) return null;
+    p.unshift([...par.childNodes].indexOf(n));
+    n = par;
+  }
+  return n === page ? p : null;
+}
+function nodeAt(p) {
+  let n = page;
+  for (const i of p || []) { n = n && n.childNodes[i]; if (!n) return null; }
+  return n;
+}
+function edSel() {
+  const s = getSelection();
+  if (!s || !s.rangeCount) return null;
+  const r = s.getRangeAt(0);
+  const a = nodePath(r.startContainer), b = nodePath(r.endContainer);
+  if (!a || !b) return null;
+  return { a, ao: r.startOffset, b, bo: r.endOffset };
+}
+function edSelLoad(sel) {
+  page.focus();
+  const s = getSelection();
+  if (!s) return;
+  const r = document.createRange();
+  const a = sel && nodeAt(sel.a), b = sel && nodeAt(sel.b);
+  if (a && b) {
+    const cl = (n, o) => Math.max(0, Math.min(o, n.nodeType === 3 ? n.data.length : n.childNodes.length));
+    try { r.setStart(a, cl(a, sel.ao)); r.setEnd(b, cl(b, sel.bo)); }
+    catch { r.selectNodeContents(page); r.collapse(false); }
+  } else { r.selectNodeContents(page); r.collapse(false); }
+  s.removeAllRanges(); s.addRange(r);
+}
+const edState = () => ({ html: page.innerHTML, sel: edSel() });
+// Ein neues Dokument beginnt mit leerem Stapel: Strg+Z fuehrt nicht in das
+// vorige Dokument zurueck.
+function edReset() {
+  edStates.length = 0;
+  edStates.push(edState());
+  edPos = 0;
+  edGroupBlock = null;
+}
+// Zustand ablegen und dabei die Kette abschneiden, die nach einer
+// zurueckgenommenen Aenderung noch vorne stand.
+function edCommit(st) {
+  edStates.length = edPos + 1;
+  edStates.push(st);
+  edPos = edStates.length - 1;
+  let bytes = 0;
+  for (let i = edStates.length - 1; i > 0; i--) {
+    bytes += edStates[i].html.length;
+    if (bytes > ED_BYTES) { edStates.splice(0, i); edPos -= i; break; }
+  }
+  while (edStates.length > ED_STEPS && edPos > 0) { edStates.shift(); edPos--; }
+}
+// Bild-, Tabellen- und Einfuegeschritte melden sich hier nach der Aenderung.
+function edTouch() {
+  if (!edStates.length) edReset();
+  const st = edState();
+  if (st.html !== edStates[edPos].html) { edGroupBlock = null; edCommit(st); }
   ownInput();
 }
-const imgAttrs = img => ({ w: img.dataset.w, r: img.dataset.r, rot: img.dataset.rot, fx: img.dataset.fx, fy: img.dataset.fy });
-function imgSnap(wrap) {
-  const img = wrap.querySelector('img');
-  return { wrap, al: wrap.dataset.al || '', attrs: img ? imgAttrs(img) : null, deleted: false };
+// Textaenderungen: Ein fortlaufendes Tippen im selben Block ist ein Schritt,
+// der obere Zustand wird dabei ersetzt statt ein zweiter angelegt.
+const TEXT_INPUT = /^(insertText|insertCompositionText|insertReplacementText|deleteContentBackward|deleteContentForward|deleteWordBackward|deleteWordForward|deleteSoftLineBackward|deleteSoftLineForward)$/;
+function edTextTouch(e) {
+  if (!edStates.length) edReset();
+  const st = edState();
+  if (st.html === edStates[edPos].html) return;
+  const sel = getSelection();
+  const block = topChild(sel && sel.anchorNode || null);
+  const join = TEXT_INPUT.test(e.inputType || '') && block && block === edGroupBlock
+    && edPos === edStates.length - 1 && performance.now() - edGroupAt < 900;
+  edGroupAt = performance.now();
+  if (join) edStates[edPos] = st;
+  else { edGroupBlock = block; edCommit(st); }
+}
+// Zustand anwenden: Inhalt neu schreiben, Bilder wieder verbinden, Cursor
+// zuruecksetzen. Die Rechtschreib-Ranges zeigen nach dem Neuschreiben auf alte
+// Knoten und werden deshalb verworfen.
+function edApply(st) {
+  clearImgSel();
+  page.innerHTML = st.html;
+  page.querySelectorAll('.edimg.sel').forEach(w => w.classList.remove('sel'));
+  initImages();
+  edSelLoad(st.sel);
+  edGroupBlock = null;
+  resetSpellRanges();
+  edPulse = true;
+  page.dispatchEvent(new Event('input'));
+  updTb(); tblBarSync();
 }
 function imgEdit(wrap, fn) {
-  const before = imgSnap(wrap);
   fn();
   if (wrap.querySelector('img')) applyImgBox(wrap);
-  edTouch(Object.assign({ kind: 'img' }, before));
+  edTouch();
 }
 // Cursor hinter (oder vor) die Stelle setzen, an der ein Bild stand.
 function caretNear(node, atEnd) {
@@ -1344,126 +1431,54 @@ function caretNear(node, atEnd) {
   const s = getSelection(); s.removeAllRanges(); s.addRange(r);
 }
 function imgDelete(wrap) {
-  const before = imgSnap(wrap);
-  before.deleted = true;
-  before.next = wrap.nextElementSibling;
-  before.prev = wrap.previousElementSibling;
+  const next = wrap.nextElementSibling, prev = wrap.previousElementSibling;
   if (imgSel === wrap) clearImgSel();
   wrap.remove();
-  edTouch(Object.assign({ kind: 'img' }, before, { deleted: true, next: before.next, prev: before.prev }));
   updTb();
-  const anker = before.next && before.next.parentNode === page ? before.next : before.prev;
-  if (anker) caretNear(anker, anker === before.prev);
-}
-function imgRestore(s) {
-  if (s.deleted) {
-    if (s.next && s.next.parentNode === page) s.next.before(s.wrap);
-    else if (s.prev && s.prev.parentNode === page) s.prev.after(s.wrap);
-    else page.append(s.wrap);
-  } else {
-    const img = s.wrap.querySelector('img');
-    if (img && s.attrs) for (const k in s.attrs) { if (s.attrs[k] == null) delete img.dataset[k]; else img.dataset[k] = s.attrs[k]; }
-    if (s.al) s.wrap.dataset.al = s.al; else s.wrap.removeAttribute('data-al');
-    applyImgBox(s.wrap);
-  }
-}
-// Tabellen: Inhalt vor dem Befehl merken - samt Spaltenbreiten (colgroup im
-// Inhalt, `table-layout` und Breite im style-Attribut) und den Nachbarn, damit
-// auch eine geloeschte Tabelle an ihren Platz zurueckfindet.
-function tblSnapBefore(table) {
-  return {
-    kind: 'tbl-inner', table, html: table.innerHTML, style: table.getAttribute('style'), cls: table.className,
-    prev: table.previousElementSibling, next: table.nextElementSibling
-  };
-}
-// Nach dem Befehl: Steht die Tabelle noch, genuegt der alte Inhalt; ist sie
-// verschwunden (letzte Zeile oder Spalte geloescht), kommt sie als Ganzes zurueck.
-function tblSnapDone(snap) {
-  if (!snap) return;
-  if (!page.contains(snap.table)) snap.kind = 'tbl-del';
-  edTouch(snap);
-}
-function tblRestoreNode(s) {
-  if (s.next && s.next.parentNode === page) s.next.before(s.table);
-  else if (s.prev && s.prev.parentNode === page) s.prev.after(s.table);
-  else page.append(s.table);
-  const c = s.table.rows[0] && s.table.rows[0].cells[0];
-  if (c) focusCell(c);
-}
-function tblRestoreInner(s) {
-  if (!page.contains(s.table)) { tblRestoreNode(s); return; }
-  s.table.innerHTML = s.html;
-  if (s.style == null) s.table.removeAttribute('style'); else s.table.setAttribute('style', s.style);
-  if (s.cls != null) s.table.className = s.cls;
-  const c = s.table.rows[0] && s.table.rows[0].cells[0];
-  if (c) focusCell(c);
-}
-// Einfuegen zuruecknehmen: Tabelle und der automatisch angelegte Absatz gehen
-// weg, ein ersetzter leerer Absatz kommt an seinen Platz zurueck.
-function tblUndoAdd(s) {
-  s.table.remove();
-  if (s.extra && s.extra.parentNode) s.extra.remove();
-  if (s.replaced) {
-    if (s.prev && s.prev.parentNode === page) s.prev.after(s.replaced);
-    else page.prepend(s.replaced);
-  }
-  const anker = s.prev && page.contains(s.prev) ? s.prev : page.firstElementChild;
-  if (anker) caretNear(anker, true);
+  const anker = next && next.parentNode === page ? next : prev;
+  if (anker) caretNear(anker, anker === prev);
+  edTouch();
 }
 function edUndo() {
-  const s = edHist.pop();
-  if (!s) return false;
-  // Nur Bildschritte mit gemerktem Zustand danach lassen sich wiederholen;
-  // ein geloeschtes Bild kommt zwar zurueck, das erneute Loeschen nicht.
-  if (s.kind === 'img' && s.after) edRedo.push(s);
-  if (s.kind === 'img') imgRestore(s);
-  else if (s.kind === 'paste') pasteUndo(s);
-  else if (s.kind === 'tbl-add') tblUndoAdd(s);
-  else if (s.kind === 'tbl-del') tblRestoreNode(s);
-  else if (s.kind === 'tbl-inner') tblRestoreInner(s);
-  edPulse = true;
-  page.dispatchEvent(new Event('input'));
-  edHistOn = edHist.length > 0;
-  updTb(); tblBarSync();
+  if (!edStates.length) edReset();
+  if (edPos <= 0) return false;
+  // Eine laufende KI-Operation sieht den Rueckgaengig-Schritt wie ein echtes
+  // Strg+Z und bricht ab, statt ihr Ergebnis auf den alten Stand zu setzen.
+  if (ED.busy) ED.cancelled = true;
+  edPos--;
+  edApply(edStates[edPos]);
   return true;
 }
-// Wiederholen: Der Eintrag traegt den Zustand nach seiner Aenderung (`after`);
-// Strg+Umschalt+Z legt ihn an und gibt ihn an den Rueckgaengig-Stapel zurueck,
-// damit Strg+Z ihn erneut zuruecknehmen kann. Text hat seinen eigenen Weg
-// (Browser-Stapel); ein Bildschritt im eigenen Stapel hat Vorrang.
+// Wiederholen: denselben Zustand einen Schritt vorwaerts anwenden, solange die
+// Kette nicht durch eine neue Aenderung abgeschnitten wurde.
 function edRedoStep() {
-  const s = edRedo.pop();
-  if (!s || !s.after || !page.contains(s.wrap)) return false;
-  edHist.push(s);
-  imgRestore(s.after);
-  edPulse = true;
-  page.dispatchEvent(new Event('input'));
-  edHistOn = true;
-  updTb(); tblBarSync();
+  if (!edStates.length) edReset();
+  if (edPos >= edStates.length - 1) return false;
+  edPos++;
+  edApply(edStates[edPos]);
   return true;
 }
+// Tabellenbefehle sind ein Schritt wie jeder andere; der Zustand vor dem
+// Befehl steht schon oben im Stapel. Die beiden Namen bleiben, weil die
+// Aufrufer sie paarweise benutzen (vorher merken, nachher ablegen).
+function tblSnapBefore() { return true; }
+function tblSnapDone(snap) { if (!snap) return; edTouch(); }
 // Steht der Fokus in einem Eingabefeld oder einem anderen editierbaren
 // Bereich, gehoeren die Tasten dort hin und nicht zum Bild.
 const otherFieldFocused = () => {
   const a = document.activeElement;
   return !!(a && a !== page && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable));
 };
-// Strg+Z greift nur, wenn die letzte Aenderung ein Bild- oder Tabellenschritt
-// war; sonst bleibt der normale Text-Rueckgaengig des Browsers zustaendig.
-// Strg+Umschalt+Z holt den zuletzt zurueckgenommenen Bildschritt zurueck.
+// Strg+Z und Strg+Umschalt+Z gehoeren im Editor dem eigenen Stapel; der
+// Browser-Stapel wird nicht mehr benutzt, damit beide nicht auseinanderlaufen.
+// In Eingabefeldern und ausserhalb des Editors bleiben die Tasten dort.
 document.addEventListener('keydown', e => {
   if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
   const k = (e.key || '').toLowerCase();
   if (k !== 'z') return;
-  if (e.shiftKey) {
-    if (!edRedo.length || otherFieldFocused()) return;
-    e.preventDefault(); e.stopPropagation();
-    edRedoStep();
-    return;
-  }
-  if (!edHistOn || !edHist.length || otherFieldFocused()) return;
+  if (otherFieldFocused() || $('#vE').classList.contains('hidden')) return;
   e.preventDefault(); e.stopPropagation();
-  edUndo();
+  if (e.shiftKey) edRedoStep(); else edUndo();
 }, true);
 // Backspace oder Entfernen loescht das ausgewaehlte Bild - wie in Word - und
 // laesst sich mit Strg+Z zurueckholen.
@@ -1555,7 +1570,6 @@ function bindImg(wrap) {
       const img = wrap.querySelector('img'); if (!img) return;
       const rot = (((+img.dataset.rot || 0) % 360) + 360) % 360, q = rot === 90 || rot === 270;
       const startW = +img.dataset.w || 240, x0 = ev.clientX, y0 = ev.clientY;
-      const before = imgSnap(wrap);
       const sx = h.dataset.h.includes('e') ? 1 : -1, sy = h.dataset.h.includes('s') ? 1 : -1;
       let w = startW;
       trackPointer(e2 => {
@@ -1568,7 +1582,7 @@ function bindImg(wrap) {
       }, cancelled => {
         // Ein Klick ohne Ziehen aendert nichts und soll das Dokument nicht als
         // geaendert melden.
-        if (!cancelled && w !== startW) edTouch(Object.assign({ kind: 'img' }, before));
+        if (!cancelled && w !== startW) edTouch();
       });
     });
   });
@@ -1630,13 +1644,13 @@ function bindImg(wrap) {
       moving = false;
       wrap.classList.remove('drag');
       if (cancelled || !to) return;
-      if (to.cell) { imgInCell(wrap, to.cell); page.dispatchEvent(new Event('input')); return; }
+      if (to.cell) { imgInCell(wrap, to.cell); edTouch(); return; }
       if (to.before) to.node.before(wrap); else to.node.after(wrap);
       if (to.al && (wrap.dataset.al || 'center') !== to.al) {
         if (to.al === 'center') wrap.removeAttribute('data-al'); else wrap.dataset.al = to.al;
         applyImgBox(wrap);
       }
-      page.dispatchEvent(new Event('input'));
+      edTouch();
     });
   });
 }
@@ -1663,7 +1677,7 @@ function insertEdImage(wrap) {
   const cell = curCell();
   if (cell) {
     imgInCell(wrap, cell);
-    page.dispatchEvent(new Event('input'));
+    edTouch();
     selectImg(wrap);
     return;
   }
@@ -1674,7 +1688,7 @@ function insertEdImage(wrap) {
   wrap.after(p);
   const r = document.createRange(); r.setStart(p, 0); r.collapse(true);
   if (s) { s.removeAllRanges(); s.addRange(r); }
-  page.dispatchEvent(new Event('input'));
+  edTouch();
   selectImg(wrap);
   try { wrap.scrollIntoView({ block:'nearest' }); } catch {}
 }
@@ -2801,6 +2815,9 @@ page.innerHTML = localStorage.getItem('edDoc') || '<p><br></p>';
 ED.docId = localStorage.getItem('edDocId') || null;
 ED.docs = [{ key:'s0', id:ED.docId, name:docName(), html:page.innerHTML, savedHtml:null }];
 ED.docKey = 's0';
+// Der geladene Stand ist der Anfang des Stapels; ohne diesen Punkt gaebe es
+// fuer die erste Tipp-Einheit keinen Zustand davor (Abschnitt 154).
+edReset();
 if (ED.docId && window.api?.libRead) {
   window.api.libRead(ED.docId).then(libDoc => {
     if (libDoc && cleanHtml(libDoc.html) === cleanHtml(page.innerHTML)) {
@@ -2868,10 +2885,11 @@ function handleMarkdownTrigger() {
 }
 
 page.addEventListener('input', e => {
-  // Eigene Bild- und Tabellenschritte halten den Rueckgaengig-Stapel am Leben;
-  // jede Textaenderung leert ihn, damit Strg+Z wieder den Text trifft.
+  // Eigene Aenderungen (Bilder, Tabellen, Rueckgaengig) liegen schon im Stapel;
+  // jede Textaenderung wird hier zu einem Schritt. Synthetische input-Ereignisse
+  // ohne inputType stammen aus dem Editor selbst und zaehlen nicht.
   if (edPulse) edPulse = false;
-  else if (e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') { edHist.length = 0; edHistOn = false; edRedo.length = 0; }
+  else if (e.inputType && e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') edTextTouch(e);
   if (S.edMarkdown && (e.data === ' ' || e.inputType === 'insertText')) handleMarkdownTrigger();
   updWords(); scheduleScan(); clearTimeout(saveTimer);
   saveTimer = setTimeout(() => { try { localStorage.setItem('edDoc', page.innerHTML); } catch {} }, 800);
@@ -2977,7 +2995,7 @@ function pasteBlocks(nodes) {
     r.insertNode(frag);
     const last = added[added.length - 1];
     if (last) caretAfter(last.nodeType === 1 ? last : last.parentNode);
-    edTouch({ kind: 'paste', added, extra: [], replaced: null, prev: null, next: null });
+    edTouch();
     return;
   }
   const s = getSelection();
@@ -3003,24 +3021,10 @@ function pasteBlocks(nodes) {
   });
   const lastBlock = extra.length ? extra[extra.length - 1] : added[added.length - 1];
   caretAfter(lastBlock);
-  // Ein eigener Rueckgaengig-Schritt: die eingefuegten Bloecke weg, ein
-  // ersetzter leerer Absatz zurueck. Die Nachbarn merken sich die Stelle,
-  // damit kein Marker im Dokument stehen bleibt.
-  const prev = added[0].previousSibling;
-  const next = lastBlock.nextSibling;
+  // Ein eigener Rueckgaengig-Schritt: der Zustand vor dem Einfuegen steht oben
+  // im Stapel. Die Marke fuer die Einfuegestelle raeumt sich selbst weg.
   stop.remove();
-  edTouch({ kind: 'paste', added, extra, replaced: leer ? host : null, prev, next });
-}
-function pasteUndo(s) {
-  s.added.forEach(n => n.remove());
-  (s.extra || []).forEach(n => n.remove());
-  if (s.replaced) {
-    if (s.next && s.next.parentNode) s.next.before(s.replaced);
-    else if (s.prev && s.prev.parentNode) s.prev.after(s.replaced);
-    else page.append(s.replaced);
-  }
-  const anker = s.replaced || (s.prev && s.prev.parentNode ? s.prev : page.lastElementChild);
-  if (anker) caretAfter(anker);
+  edTouch();
 }
 page.addEventListener('paste', e => {
   const dt = e.clipboardData;
