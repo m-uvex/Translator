@@ -1409,6 +1409,7 @@ function edUndo() {
   const s = edHist.pop();
   if (!s) return false;
   if (s.kind === 'img') imgRestore(s);
+  else if (s.kind === 'paste') pasteUndo(s);
   else if (s.kind === 'tbl-add') tblUndoAdd(s);
   else if (s.kind === 'tbl-del') tblRestoreNode(s);
   else if (s.kind === 'tbl-inner') tblRestoreInner(s);
@@ -2817,13 +2818,157 @@ page.addEventListener('input', e => {
 page.addEventListener('beforeinput', e => {
   if (ED.busy && !ED.writing && e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') e.preventDefault();
 });
-// Ein Bild in der Zwischenablage hat Vorrang vor Text: Strg+V fuegt es ein,
-// alles andere geht wie bisher als reiner Text hinein.
+// ---------- Einfuegen aus der Zwischenablage ----------
+// Ein Bild hat Vorrang. Eine aus Word kopierte Tabelle kommt nur als text/html
+// an - als reiner Text blieben nur die Zellinhalte untereinander uebrig. Enthaelt
+// die Zwischenablage eine Tabelle, wird sie deshalb uebernommen: ohne
+// Office-Ballast, als echte Tabelle der Seite.
+const PASTE_KEEP = { b:'strong', strong:'strong', i:'em', em:'em', u:'u', s:'s', strike:'s', del:'s', ins:'u',
+  ul:'ul', ol:'ol', li:'li', h1:'h1', h2:'h2', h3:'h3', h4:'h4', blockquote:'blockquote', a:'a',
+  code:'code', pre:'pre', p:'p', br:'br', hr:'hr', sub:'sub', sup:'sup', caption:'caption' };
+// div und span werden zu ihrem Inhalt verflacht: Word packt alles in
+// div.WordSection1, und ein Rahmen-Div wuerde die Tabelle in einen Block sperren.
+const PASTE_SKIP = /^(script|style|meta|link|title|head|iframe|object|embed|xml|o:p|v:.*|w:.*)$/i;
+// Kopierten Inhalt in saubere Knoten umsetzen: erlaubte Tags bleiben, Format-
+// und Office-Ballast faellt weg, Tabellen werden zu echten Tabellen.
+function pasteCopy(node, out) {
+  node.childNodes.forEach(n => {
+    if (n.nodeType === 3) {
+      const txt = n.data.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ');
+      if (txt.trim() || txt === ' ') out.append(document.createTextNode(txt));
+      return;
+    }
+    if (n.nodeType !== 1) return;
+    const tag = n.tagName.toLowerCase();
+    if (PASTE_SKIP.test(tag)) return;
+    if (tag === 'table') { const t = pasteTable(n); if (t) out.append(t); return; }
+    if (tag === 'img') {
+      const src = n.getAttribute('src') || '';
+      if (/^data:image\//i.test(src)) { const im = document.createElement('img'); im.src = src; im.alt = ''; out.append(im); }
+      return;
+    }
+    const keep = PASTE_KEEP[tag];
+    if (!keep) { pasteCopy(n, out); return; }
+    // Leere Fuellabsaetze aus Word nicht uebernehmen.
+    if (keep === 'p' && !n.textContent.trim() && !n.querySelector('img,table')) return;
+    const el = document.createElement(keep);
+    if (keep === 'a') { const href = n.getAttribute('href') || ''; if (/^(https?:|mailto:)/i.test(href)) el.setAttribute('href', href); }
+    pasteCopy(n, el);
+    out.append(el);
+  });
+}
+// Word-Tabelle uebernehmen: Zeilen und Zellen ohne Breiten, Rahmen und mso-*
+// Angaben - Aussehen kommt aus dem Stylesheet der Seite.
+function pasteTable(src) {
+  const table = document.createElement('table');
+  table.className = 'edtbl';
+  const tbody = document.createElement('tbody');
+  [...src.querySelectorAll('tr')].forEach(tr => {
+    if (tr.closest('table') !== src) return; // Zeilen verschachtelter Tabellen
+    const row = document.createElement('tr');
+    [...tr.children].forEach(c => {
+      if (!/^(td|th)$/i.test(c.tagName)) return;
+      const cell = document.createElement(c.tagName.toLowerCase() === 'th' ? 'th' : 'td');
+      pasteCopy(c, cell);
+      if (!cell.firstChild) cell.append(document.createElement('br'));
+      row.append(cell);
+    });
+    if (row.cells.length) tbody.append(row);
+  });
+  if (!tbody.rows.length) return null;
+  table.append(tbody);
+  return table;
+}
+// Cursor hinter einen Knoten setzen (ans Ende seines letzten Absatzes).
+function caretAfter(n) {
+  if (!n) return;
+  page.focus();
+  const r = document.createRange();
+  r.selectNodeContents(n);
+  r.collapse(false);
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+}
+// Kopierte Bloecke als Bloecke der Seite einsetzen: in der Reihenfolge der
+// Zwischenablage, hinter dem Block des Cursors (bzw. anstelle eines leeren
+// Absatzes). insertHTML wird bewusst nicht benutzt - Chromium schiebt eine
+// eingefuegte Tabelle sonst vor den Text, der in Word davor stand.
+function pasteBlocks(nodes) {
+  if (!nodes.length) return;
+  const zelle = curCell();
+  if (zelle) {
+    const s = getSelection();
+    if (!s.rangeCount) return;
+    const r = s.getRangeAt(0);
+    r.deleteContents();
+    const frag = document.createDocumentFragment();
+    nodes.forEach(n => frag.append(n));
+    const added = [...frag.childNodes];
+    r.insertNode(frag);
+    const last = added[added.length - 1];
+    if (last) caretAfter(last.nodeType === 1 ? last : last.parentNode);
+    edTouch({ kind: 'paste', added, extra: [], replaced: null, prev: null, next: null });
+    return;
+  }
+  const s = getSelection();
+  const host = topChild(s && s.rangeCount ? s.anchorNode : null);
+  const leer = host && /^(P|DIV)$/.test(host.tagName) && !host.textContent.trim() && !host.querySelector('img,table,.edimg');
+  // Ein Kommentar merkt sich die Einfuegestelle, damit sie auch dann stimmt,
+  // wenn ein leerer Absatz ersetzt wird.
+  const stop = document.createComment('');
+  if (leer) host.replaceWith(stop);
+  else if (host) host.after(stop);
+  else page.append(stop);
+  const added = [];
+  nodes.forEach(n => { stop.before(n); added.push(n); });
+  // Unter einer eingefuegten Tabelle braucht der Cursor einen Absatz; steht
+  // schon einer dahinter, bleibt er unangetastet.
+  const extra = [];
+  added.filter(n => n.tagName === 'TABLE').forEach(t => {
+    const next = t.nextElementSibling;
+    if (!next || next.tagName === 'TABLE') {
+      const p = document.createElement('p'); p.innerHTML = '<br>';
+      t.after(p); extra.push(p);
+    }
+  });
+  const lastBlock = extra.length ? extra[extra.length - 1] : added[added.length - 1];
+  caretAfter(lastBlock);
+  // Ein eigener Rueckgaengig-Schritt: die eingefuegten Bloecke weg, ein
+  // ersetzter leerer Absatz zurueck. Die Nachbarn merken sich die Stelle,
+  // damit kein Marker im Dokument stehen bleibt.
+  const prev = added[0].previousSibling;
+  const next = lastBlock.nextSibling;
+  stop.remove();
+  edTouch({ kind: 'paste', added, extra, replaced: leer ? host : null, prev, next });
+}
+function pasteUndo(s) {
+  s.added.forEach(n => n.remove());
+  (s.extra || []).forEach(n => n.remove());
+  if (s.replaced) {
+    if (s.next && s.next.parentNode) s.next.before(s.replaced);
+    else if (s.prev && s.prev.parentNode) s.prev.after(s.replaced);
+    else page.append(s.replaced);
+  }
+  const anker = s.replaced || (s.prev && s.prev.parentNode ? s.prev : page.lastElementChild);
+  if (anker) caretAfter(anker);
+}
 page.addEventListener('paste', e => {
   const dt = e.clipboardData;
   const files = dt ? [...dt.files].filter(f => /^image\//.test(f.type)) : [];
   if (files.length) { e.preventDefault(); addImageFiles(files); return; }
-  e.preventDefault(); document.execCommand('insertText', false, dt.getData('text/plain'));
+  const html = dt ? dt.getData('text/html') : '';
+  const text = dt ? dt.getData('text/plain') : '';
+  // Tabelle aus Word: nur als HTML vorhanden - als reiner Text blieben nur die
+  // Zellinhalte untereinander uebrig.
+  if (html && /<table[\s>]/i.test(html)) {
+    const frag = document.createDocumentFragment();
+    pasteCopy(new DOMParser().parseFromString(html, 'text/html').body, frag);
+    if (frag.querySelector('table')) {
+      e.preventDefault();
+      pasteBlocks([...frag.childNodes]);
+      return;
+    }
+  }
+  e.preventDefault(); document.execCommand('insertText', false, text);
 });
 // Drag und Drop: Das Bild landet dort, wo der Zeiger loslaesst.
 page.addEventListener('dragover', e => {
