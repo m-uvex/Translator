@@ -1548,11 +1548,23 @@ function bindImg(wrap) {
     const move = e2 => {
       if (!moving && Math.hypot(e2.clientX - x0, e2.clientY - y0) < 5) return;
       if (!moving) { moving = true; wrap.classList.add('drag'); }
+      // Ueber einer Tabellenzelle wird die ganze Zelle markiert und das Bild
+      // spaeter in ihr abgelegt.
+      const zelle = cellAtPoint(e2.clientX, e2.clientY);
+      if (zelle) {
+        drop = { cell: zelle };
+        if (!mark) { mark = document.createElement('div'); mark.className = 'dropmark'; document.body.append(mark); }
+        const c = zelle.getBoundingClientRect();
+        mark.className = 'dropmark cell';
+        Object.assign(mark.style, { left: c.left + 'px', top: c.top + 'px', width: c.width + 'px', height: c.height + 'px' });
+        return;
+      }
       const to = blockUnder(e2.clientX, e2.clientY, wrap);
       // Ohne Ziel (neben der Seite, ueber einem Bild) verschwindet die Marke;
       // ein Loslassen setzt dann nichts um.
       if (!to.node) { drop = null; unmark(); return; }
       drop = to;
+      if (mark) { mark.className = 'dropmark'; mark.style.height = ''; }
       // Die Marke liegt ueber der Seite, nicht in ihr: so kann sie weder
       // gespeichert noch gedruckt werden und verschiebt kein Layout.
       if (!mark) { mark = document.createElement('div'); mark.className = 'dropmark'; document.body.append(mark); }
@@ -1569,6 +1581,7 @@ function bindImg(wrap) {
       moving = false;
       wrap.classList.remove('drag');
       if (cancelled || !to) return;
+      if (to.cell) { imgInCell(wrap, to.cell); page.dispatchEvent(new Event('input')); return; }
       if (to.before) to.node.before(wrap); else to.node.after(wrap);
       page.dispatchEvent(new Event('input'));
     });
@@ -1593,6 +1606,14 @@ function mkEdImage(spec) {
 // Das Bild kommt als eigener Block an die Stelle des Cursors; danach bleibt ein
 // leerer Absatz stehen, sonst kann der Cursor nicht unter das Bild.
 function insertEdImage(wrap) {
+  // Steht der Cursor in einer Tabellenzelle, gehoert das Bild in die Zelle.
+  const cell = curCell();
+  if (cell) {
+    imgInCell(wrap, cell);
+    page.dispatchEvent(new Event('input'));
+    selectImg(wrap);
+    return;
+  }
   const s = getSelection();
   const host = topChild(s && s.rangeCount ? s.anchorNode : null);
   if (host) host.after(wrap); else page.append(wrap);
@@ -1632,7 +1653,7 @@ const tblIn = node => {
   return null;
 };
 // Zelle, in der der Cursor steht - oder null.
-const curCell = () => {
+function curCell() {
   const s = getSelection();
   if (!s || !s.rangeCount) return null;
   const tb = tblIn(s.anchorNode);
@@ -1641,7 +1662,7 @@ const curCell = () => {
   while (n && n.nodeType !== 1) n = n.parentNode;
   while (n && n !== tb && !/^(TD|TH)$/.test(n.tagName)) n = n.parentNode;
   return n && n !== tb ? n : null;
-};
+}
 const cellInfo = cell => {
   const tr = cell.parentNode, table = tr.closest('table');
   return { table, tr, row: [...table.rows].indexOf(tr), col: [...tr.cells].indexOf(cell) };
@@ -1660,6 +1681,32 @@ function focusCell(cell, all) {
   try { cell.scrollIntoView({ block: 'nearest' }); } catch {}
 }
 // Tabelle mit r Zeilen und c Spalten hinter dem Block des Cursors einfuegen.
+// Ein Bild in eine Zelle legen: einen reinen Platzhalter-Bruch vorher raeumen,
+// damit keine leere Zeile ueber dem Bild steht, und ein zu breites Bild auf die
+// Zellenbreite verkleinern - sonst waechst die Tabelle ueber die Seite hinaus.
+function imgInCell(wrap, cell) {
+  const img = wrap.querySelector('img');
+  if (img) {
+    const cs = getComputedStyle(cell);
+    const verfuegbar = Math.floor(cell.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight));
+    if (verfuegbar > 0 && (+img.dataset.w || 0) > verfuegbar) {
+      img.dataset.w = String(Math.max(48, verfuegbar));
+      applyImgBox(wrap);
+    }
+  }
+  if (!cell.textContent.trim() && !cell.querySelector('img, table, .edimg')) cell.innerHTML = '';
+  cell.append(wrap);
+  try { wrap.scrollIntoView({ block: 'nearest' }); } catch {}
+  return wrap;
+}
+// Zelle unter dem Zeiger (fuer das Ablegen von Bildern).
+function cellAtPoint(x, y) {
+  const el = document.elementFromPoint(x, y);
+  const cell = el && el.closest ? el.closest('td,th') : null;
+  if (!cell || !page.contains(cell)) return null;
+  return tblIn(cell) ? cell : null;
+}
+
 function insertTable(rows = 3, cols = 3) {
   const table = document.createElement('table');
   table.className = 'edtbl';
