@@ -3045,11 +3045,36 @@ page.addEventListener('paste', e => {
   }
   e.preventDefault(); document.execCommand('insertText', false, text);
 });
-// Drag und Drop: Das Bild landet dort, wo der Zeiger loslaesst.
-page.addEventListener('dragover', e => {
-  if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }
-});
+// Marke fuer eine von aussen gezogene Datei: ueber einer Tabellenzelle zeigt
+// sie dieselbe Zellenflaeche wie beim Ziehen eines vorhandenen Bildes
+// (`.dropmark.cell`). Ausserhalb der Tabelle bleibt sie weg - dorthin legt der
+// Drop das Bild als Block ab, und eine Zelle gaebe es dort nicht zu markieren.
+let fileMark = null;
+function fileMarkShow(cell) {
+  if (!fileMark) { fileMark = document.createElement('div'); document.body.append(fileMark); }
+  const c = cell.getBoundingClientRect();
+  fileMark.className = 'dropmark cell';
+  Object.assign(fileMark.style, { left: c.left + 'px', top: c.top + 'px', width: c.width + 'px', height: c.height + 'px' });
+}
+function fileMarkOff() { if (fileMark) { fileMark.remove(); fileMark = null; } }
+// Drag und Drop: Das Bild landet dort, wo der Zeiger loslaesst. `dragenter`
+// und `dragover` teilen sich denselben Horchposten, damit die Marke schon beim
+// Betreten einer Zelle steht und nicht erst bei der naechsten Bewegung.
+const fileDragOver = e => {
+  if (!(e.dataTransfer && [...e.dataTransfer.types].includes('Files'))) return;
+  e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
+  const cell = cellAtPoint(e.clientX, e.clientY);
+  if (cell) fileMarkShow(cell); else fileMarkOff();
+};
+page.addEventListener('dragenter', fileDragOver);
+page.addEventListener('dragover', fileDragOver);
+// Nur beim Verlassen der Seite geht die Marke weg; ein Wechsel zwischen
+// Kindern der Seite ist kein Verlassen. Ueber Leisten und Seitenleisten zeigt
+// der fortlaufende dragover, dass der Zug ausserhalb der Seite steht.
+page.addEventListener('dragleave', e => { if (!e.relatedTarget || !page.contains(e.relatedTarget)) fileMarkOff(); });
+document.addEventListener('dragover', e => { if (e.target && e.target.nodeType === 1 && !page.contains(e.target)) fileMarkOff(); }, true);
 page.addEventListener('drop', e => {
+  fileMarkOff();
   const files = [...((e.dataTransfer && e.dataTransfer.files) || [])].filter(f => /^image\//.test(f.type));
   if (!files.length) return;
   e.preventDefault();
