@@ -1510,6 +1510,16 @@ function blockUnder(x, y, skip) {
   return { node, before: y < b.top + b.height / 2, rect: b };
 }
 
+// Ausrichtung aus der Zeigerposition: das linke Drittel des Zielblocks richtet
+// linksbuendig aus, das rechte rechtsbuendig, dazwischen mittig. So landet ein
+// gezogenes Bild dort, wo es losgelassen wurde, statt immer mittig zu stehen.
+function alignAt(x, rect) {
+  const d = rect.width / 3;
+  if (x < rect.left + d) return 'left';
+  if (x > rect.right - d) return 'right';
+  return 'center';
+}
+
 // Zeiger bis zum Loslassen verfolgen. Am Dokument statt am Element: pointer
 // capture greift hier nicht zuverlaessig, dann kaemen die Bewegungen ueber
 // anderen Elementen nicht mehr an und der Zug bliebe haengen. `end` bekommt
@@ -1595,14 +1605,21 @@ function bindImg(wrap) {
       // Ohne Ziel (neben der Seite, ueber einem Bild) verschwindet die Marke;
       // ein Loslassen setzt dann nichts um.
       if (!to.node) { drop = null; unmark(); return; }
+      // Die waagerechte Lage kommt aus der Zeigerposition, nicht mehr allein
+      // aus der bisherigen Ausrichtung des Bildes.
+      to.al = alignAt(e2.clientX, to.rect);
       drop = to;
       if (mark) { mark.className = 'dropmark'; mark.style.height = ''; }
       // Die Marke liegt ueber der Seite, nicht in ihr: so kann sie weder
       // gespeichert noch gedruckt werden und verschiebt kein Layout.
       if (!mark) { mark = document.createElement('div'); mark.className = 'dropmark'; document.body.append(mark); }
-      const b = to.rect;
+      // Die Marke zeigt nur das Drittel, in dem das Bild andocken wird: links,
+      // mitte oder rechts. So ist vor dem Loslassen sichtbar, welche
+      // Ausrichtung gilt.
+      const b = to.rect, third = b.width / 3;
+      const mx = to.al === 'left' ? b.left : to.al === 'right' ? b.right - third : b.left + third;
       Object.assign(mark.style, {
-        left: b.left + 'px', width: b.width + 'px',
+        left: mx + 'px', width: third + 'px',
         top: (to.before ? b.top - 2 : b.bottom) + 'px'
       });
     };
@@ -1615,6 +1632,10 @@ function bindImg(wrap) {
       if (cancelled || !to) return;
       if (to.cell) { imgInCell(wrap, to.cell); page.dispatchEvent(new Event('input')); return; }
       if (to.before) to.node.before(wrap); else to.node.after(wrap);
+      if (to.al && (wrap.dataset.al || 'center') !== to.al) {
+        if (to.al === 'center') wrap.removeAttribute('data-al'); else wrap.dataset.al = to.al;
+        applyImgBox(wrap);
+      }
       page.dispatchEvent(new Event('input'));
     });
   });
