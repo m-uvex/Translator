@@ -2963,6 +2963,56 @@ const PASTE_SKIP = /^(script|style|meta|link|title|head|iframe|object|embed|xml|
 // traegt: Groesse, Text- und Hintergrundfarbe sowie die Ausrichtung (Abschnitt
 // 159). Alles andere (Zeilenhoehe, Einzuege, Schriftschnitte in mso-Form) faellt
 // weg, damit kein Office-Ballast in der Seite landet.
+//
+// Oft stehen diese Angaben gar nicht am Element, sondern nur im mitkopierten
+// <style>-Block, etwa `p.MsoNormal { font-size:19pt; color:#C00000 }`. Solche
+// Regeln werden ausgelesen und wie Inline-Stile behandelt; der <style>-Block
+// selbst und die Office-Klassennamen landen nie in der Seite (Abschnitt 165).
+// Gelesen wird nur, was `pasteStyle` ohnehin uebernimmt.
+let PASTE_CSS = null;
+const PASTE_PROPS = { 'font-size':'fontSize', color:'color', 'background-color':'backgroundColor', background:'backgroundColor', 'text-align':'textAlign' };
+function pasteCssGather(doc) {
+  const rules = [];
+  doc.querySelectorAll('style').forEach(s => {
+    // Word kommentiert den Block aus und schreibt @page-Regeln hinein; beides
+    // interessiert hier nicht, die Angaben stehen in normalen Regeln.
+    const css = s.textContent.replace(/<!--|-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    const re = /([^{}]+)\{([^{}]*)\}/g;
+    let m;
+    while ((m = re.exec(css))) {
+      const decl = {};
+      m[2].split(';').forEach(part => {
+        const i = part.indexOf(':');
+        if (i < 0) return;
+        const prop = PASTE_PROPS[part.slice(0, i).trim().toLowerCase()];
+        if (prop) decl[prop] = part.slice(i + 1).trim();
+      });
+      if (!Object.keys(decl).length) continue;
+      m[1].split(',').forEach(sel => { const t = sel.trim(); if (t) rules.push({ sel: t, decl }); });
+    }
+  });
+  return rules.length ? rules : null;
+}
+// Nur einfache Waehler zaehlen: `p.MsoNormal`, `.MsoNormal`, `p`, `*`. Alles mit
+// Nachfahren, IDs, Attributen oder Pseudoklassen trifft die kopierte Struktur
+// nicht; `a:link` verliert seine Pseudoklasse und gilt dann fuer `a`. Fuer
+// Schriftangaben benutzt Word nur diese einfachen Formen.
+function pasteSelHit(sel, el) {
+  const s = sel.replace(/::?[a-z-]+(?:\([^)]*\))?/gi, '').trim().toLowerCase();
+  if (!s || s[0] === '@' || /[\s>+~[\]{}#]/.test(s)) return false;
+  const m = /^([a-z][a-z0-9]*|\*)?((?:\.[\w-]+)*)$/.exec(s);
+  if (!m) return false;
+  const tag = m[1] || '', cls = (m[2] || '').split('.').filter(Boolean);
+  if (tag && tag !== '*' && tag !== el.tagName.toLowerCase()) return false;
+  if (!cls.length) return !!tag;
+  const own = [...el.classList].map(c => c.toLowerCase());
+  return cls.every(c => own.includes(c));
+}
+function pasteCssOf(el) {
+  const d = {};
+  if (PASTE_CSS) PASTE_CSS.forEach(r => { if (pasteSelHit(r.sel, el)) Object.assign(d, r.decl); });
+  return d;
+}
 const PT_PX = 96 / 72;
 function pastePx(v) {
   const m = /^\s*(-?[\d.]+)\s*(pt|px|em|rem|%)\s*$/i.exec(v || '');
@@ -2982,15 +3032,16 @@ function pasteColor(v) {
 }
 const PASTE_ALIGN = /^(left|center|right|justify|start|end)$/i;
 function pasteStyle(el) {
-  const st = el.style || {};
+  // Inline-Angaben gewinnen gegen die Regeln aus dem <style>-Block.
+  const st = el.style || {}, rule = pasteCssOf(el);
   const out = [];
-  const size = pastePx(st.fontSize || '');
+  const size = pastePx(st.fontSize || rule.fontSize || '');
   if (size) out.push('font-size:' + size);
-  const fg = pasteColor(st.color) || (el.tagName === 'FONT' ? pasteColor(el.getAttribute('color')) : '');
+  const fg = pasteColor(st.color) || pasteColor(rule.color) || (el.tagName === 'FONT' ? pasteColor(el.getAttribute('color')) : '');
   if (fg) out.push('color:' + fg);
-  const bg = pasteColor(st.backgroundColor) || pasteColor(st.background);
+  const bg = pasteColor(st.backgroundColor) || pasteColor(st.background) || pasteColor(rule.backgroundColor);
   if (bg) out.push('background-color:' + bg);
-  const al = (st.textAlign || '').toLowerCase();
+  const al = (st.textAlign || rule.textAlign || '').toLowerCase();
   if (PASTE_ALIGN.test(al)) out.push('text-align:' + (al === 'start' ? 'left' : al === 'end' ? 'right' : al));
   return out.join(';');
 }
@@ -3183,8 +3234,12 @@ page.addEventListener('paste', e => {
   // Tabelle aus Word: nur als HTML vorhanden - als reiner Text blieben nur die
   // Zellinhalte untereinander uebrig.
   if (html && /<table[\s>]/i.test(html)) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
     const frag = document.createDocumentFragment();
-    pasteCopy(new DOMParser().parseFromString(html, 'text/html').body, frag);
+    // Schriftangaben aus dem mitkopierten <style>-Block gelten fuer diesen
+    // einen Einfuegevorgang (Abschnitt 165).
+    PASTE_CSS = pasteCssGather(doc);
+    try { pasteCopy(doc.body, frag); } finally { PASTE_CSS = null; }
     if (frag.querySelector('table')) {
       e.preventDefault();
       pasteBlocks([...frag.childNodes]);
