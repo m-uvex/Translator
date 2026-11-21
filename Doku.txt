@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 21. November 2026, App-Version 1.15.124 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 21. November 2026, App-Version 1.15.125 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2057,3 +2057,20 @@ Tabellenbefehle aendern das DOM direkt; der Rueckgaengig-Stapel des Browsers bek
 **Geprueft im laufenden Fenster.** Die Zwischenablage wurde mit einer Word-typischen Tabelle gefuellt (CF_HTML per PowerShell: `div.WordSection1`, `table.MsoTableGrid` mit `mso-*`-Stilen, `border=1 cellspacing=0`, Absaetze "Vor der Tabelle" / "Nach der Tabelle", `o:p`-Reste) und mit echter Tastatur (Strg+V) in die App eingefuegt (`.freebuff/paste-lab.mjs`). Ergebnisse: Bloecke `P:Vor der Tabelle | TABLE | P:Nach der Tabelle` (Reihenfolge wie in Word), Tabelle 3 x 2 mit Zellen `Obst|Anzahl / Apfel|3 / Birne|5`, `class="edtbl"`, 0 Tabellen in einem Absatz, 0 `mso-`/`MsoNormal`/`WordSection`-Reste, Zellrahmen 0.8 px solid aus dem Stylesheet. Strg+Z → 0 Tabellen, nur der leere Absatz bleibt. Zweites Einfuegen mit Cursor in Zelle (1,1) → Tabelle in der Zelle (verschachtelt), aeussere Tabelle bleibt 3 x 2. Reiner Text in der Zwischenablage kommt weiterhin als reiner Text an. Die Konsole blieb ohne Fehler.
 
 **Offen.** (1) Formate, die Word nur ueber Stilattribute ausdrueckt (Schriftgroesse, Farbe, Ausrichtung), gehen verloren - uebernommen wird die Struktur mit fett/kursiv/unterstrichen. (2) Bilder aus Word kommen nur an, wenn Word sie als `data:`-URL in die Zwischenablage legt. (3) Eine Tabelle, die in Word selbst eine Tabelle in einer Zelle enthaelt, wurde nicht als Kopiervorlage geprueft; der Weg fuer verschachtelte Zeilen ist in `pasteTable` vorgesehen.
+
+## 150. Rechtschreibwellen nach angenommener Korrektur (1.15.125)
+
+**Gemeldet.** Nach dem Uebernehmen eines Korrekturvorschlags aus dem Hunspell-Woerterbuch konnten die roten Wellen weiter unter dem korrigierten Wort stehen.
+
+**Ursachen.** Beide Wege hatten keine Pruefung des aktuellen Textes:
+1. `spellScan` sammelt Textknoten und Wortpositionen ein und wartet dann auf `window.api.spellCheck`. Kommt die Antwort erst nach einer Korrektur zurueck, setzt der Scan seine Markierungen auf Positionen, die inzwischen auf anderem Text stehen - bei einem Wort gleicher Laenge also genau auf dem korrigierten Wort. `resetSpellRanges` leerte zwar die Markierungen, entwertete den laufenden Scan aber nicht (`ED.seq` blieb gleich), der alte Scan durfte sein Ergebnis also noch anwenden. Der Fehler war zeitabhaengig: Er traf nur, wenn die Antwort zwischen der Korrektur und dem naechsten Scan (500 ms spaeter) eintraf.
+2. Im Vorschlags-Handler liefen `dropWordRanges`/`resetSpellRanges` erst nach dem `execCommand`; warf das Einfuegen eine Ausnahme, wurden die alten Markierungen nie geloescht.
+
+**Behoben.**
+- `spellScan` prueft jede gefundene Stelle gegen den aktuellen Text: Der Knoten muss noch im Dokument haengen und `text.slice(start, ende)` muss dem gefundenen Wort entsprechen, sonst faellt die Stelle weg. Dieselbe Pruefung hat der Komma-Hinweis.
+- `resetSpellRanges` und `dropWordRanges` erhoehen `ED.seq`; ein Scan, dessen Antwort danach eintrifft, verwirft sein Ergebnis. Der neu angestossene Scan liest den geaenderten Text.
+- Der Vorschlags-Handler raeumt in `finally` auf, damit die Markierung auch bei einem Fehler im `execCommand` verschwindet.
+
+**Geprueft im laufenden Fenster** (`.freebuff/spell-check2.mjs`, eigenes `--user-data-dir`, echte Maus und Tastatur): "Das ist ein Wotr in einem Satz." → Marke `Wotr`, 137 rote Pixel auf dem Overlay; Vorschlag "Wort" angenommen → sofort 0 Marken, 0 rote Pixel, 25 Proben ueber 2 s ohne Marke, Text "Das ist ein Wort in einem Satz.". Zwei Fehler ("Wotr", "Fenstr") → Korrektur des ersten laesst `Fenstr` markiert, Korrektur des zweiten → 0 Marken, Text "Das ist ein Wort und ein Fenster im Satz.". Komma-Hinweis ("dass") erscheint weiterhin, echtes Tippen erzeugt wieder eine Marke (`Wotr`, 261 rote Pixel). Konsole ohne Fehler. Der zeitabhaengige Fall liess sich im Prueflauf nicht erzwingen (die Antwort kam immer vor oder nach dem Fenster); der Schutz gegen veraltete Positionen ist deshalb ueber die Textpruefung belegt, nicht ueber eine Reproduktion.
+
+**Offen.** (1) Ein Vorschlag, den das Woerterbuch in dieser Form nicht kennt (fremdsprachiges Wort, Eigenname), wird weiterhin markiert - das ist gewollt. (2) Ein Wiederherstellen (Strg+Umschalt+Z) fuer Text gibt es weiterhin nur ueber den Browser-Stapel.

@@ -2447,6 +2447,9 @@ function dropSpoilerRanges() { ED.ranges = ED.ranges.filter(x => !spoilerNode(x.
 function dropWordRanges(word) {
   const w = String(word || '').toLowerCase();
   if (!w) return;
+  // Laufende Scans verwerfen: ihr Ergebnis beruht auf einem Textstand, den es
+  // nach dieser Aenderung nicht mehr gibt.
+  ED.seq++;
   ED.ranges = ED.ranges.filter(x => String(x.word || '').toLowerCase() !== w);
   syncSpellHighlight();
 }
@@ -2454,6 +2457,10 @@ function dropWordRanges(word) {
 // oder entfernte Textknoten. Sie werden sofort verworfen, damit keine Welle an
 // der alten Stelle stehen bleibt; der naechste Scan setzt nur echte Fehler neu.
 function resetSpellRanges() {
+  // Ein Scan, der schon unterwegs ist, hat seine Positionen vor der Korrektur
+  // gemerkt; sein Ergebnis wuerde die Welle unter das korrigierte Wort setzen.
+  // Die Sequenznummer entwertet ihn, der neue Scan liest den neuen Text.
+  ED.seq++;
   ED.ranges = [];
   syncSpellHighlight();
   scheduleScan();
@@ -2547,9 +2554,12 @@ async function spellScan() {
   if (seq !== ED.seq) return;
   const found = [];
   occ.forEach(o => {
-    if (bad.has(o.w) && !ED.ignored.has(o.w.toLowerCase())) {
-      try { const r = new Range(); r.setStart(o.n, o.s); r.setEnd(o.n, o.e); found.push({ r, kind:'spell', word:o.w }); } catch {}
-    }
+    if (!bad.has(o.w) || ED.ignored.has(o.w.toLowerCase())) return;
+    // Der Text kann sich waehrend des Scans geaendert haben (angenommene
+    // Korrektur, Tippen, Einfuegen): dann zeigt der gemerkte Abschnitt auf
+    // anderen Text, und eine Welle stuende an der falschen Stelle.
+    if (!o.n.isConnected || o.n.data.slice(o.s, o.e) !== o.w) return;
+    try { const r = new Range(); r.setStart(o.n, o.s); r.setEnd(o.n, o.e); found.push({ r, kind:'spell', word:o.w }); } catch {}
   });
   if (lang === 'de') {
     const rc = /(\p{L}+)(\s+)(dass|weil|obwohl|obgleich|sodass|falls)\b/giu, nodes = [];
@@ -2559,7 +2569,10 @@ async function spellScan() {
       while ((m = rc.exec(n.data))) {
         if (COMMA_SKIP.has(m[1].toLowerCase())) continue;
         if (n.data.slice(Math.max(0, m.index - 3), m.index).includes(',')) continue;
-        try { const r = new Range(), at = m.index + m[1].length + m[2].length; r.setStart(n, at); r.setEnd(n, at + m[3].length); found.push({ r, kind:'comma', word:m[3], node:n, pos:m.index + m[1].length }); } catch {}
+        const at = m.index + m[1].length + m[2].length;
+        // Auch hier den aktuellen Text pruefen (siehe oben bei den Woertern).
+        if (!n.isConnected || n.data.slice(at, at + m[3].length) !== m[3]) continue;
+        try { const r = new Range(); r.setStart(n, at); r.setEnd(n, at + m[3].length); found.push({ r, kind:'comma', word:m[3], node:n, pos:m.index + m[1].length }); } catch {}
       }
     });
   }
@@ -2579,7 +2592,13 @@ page.addEventListener('contextmenu', async e => {
   } else {
     let sug = []; try { sug = await window.api.spellSuggest(dictCode(), hit.word); } catch {}
     if (!sug.length) { const h = document.createElement('div'); h.className = 'row hd'; h.textContent = t('noSug'); m.append(h); }
-    sug.forEach(s => row(s, () => { const s2 = getSelection(); s2.removeAllRanges(); s2.addRange(hit.r); page.focus(); ED.writing = true; try { document.execCommand('insertText', false, s); } finally { ED.writing = false; } dropWordRanges(hit.word); resetSpellRanges(); }, true));
+    // Wellen auch dann loeschen, wenn das Einfuegen des Vorschlags scheitert
+    // (finally): sonst bliebe die Markierung des alten Wortes stehen.
+    sug.forEach(s => row(s, () => {
+      const s2 = getSelection(); s2.removeAllRanges(); s2.addRange(hit.r); page.focus(); ED.writing = true;
+      try { document.execCommand('insertText', false, s); }
+      finally { ED.writing = false; dropWordRanges(hit.word); resetSpellRanges(); }
+    }, true));
     m.append(document.createElement('hr'));
     row(t('addDict'), async () => {
       // Sofort alle Wellen dieses Wortes entfernen; der Scan bestaetigt das
