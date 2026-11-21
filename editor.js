@@ -1299,35 +1299,35 @@ function selImg() {
   return imgSel;
 }
 
-// ---------- Rueckgaengig fuer Bildaenderungen ----------
-// Drehen, Spiegeln, Groesse und Ausrichtung aendern nur Attribute am Bild; der
+// ---------- Rueckgaengig fuer Bild- und Tabellenbefehle ----------
+// Bilder (Drehen, Spiegeln, Groesse, Ausrichtung) und Tabellen (Einfuegen,
+// Zeilen, Spalten, Kopfzeile, Breiten) aendern nur das DOM; der
 // Rueckgaengig-Stapel des Browsers bekommt davon nichts mit. Deshalb merkt sich
-// der Editor den Zustand vor jeder Bildaenderung: Strg+Z nimmt die letzte
-// Bildaenderung zurueck, solange danach kein Text getippt wurde. Tippen leert
-// den Stapel, damit Strg+Z dann wieder ganz normal den Text trifft.
-const imgHist = [];
-let imgPulse = false;  // laeuft gerade ein eigenes input-Ereignis?
-let imgHistOn = false; // war die letzte Aenderung eine Bildaenderung?
+// der Editor jeden solchen Schritt selbst: Strg+Z nimmt ihn zurueck, solange
+// danach kein Text getippt wurde. Tippen leert den Stapel, damit Strg+Z dann
+// wieder ganz normal den Text trifft.
+const edHist = [];
+let edPulse = false;  // laeuft gerade ein eigenes input-Ereignis?
+let edHistOn = false; // war die letzte Aenderung ein eigener Schritt?
+// Eigenes input-Ereignis: meldet die Aenderung zum Speichern, ohne dass der
+// Horchposten sie fuer eine Textaenderung haelt (der wuerde den Stapel leeren).
+function ownInput() { edPulse = true; page.dispatchEvent(new Event('input')); }
+function edTouch(entry) {
+  edHist.push(entry);
+  if (edHist.length > 30) edHist.shift();
+  edHistOn = true;
+  ownInput();
+}
 const imgAttrs = img => ({ w: img.dataset.w, r: img.dataset.r, rot: img.dataset.rot, fx: img.dataset.fx, fy: img.dataset.fy });
 function imgSnap(wrap) {
   const img = wrap.querySelector('img');
   return { wrap, al: wrap.dataset.al || '', attrs: img ? imgAttrs(img) : null, deleted: false };
 }
-// Eintrag merken und das Dokument als geaendert melden. `imgPulse` sorgt
-// dafuer, dass der input-Horchposten diesen Vorgang nicht fuer eine
-// Textaenderung haelt (sonst waere der Stapel sofort wieder leer).
-function imgTouch(before) {
-  imgHist.push(before);
-  if (imgHist.length > 30) imgHist.shift();
-  imgHistOn = true;
-  imgPulse = true;
-  page.dispatchEvent(new Event('input'));
-}
 function imgEdit(wrap, fn) {
   const before = imgSnap(wrap);
   fn();
   if (wrap.querySelector('img')) applyImgBox(wrap);
-  imgTouch(before);
+  edTouch(Object.assign({ kind: 'img' }, before));
 }
 // Cursor hinter (oder vor) die Stelle setzen, an der ein Bild stand.
 function caretNear(node, atEnd) {
@@ -1345,14 +1345,12 @@ function imgDelete(wrap) {
   before.prev = wrap.previousElementSibling;
   if (imgSel === wrap) clearImgSel();
   wrap.remove();
-  imgTouch(before);
+  edTouch(Object.assign({ kind: 'img' }, before, { deleted: true, next: before.next, prev: before.prev }));
   updTb();
   const anker = before.next && before.next.parentNode === page ? before.next : before.prev;
   if (anker) caretNear(anker, anker === before.prev);
 }
-function imgUndo() {
-  const s = imgHist.pop();
-  if (!s) return false;
+function imgRestore(s) {
   if (s.deleted) {
     if (s.next && s.next.parentNode === page) s.next.before(s.wrap);
     else if (s.prev && s.prev.parentNode === page) s.prev.after(s.wrap);
@@ -1363,10 +1361,61 @@ function imgUndo() {
     if (s.al) s.wrap.dataset.al = s.al; else s.wrap.removeAttribute('data-al');
     applyImgBox(s.wrap);
   }
-  imgPulse = true;
+}
+// Tabellen: Inhalt vor dem Befehl merken - samt Spaltenbreiten (colgroup im
+// Inhalt, `table-layout` und Breite im style-Attribut) und den Nachbarn, damit
+// auch eine geloeschte Tabelle an ihren Platz zurueckfindet.
+function tblSnapBefore(table) {
+  return {
+    kind: 'tbl-inner', table, html: table.innerHTML, style: table.getAttribute('style'), cls: table.className,
+    prev: table.previousElementSibling, next: table.nextElementSibling
+  };
+}
+// Nach dem Befehl: Steht die Tabelle noch, genuegt der alte Inhalt; ist sie
+// verschwunden (letzte Zeile oder Spalte geloescht), kommt sie als Ganzes zurueck.
+function tblSnapDone(snap) {
+  if (!snap) return;
+  if (!page.contains(snap.table)) snap.kind = 'tbl-del';
+  edTouch(snap);
+}
+function tblRestoreNode(s) {
+  if (s.next && s.next.parentNode === page) s.next.before(s.table);
+  else if (s.prev && s.prev.parentNode === page) s.prev.after(s.table);
+  else page.append(s.table);
+  const c = s.table.rows[0] && s.table.rows[0].cells[0];
+  if (c) focusCell(c);
+}
+function tblRestoreInner(s) {
+  if (!page.contains(s.table)) { tblRestoreNode(s); return; }
+  s.table.innerHTML = s.html;
+  if (s.style == null) s.table.removeAttribute('style'); else s.table.setAttribute('style', s.style);
+  if (s.cls != null) s.table.className = s.cls;
+  const c = s.table.rows[0] && s.table.rows[0].cells[0];
+  if (c) focusCell(c);
+}
+// Einfuegen zuruecknehmen: Tabelle und der automatisch angelegte Absatz gehen
+// weg, ein ersetzter leerer Absatz kommt an seinen Platz zurueck.
+function tblUndoAdd(s) {
+  s.table.remove();
+  if (s.extra && s.extra.parentNode) s.extra.remove();
+  if (s.replaced) {
+    if (s.prev && s.prev.parentNode === page) s.prev.after(s.replaced);
+    else page.prepend(s.replaced);
+  }
+  const anker = s.prev && page.contains(s.prev) ? s.prev : page.firstElementChild;
+  if (anker) caretNear(anker, true);
+}
+function edUndo() {
+  const s = edHist.pop();
+  if (!s) return false;
+  if (s.kind === 'img') imgRestore(s);
+  else if (s.kind === 'tbl-add') tblUndoAdd(s);
+  else if (s.kind === 'tbl-del') tblRestoreNode(s);
+  else if (s.kind === 'tbl-inner') tblRestoreInner(s);
+  edPulse = true;
   page.dispatchEvent(new Event('input'));
-  imgHistOn = imgHist.length > 0;
-  updTb();
+  edHistOn = edHist.length > 0;
+  updTb(); tblBarSync();
   return true;
 }
 // Steht der Fokus in einem Eingabefeld oder einem anderen editierbaren
@@ -1375,14 +1424,14 @@ const otherFieldFocused = () => {
   const a = document.activeElement;
   return !!(a && a !== page && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable));
 };
-// Strg+Z greift nur, wenn die letzte Aenderung am Bild war; sonst bleibt der
-// normale Text-Rueckgaengig des Browsers zustaendig.
+// Strg+Z greift nur, wenn die letzte Aenderung ein Bild- oder Tabellenschritt
+// war; sonst bleibt der normale Text-Rueckgaengig des Browsers zustaendig.
 document.addEventListener('keydown', e => {
   if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
   if (e.key !== 'z' && e.key !== 'Z') return;
-  if (!imgHistOn || !imgHist.length || otherFieldFocused()) return;
+  if (!edHistOn || !edHist.length || otherFieldFocused()) return;
   e.preventDefault(); e.stopPropagation();
-  imgUndo();
+  edUndo();
 }, true);
 // Backspace oder Entfernen loescht das ausgewaehlte Bild - wie in Word - und
 // laesst sich mit Strg+Z zurueckholen.
@@ -1477,7 +1526,7 @@ function bindImg(wrap) {
       }, cancelled => {
         // Ein Klick ohne Ziehen aendert nichts und soll das Dokument nicht als
         // geaendert melden.
-        if (!cancelled && w !== startW) imgTouch(before);
+        if (!cancelled && w !== startW) edTouch(Object.assign({ kind: 'img' }, before));
       });
     });
   });
@@ -1631,9 +1680,11 @@ function insertTable(rows = 3, cols = 3) {
   else page.append(table);
   const p = document.createElement('p'); p.innerHTML = '<br>';
   table.after(p);
-  page.dispatchEvent(new Event('input'));
   focusCell(table.rows[0].cells[0]);
   tblBarSync();
+  // Strg+Z nimmt das Einfuegen zurueck: Tabelle und der automatisch angelegte
+  // Absatz verschwinden, ein ersetzter leerer Absatz kommt zurueck.
+  edTouch({ kind: 'tbl-add', table, extra: p, replaced: leer ? host : null, prev: table.previousElementSibling });
   return table;
 }
 // Breite einer gezogenen Tabelle (0, solange sie sich selbst einteilt).
@@ -1664,7 +1715,7 @@ function syncColWidths(table, target) {
 function delTableAt(table) {
   const next = table.nextElementSibling;
   table.remove();
-  page.dispatchEvent(new Event('input'));
+  ownInput();
   if (next) {
     page.focus();
     const r = document.createRange(); r.setStart(next, 0); r.collapse(true);
@@ -1675,7 +1726,7 @@ function delTableAt(table) {
 function delRowAt({ table, tr, row, col }) {
   if (table.rows.length <= 1) return delTableAt(table);
   tr.remove();
-  page.dispatchEvent(new Event('input'));
+  ownInput();
   const next = table.rows[Math.min(row, table.rows.length - 1)];
   focusCell(next.cells[Math.min(col, next.cells.length - 1)] || next.cells[0]);
   tblBarSync();
@@ -1689,7 +1740,7 @@ function delColAt({ table, col }) {
     const c = tr.cells[Math.min(col, tr.cells.length - 1)];
     if (c) c.remove();
   });
-  page.dispatchEvent(new Event('input'));
+  ownInput();
   syncColWidths(table, breite);
   const tr = table.rows[0];
   focusCell(tr.cells[Math.min(col, tr.cells.length - 1)]);
@@ -1705,7 +1756,7 @@ function toggleHeader(table) {
     cell.replaceWith(el);
   });
   table.classList.toggle('hdr', !on);
-  page.dispatchEvent(new Event('input'));
+  ownInput();
   focusCell(table.rows[0].cells[0]);
   tblBarSync();
 }
@@ -1713,12 +1764,14 @@ function tblOp(kind) {
   const cell = curCell();
   if (!cell) return;
   const info = cellInfo(cell), table = info.table;
+  // Zustand vor dem Befehl merken - Strg+Z stellt ihn wieder her.
+  const snap = tblSnapBefore(table);
   if (kind === 'rowAbove' || kind === 'rowBelow') {
     const tr = document.createElement('tr');
     const n = Math.max(1, table.rows[0].cells.length);
     for (let i = 0; i < n; i++) tr.append(tblCell('td'));
     if (kind === 'rowAbove') info.tr.before(tr); else info.tr.after(tr);
-    page.dispatchEvent(new Event('input'));
+    ownInput();
     focusCell(tr.cells[Math.min(info.col, tr.cells.length - 1)]);
   } else if (kind === 'colLeft' || kind === 'colRight') {
     const breite = tblFixedWidth(table);
@@ -1728,7 +1781,7 @@ function tblOp(kind) {
       const c = tblCell(ref.tagName === 'TH' ? 'th' : 'td');
       if (kind === 'colLeft') ref.before(c); else ref.after(c);
     });
-    page.dispatchEvent(new Event('input'));
+    ownInput();
     syncColWidths(table, breite);
     const tr = table.rows[info.row] || table.rows[0];
     focusCell(tr.cells[kind === 'colLeft' ? info.col : Math.min(info.col + 1, tr.cells.length - 1)]);
@@ -1736,6 +1789,7 @@ function tblOp(kind) {
   else if (kind === 'colDel') delColAt(info);
   else if (kind === 'tblHdr') toggleHeader(table);
   else if (kind === 'tblDel') delTableAt(table);
+  tblSnapDone(snap);
   updTb(); tblBarSync();
 }
 // Tabulatortaste in einer Zelle: naechste Zelle, in der letzten Zelle eine neue
@@ -1748,12 +1802,15 @@ function tblTab(back) {
   const flat = [...table.rows].flatMap(r => [...r.cells]);
   const i = flat.indexOf(cell);
   if (!back && i === flat.length - 1) {
+    // Tabulator in der letzten Zelle legt eine Zeile an - auch das laesst sich
+    // mit Strg+Z zuruecknehmen.
+    const snap = tblSnapBefore(table);
     const tr = document.createElement('tr');
     const n = Math.max(1, table.rows[0].cells.length);
     for (let k = 0; k < n; k++) tr.append(tblCell('td'));
     table.rows[table.rows.length - 1].after(tr);
-    page.dispatchEvent(new Event('input'));
     focusCell(tr.cells[0], true);
+    tblSnapDone(snap);
     return true;
   }
   if (back && i === 0) {
@@ -1870,7 +1927,7 @@ page.addEventListener('pointerdown', e => {
   if (e.clientX <= r.right - 6) return;
   e.preventDefault();
   const widths = [...table.rows[0].cells].map(c => Math.round(c.getBoundingClientRect().width));
-  tblDrag = { table, col: [...cell.parentNode.cells].indexOf(cell), x: e.clientX, widths };
+  tblDrag = { table, col: [...cell.parentNode.cells].indexOf(cell), x: e.clientX, widths, snap: tblSnapBefore(table), changed: false };
   document.body.classList.add('tblresizing');
 });
 document.addEventListener('pointermove', e => {
@@ -1879,13 +1936,15 @@ document.addEventListener('pointermove', e => {
   const widths = tblDrag.widths.slice();
   widths[tblDrag.col] = w;
   applyColWidths(tblDrag.table, widths);
+  tblDrag.changed = true;
 });
 document.addEventListener('pointerup', () => {
   if (!tblDrag) return;
-  const t2 = tblDrag.table;
+  const d = tblDrag;
   tblDrag = null;
   document.body.classList.remove('tblresizing');
-  page.dispatchEvent(new Event('input'));
+  // Nur ein wirklich gezogener Breitenwechsel ist ein Rueckgaengig-Schritt.
+  if (d.changed) tblSnapDone(d.snap);
   tblBarSync();
 });
 
@@ -2690,10 +2749,10 @@ function handleMarkdownTrigger() {
 }
 
 page.addEventListener('input', e => {
-  // Eigene Bildaenderungen halten den Rueckgaengig-Stapel der Bilder am Leben;
+  // Eigene Bild- und Tabellenschritte halten den Rueckgaengig-Stapel am Leben;
   // jede Textaenderung leert ihn, damit Strg+Z wieder den Text trifft.
-  if (imgPulse) imgPulse = false;
-  else if (e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') { imgHist.length = 0; imgHistOn = false; }
+  if (edPulse) edPulse = false;
+  else if (e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') { edHist.length = 0; edHistOn = false; }
   if (S.edMarkdown && (e.data === ' ' || e.inputType === 'insertText')) handleMarkdownTrigger();
   updWords(); scheduleScan(); clearTimeout(saveTimer);
   saveTimer = setTimeout(() => { try { localStorage.setItem('edDoc', page.innerHTML); } catch {} }, 800);
