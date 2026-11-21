@@ -1309,10 +1309,15 @@ function selImg() {
 const edHist = [];
 let edPulse = false;  // laeuft gerade ein eigenes input-Ereignis?
 let edHistOn = false; // war die letzte Aenderung ein eigener Schritt?
+const edRedo = [];    // zurueckgenommene Bildschritte, zuletzt oben
 // Eigenes input-Ereignis: meldet die Aenderung zum Speichern, ohne dass der
 // Horchposten sie fuer eine Textaenderung haelt (der wuerde den Stapel leeren).
 function ownInput() { edPulse = true; page.dispatchEvent(new Event('input')); }
 function edTouch(entry) {
+  // Bildschritte merken sich auch den Zustand danach: Strg+Umschalt+Z setzt
+  // ihn wieder. Ein neuer Schritt macht die alte Wiederhol-Kette ungueltig.
+  if (entry.kind === 'img' && !entry.deleted) entry.after = imgSnap(entry.wrap);
+  edRedo.length = 0;
   edHist.push(entry);
   if (edHist.length > 30) edHist.shift();
   edHistOn = true;
@@ -1408,6 +1413,9 @@ function tblUndoAdd(s) {
 function edUndo() {
   const s = edHist.pop();
   if (!s) return false;
+  // Nur Bildschritte mit gemerktem Zustand danach lassen sich wiederholen;
+  // ein geloeschtes Bild kommt zwar zurueck, das erneute Loeschen nicht.
+  if (s.kind === 'img' && s.after) edRedo.push(s);
   if (s.kind === 'img') imgRestore(s);
   else if (s.kind === 'paste') pasteUndo(s);
   else if (s.kind === 'tbl-add') tblUndoAdd(s);
@@ -1419,6 +1427,21 @@ function edUndo() {
   updTb(); tblBarSync();
   return true;
 }
+// Wiederholen: Der Eintrag traegt den Zustand nach seiner Aenderung (`after`);
+// Strg+Umschalt+Z legt ihn an und gibt ihn an den Rueckgaengig-Stapel zurueck,
+// damit Strg+Z ihn erneut zuruecknehmen kann. Text hat seinen eigenen Weg
+// (Browser-Stapel); ein Bildschritt im eigenen Stapel hat Vorrang.
+function edRedoStep() {
+  const s = edRedo.pop();
+  if (!s || !s.after || !page.contains(s.wrap)) return false;
+  edHist.push(s);
+  imgRestore(s.after);
+  edPulse = true;
+  page.dispatchEvent(new Event('input'));
+  edHistOn = true;
+  updTb(); tblBarSync();
+  return true;
+}
 // Steht der Fokus in einem Eingabefeld oder einem anderen editierbaren
 // Bereich, gehoeren die Tasten dort hin und nicht zum Bild.
 const otherFieldFocused = () => {
@@ -1427,9 +1450,17 @@ const otherFieldFocused = () => {
 };
 // Strg+Z greift nur, wenn die letzte Aenderung ein Bild- oder Tabellenschritt
 // war; sonst bleibt der normale Text-Rueckgaengig des Browsers zustaendig.
+// Strg+Umschalt+Z holt den zuletzt zurueckgenommenen Bildschritt zurueck.
 document.addEventListener('keydown', e => {
-  if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
-  if (e.key !== 'z' && e.key !== 'Z') return;
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+  const k = (e.key || '').toLowerCase();
+  if (k !== 'z') return;
+  if (e.shiftKey) {
+    if (!edRedo.length || otherFieldFocused()) return;
+    e.preventDefault(); e.stopPropagation();
+    edRedoStep();
+    return;
+  }
   if (!edHistOn || !edHist.length || otherFieldFocused()) return;
   e.preventDefault(); e.stopPropagation();
   edUndo();
@@ -2819,7 +2850,7 @@ page.addEventListener('input', e => {
   // Eigene Bild- und Tabellenschritte halten den Rueckgaengig-Stapel am Leben;
   // jede Textaenderung leert ihn, damit Strg+Z wieder den Text trifft.
   if (edPulse) edPulse = false;
-  else if (e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') { edHist.length = 0; edHistOn = false; }
+  else if (e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') { edHist.length = 0; edHistOn = false; edRedo.length = 0; }
   if (S.edMarkdown && (e.data === ' ' || e.inputType === 'insertText')) handleMarkdownTrigger();
   updWords(); scheduleScan(); clearTimeout(saveTimer);
   saveTimer = setTimeout(() => { try { localStorage.setItem('edDoc', page.innerHTML); } catch {} }, 800);
