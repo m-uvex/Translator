@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 21. November 2026, App-Version 1.15.138 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 21. November 2026, App-Version 1.15.139 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2280,3 +2280,11 @@ Konsole ohne Fehler. Text-Rueckgaengig ist unveraendert (Abschnitt 154), weil de
 - Nach „Nach rechts drehen“ (`rot=90`) sind beide seitlichen Griffe `display:none`, die vier Ecken stehen auf `ns-resize`; **Strg+Z** bringt die seitlichen Griffe zurueck (`y=542` bei 560 px Rahmen).
 
 Konsole ohne Fehler. Die Ecken sind unveraendert; Bilder in Tabellenzellen behalten ihre Breitengrenze (`cellRoom`), weil beide Griffarten dieselbe Rechnung benutzen.
+
+## 164. Klarerer Hinweis am Hauptschalter „KI-Funktionen“ (1.15.139)
+
+**Gemeldet.** Der Hinweis unter dem Hauptschalter sprach von „beiden Arbeitsplaetzen“, obwohl es drei gibt (Uebersetzer, Textbearbeitung, Lernen); offen blieb, welche zwei gemeint sind. Ausserdem erklaerte er, dass auch kuenftige Funktionen aus sind, und zaehlte auf, was ohne Modell weiterlaeuft - beides erwartet man an der Stelle ohnehin.
+
+**Behoben.** Neuer Text in allen sechs Sprachen, knapp und ohne Aufzaehlung: „Schaltet alle KI-Funktionen in allen Arbeitsplaetzen aus. Nur das Uebersetzen bleibt unangetastet.“ (englisch „Turns off all AI functions in every workspace. Only translation stays untouched.“, dazu nl/es/tr/ar sinngemaess). Die Aussage stimmt mit dem Code ueberein: `AI_ALLOWED` enthaelt allein `translate`, jeder andere Modellaufruf haengt an `aiAll`.
+
+**Geprueft 1.15.139** im laufenden Fenster (Quelllauf, `--remote-debugging-port=9333`): Einstellungen geoeffnet, Hinweis unter dem Schalter ausgelesen - Text wie oben (96 Zeichen, Kaestchen 505x36 px, zweizeilig), Ueberschrift „KI-Funktionen (alle auf einmal)“; die drei Arbeitsplaetze in derselben Ansicht heissen Uebersetzer, Textbearbeitung und Lernen.
