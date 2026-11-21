@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 21. November 2026, App-Version 1.15.142 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 21. November 2026, App-Version 1.15.143 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2333,3 +2333,14 @@ Konsole ohne Fehler. Die Ecken sind unveraendert; Bilder in Tabellenzellen behal
 - Zeile 2: **drei** Zellen, erste mit `rowspan="2"`, Hoehe **75 px** fuer zwei Zeilen von je 38 px, Schattierung `rgb(255, 242, 204)` erhalten.
 - Zeile 3: **zwei** Zellen, beide beginnen erst hinter der verbundenen Zelle (`x=664` und `828`).
 - Tabelle `650x113 px`, `class="edtbl"`, kein `<style>` (`0`), keine Office-Namen (`0`), Konsole ohne Fehler.
+
+## 168. Seitliche Bildgriffe wieder entfernt (1.15.143)
+
+**Gemeldet.** Die Griffe rechts und links am Bild sollen weg; die in den Ecken bleiben.
+
+**Behoben.** `addHandles()` legt nur noch `nw`/`ne`/`sw`/`se` an; der Zweig fuer `w`/`e` aus Abschnitt 163 ist samt Hinweistext entfallen. `applyImgBox()` setzt nur noch die vier Ecken (kein Ausblenden bei 90/270 Grad mehr noetig) und `bindImg()` rechnet wieder in jeder Lage mit der Bewegung, die zur sichtbaren Breite passt: bei 0/180 Grad waagerecht, bei 90/270 Grad senkrecht. Der Text `imgDragW` („Waagerecht ziehen“) ist aus allen sechs Sprachtabellen entfernt, weil ihn nichts mehr zeigt.
+
+**Geprueft 1.15.143** im laufenden Fenster (Quelllauf, `--remote-debugging-port=9333`, eigenes Profil, Bild 240x180 per Dateiauswahl des Editors eingefuegt, echte Mausereignisse):
+- Am ausgewaehlten Bild genau **vier** Ziehpunkte, je `10x10` und an den Ecken: `nw` bei (535/267), `ne` (775/267), `sw` (535/447), `se` (775/447) - Rahmen 240x180 an Position 530/262, also genau die vier Ecken. Kein Griff auf halber Hoehe mehr, `title` an allen vieren leer.
+- Zeiger: `nwse-resize` an `nw` und `se`, `nesw-resize` an `ne` und `sw`.
+- Ecke `se` 80 px nach rechts gezogen: **240 -> 320 px** Breite, Rahmen **320x240** (Seitenverhaeltnis bleibt), Konsole ohne Fehler.
