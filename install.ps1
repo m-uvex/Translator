@@ -2,19 +2,52 @@
 #
 # HINWEIS: Omnilingual MT (OMT) von Meta ist derzeit (Stand 2026) nicht als
 # oeffentliches Modell verfuegbar. Alle OMT-Optionen sind auskommentiert.
+param(
+  [string]$AppDir = '',
+  [string]$VenvDir = '',
+  [string]$ServerDir = '',
+  [string]$CfgDir = '',
+  [string]$OllamaModels = '',
+  [string]$NllbModels = '',
+  [switch]$NoAutostart,
+  [switch]$Headless
+)
+
 $ErrorActionPreference = 'Stop'
+$script:headless = [bool]$Headless
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
-[Windows.Forms.Application]::EnableVisualStyles()
+if (-not $script:headless) { [Windows.Forms.Application]::EnableVisualStyles() }
 
 trap {
+  if ($script:headless) { [Console]::Out.WriteLine('ERR|' + $_.Exception.Message); [Console]::Out.Flush(); exit 1 }
   try { [void][System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Fehler bei der Einrichtung') } catch {}
   exit 1
 }
 
 $script:src = $PSScriptRoot
-if (-not $script:src -or -not (Test-Path (Join-Path $script:src 'main.js'))) {
-  [void][System.Windows.Forms.MessageBox]::Show('Bitte die ZIP-Datei zuerst vollstaendig entpacken und Installieren.bat aus dem entpackten Ordner starten.', 'Einrichtung'); exit
+if ($script:headless) {
+  # Aufruf aus der App beim ersten Start (main.js, IPC setup:run). Ziel ist die
+  # Installation; Node, Electron, das Kopieren der Dateien und die
+  # Verknuepfungen entfallen, weil der Setup-Installer das erledigt hat. Hier
+  # kommen nur Programme und Modelle dazu, und alles, was geschrieben wird,
+  # landet dort, wo die App es sucht.
+  [Console]::OutputEncoding = [Text.Encoding]::UTF8
+  $script:dir = $AppDir
+  if (-not $script:dir -or -not (Test-Path $script:dir)) {
+    [Console]::Out.WriteLine('ERR|Installationsordner nicht gefunden: ' + $AppDir); [Console]::Out.Flush(); exit 1
+  }
+  # nllb-venv liegt im Benutzerprofil, weil der Serverstart dort zuerst sucht
+  # (venvPython in main.js); der Modellzustand liegt daneben (NLLB_STATE_DIR).
+  $script:venv = if ($VenvDir) { $VenvDir } else { Join-Path $script:dir 'nllb-venv' }
+  $script:serverDir = if ($ServerDir) { $ServerDir } else { $script:dir }
+  $script:cfgDir = if ($CfgDir) { $CfgDir } else { $script:dir }
+  $script:autoStart = -not $NoAutostart
+} else {
+  $script:venv = ''; $script:serverDir = ''; $script:cfgDir = ''
+  if (-not $script:src -or -not (Test-Path (Join-Path $script:src 'main.js'))) {
+    [void][System.Windows.Forms.MessageBox]::Show('Bitte die ZIP-Datei zuerst vollstaendig entpacken und Installieren.bat aus dem entpackten Ordner starten.', 'Einrichtung'); exit
+  }
 }
 $script:cmdlog = Join-Path $env:TEMP 'uebersetzer-setup.log'
 $script:done = $false
@@ -181,6 +214,9 @@ $script:langCode = $sysLang
 function tr($k) { if ($script:L.ContainsKey($k)) { return $script:L[$k] } else { return $T['en'][$k] } }
 
 # ---------- Oberflaeche (resizable) ----------
+# Im App-Betrieb (Headless) gibt es kein Fenster; die Oberflaeche wird dann
+# gar nicht erst gebaut, und die Schritte gehen als Zeilen an die App.
+if (-not $script:headless) {
 $f = New-Object Windows.Forms.Form
 $f.Text = tr 'title'; $f.ClientSize = New-Object Drawing.Size(580, 812)
 $f.MinimumSize = New-Object Drawing.Size(560, 772)
@@ -250,11 +286,21 @@ $lblStatus = Ctl (New-Object Windows.Forms.Label) 20 664 540 22 ''
 $lblStatus.ForeColor = [Drawing.Color]::Gray; $lblStatus.Anchor = 'Top,Left,Right'
 $txtLog = Ctl (New-Object Windows.Forms.TextBox) 20 690 540 100 ''
 $txtLog.Multiline = $true; $txtLog.ReadOnly = $true; $txtLog.ScrollBars = 'Vertical'; $txtLog.Anchor = 'Top,Bottom,Left,Right'
+}
 
 # ---------- Hilfsfunktionen ----------
-function Pump { [Windows.Forms.Application]::DoEvents() }
-function Log($t) { $txtLog.AppendText($t + "`r`n"); Pump }
-function Status($t) { $lblStatus.Text = $t; Pump }
+# Log ist eine Meldung, Status der laufende Schritt. Im Fenster landen beide in
+# Textfeld und Statuszeile, headless als LOG| bzw. STEP| auf der Ausgabe, die
+# main.js Zeile fuer Zeile an die Oberflaeche weiterreicht.
+function Pump { if ($script:headless) { return } [Windows.Forms.Application]::DoEvents() }
+function Log($t) {
+  if ($script:headless) { [Console]::Out.WriteLine('LOG|' + $t); [Console]::Out.Flush(); return }
+  $txtLog.AppendText($t + "`r`n"); Pump
+}
+function Status($t) {
+  if ($script:headless) { if ($t) { [Console]::Out.WriteLine('STEP|' + $t); [Console]::Out.Flush() }; return }
+  $lblStatus.Text = $t; Pump
+}
 function Wait-Ms($ms) { $sw = [Diagnostics.Stopwatch]::StartNew(); while ($sw.ElapsedMilliseconds -lt $ms) { Start-Sleep -Milliseconds 100; Pump } }
 function Refresh-Path { $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User') }
 function Find-Cmd($n) { return (Get-Command $n -ErrorAction SilentlyContinue) }
@@ -301,10 +347,12 @@ function Apply-Lang($code) {
     $btn.Text = if (Test-Path (Join-Path $txtDir.Text.Trim() 'package.json')) { tr 'update' } else { tr 'install' }
   }
 }
-$cmbLang.Add_SelectedIndexChanged({
-  $code = switch ($cmbLang.SelectedIndex) { 0 { 'de' } 1 { 'en' } 2 { 'nl' } 3 { 'es' } 4 { 'tr' } 5 { 'ar' } default { 'en' } }
-  Apply-Lang $code
-})
+if (-not $script:headless) {
+  $cmbLang.Add_SelectedIndexChanged({
+    $code = switch ($cmbLang.SelectedIndex) { 0 { 'de' } 1 { 'en' } 2 { 'nl' } 3 { 'es' } 4 { 'tr' } 5 { 'ar' } default { 'en' } }
+    Apply-Lang $code
+  })
+}
 
 # ---------- Komponenten ----------
 function Ensure-Node {
@@ -383,16 +431,21 @@ function Setup-Mt($ids, $auto) {
     if (-not $py) { Log (tr 'pyDl'); $exe = Join-Path $env:TEMP 'python-3.12.10-amd64.exe'; Download 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe' $exe; [void](Run "`"$exe`" /quiet InstallAllUsers=0 PrependPath=1 Include_launcher=0"); $py = Find-Py }
   } else { Log (tr 'pyOk') }
   if (-not $py) { throw (tr 'noPy') }
-  $venv = Join-Path $script:dir 'nllb-venv'; $vpy = Join-Path $venv 'Scripts\python.exe'
+  # Zielordner der Umgebung und Ablage des Servers: im Fenster beides im
+  # Installationsordner, in der App im Benutzerprofil bzw. neben app.asar.
+  $venv = if ($script:venv) { $script:venv } else { Join-Path $script:dir 'nllb-venv' }
+  $srvDir = if ($script:serverDir) { $script:serverDir } else { $script:dir }
+  $cfgDir = if ($script:cfgDir) { $script:cfgDir } else { $script:dir }
+  $vpy = Join-Path $venv 'Scripts\python.exe'
   if (-not (Test-Path $vpy)) { Log (tr 'venv'); if ((Run "`"$py`" -m venv `"$venv`"") -ne 0) { throw (tr 'noVenv') } }
   Log (tr 'pip')
   if ((Run "`"$vpy`" -m pip install --progress-bar off torch transformers sentencepiece langcodes language-data huggingface_hub") -ne 0) { throw (tr 'noPip') }
   $inst = @()
-  try { $out = & $vpy -u nllb_server.py --installed $script:dir 2>$null; if ($out) { $inst = @($out | ConvertFrom-Json) } } catch {}
+  try { $out = & $vpy -u (Join-Path $srvDir 'nllb_server.py') --installed $cfgDir 2>$null; if ($out) { $inst = @($out | ConvertFrom-Json) } } catch {}
   $missing = @($ids | Where-Object { $inst -notcontains $_ })
   if ($missing.Count -eq 0) { Log (tr 'allModels') }
-  else { foreach ($id in $missing) { Log ((tr 'hf') -f $id); if ((Run "`"$vpy`" -u nllb_server.py --install $id" $script:dir) -ne 0) { throw "$id" } } }
-  @{ nllbAutostart = [bool]$auto } | ConvertTo-Json | Set-Content (Join-Path $script:dir 'config.json') -Encoding ASCII
+  else { foreach ($id in $missing) { Log ((tr 'hf') -f $id); if ((Run "`"$vpy`" -u nllb_server.py --install $id" $srvDir) -ne 0) { throw "$id" } } }
+  @{ nllbAutostart = [bool]$auto } | ConvertTo-Json | Set-Content (Join-Path $cfgDir 'config.json') -Encoding ASCII
 }
 function New-Shortcut($lnk) {
   $s = (New-Object -ComObject WScript.Shell).CreateShortcut($lnk)
@@ -409,6 +462,34 @@ function New-UninstallShortcut($lnk) {
   $ico = Join-Path $script:dir 'build\icon.ico'
   if (Test-Path $ico) { $s.IconLocation = $ico }
   $s.Save()
+}
+
+# ---------- Ablauf ohne Fenster (erster Start der App) ----------
+# Dieselben Schritte wie der Knopf im Assistenten, nur ohne Auswahl: Die App
+# uebergibt die Modelle als Parameter, und jede Meldung geht als Zeile hinaus.
+if ($script:headless) {
+  try {
+    $oTags = @($OllamaModels -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    $nIds = @($NllbModels -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    if ($oTags.Count -eq 0) { Log 'Keine Sprachmodelle fuer Ollama gewaehlt.' }
+    else {
+      $o = Ensure-Ollama
+      Start-OllamaServer $o
+      $have = @()
+      try { $have = (& $o list) -split "`r?`n" | Select-Object -Skip 1 | ForEach-Object { ($_ -split '\s+')[0] } } catch {}
+      foreach ($tag in $oTags) {
+        if ($have -contains $tag) { Log ((tr 'modelOk') -f $tag) }
+        else { Log ((tr 'modelDl') -f $tag); if ((Run "`"$o`" pull $tag") -ne 0) { throw "$tag" } }
+      }
+    }
+    if ($nIds.Count -eq 0) { Log 'Keine Uebersetzungsmodelle gewaehlt.' }
+    else { Setup-Mt $nIds $script:autoStart }
+    [Console]::Out.WriteLine('OK|' + (tr 'done')); [Console]::Out.Flush()
+    exit 0
+  } catch {
+    [Console]::Out.WriteLine('ERR|' + $_.Exception.Message); [Console]::Out.Flush()
+    exit 1
+  }
 }
 
 # ---------- Ablauf ----------

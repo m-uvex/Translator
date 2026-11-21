@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 21. November 2026, App-Version 1.15.143 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 21. November 2026, App-Version 1.15.144 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2344,3 +2344,21 @@ Konsole ohne Fehler. Die Ecken sind unveraendert; Bilder in Tabellenzellen behal
 - Am ausgewaehlten Bild genau **vier** Ziehpunkte, je `10x10` und an den Ecken: `nw` bei (535/267), `ne` (775/267), `sw` (535/447), `se` (775/447) - Rahmen 240x180 an Position 530/262, also genau die vier Ecken. Kein Griff auf halber Hoehe mehr, `title` an allen vieren leer.
 - Zeiger: `nwse-resize` an `nw` und `se`, `nesw-resize` an `ne` und `sw`.
 - Ecke `se` 80 px nach rechts gezogen: **240 -> 320 px** Breite, Rahmen **320x240** (Seitenverhaeltnis bleibt), Konsole ohne Fehler.
+
+## 169. Einrichtung beim ersten Start statt zweiter Datei (1.15.144)
+
+**Gewünscht.** `install.ps1` als `extraResources` in die Setup-EXE, die Einrichtung beim ersten Start der App anbieten, Fortschritt in der App sichtbar; Zielordner und Startweg vereinheitlichen, statt `installieren.bat` und Setup getrennt zu öffnen.
+
+**Umsetzung.**
+- `package.json`: `build.extraResources: ["install.ps1"]`; die Datei liegt im Paket als `resources/install.ps1` neben `app.asar`.
+- `install.ps1` hat einen Parameterblock und den Schalter `-Headless`. In diesem Modus wird die WinForms-Oberfläche gar nicht gebaut (auch der Sprachwechsel-Handler nicht); `Log`/`Status` schreiben `LOG|` bzw. `STEP|` als UTF-8 nach stdout, und der Ablauf am Dateiende richtet nur Ollama samt Modellen und die Python-Umgebung ein. Node.js, Electron, npm-Pakete, das Kopieren der App-Dateien und die Verknüpfungen entfallen, weil der Setup-Installer das schon erledigt hat. Der Fensterbetrieb (ZIP-Weg über `installieren.bat`) bleibt unverändert.
+- Vereinheitlicht: Zielordner ist die Installation (`-AppDir`, in der App `path.dirname(app.getPath('exe'))`); `nllb-venv` liegt unter `%APPDATA%\Uebersetzer\nllb-venv`, also dort, wo `venvPython()` in `main.js` sucht; `nllb_server.py` kommt aus `app.asar.unpacked` (`-ServerDir`), der Modellzustand liegt in `-CfgDir` = `userData` (wie `NLLB_STATE_DIR`), und `config.json` mit `nllbAutostart` schreibt der Lauf dorthin. Damit gibt es einen Startweg: die installierte `Übersetzer.exe`.
+- `main.js`: `setupState()` fragt nur, solange weder `setupDone` noch `setupSkipped` gesetzt ist und noch keine Umgebung existiert; IPC `setup:needed`, `setup:run`, `setup:skip`. `runSetup()` startet `powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File resources\install.ps1 -Headless ...`, reicht jede Zeile als `setup:line` an die Seite und setzt bei Exit 0 `setupDone: true` und startet den Server. Vorgabe wie im Assistenten: `translategemma:4b`, `gemma3:4b`, `nllb:600M`.
+- Oberfläche: `<dialog id="setupDlg">` mit Titel, Hinweis, laufendem Balken, Zeilenliste und zwei Knöpfen. `renderer.js` öffnet ihn beim Start, wenn `setup:needed` das meldet, hängt die Zeilen an und zeigt am Ende „Fertig.“ oder den Fehlertext. Sieben Texte in allen sechs Sprachtabellen; der Hinweis `serverDown` nennt nicht mehr `Installieren.bat`.
+
+**Geprüft 1.15.144.**
+- `node --check` für `main.js`, `preload.js`, `renderer.js` ohne Fehler; PowerShell-Parser für `install.ps1` ohne Fehler (`ps-parse ok`).
+- Headless-Lauf ohne Modelle (`-OllamaModels "" -NllbModels ""`): drei Zeilen `LOG|Keine Sprachmodelle ...`, `LOG|Keine Uebersetzungsmodelle ...`, `OK|OK: Fertig! Die App ist eingerichtet.`, Exit 0, keine Fehlerzeile.
+- Paket: `resources/install.ps1` **37.474 Bytes** neben `app.asar` **77.228.067 Bytes**; Installer `Übersetzer Setup 1.15.144.exe` **109.380.547 Bytes**, still installiert (Exit 0), `/health` → `{"ok": true, "loaded": null, "port": 8765}`.
+- Im Fenster (Quelllauf, `--remote-debugging-port=9333`, frisches Profil): Dialog **offen und modal**, Titel „Einrichtung“, Knöpfe „Einrichten“/„Später“; Klick auf „Einrichten“ → Balken sichtbar, beide Knöpfe `disabled`, Knopftext „Einrichtung läuft …“, fünf Zeilen: `OK: Ollama vorhanden`, `OK: Modell translategemma:4b ist bereits installiert`, `OK: Modell gemma3:4b ist bereits installiert`, `OK: Python 3.12 vorhanden`, `Erstelle Python-Umgebung ...`.
+- Nicht durchgelaufen: `pip` (torch) und der Modell-Download — auf diesem Rechner sind die Modelle vorhanden, die Umgebung wurde nach dem Anlegen bewusst abgebrochen. Der Fehlerzweig (`ERR|`) ist nur über Exit-Code und Parser geprüft, nicht im Fenster.

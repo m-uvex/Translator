@@ -281,6 +281,73 @@ function setupNllb(sender) {
 }
 ipcMain.handle('nllb:setup', e => setupNllb(e.sender));
 
+// ---------- Einrichtung beim ersten Start ----------
+// install.ps1 liegt als extraResource in der Setup-EXE (build.extraResources)
+// und laeuft hier mit -Headless: dieselben Schritte wie im Assistenten - Ollama
+// samt Modellen, Python 3.12, nllb-venv, die Uebersetzungsmodelle -, nur ohne
+// eigenes Fenster und ohne Node/Electron/Kopieren, weil der Installer das schon
+// erledigt hat. Zielordner ist die Installation, die Umgebung liegt wie beim
+// Serverstart im Benutzerprofil (venvDir), der Zustand daneben (NLLB_STATE_DIR).
+const setupScript = () => app.isPackaged
+  ? path.join(process.resourcesPath, 'install.ps1')
+  : path.join(__dirname, 'install.ps1');
+// Die Modelle, die der Assistent vorschlaegt: reine Uebersetzung, Stil/Kontext
+// und die kleinste NLLB-Fassung. Wer mehr will, nimmt sie in den Einstellungen
+// unter "Uebersetzungsmodelle" dazu.
+const SETUP_OLLAMA = ['translategemma:4b', 'gemma3:4b'];
+const SETUP_NLLB = ['nllb:600M'];
+
+// Gefragt wird nur, solange die Einrichtung nicht durch ist und auch nicht
+// bewusst uebersprungen wurde; eine vorhandene Umgebung gilt ebenfalls als
+// eingerichtet, damit eine bestehende Installation nicht erneut gefragt wird.
+function setupState() {
+  const cfg = readCfg();
+  return { needed: !cfg.setupDone && !cfg.setupSkipped && !venvPython(), done: !!cfg.setupDone };
+}
+ipcMain.handle('setup:needed', () => setupState());
+ipcMain.handle('setup:skip', () => { writeCfg({ setupSkipped: true }); return { ok: true }; });
+
+let setupJob = null;
+function runSetup(sender) {
+  if (setupJob) return setupJob;
+  const send = (kind, text) => { try { if (sender && !sender.isDestroyed()) sender.send('setup:line', { kind, text }); } catch {} };
+  const script = setupScript();
+  if (!fs.existsSync(script)) return Promise.resolve({ ok: false, error: 'install.ps1 fehlt' });
+  const args = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', script,
+    '-Headless', '-AppDir', path.dirname(app.getPath('exe')), '-VenvDir', venvDir(),
+    '-ServerDir', path.dirname(resPath('nllb_server.py')), '-CfgDir', app.getPath('userData'),
+    '-OllamaModels', SETUP_OLLAMA.join(','), '-NllbModels', SETUP_NLLB.join(',')];
+  setupJob = new Promise(resolve => {
+    let lastErr = '';
+    let child;
+    try { child = spawn('powershell', args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }); }
+    catch (e) { send('err', String(e.message || e)); return resolve({ ok: false, error: String(e.message || e) }); }
+    // Das Skript spricht in vier Sorten: LOG (Zeile der Komponenten), STEP
+    // (laufender Schritt), OK und ERR. Alles andere (etwa die Ausgabe von pip
+    // oder curl) geht als gewoehnliche Zeile mit.
+    const feed = b => String(b).split(/\r?\n/).forEach(raw => {
+      const s = raw.trim();
+      if (!s) return;
+      const m = s.match(/^(LOG|STEP|OK|ERR)\|(.*)$/);
+      if (!m) { if (s.length < 300) send('log', s); return; }
+      if (m[1] === 'ERR') { lastErr = m[2]; send('err', m[2]); return; }
+      send(m[1] === 'STEP' ? 'step' : 'log', m[2]);
+    });
+    child.stdout.on('data', feed); child.stderr.on('data', feed);
+    child.on('error', e => { lastErr = String(e.message || e); send('err', lastErr); });
+    child.on('close', code => {
+      if (code === 0) {
+        writeCfg({ setupDone: true, setupSkipped: false });
+        startNllb(true);
+        return resolve({ ok: true });
+      }
+      resolve({ ok: false, error: lastErr || ('Exit ' + code) });
+    });
+  }).finally(() => { setupJob = null; });
+  return setupJob;
+}
+ipcMain.handle('setup:run', e => runSetup(e.sender));
+
 // ---------- EPUB ----------
 // Ein EPUB ist ein ZIP mit XHTML-Dateien. container.xml nennt die Paketdatei
 // (OPF), dort stehen der Titel und die Lesereihenfolge (spine). Fuer Lesetexte

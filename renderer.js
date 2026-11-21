@@ -408,7 +408,12 @@ const K = {
   // Wortwahl vorlaeufig: "miteingerichtet" ist kein Standardwort. Falls es
   // stoert, sind "wird mitinstalliert" oder "richtet sich mit ein" die
   // naheliegenden Alternativen; der Satz wurde bewusst noch nicht geaendert.
-  serverDown:['Der Übersetzungs-Server ist nicht erreichbar. Er wird bei der Einrichtung (Installieren.bat) miteingerichtet und läuft mit dem Programm an.','The translation server is not reachable. It is installed by the setup wizard (Installieren.bat) and starts with the app.'],
+  serverDown:['Der Übersetzungs-Server ist nicht erreichbar. Er wird bei der Einrichtung beim ersten Start mit eingerichtet und läuft mit dem Programm an.','The translation server is not reachable. It is set up together with the app on first start and starts with it.'],
+  setupH:['Einrichtung','Setup'],
+  setupIntro:['Fehlende Programme und Modelle werden jetzt eingerichtet: Ollama, die Sprachmodelle und die Python-Umgebung. Das dauert einige Minuten; der Fortschritt läuft hier mit.','Missing programs and models are set up now: Ollama, the language models and the Python environment. This takes a few minutes; the progress runs along here.'],
+  setupRun:['Einrichten','Set up'], setupLater:['Später','Later'], setupWorking:['Einrichtung läuft …','Setup is running …'],
+  setupDoneMsg:['Fertig. Die App ist eingerichtet.','Done. The app is set up.'],
+  setupFailMsg:['Die Einrichtung ist nicht vollständig durchgelaufen: ','Setup did not finish: '],
   confBig:[(id, gb) => `${id} ist ${gb} GB groß und braucht viel Arbeitsspeicher und Zeit. Trotzdem herunterladen?`, (id, gb) => `${id} is ${gb} GB and needs a lot of RAM and time. Download anyway?`],
   confDel:[id => `${id} wirklich löschen? Das Modell kann später erneut geladen werden.`, id => `Really delete ${id}? You can download it again later.`]
 };
@@ -459,7 +464,12 @@ const NL = {
   startTr:'Vertaler openen', startEd:'Tekstbewerking openen', startLast:'Laatst gebruikte openen', wsTr:'Vertaler', wsEd:'Tekstbewerking', wsStudy:'Leren',
   reset:'Herstellen', resetAll:'Alles herstellen', autoSys:'Automatisch (systeem)', autoO:'Automatisch', autoModel:'Automatisch', light:'Licht', dark:'Donker',
   nllbH:'Vertaalmodellen', srvSetup:'Server instellen', mInst:'Geïnstalleerd', mNot:'Niet geïnstalleerd', mLoad:p => `Downloaden … ${p} %`, mErr:e => `Fout: ${e}`, bDl:'Downloaden', bDel:'Verwijderen', bBusy:'Bezig …',
-  serverDown:'De vertaalserver is niet bereikbaar. Die wordt door de installatiewizard (Installieren.bat) geïnstalleerd en start met de app.',
+  serverDown:'De vertaalserver is niet bereikbaar. Die wordt bij de eerste start samen met de app ingesteld en start met de app.',
+  setupH:'Installatie',
+  setupIntro:'Ontbrekende programma\'s en modellen worden nu ingesteld: Ollama, de taalmodellen en de Python-omgeving. Dit duurt een paar minuten; de voortgang is hier te zien.',
+  setupRun:'Instellen', setupLater:'Later', setupWorking:'Installatie loopt …',
+  setupDoneMsg:'Klaar. De app is ingesteld.',
+  setupFailMsg:'De installatie is niet voltooid: ',
   confBig:(id, gb) => `${id} is ${gb} GB groot en heeft veel werkgeheugen en tijd nodig. Toch downloaden?`, confDel:id => `${id} echt verwijderen? Je kunt het later opnieuw downloaden.`,
   // Tooltips der Vokabel- und Studium-Ansichten (Abschnitt 143)
   navVoc:'Woorden',
@@ -620,7 +630,12 @@ const ES = {
   startTr:'Abrir traductor', startEd:'Abrir editor', startLast:'Abrir último usado', wsTr:'Traductor', wsEd:'Editor', wsStudy:'Aprendizaje',
   reset:'Restablecer', resetAll:'Restablecer todo', autoSys:'Automático (sistema)', autoO:'Automático', autoModel:'Automático', light:'Claro', dark:'Oscuro',
   nllbH:'Modelos de traducción', srvSetup:'Configurar el servidor', mInst:'Instalado', mNot:'No instalado', mLoad:p => `Descargando … ${p} %`, mErr:e => `Error: ${e}`, bDl:'Descargar', bDel:'Eliminar', bBusy:'Descargando …',
-  serverDown:'El servidor de traducción no está disponible. Se instala con el asistente y se inicia con la app.',
+  serverDown:'El servidor de traducción no está disponible. Se configura en el primer inicio junto con la app y se inicia con ella.',
+  setupH:'Configuración',
+  setupIntro:'Ahora se configuran los programas y modelos que faltan: Ollama, los modelos de idioma y el entorno de Python. Tarda unos minutos; el progreso se ve aquí.',
+  setupRun:'Configurar', setupLater:'Más tarde', setupWorking:'La configuración está en marcha …',
+  setupDoneMsg:'Listo. La aplicación está configurada.',
+  setupFailMsg:'La configuración no terminó: ',
   confBig:(id, gb) => `${id} tiene un tamaño de ${gb} GB y requiere bastante memoria y tiempo. ¿Descargar igualmente?`, confDel:id => `¿Realmente eliminar ${id}? Puedes descargarlo nuevamente más tarde.`,
   stopTr:'Detener', stopped:'Traducción detenida', on:'Activado', off:'Desactivado', s_bootModel:'Precargar último modelo al iniciar', s_profanity:'Filtro de malas palabras', s_profanityStyle:'Sustitución de palabras malsonantes', s_autoCopy:'Copiar la salida automáticamente', s_autoCopyTyped:'Copiar la salida solo con texto tecleado', o_stars:'Asteriscos (****)', o_symbols:'Símbolos (@#$%&!)', s_mdMode:'Markdown dinámico en el editor', s_spellAnim:'Animar las ondulaciones ortográficas',
   personalDict:'Diccionario personal', dictWords:'Palabras guardadas', addWord:'Añadir palabra', addWordPh:'Nueva palabra …', noDictWords:'No hay palabras en el diccionario personal', edit:'Editar', wordExists:'La palabra ya existe',
@@ -783,7 +798,12 @@ const TR = {
   startTr:'Çevirmeni aç', startEd:'Metin düzenleyiciyi aç', startLast:'Son kullanılanı aç', wsTr:'Çevirmen', wsEd:'Editör', wsStudy:'Öğrenme',
   reset:'Sıfırla', resetAll:'Tümünü sıfırla', autoSys:'Otomatik (sistem)', autoO:'Otomatik', autoModel:'Otomatik', light:'Açık', dark:'Koyu',
   nllbH:'Çeviri modelleri', srvSetup:'Sunucuyu kur', mInst:'Yüklü', mNot:'Yüklü değil', mLoad:p => `İndiriliyor … %${p}`, mErr:e => `Hata: ${e}`, bDl:'İndir', bDel:'Sil', bBusy:'İndiriliyor …',
-  serverDown:'Çeviri sunucusuna ulaşılamıyor. Kurulum sihirbazı ile kurulur ve uygulamayla birlikte başlar.',
+  serverDown:'Çeviri sunucusuna ulaşılamıyor. İlk açılışta uygulamayla birlikte kurulur ve uygulamayla başlar.',
+  setupH:'Kurulum',
+  setupIntro:'Eksik programlar ve modeller şimdi kuruluyor: Ollama, dil modelleri ve Python ortamı. Birkaç dakika sürer; ilerleme burada görünür.',
+  setupRun:'Kur', setupLater:'Sonra', setupWorking:'Kurulum sürüyor …',
+  setupDoneMsg:'Tamam. Uygulama kuruldu.',
+  setupFailMsg:'Kurulum tamamlanmadı: ',
   confBig:(id, gb) => `${id} boyutu ${gb} GB ve çok bellek gerektirir. Yine de indirilsin mi?`, confDel:id => `${id} gerçekten silinsin mi? Daha sonra tekrar indirebilirsiniz.`,
   stopTr:'Durdur', stopped:'Çeviri durduruldu', on:'Açık', off:'Kapalı', s_bootModel:'Başlangıçta son kullanılan modeli ön yükle', s_profanity:'Küfür filtresini etkinleştir', s_profanityStyle:'Küfürlerin değiştirilmesi', s_autoCopy:'Çıktıyı otomatik kopyala', s_autoCopyTyped:'Çıktıyı yalnızca yazılan metinde kopyala', o_stars:'Yıldızlar (****)', o_symbols:'Semboller (@#$%&!)', s_mdMode:'Editörde dinamik Markdown', s_spellAnim:'Yazım dalgalarını canlandır',
   personalDict:'Kişisel sözlük', dictWords:'Kayıtlı kelimeler', addWord:'Kelime ekle', addWordPh:'Yeni kelime yazın …', noDictWords:'Kişisel sözlükte kayıtlı kelime yok', edit:'Düzenle', wordExists:'Kelime zaten mevcut',
@@ -946,7 +966,12 @@ const AR = {
   startTr:'فتح المترجم', startEd:'فتح المحرر', startLast:'فتح آخر مستخدم', wsTr:'المترجم', wsEd:'المحرر', wsStudy:'التعلّم',
   reset:'إعادة تعيين', resetAll:'إعادة تعيين الكل', autoSys:'تلقائي (النظام)', autoO:'تلقائي', autoModel:'تلقائي', light:'فاتح', dark:'داكن',
   nllbH:'نماذج الترجمة', srvSetup:'إعداد الخادم', mInst:'مثبت', mNot:'غير مثبت', mLoad:p => `جاري التنزيل … ${p} %`, mErr:e => `خطأ: ${e}`, bDl:'تنزيل', bDel:'حذف', bBusy:'جاري التنزيل …',
-  serverDown:'خادم الترجمة غير متاح. يتم تثبيته عبر المعالج ويعمل مع التطبيق.',
+  serverDown:'خادم الترجمة غير متاح. يتم إعداده عند أول تشغيل مع التطبيق ويعمل معه.',
+  setupH:'الإعداد',
+  setupIntro:'يتم الآن إعداد البرامج والنماذج الناقصة: Ollama ونماذج اللغة وبيئة Python. يستغرق ذلك بضع دقائق، ويظهر التقدم هنا.',
+  setupRun:'إعداد', setupLater:'لاحقاً', setupWorking:'جارٍ الإعداد …',
+  setupDoneMsg:'تم. التطبيق مُعد.',
+  setupFailMsg:'لم يكتمل الإعداد: ',
   confBig:(id, gb) => `حجم ${id} هو ${gb} غيغابايت ويتطلب ذاكرة ووقت. هل تريد التنزيل؟`, confDel:id => `هل تريد حقاً حذف ${id}؟ يمكنك تنزيله لاحقاً.`,
   stopTr:'إيقاف', stopped:'تم إيقاف الترجمة', on:'مفعّل', off:'معطّل', s_bootModel:'تحميل النموذج مسبقاً عند البدء', s_profanity:'فلتر الكلمات البذيئة', s_profanityStyle:'استبدال الكلمات البذيئة', s_autoCopy:'نسخ الناتج تلقائياً', s_autoCopyTyped:'نسخ الناتج فقط عند الكتابة يدوياً', o_stars:'نجوم (****)', o_symbols:'رموز (@#$%&!)', s_mdMode:'ماركداون ديناميكي في المحرر', s_spellAnim:'تحريك موجات التدقيق الإملائي',
   personalDict:'القاموس الشخصي', dictWords:'الكلمات المحفوظة', addWord:'إضافة كلمة', addWordPh:'اكتب كلمة جديدة …', noDictWords:'لا توجد كلمات في القاموس الشخصي', edit:'تعديل', wordExists:'الكلمة موجودة بالفعل',
@@ -2854,4 +2879,70 @@ applyTheme(); applyI18n(); upd(); drawStyles(); drawGloss(); drawHist(); applyDi
   document.addEventListener('keydown', hide, true);
   window.addEventListener('blur', hide);
   window.addEventListener('resize', hide);
+})();
+
+// ---------- Einrichtung beim ersten Start ----------
+// Die Setup-EXE bringt install.ps1 mit; der Hauptprozess startet es ohne
+// Fenster, und die Zeilen laufen hier mit. Damit gibt es einen Einstieg:
+// installieren, App starten, Einrichtung annehmen - keine zweite Datei.
+let setupBusy = false;
+function setupLine(kind, text) {
+  const box = $('#setupLines'); if (!box || !text) return;
+  const row = document.createElement('div');
+  row.className = 'sl' + (kind === 'step' ? ' step' : kind === 'err' ? ' err' : '');
+  row.textContent = text;
+  box.append(row);
+  box.scrollTop = box.scrollHeight;
+}
+function openSetup() {
+  const d = $('#setupDlg'); if (!d || d.open) return;
+  const lines = $('#setupLines'); if (lines) lines.textContent = '';
+  const msg = $('#setupMsg'); if (msg) { msg.className = 'vmsg hidden'; msg.textContent = ''; }
+  const go = $('#setupGo'); if (go) { go.disabled = false; go.textContent = t('setupRun'); go.classList.remove('hidden'); }
+  const later = $('#setupLater'); if (later) { later.disabled = false; later.textContent = t('setupLater'); }
+  d.showModal();
+}
+async function runSetupNow() {
+  if (setupBusy || !(window.api && window.api.setupRun)) return;
+  setupBusy = true;
+  const go = $('#setupGo'), later = $('#setupLater'), bar = $('#setupBar'), msg = $('#setupMsg');
+  go.disabled = true; later.disabled = true; go.textContent = t('setupWorking');
+  bar.classList.remove('hidden');
+  msg.className = 'vmsg hidden'; msg.textContent = '';
+  const off = window.api.onSetupLine ? window.api.onSetupLine(d => setupLine(d && d.kind, d && d.text)) : null;
+  let res = null;
+  try { res = await window.api.setupRun(); } catch {}
+  if (typeof off === 'function') off();
+  setupBusy = false;
+  bar.classList.add('hidden');
+  go.disabled = false; later.disabled = false; go.textContent = t('setupRun');
+  msg.classList.remove('hidden');
+  if (res && res.ok) {
+    msg.className = 'vmsg okmsg'; msg.textContent = t('setupDoneMsg');
+    go.classList.add('hidden');
+    try { loadModels(); } catch {}
+    try { if (typeof loadNllb === 'function') loadNllb(); } catch {}
+  } else {
+    msg.className = 'vmsg'; msg.textContent = t('setupFailMsg') + ((res && res.error) || '');
+  }
+}
+function setupDismiss() {
+  if (setupBusy) return;
+  try { window.api.setupSkip(); } catch {}
+  const d = $('#setupDlg'); if (d) d.close();
+}
+(function setupInit() {
+  const go = $('#setupGo'), later = $('#setupLater'), x = $('#setupX');
+  if (go) go.addEventListener('click', runSetupNow);
+  if (later) later.addEventListener('click', setupDismiss);
+  if (x) x.addEventListener('click', setupDismiss);
+  const ask = async () => {
+    try {
+      if (!(window.api && window.api.setupNeeded)) return;
+      const r = await window.api.setupNeeded();
+      if (r && r.needed) openSetup();
+    } catch {}
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ask);
+  else ask();
 })();

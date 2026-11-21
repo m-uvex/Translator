@@ -27,6 +27,12 @@ contextBridge.exposeInMainWorld('api', {
   // zusammen mit einem Modell-Download). Liefert {ok, error?}.
   nllbSetup: () => ipcRenderer.invoke('nllb:setup'),
   onNllbSetup: cb => { const f = (_e, d) => cb(d); ipcRenderer.on('nllb:setup', f); return () => ipcRenderer.removeListener('nllb:setup', f); },
+  // Einrichtung beim ersten Start: install.ps1 steckt in der Setup-EXE und
+  // laeuft hier ohne eigenes Fenster; jede Zeile kommt ueber onSetupLine an.
+  setupNeeded: () => ipcRenderer.invoke('setup:needed'),
+  setupRun: () => ipcRenderer.invoke('setup:run'),
+  setupSkip: () => ipcRenderer.invoke('setup:skip'),
+  onSetupLine: cb => { const f = (_e, d) => cb(d); ipcRenderer.on('setup:line', f); return () => ipcRenderer.removeListener('setup:line', f); },
   // Dieselbe Meldung fuer Ollama: der Hauptprozess prueft beim Hochfahren die
   // eingestellte Adresse und startet nur einen lokalen Server.
   ollamaUrl: u => ipcRenderer.send('ollama:url', u),

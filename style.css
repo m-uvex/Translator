@@ -593,6 +593,18 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 /* Abstand zwischen letzter Einstellung und dem Knopf "Alles zuruecksetzen":
    ohne ihn klebte der Knopf mit 0 px an der Notiz unter NLLB-200. */
 #settings #setBody + .dh{margin-top:16px}
+/* Einrichtung beim ersten Start: Fortschritt laeuft hier mit, damit die App
+   der einzige Einstieg bleibt (kein zweites Fenster, keine Batch-Datei). */
+#setupDlg{width:min(620px,94vw)}
+.setupbar{height:6px;border-radius:3px;background:var(--soft);overflow:hidden;margin:14px 0}
+.setupbar .fill{height:100%;width:40%;background:var(--accent);animation:setupmove 1.2s linear infinite}
+@keyframes setupmove{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
+.setuplines{margin:10px 0;max-height:32vh;overflow:auto;font-size:12px;line-height:1.5}
+.setuplines .sl{white-space:pre-wrap;color:var(--muted)}
+.setuplines .sl.step{color:var(--text)}
+.setuplines .sl.err{color:#d9534f}
+.setupacts{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+#setupMsg.okmsg{color:var(--accent)}
 /* Textmarker und Schriftfarbe: die aktive Farbe steht als schmaler Balken unten
    im Werkzeugknopf, die Palette ist ein 4-mal-3-Raster aus Kreisen. Der
    gewaehlte Kreis traegt zwei Ringe (Karte + Textfarbe), damit die Auswahl in
