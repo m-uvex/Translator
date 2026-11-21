@@ -2712,7 +2712,7 @@ async function showDictManager() {
         <div style="display:flex;gap:2px">
           <button class="ib" id="dictExport" title="${t('dictExport')}">${ic('upload', 16)}</button>
           <button class="ib" id="dictImport" title="${t('dictImport')}">${ic('download', 16)}</button>
-          <button class="ib" id="dictClose" data-i="x"></button>
+          <button class="ib" id="dictClose" data-i="x" title="${t('cancel')}"></button>
         </div>
       </div>
       <div class="dict-add">

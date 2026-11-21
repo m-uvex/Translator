@@ -2777,11 +2777,24 @@ applyTheme(); applyI18n(); upd(); drawStyles(); drawGloss(); drawHist(); applyDi
   tip.id = 'ttip'; tip.setAttribute('role', 'tooltip');
   document.body.append(tip);
 
+  // Ohne title hat ein reiner Icon-Knopf keinen zugaenglichen Namen mehr: der
+  // System-Tooltip war dort die letzte Textquelle. Der Hinweistext ist genau
+  // die Aufgabe des Knopfs und wird deshalb zum aria-label - aber nur, wenn
+  // das Element nicht schon anders heisst (sichtbarer Text, aria-label,
+  // aria-labelledby). Ein eigenes gesetztes Label wird mitgepflegt, damit ein
+  // Sprachwechsel oder ein wechselnder Text (Fensterknopf) nicht veraltet.
+  const nameIt = (el, text) => {
+    const spoken = el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby') || !!(el.textContent || '').trim();
+    if (spoken && el.dataset.a11y !== '1') return;
+    if (text) { el.setAttribute('aria-label', text); el.dataset.a11y = '1'; }
+    else if (el.dataset.a11y === '1') { el.removeAttribute('aria-label'); delete el.dataset.a11y; }
+  };
   const adopt = el => {
     if (!el || el.nodeType !== 1 || !el.hasAttribute('title')) return;
     const text = el.getAttribute('title');
     el.removeAttribute('title');
-    if (text && text.trim()) el.dataset.tip = text; else delete el.dataset.tip;
+    if (text && text.trim()) { el.dataset.tip = text; nameIt(el, text.trim()); }
+    else { delete el.dataset.tip; nameIt(el, ''); }
   };
   const adoptTree = root => {
     if (!root || root.nodeType !== 1) return;

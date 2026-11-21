@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 21. November 2026, App-Version 1.15.135 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 21. November 2026, App-Version 1.15.136 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2225,3 +2225,23 @@ Erhaltene Tags bekommen den Stil direkt (`p`, `td`-Inhalt), verflachte Tags (`di
 - **Bilddialog:** Ziel „Trotzdem exportieren“ (`#imgDlgGo`), `#ttip` haengt in `#imgDlg`, Text „Bild trotzdem exportieren“, Flaeche 165x30 px bei (721, 460) - sichtbar ueber dem unteren Rand des Dialogs. Die Knoepfe dieses Dialogs tragen keinen eigenen Tooltip; der Text wurde fuer die Messung gesetzt.
 
 Konsole in allen drei Faellen ohne Fehler. Ausserhalb von Dialogen bleibt das Verhalten unveraendert (Hinweis an `body`).
+
+## 161. Zugaengliche Namen fuer reine Icon-Knoepfe (1.15.136)
+
+**Gemeldet.** Seit die `title`-Attribute nach `data-tip` wandern (Abschnitt 151), hat ein reiner Icon-Knopf ohne `aria-label` keinen zugaenglichen Namen mehr - `title` war dort die letzte Textquelle.
+
+**Bewertung der Empfehlung.** Sie stimmt. Ein Name ist das, was ein Screenreader fuer den Knopf ansagt; `aria-label` setzt ihn direkt. `aria-describedby` waere hier falsch: es liefert eine zusaetzliche Beschreibung, keinen Namen - ein Knopf ohne Namen bliebe ohne Namen. Der Hinweistext beschreibt genau die Aufgabe des Knopfs („Kopieren“, „Minimieren“), deshalb ist er als Name richtig und nicht nur als Beschreibung.
+
+**Umsetzung.** Im Tooltip-Block (renderer.js) setzt `nameIt()` beim Uebernehmen des Titels zusaetzlich `aria-label`, aber nur wenn das Element nicht schon anders heisst: sichtbarer Text, vorhandenes `aria-label` oder `aria-labelledby` gewinnen. Ob der Name von uns stammt, merkt sich `data-a11y="1"`; dann wird er bei jedem neuen Titel mitgezogen (Sprachwechsel, wechselnder Fensterknopf) und bei leerem Text wieder entfernt. Der Beobachter laeuft wie bisher auch ueber neu eingehaengte Knoten, damit nachgezeichnete Dialoge ihre Namen bekommen.
+
+**Zusatz.** `#dictClose` im Woerterbuch-Dialog hatte weder Titel noch Namen (Altbestand, nicht Folge von Abschnitt 151). Er bekommt `title="${t('cancel')}"` wie die Nachbarknoepfe; damit hat er auch einen Tooltip und heisst „Abbrechen“.
+
+**Geprueft 1.15.136** im laufenden Fenster (Quelllauf, `--remote-debugging-port=9333`) ueber den echten Accessibility-Baum (`Accessibility.getPartialAXTree`, nicht nur Attribute), Skripte `.freebuff/a11y-probe.mjs` und `.freebuff/a11y-dict.mjs`:
+- Vorher: 117 Elemente mit `data-tip`, davon 21 mit Namen und 96 ohne; unter den Namenlosen 15 interaktive Knoepfe (`#winMin`, `#winMax`, `#winClose`, `#nvTr`, `#nvEd`, ...).
+- Nachher: 37 mit Namen, 80 ohne, davon **0 interaktive** - die restlichen Namenlosen sind reine Text- oder Icon-Flaechen ohne Knopfrolle (z. B. Abschnittsueberschriften).
+- Fensterknopf mit wechselndem Text: `#winMax` heisst „Maximieren“; nach echtem Klick „Wiederherstellen“ (Tooltip und `aria-label` mitgezogen); nach erneutem Klick wieder „Maximieren“.
+- Einstellungen geoeffnet: 28 Elemente mit `data-tip`, **0 ohne Namen**; die Zuruecksetzen-Knoepfe heissen „Zurücksetzen“.
+- Woerterbuch-Dialog: alle 5 Knoepfe benannt - `#dictExport` „Wörterbuch exportieren“, `#dictImport` „Wörterbuch importieren“, `#dictClose` „Abbrechen“, `#dictAddBtn` „Wort hinzufügen“ (aus sichtbarem Text), `#dictDoneBtn` „Schließen“ (sichtbarer Text).
+- Ganze Seite: 144 sichtbare Knoepfe, 0 ohne Namen; mit geoeffnetem Woerterbuch-Dialog 267 Knoepfe, vor der Ergänzung von `#dictClose` genau 1 ohne Namen, danach 0.
+
+**Grenzen.** (1) Nur Elemente, die einen Titel bekommen, erhalten den Namen auf diesem Weg; eine reine Icon-Flaeche ohne Titel bleibt unbenannt. (2) Ein Element mit sichtbarem Text behaelt diesen als Namen - der Tooltip ergaenzt dort nichts, damit der Name nicht doppelt vorgelesen wird. (3) `aria-label` ueberschreibt bei uns gesetzten Text weiterhin nur dann, wenn er von uns stammt (`data-a11y`); ein spaeter vom Code gesetztes eigenes `aria-label` bleibt unangetastet.
