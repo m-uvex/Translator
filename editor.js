@@ -1264,12 +1264,17 @@ function applyImgBox(wrap) {
     transform: 'rotate(' + rot + 'deg) scale(' + fx + ',' + fy + ')'
   });
   wrap.querySelectorAll('.hnd').forEach(h => {
-    const p = h.dataset.h;
+    const p = h.dataset.h, mid = p === 'w' || p === 'e';
+    // Seitliche Griffe nur, solange die Breite auch waagerecht liegt: bei
+    // 90/270 Grad liegt sie in der Senkrechten, dort uebernehmen die Ecken
+    // (sonst zoege ein waagerechter Griff an der sichtbaren Hoehe).
+    if (mid && q) { h.style.display = 'none'; return; }
+    h.style.display = '';
     h.style.left = (p.includes('w') ? -5 : bw - 5) + 'px';
-    h.style.top = (p.includes('n') ? -5 : bh - 5) + 'px';
+    h.style.top = (mid ? Math.round(bh / 2 - 5) : (p.includes('n') ? -5 : bh - 5)) + 'px';
     // Der Zeiger zeigt, wohin das Ziehen wirkt: bei 90/270 Grad aendert sich
     // die Breite in der Senkrechten, also ein senkrechter Doppelpfeil.
-    h.style.cursor = q ? 'ns-resize' : ((p === 'nw' || p === 'se') ? 'nwse-resize' : 'nesw-resize');
+    h.style.cursor = mid ? 'ew-resize' : (q ? 'ns-resize' : ((p === 'nw' || p === 'se') ? 'nwse-resize' : 'nesw-resize'));
   });
 }
 
@@ -1554,11 +1559,22 @@ function trackPointer(move, end) {
   document.addEventListener('pointercancel', cancel);
 }
 
-// Die vier Ziehpunkte; Groesse und Position setzt applyImgBox.
+// Die Ziehpunkte; Groesse und Position setzt applyImgBox. Die vier Ecken
+// ziehen an der Breite (die Hoehe folgt dem Seitenverhaeltnis), die beiden
+// seitlichen Griffe in der Mitte tun dasselbe, liegen aber auf der Hoehe des
+// Bildes und tragen den Hinweis „Waagerecht ziehen“ (Abschnitt 163).
 function addHandles(wrap) {
   ['nw','ne','sw','se'].forEach(p => {
     const h = document.createElement('span');
     h.className = 'hnd ' + p; h.dataset.h = p; wrap.append(h);
+  });
+  ['w','e'].forEach(p => {
+    const h = document.createElement('span');
+    h.className = 'hnd ' + p; h.dataset.h = p;
+    h.title = t('imgDragW');
+    // Reine Maushilfe: fuer Screenreader ist der Griff nichts.
+    h.setAttribute('aria-hidden', 'true');
+    wrap.append(h);
   });
 }
 
@@ -1584,6 +1600,9 @@ function bindImg(wrap) {
       const rot = (((+img.dataset.rot || 0) % 360) + 360) % 360, q = rot === 90 || rot === 270;
       const startW = +img.dataset.w || 240, x0 = ev.clientX, y0 = ev.clientY;
       const sx = h.dataset.h.includes('e') ? 1 : -1, sy = h.dataset.h.includes('s') ? 1 : -1;
+      // Seitliche Griffe messen nur waagerecht; sie erscheinen gar nicht, wenn
+      // die Breite gedreht in der Senkrechten liegt.
+      const side = h.dataset.h === 'w' || h.dataset.h === 'e';
       // Grenze einmal beim Anfassen festhalten: Die Innenbreite der Zelle waere
       // waehrend des Zugs keine Grenze, sondern wuerde mit dem Bild mitwachsen
       // (die Tabelle verteilt die Breite neu und laeuft dann ueber den
@@ -1594,7 +1613,7 @@ function bindImg(wrap) {
       const cap = Math.min(3000, Math.max(startW, room === Infinity ? 3000 : (q ? Math.round(room / r2) : room)));
       let w = startW;
       trackPointer(e2 => {
-        const d = q ? sy * (e2.clientY - y0) : sx * (e2.clientX - x0);
+        const d = (q && !side) ? sy * (e2.clientY - y0) : sx * (e2.clientX - x0);
         const nw = Math.max(48, Math.min(cap, Math.round(startW + d)));
         if (nw === w) return;
         w = nw;

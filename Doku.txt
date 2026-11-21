@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 21. November 2026, App-Version 1.15.137 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 21. November 2026, App-Version 1.15.138 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2262,3 +2262,21 @@ Konsole in allen drei Faellen ohne Fehler. Ausserhalb von Dialogen bleibt das Ve
 - Nach einem neuen Schritt („Waagerecht spiegeln“, `scale(-1, 1)`) bewirkt **Strg+Y** nichts mehr: `scale(-1, 1)` bleibt, die Vorwaertskette ist wie vorgesehen abgeschnitten.
 
 Konsole ohne Fehler. Text-Rueckgaengig ist unveraendert (Abschnitt 154), weil derselbe Stapel benutzt wird.
+
+## 163. Seitliche Bildgriffe fuer die Breite (1.15.138)
+
+**Gemeldet.** Am Bild sollen seitliche Griffe sitzen, die nur die Breite aendern und den Hinweis „Waagerecht ziehen“ tragen; das Ziehen ist mit echten Mausereignissen zu pruefen.
+
+**Stand vorher.** `addHandles()` legte nur die vier Ecken an (`nw`,`ne`,`sw`,`se`); alle aenderten schon bloss die Breite, die Hoehe folgt dem Seitenverhaeltnis (`applyImgBox`). Seitliche Griffe fehlten, und die Ecken tragen keinen Hinweis.
+
+**Behoben.** `addHandles()` haengt zwei weitere Ziehpunkte an (`w`,`e`), mit `title` aus dem neuen Text `imgDragW` („Waagerecht ziehen“) in allen sechs Sprachen; `aria-hidden` ist gesetzt, weil der Griff eine reine Maushilfe ist. `applyImgBox()` setzt sie auf halbe Hoehe (`bh/2 - 5`), Zeiger `ew-resize`, und blendet sie bei 90/270 Grad aus: dann liegt die Breite in der Senkrechten, dort ziehen die Ecken (`ns-resize`). `bindImg()` rechnet bei den seitlichen Griffen nur mit der waagerechten Bewegung (`sx * dx`), senkrechtes Ziehen aendert nichts.
+
+**Geprueft 1.15.138** im laufenden Fenster (Quelllauf, `--remote-debugging-port=9333`, eigenes Profil, Skript `.freebuff/side-lab.mjs`), Bild 480 px per Dateiauswahl eingefuegt, alles mit echten Maus-/Tastaturereignissen, gemessen am DOM:
+- Ausgewaehltes Bild: **6 Ziehpunkte**; die seitlichen liegen bei `y=502` in einem Rahmen von 262 bis 742 (genau halbe Hoehe), `10x10`, Zeiger `ew-resize`, `data-tip` und `title` „Waagerecht ziehen“.
+- Zeiger auf den rechten Griff: `#ttip` sichtbar (`opacity 1`) mit Text „Waagerecht ziehen“, 129x30 px.
+- Rechten Griff 80 px nach rechts gezogen: **`w=480 -> 560`**, Rahmen **560x560** - nur die Breite, die Hoehe folgt dem Seitenverhaeltnis.
+- Nur senkrecht gezogen (0/70 px): **`w=560` bleibt**.
+- **Strg+Z** -> `w=480`, **Strg+Y** -> `w=560`: der Griffschritt ist ein Schritt im Stapel (Abschnitt 162).
+- Nach „Nach rechts drehen“ (`rot=90`) sind beide seitlichen Griffe `display:none`, die vier Ecken stehen auf `ns-resize`; **Strg+Z** bringt die seitlichen Griffe zurueck (`y=542` bei 560 px Rahmen).
+
+Konsole ohne Fehler. Die Ecken sind unveraendert; Bilder in Tabellenzellen behalten ihre Breitengrenze (`cellRoom`), weil beide Griffarten dieselbe Rechnung benutzen.
