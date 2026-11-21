@@ -1560,6 +1560,17 @@ function addHandles(wrap) {
   });
 }
 
+// Innenbreite der Tabellenzelle, in der ein Bild steht (ohne Polster). Ausserhalb
+// einer Zelle gibt es keine Zellgrenze, dann gilt nur die allgemeine Obergrenze.
+// Ein Bild in einer Zelle darf nicht breiter werden als die Zelle, sonst zieht
+// die ganze Tabelle ueber den Seitenrand hinaus.
+function cellRoom(wrap) {
+  const cell = wrap.closest && wrap.closest('td,th');
+  if (!cell || !page.contains(cell)) return Infinity;
+  const cs = getComputedStyle(cell);
+  const room = Math.floor(cell.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight));
+  return room > 0 ? room : Infinity;
+}
 // Ziehen an einer Ecke aendert die Breite; die Hoehe folgt aus dem Seiten-
 // verhaeltnis. Bei 90/270 Grad liegt die sichtbare Breite in der Senkrechten,
 // deshalb wird dort die senkrechte Bewegung genommen.
@@ -1571,10 +1582,18 @@ function bindImg(wrap) {
       const rot = (((+img.dataset.rot || 0) % 360) + 360) % 360, q = rot === 90 || rot === 270;
       const startW = +img.dataset.w || 240, x0 = ev.clientX, y0 = ev.clientY;
       const sx = h.dataset.h.includes('e') ? 1 : -1, sy = h.dataset.h.includes('s') ? 1 : -1;
+      // Grenze einmal beim Anfassen festhalten: Die Innenbreite der Zelle waere
+      // waehrend des Zugs keine Grenze, sondern wuerde mit dem Bild mitwachsen
+      // (die Tabelle verteilt die Breite neu und laeuft dann ueber den
+      // Seitenrand). Bei 90/270 Grad ist die sichtbare Breite die Hoehe des
+      // Bildes, deshalb wird der Platz durch das Seitenverhaeltnis geteilt.
+      const room = cellRoom(wrap);
+      const r2 = Math.max(0.05, +img.dataset.r || 0.75);
+      const cap = Math.min(3000, Math.max(startW, room === Infinity ? 3000 : (q ? Math.round(room / r2) : room)));
       let w = startW;
       trackPointer(e2 => {
         const d = q ? sy * (e2.clientY - y0) : sx * (e2.clientX - x0);
-        const nw = Math.max(48, Math.min(3000, Math.round(startW + d)));
+        const nw = Math.max(48, Math.min(cap, Math.round(startW + d)));
         if (nw === w) return;
         w = nw;
         img.dataset.w = String(nw);
