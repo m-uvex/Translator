@@ -2937,6 +2937,42 @@ const PASTE_KEEP = { b:'strong', strong:'strong', i:'em', em:'em', u:'u', s:'s',
 // div und span werden zu ihrem Inhalt verflacht: Word packt alles in
 // div.WordSection1, und ein Rahmen-Div wuerde die Tabelle in einen Block sperren.
 const PASTE_SKIP = /^(script|style|meta|link|title|head|iframe|object|embed|xml|o:p|v:.*|w:.*)$/i;
+// Word schreibt Schriftgroesse, Textfarbe und Ausrichtung als Inline-Stile, oft
+// neben mso-* Angaben. Uebernommen wird daraus nur, was das Dokument selbst
+// traegt: Groesse, Text- und Hintergrundfarbe sowie die Ausrichtung (Abschnitt
+// 159). Alles andere (Zeilenhoehe, Einzuege, Schriftschnitte in mso-Form) faellt
+// weg, damit kein Office-Ballast in der Seite landet.
+const PT_PX = 96 / 72;
+function pastePx(v) {
+  const m = /^\s*(-?[\d.]+)\s*(pt|px|em|rem|%)\s*$/i.exec(v || '');
+  if (!m) return '';
+  const n = parseFloat(m[1]);
+  if (!isFinite(n) || n <= 0) return '';
+  const u = m[2].toLowerCase();
+  if (u === 'pt') return Math.round(n * PT_PX) + 'px';
+  if (u === 'px') return Math.round(n) + 'px';
+  return Math.round(n * 100) / 100 + u;
+}
+function pasteColor(v) {
+  const c = String(v || '').trim();
+  if (!c || /^inherit$/i.test(c)) return '';
+  // Nur Farben, die der Browser kennt; damit fallen url() und Ausdruecke raus.
+  try { return CSS.supports('color', c) ? c : ''; } catch { return ''; }
+}
+const PASTE_ALIGN = /^(left|center|right|justify|start|end)$/i;
+function pasteStyle(el) {
+  const st = el.style || {};
+  const out = [];
+  const size = pastePx(st.fontSize || '');
+  if (size) out.push('font-size:' + size);
+  const fg = pasteColor(st.color) || (el.tagName === 'FONT' ? pasteColor(el.getAttribute('color')) : '');
+  if (fg) out.push('color:' + fg);
+  const bg = pasteColor(st.backgroundColor) || pasteColor(st.background);
+  if (bg) out.push('background-color:' + bg);
+  const al = (st.textAlign || '').toLowerCase();
+  if (PASTE_ALIGN.test(al)) out.push('text-align:' + (al === 'start' ? 'left' : al === 'end' ? 'right' : al));
+  return out.join(';');
+}
 // Kopierten Inhalt in saubere Knoten umsetzen: erlaubte Tags bleiben, Format-
 // und Office-Ballast faellt weg, Tabellen werden zu echten Tabellen.
 function pasteCopy(node, out) {
@@ -2956,10 +2992,27 @@ function pasteCopy(node, out) {
       return;
     }
     const keep = PASTE_KEEP[tag];
-    if (!keep) { pasteCopy(n, out); return; }
+    if (!keep) {
+      // div, span und font werden verflacht; ihre Schriftangaben bleiben als
+      // span-Auszeichnung erhalten, damit Farbe und Groesse nicht verloren
+      // gehen. Auf Seitenebene (Fragment) gibt es keinen Inline-Kontext, dort
+      // faellt der Stil wie bisher weg.
+      const st = pasteStyle(n);
+      if (st && out.nodeType === 1) {
+        const span = document.createElement('span');
+        span.setAttribute('style', st);
+        pasteCopy(n, span);
+        if (span.firstChild) out.append(span);
+        return;
+      }
+      pasteCopy(n, out);
+      return;
+    }
     // Leere Fuellabsaetze aus Word nicht uebernehmen.
     if (keep === 'p' && !n.textContent.trim() && !n.querySelector('img,table')) return;
     const el = document.createElement(keep);
+    const st = pasteStyle(n);
+    if (st) el.setAttribute('style', st);
     if (keep === 'a') { const href = n.getAttribute('href') || ''; if (/^(https?:|mailto:)/i.test(href)) el.setAttribute('href', href); }
     pasteCopy(n, el);
     out.append(el);
@@ -2977,6 +3030,11 @@ function pasteTable(src) {
     [...tr.children].forEach(c => {
       if (!/^(td|th)$/i.test(c.tagName)) return;
       const cell = document.createElement(c.tagName.toLowerCase() === 'th' ? 'th' : 'td');
+      // Zellschattierung uebernehmen, sonst nichts: Abstaende und Rahmen der
+      // Zellen kommen aus dem Stylesheet der Seite (Abschnitt 159).
+      const cs = c.style || {};
+      const cbg = pasteColor(cs.backgroundColor) || pasteColor(cs.background);
+      if (cbg) cell.setAttribute('style', 'background-color:' + cbg);
       pasteCopy(c, cell);
       if (!cell.firstChild) cell.append(document.createElement('br'));
       row.append(cell);
