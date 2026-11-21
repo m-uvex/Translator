@@ -746,3 +746,11 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 body.tblresizing{cursor:col-resize}
 body.tblresizing #page{user-select:none}
 @media print{#page table td,#page table th{border-color:#4a4a4a;padding:5px 8px}#page table th,#page table tr.hdr td{background:#eee}#page table tr{break-inside:avoid;page-break-inside:avoid}}
+
+/* Eigener Tooltip statt des eckigen Systemfensters. Chromium zeichnet das
+   title-Attribut selbst und laesst sich nicht stylen; deshalb wandert der Text
+   in data-tip und wird hier als runde Flaeche gezeigt (wie in der Rust-Fassung).
+   Farbe und Rand kommen aus dem Theme, damit hell und dunkel zusammenpassen. */
+#ttip{position:fixed;left:0;top:0;z-index:90;max-width:min(360px,80vw);padding:5px 11px 6px;border:1px solid var(--line);border-radius:10px;background:var(--soft);color:var(--text);font-size:12.5px;line-height:1.4;white-space:pre-line;pointer-events:none;opacity:0;box-shadow:0 6px 18px #00000024;transition:opacity .12s ease}
+#ttip.on{opacity:1}
+@media print{#ttip{display:none!important}}

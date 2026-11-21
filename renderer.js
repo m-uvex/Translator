@@ -2762,3 +2762,75 @@ window.trIsStudyless = () => isMt() || isTg(S.model);
 window.trStatus = status;
 
 applyTheme(); applyI18n(); upd(); drawStyles(); drawGloss(); drawHist(); applyDiag(); updModelBtn(); loadModels();
+// ---------- Eigene Tooltips ----------
+// Chromium zeichnet ein title-Attribut als eckiges Systemfenster, das sich
+// nicht gestalten laesst. Die App zeigt den Text deshalb selbst: als runde
+// Flaeche in den Theme-Farben, wie es die stillgelegte Rust-Fassung tat.
+// Dafuer wandert jedes title-Attribut sofort nach data-tip; ohne title entsteht
+// der native Tooltip gar nicht. Der Beobachter faengt auch spaeter gesetzte
+// Texte ab (applyI18n, wechselnde Beschriftungen wie Fensterknopf oder
+// "Alle auswaehlen"), ohne dass die aufrufenden Stellen etwas davon wissen.
+(function tooltips() {
+  const HOLD = 400;              // Wartezeit wie beim System-Tooltip
+  const GAP = 8;                 // Mindestabstand zum Fensterrand
+  const tip = document.createElement('div');
+  tip.id = 'ttip'; tip.setAttribute('role', 'tooltip');
+  document.body.append(tip);
+
+  const adopt = el => {
+    if (!el || el.nodeType !== 1 || !el.hasAttribute('title')) return;
+    const text = el.getAttribute('title');
+    el.removeAttribute('title');
+    if (text && text.trim()) el.dataset.tip = text; else delete el.dataset.tip;
+  };
+  const adoptTree = root => {
+    if (!root || root.nodeType !== 1) return;
+    adopt(root);
+    root.querySelectorAll('[title]').forEach(adopt);
+  };
+  document.querySelectorAll('[title]').forEach(adopt);
+  new MutationObserver(list => list.forEach(m => {
+    if (m.type === 'attributes') adopt(m.target);
+    else m.addedNodes.forEach(adoptTree);
+  })).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['title'] });
+
+  let host = null, wait = 0;
+  const hide = () => {
+    clearTimeout(wait); wait = 0; host = null;
+    tip.classList.remove('on');
+  };
+  const place = () => {
+    if (!host || !host.isConnected) return hide();
+    const text = host.dataset.tip;
+    if (!text) return hide();
+    tip.textContent = text;
+    tip.style.left = '0px'; tip.style.top = '0px';
+    tip.classList.add('on');
+    // Erst messen, dann setzen: die Breite haengt am Text. Unter dem Element
+    // ist der Regelfall; fehlt dort Platz, klappt der Tooltip darueber.
+    const r = host.getBoundingClientRect(), b = tip.getBoundingClientRect();
+    let left = r.left + r.width / 2 - b.width / 2;
+    left = Math.max(GAP, Math.min(left, innerWidth - b.width - GAP));
+    let top = r.bottom + 6;
+    if (top + b.height > innerHeight - GAP) top = Math.max(GAP, r.top - b.height - 6);
+    tip.style.left = Math.round(left) + 'px';
+    tip.style.top = Math.round(top) + 'px';
+  };
+  // Delegiert: ein Listener fuer alle Elemente, auch fuer neu gezeichnete.
+  document.addEventListener('mouseover', e => {
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    if (el === host) return;
+    hide();
+    if (!el) return;
+    host = el; wait = setTimeout(place, HOLD);
+  });
+  document.addEventListener('mouseleave', hide);
+  // Beim Klicken, Scrollen und Tippen verschwindet der Hinweis sofort; er
+  // gehoert zur Stelle unter dem Zeiger und waere danach falsch verortet.
+  document.addEventListener('mousedown', hide, true);
+  document.addEventListener('wheel', hide, { capture: true, passive: true });
+  document.addEventListener('scroll', hide, true);
+  document.addEventListener('keydown', hide, true);
+  window.addEventListener('blur', hide);
+  window.addEventListener('resize', hide);
+})();
