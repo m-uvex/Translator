@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 21. November 2026, App-Version 1.15.140 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 21. November 2026, App-Version 1.15.141 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2306,3 +2306,16 @@ Konsole ohne Fehler. Die Ecken sind unveraendert; Bilder in Tabellenzellen behal
 - Fuellabsatz mit `&nbsp;` aus Word wurde wie bisher verworfen. Konsole ohne Fehler.
 
 **Grenzen.** `colspan`/`rowspan` werden weiterhin nicht uebernommen (unveraendert seit Abschnitt 159), und Regeln aus verlinkten Blättern oder mit komplexen Waehlern gelten nicht - Word schreibt Schriftangaben aber in einfacher Form.
+
+## 166. Word-Absaetze ohne Tabelle behalten ihre Schriftangaben (1.15.141)
+
+**Gemeldet.** Beim Einfuegen reiner Word-Absaetze (ohne Tabelle) kam weiterhin nur reiner Text an; die Angaben aus dem `<style>`-Block sollen auch dort uebernommen werden, ohne Office-Ballast.
+
+**Ursache.** Der Einfuege-Horchposten nahm den HTML-Weg nur bei `<table>` im kopierten HTML. Alles andere ging als reiner Text durch `insertText` - damit waren Absatzformatierung, Groesse und Farbe weg, obwohl `pasteCopy`/`pasteStyle` sie seit Abschnitt 165 koennten.
+
+**Behoben.** Der HTML-Weg greift jetzt auch ohne Tabelle, wenn das HTML von Word kommt (`urn:schemas-microsoft-com:office`, `Microsoft Word` oder eine Klasse `Mso…`). Umgesetzt wird nur, wenn dabei Bloecke entstehen (Absatz, Ueberschrift, Liste, Tabelle, Zitat, `pre`, `hr`) und Text vorhanden ist; eine blosse Zeile ohne Absatz bleibt eine Text-Einfuegung an der Cursorstelle. HTML anderer Programme bleibt beim reinen Text, damit dort nichts Unerwartetes in der Seite landet.
+
+**Geprueft 1.15.141** im laufenden Fenster (Quelllauf, `--remote-debugging-port=9333`): Word-Seite mit vier Absaetzen (`p.MsoNormal` mit `font-size:19.0pt; color:#C00000; text-align:center`, `p.MsoHeading1` mit `24.0pt`/`#2F5496`, ein `span.Klein` mit `9.0pt`/`#008000`, ein Absatz mit Inline-Angaben, dazu ein Füllabsatz mit `&nbsp;`) per PowerShell als CF_HTML in die Zwischenablage, dann echtes **Strg+V**:
+- Vier Bloecke angekommen: `25px` / `rgb(192, 0, 0)` / `center` (nur Regel), `25px` mit `span` `12px` / `rgb(0, 128, 0)`, „Ueberschrift“ `32px` / `rgb(47, 84, 150)` (nur Regel), „Dritter Absatz“ `25px` aus der Regel mit `rgb(31, 78, 121)` und `left` aus dem Inline-Stil (inline gewinnt).
+- Kein `<style>` in der Seite (`0`), keine Office-Klassennamen (`0`), Fuellabsatz verworfen, Konsole ohne Fehler.
+- Gegenprobe in frischem Profil mit fremdem HTML (`<div>Fremder <b>fetter</b> Text ohne Word</div>` samt eigenem `<style>`): angekommen ist reiner Text `<p>Fremder fetter Text ohne Word</p>` - kein `<b>`, kein `<div>`, kein Stil, keine Farbangabe aus dem fremden Blatt.

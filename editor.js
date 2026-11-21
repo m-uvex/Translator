@@ -3231,16 +3231,25 @@ page.addEventListener('paste', e => {
   if (files.length) { e.preventDefault(); addImageFiles(files); return; }
   const html = dt ? dt.getData('text/html') : '';
   const text = dt ? dt.getData('text/plain') : '';
-  // Tabelle aus Word: nur als HTML vorhanden - als reiner Text blieben nur die
-  // Zellinhalte untereinander uebrig.
-  if (html && /<table[\s>]/i.test(html)) {
+  // Aus Word kommt der Inhalt als HTML: eine Tabelle gibt es nur dort (als
+  // reiner Text blieben nur die Zellinhalte untereinander uebrig), und seit
+  // Abschnitt 165 stehen Schriftgroesse, Farbe und Ausrichtung oft nur im
+  // mitkopierten <style>-Block. Deshalb geht auch eine reine Absatz-Seite aus
+  // Word diesen Weg (Abschnitt 166); HTML anderer Programme bleibt beim reinen
+  // Text, damit dort nichts Unerwartetes in der Seite landet.
+  const word = /urn:schemas-microsoft-com:office|Microsoft Word|class=["']?Mso/i.test(html || '');
+  if (html && (/<table[\s>]/i.test(html) || word)) {
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const frag = document.createDocumentFragment();
     // Schriftangaben aus dem mitkopierten <style>-Block gelten fuer diesen
     // einen Einfuegevorgang (Abschnitt 165).
     PASTE_CSS = pasteCssGather(doc);
     try { pasteCopy(doc.body, frag); } finally { PASTE_CSS = null; }
-    if (frag.querySelector('table')) {
+    // Nur Bloecke einsetzen: eine reine Zeile ohne Absatz (etwa ein markiertes
+    // Wort) bleibt eine Text-Einfuegung an der Cursorstelle.
+    const blocky = !!frag.querySelector('table') ||
+      [...frag.children].some(el => /^(P|H[1-6]|UL|OL|BLOCKQUOTE|PRE|HR)$/.test(el.tagName));
+    if (blocky && frag.textContent.trim()) {
       e.preventDefault();
       pasteBlocks([...frag.childNodes]);
       return;
