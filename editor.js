@@ -3102,6 +3102,17 @@ function pasteTable(src) {
     [...tr.children].forEach(c => {
       if (!/^(td|th)$/i.test(c.tagName)) return;
       const cell = document.createElement(c.tagName.toLowerCase() === 'th' ? 'th' : 'td');
+      // Verbundene Zellen behalten ihre Ausdehnung: ohne colspan/rowspan wuerde
+      // aus einer verbundenen Zelle eine einzelne, und die Zeilen passten nicht
+      // mehr zusammen (Abschnitt 167). Grenzen nur gegen Unsinn in der
+      // Zwischenablage, nicht als Gestaltung.
+      const span = (name, max) => {
+        const v = Math.round(+c.getAttribute(name) || 1);
+        return v > 1 && v <= max ? v : 0;
+      };
+      const colSpan = span('colspan', 64), rowSpan = span('rowspan', 512);
+      if (colSpan) cell.setAttribute('colspan', String(colSpan));
+      if (rowSpan) cell.setAttribute('rowspan', String(rowSpan));
       // Zellschattierung uebernehmen, sonst nichts: Abstaende und Rahmen der
       // Zellen kommen aus dem Stylesheet der Seite (Abschnitt 159).
       const cs = c.style || {};

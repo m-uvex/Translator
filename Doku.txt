@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 21. November 2026, App-Version 1.15.141 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 21. November 2026, App-Version 1.15.142 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2319,3 +2319,17 @@ Konsole ohne Fehler. Die Ecken sind unveraendert; Bilder in Tabellenzellen behal
 - Vier Bloecke angekommen: `25px` / `rgb(192, 0, 0)` / `center` (nur Regel), `25px` mit `span` `12px` / `rgb(0, 128, 0)`, „Ueberschrift“ `32px` / `rgb(47, 84, 150)` (nur Regel), „Dritter Absatz“ `25px` aus der Regel mit `rgb(31, 78, 121)` und `left` aus dem Inline-Stil (inline gewinnt).
 - Kein `<style>` in der Seite (`0`), keine Office-Klassennamen (`0`), Fuellabsatz verworfen, Konsole ohne Fehler.
 - Gegenprobe in frischem Profil mit fremdem HTML (`<div>Fremder <b>fetter</b> Text ohne Word</div>` samt eigenem `<style>`): angekommen ist reiner Text `<p>Fremder fetter Text ohne Word</p>` - kein `<b>`, kein `<div>`, kein Stil, keine Farbangabe aus dem fremden Blatt.
+
+## 167. Verbundene Zellen beim Einfuegen einer Word-Tabelle (1.15.142)
+
+**Gemeldet.** Beim Einfuegen einer Word-Tabelle gingen `colspan` und `rowspan` verloren; verbundene Zellen wurden zu einzelnen Zellen.
+
+**Ursache.** `pasteTable()` legte fuer jede `td`/`th` eine neue Zelle an und uebernahm nur die Schattierung. Die Attribute `colspan`/`rowspan` der Quelle wurden nicht gelesen - aus einer ueber zwei Spalten verbundenen Zelle wurden zwei Zellen, und die Zeilen passten danach nicht mehr zueinander.
+
+**Behoben.** Die Zelle bekommt `colspan`/`rowspan` aus der Quelle, wenn der Wert groesser als 1 ist (Grenzen 64 bzw. 512 nur gegen Unsinn in der Zwischenablage, nicht als Gestaltung). Breiten, Rahmen und Abstaende kommen weiterhin aus dem Stylesheet der Seite, Office-Angaben werden nicht uebernommen.
+
+**Geprueft 1.15.142** im laufenden Fenster (Quelllauf, `--remote-debugging-port=9333`): Word-Tabelle 3x3 mit einer ueber zwei Spalten verbundenen Zelle und einer ueber zwei Zeilen verbundenen Zelle (schattiert) als CF_HTML in die Zwischenablage, echtes **Strg+V**, danach am DOM gemessen:
+- Zeile 1: **zwei** Zellen, erste mit `colspan="2"`, Breite **498 px** (333 + 164 der beiden Spalten), zweite 152 px.
+- Zeile 2: **drei** Zellen, erste mit `rowspan="2"`, Hoehe **75 px** fuer zwei Zeilen von je 38 px, Schattierung `rgb(255, 242, 204)` erhalten.
+- Zeile 3: **zwei** Zellen, beide beginnen erst hinter der verbundenen Zelle (`x=664` und `828`).
+- Tabelle `650x113 px`, `class="edtbl"`, kein `<style>` (`0`), keine Office-Namen (`0`), Konsole ohne Fehler.
