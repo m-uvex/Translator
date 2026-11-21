@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 21. November 2026, App-Version 1.15.136 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 21. November 2026, App-Version 1.15.137 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2245,3 +2245,20 @@ Konsole in allen drei Faellen ohne Fehler. Ausserhalb von Dialogen bleibt das Ve
 - Ganze Seite: 144 sichtbare Knoepfe, 0 ohne Namen; mit geoeffnetem Woerterbuch-Dialog 267 Knoepfe, vor der Ergänzung von `#dictClose` genau 1 ohne Namen, danach 0.
 
 **Grenzen.** (1) Nur Elemente, die einen Titel bekommen, erhalten den Namen auf diesem Weg; eine reine Icon-Flaeche ohne Titel bleibt unbenannt. (2) Ein Element mit sichtbarem Text behaelt diesen als Namen - der Tooltip ergaenzt dort nichts, damit der Name nicht doppelt vorgelesen wird. (3) `aria-label` ueberschreibt bei uns gesetzten Text weiterhin nur dann, wenn er von uns stammt (`data-a11y`); ein spaeter vom Code gesetztes eigenes `aria-label` bleibt unangetastet.
+
+## 162. Wiederholen fuer Bildschritte mit Strg+Y (1.15.137)
+
+**Gemeldet.** Nach dem Zuruecknehmen eines Bildschritts soll Wiederholen wieder vorwaerts greifen - ueber Strg+Umschalt+Z und Strg+Y.
+
+**Stand vorher.** Seit Abschnitt 154 teilen Text, Bilder und Tabellen einen Zustandsstapel (`edStates`/`edPos`); `edRedoStep()` setzt den naechsten Zustand wieder und Strg+Umschalt+Z war im Tastenhorchposten schon verdrahtet. **Strg+Y fehlte**: die Taste lief am Editor vorbei in den Browser-Stapel, der Bildschritte gar nicht kennt, und bewirkte bei Bildern nichts.
+
+**Behoben.** Der gemeinsame Tastenhorchposten (`keydown`, Capture, Strg/Meta ohne Alt) nimmt jetzt `z` und `y`: `z` mit Umschalt und `y` ohne Umschalt rufen `edRedoStep()`, `z` ohne Umschalt `edUndo()`. In Eingabefeldern und ausserhalb des Editors bleibt die Taste wie bisher dem Feld beziehungsweise dem Browser. Ein neuer Schritt schneidet die Vorwaertskette wie bisher ab (`edCommit` setzt `edStates.length = edPos + 1`), deshalb gibt es danach nichts zu wiederholen.
+
+**Geprueft 1.15.137** im laufenden Fenster (Quelllauf, `--remote-debugging-port=9333`, eigenes Profil, Skript `.freebuff/redo-lab.mjs`): Bild ueber die Dateiauswahl des Editors eingefuegt (`build/icon.png`, 480 px), Bildschritte mit echter Maus (Rechtsklick-Menue, Ziehpunkt) und echten Tasten ausgeloest, gemessen an `img.dataset.w`, `img.dataset.rot` und der Transform des Bildes:
+- Start: `w=480 rot=0`, `transform: rotate(0deg) scale(1, 1)`.
+- Rechtsklick-Menue mit sechs Zeilen („Nach links drehen“ … „Löschen“), „Nach rechts drehen“ angeklickt: `rot=90`, `rotate(90deg)`.
+- **Strg+Z**: `rot=0` - **Strg+Umschalt+Z**: `rot=90` - **Strg+Z**: `rot=0` - **Strg+Y**: `rot=90`.
+- Groesse am Ziehpunkt von 480 auf 540 px gezogen; **Strg+Z**: `w=480`; **Strg+Y**: `w=540` (jeweils mit passender Rahmenbreite 480 bzw. 540 px).
+- Nach einem neuen Schritt („Waagerecht spiegeln“, `scale(-1, 1)`) bewirkt **Strg+Y** nichts mehr: `scale(-1, 1)` bleibt, die Vorwaertskette ist wie vorgesehen abgeschnitten.
+
+Konsole ohne Fehler. Text-Rueckgaengig ist unveraendert (Abschnitt 154), weil derselbe Stapel benutzt wird.

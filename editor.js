@@ -1469,16 +1469,18 @@ const otherFieldFocused = () => {
   const a = document.activeElement;
   return !!(a && a !== page && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable));
 };
-// Strg+Z und Strg+Umschalt+Z gehoeren im Editor dem eigenen Stapel; der
+// Strg+Z, Strg+Umschalt+Z und Strg+Y gehoeren im Editor dem eigenen Stapel; der
 // Browser-Stapel wird nicht mehr benutzt, damit beide nicht auseinanderlaufen.
-// In Eingabefeldern und ausserhalb des Editors bleiben die Tasten dort.
+// Strg+Y ist unter Windows die gewohnte Taste fuer Wiederholen und gilt hier
+// auch fuer Bildschritte, die der Browser-Stapel gar nicht kennt (Abschnitt
+// 162). In Eingabefeldern und ausserhalb des Editors bleiben die Tasten dort.
 document.addEventListener('keydown', e => {
   if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
   const k = (e.key || '').toLowerCase();
-  if (k !== 'z') return;
+  if (k !== 'z' && k !== 'y') return;
   if (otherFieldFocused() || $('#vE').classList.contains('hidden')) return;
   e.preventDefault(); e.stopPropagation();
-  if (e.shiftKey) edRedoStep(); else edUndo();
+  if (k === 'y' || e.shiftKey) edRedoStep(); else edUndo();
 }, true);
 // Backspace oder Entfernen loescht das ausgewaehlte Bild - wie in Word - und
 // laesst sich mit Strg+Z zurueckholen.
