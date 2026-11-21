@@ -2803,6 +2803,14 @@ applyTheme(); applyI18n(); upd(); drawStyles(); drawGloss(); drawHist(); applyDi
     if (!host || !host.isConnected) return hide();
     const text = host.dataset.tip;
     if (!text) return hide();
+    // Ein modaler <dialog> liegt in der obersten Ebene des Browsers und deckt
+    // alles ab, was nicht selbst dort haengt - auch ein hoher z-index hilft
+    // nicht. Der Hinweis wandert deshalb in den geoeffneten Dialog, solange
+    // einer offen ist; dort wird er ueber dessen Inhalt gezeichnet (Abschnitt
+    // 160). Ohne Dialog bleibt er direkt an body.
+    const dlg = document.querySelector('dialog[open]');
+    const holder = dlg || document.body;
+    if (tip.parentElement !== holder) holder.append(tip);
     tip.textContent = text;
     tip.style.left = '0px'; tip.style.top = '0px';
     tip.classList.add('on');
