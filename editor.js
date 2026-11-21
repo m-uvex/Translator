@@ -2996,6 +2996,40 @@ function caretAfter(n) {
   r.collapse(false);
   const s = getSelection(); s.removeAllRanges(); s.addRange(r);
 }
+function caretStart(n) {
+  if (!n) return;
+  page.focus();
+  const r = document.createRange();
+  r.setStart(n, 0);
+  r.collapse(true);
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+}
+// Steht der Cursor am Anfang des Blocks (davor nur Leerraum)? Dann wird nicht
+// geteilt, sondern vor dem Block eingefuegt.
+function atBlockStart(host, r) {
+  try {
+    const pre = document.createRange();
+    pre.setStart(host, 0);
+    pre.setEnd(r.startContainer, r.startOffset);
+    const head = pre.cloneContents();
+    return !head.textContent.trim() && !head.querySelector('img,table,.edimg,br');
+  } catch { return false; }
+}
+// Einen Block an der Cursorstelle teilen: der Rest hinter dem Cursor kommt in
+// einen Klon des Blocks, der hinter dem Original steht. Liefert den Klon oder
+// null, wenn nichts dahinter steht (dann bleibt der Block ganz).
+function splitBlockAt(host, r) {
+  try {
+    const rest = document.createRange();
+    rest.setStart(r.startContainer, r.startOffset);
+    rest.setEnd(host, host.childNodes.length);
+    const tail = host.cloneNode(false);
+    tail.append(rest.extractContents());
+    if (!tail.textContent.trim() && !tail.querySelector('img,table,.edimg,br')) return null;
+    host.after(tail);
+    return tail;
+  } catch { return null; }
+}
 // Kopierte Bloecke als Bloecke der Seite einsetzen: in der Reihenfolge der
 // Zwischenablage, hinter dem Block des Cursors (bzw. anstelle eines leeren
 // Absatzes). insertHTML wird bewusst nicht benutzt - Chromium schiebt eine
@@ -3018,12 +3052,22 @@ function pasteBlocks(nodes) {
     return;
   }
   const s = getSelection();
-  const host = topChild(s && s.rangeCount ? s.anchorNode : null);
+  const r = s && s.rangeCount ? s.getRangeAt(0) : null;
+  // Eine markierte Stelle wird ersetzt, wie bei jeder anderen Einfuegung.
+  if (r && !r.collapsed) { r.deleteContents(); r.collapse(true); }
+  const host = topChild(r ? r.startContainer : null);
   const leer = host && /^(P|DIV)$/.test(host.tagName) && !host.textContent.trim() && !host.querySelector('img,table,.edimg');
+  // Steht der Cursor mitten in einem Absatz, wird der Absatz geteilt: der Teil
+  // vor dem Cursor bleibt stehen, der Rest kommt in einen Klon dahinter, und
+  // die eingefuegten Bloecke landen dazwischen (Abschnitt 157).
+  const atStart = !!(host && r && atBlockStart(host, r));
+  const tail = host && r && !leer && !atStart ? splitBlockAt(host, r) : null;
   // Ein Kommentar merkt sich die Einfuegestelle, damit sie auch dann stimmt,
   // wenn ein leerer Absatz ersetzt wird.
   const stop = document.createComment('');
   if (leer) host.replaceWith(stop);
+  else if (atStart) host.before(stop);
+  else if (tail) tail.before(stop);
   else if (host) host.after(stop);
   else page.append(stop);
   const added = [];
@@ -3039,7 +3083,9 @@ function pasteBlocks(nodes) {
     }
   });
   const lastBlock = extra.length ? extra[extra.length - 1] : added[added.length - 1];
-  caretAfter(lastBlock);
+  // Nach dem Einfuegen steht der Cursor hinter den neuen Bloecken: im Rest des
+  // geteilten Absatzes, sonst am Ende des letzten Blocks.
+  if (tail && page.contains(tail)) caretStart(tail); else caretAfter(lastBlock);
   // Ein eigener Rueckgaengig-Schritt: der Zustand vor dem Einfuegen steht oben
   // im Stapel. Die Marke fuer die Einfuegestelle raeumt sich selbst weg.
   stop.remove();
