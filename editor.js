@@ -900,8 +900,7 @@ function alignImg(command) {
   const al = IMG_AL[command];
   const wrap = selImg();
   if (!al || !wrap) return false;
-  wrap.dataset.al = al;
-  page.dispatchEvent(new Event('input'));
+  if ((wrap.dataset.al || 'center') !== al) imgEdit(wrap, () => { wrap.dataset.al = al; });
   updTb();
   return true;
 }
@@ -1300,6 +1299,102 @@ function selImg() {
   return imgSel;
 }
 
+// ---------- Rueckgaengig fuer Bildaenderungen ----------
+// Drehen, Spiegeln, Groesse und Ausrichtung aendern nur Attribute am Bild; der
+// Rueckgaengig-Stapel des Browsers bekommt davon nichts mit. Deshalb merkt sich
+// der Editor den Zustand vor jeder Bildaenderung: Strg+Z nimmt die letzte
+// Bildaenderung zurueck, solange danach kein Text getippt wurde. Tippen leert
+// den Stapel, damit Strg+Z dann wieder ganz normal den Text trifft.
+const imgHist = [];
+let imgPulse = false;  // laeuft gerade ein eigenes input-Ereignis?
+let imgHistOn = false; // war die letzte Aenderung eine Bildaenderung?
+const imgAttrs = img => ({ w: img.dataset.w, r: img.dataset.r, rot: img.dataset.rot, fx: img.dataset.fx, fy: img.dataset.fy });
+function imgSnap(wrap) {
+  const img = wrap.querySelector('img');
+  return { wrap, al: wrap.dataset.al || '', attrs: img ? imgAttrs(img) : null, deleted: false };
+}
+// Eintrag merken und das Dokument als geaendert melden. `imgPulse` sorgt
+// dafuer, dass der input-Horchposten diesen Vorgang nicht fuer eine
+// Textaenderung haelt (sonst waere der Stapel sofort wieder leer).
+function imgTouch(before) {
+  imgHist.push(before);
+  if (imgHist.length > 30) imgHist.shift();
+  imgHistOn = true;
+  imgPulse = true;
+  page.dispatchEvent(new Event('input'));
+}
+function imgEdit(wrap, fn) {
+  const before = imgSnap(wrap);
+  fn();
+  if (wrap.querySelector('img')) applyImgBox(wrap);
+  imgTouch(before);
+}
+// Cursor hinter (oder vor) die Stelle setzen, an der ein Bild stand.
+function caretNear(node, atEnd) {
+  if (!node) return;
+  page.focus();
+  const r = document.createRange();
+  if (atEnd) { r.selectNodeContents(node); r.collapse(false); }
+  else { r.setStart(node, 0); r.collapse(true); }
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+}
+function imgDelete(wrap) {
+  const before = imgSnap(wrap);
+  before.deleted = true;
+  before.next = wrap.nextElementSibling;
+  before.prev = wrap.previousElementSibling;
+  if (imgSel === wrap) clearImgSel();
+  wrap.remove();
+  imgTouch(before);
+  updTb();
+  const anker = before.next && before.next.parentNode === page ? before.next : before.prev;
+  if (anker) caretNear(anker, anker === before.prev);
+}
+function imgUndo() {
+  const s = imgHist.pop();
+  if (!s) return false;
+  if (s.deleted) {
+    if (s.next && s.next.parentNode === page) s.next.before(s.wrap);
+    else if (s.prev && s.prev.parentNode === page) s.prev.after(s.wrap);
+    else page.append(s.wrap);
+  } else {
+    const img = s.wrap.querySelector('img');
+    if (img && s.attrs) for (const k in s.attrs) { if (s.attrs[k] == null) delete img.dataset[k]; else img.dataset[k] = s.attrs[k]; }
+    if (s.al) s.wrap.dataset.al = s.al; else s.wrap.removeAttribute('data-al');
+    applyImgBox(s.wrap);
+  }
+  imgPulse = true;
+  page.dispatchEvent(new Event('input'));
+  imgHistOn = imgHist.length > 0;
+  updTb();
+  return true;
+}
+// Steht der Fokus in einem Eingabefeld oder einem anderen editierbaren
+// Bereich, gehoeren die Tasten dort hin und nicht zum Bild.
+const otherFieldFocused = () => {
+  const a = document.activeElement;
+  return !!(a && a !== page && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable));
+};
+// Strg+Z greift nur, wenn die letzte Aenderung am Bild war; sonst bleibt der
+// normale Text-Rueckgaengig des Browsers zustaendig.
+document.addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+  if (e.key !== 'z' && e.key !== 'Z') return;
+  if (!imgHistOn || !imgHist.length || otherFieldFocused()) return;
+  e.preventDefault(); e.stopPropagation();
+  imgUndo();
+}, true);
+// Backspace oder Entfernen loescht das ausgewaehlte Bild - wie in Word - und
+// laesst sich mit Strg+Z zurueckholen.
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+  const wrap = selImg();
+  if (!wrap || $('#vE').classList.contains('hidden') || otherFieldFocused()) return;
+  e.preventDefault(); e.stopPropagation();
+  imgDelete(wrap);
+}, true);
+
 // Der Block der Seite, in dem ein Knoten steckt: das direkte Kind von #page.
 // Fuer Knoten ausserhalb der Seite gibt es keinen Block (null).
 function topChild(n) {
@@ -1369,6 +1464,7 @@ function bindImg(wrap) {
       const img = wrap.querySelector('img'); if (!img) return;
       const rot = (((+img.dataset.rot || 0) % 360) + 360) % 360, q = rot === 90 || rot === 270;
       const startW = +img.dataset.w || 240, x0 = ev.clientX, y0 = ev.clientY;
+      const before = imgSnap(wrap);
       const sx = h.dataset.h.includes('e') ? 1 : -1, sy = h.dataset.h.includes('s') ? 1 : -1;
       let w = startW;
       trackPointer(e2 => {
@@ -1381,7 +1477,7 @@ function bindImg(wrap) {
       }, cancelled => {
         // Ein Klick ohne Ziehen aendert nichts und soll das Dokument nicht als
         // geaendert melden.
-        if (!cancelled && w !== startW) page.dispatchEvent(new Event('input'));
+        if (!cancelled && w !== startW) imgTouch(before);
       });
     });
   });
@@ -1856,25 +1952,19 @@ function imgMenu(img, ev) {
   const row = (icon, name, fn) => {
     const r = document.createElement('div'); r.className = 'row';
     r.innerHTML = '<span class="lft"><span class="ico">' + ic(icon, 18) + '</span>' + esc(name) + '</span>';
-    r.onclick = () => { closePops(); fn(); page.dispatchEvent(new Event('input')); };
+    r.onclick = () => { closePops(); fn(); };
     p.append(r);
   };
-  row('rotL', t('imgMenuRotL'), () => { img.dataset.rot = String((((+img.dataset.rot || 0) - 90) % 360 + 360) % 360); applyImgBox(wrap); });
-  row('rotR', t('imgMenuRotR'), () => { img.dataset.rot = String((((+img.dataset.rot || 0) + 90) % 360 + 360) % 360); applyImgBox(wrap); });
-  row('flipH', t('imgMenuFlipH'), () => { img.dataset.fx = img.dataset.fx === '1' ? '0' : '1'; applyImgBox(wrap); });
-  row('flipV', t('imgMenuFlipV'), () => { img.dataset.fy = img.dataset.fy === '1' ? '0' : '1'; applyImgBox(wrap); });
+  row('rotL', t('imgMenuRotL'), () => imgEdit(wrap, () => { img.dataset.rot = String((((+img.dataset.rot || 0) - 90) % 360 + 360) % 360); }));
+  row('rotR', t('imgMenuRotR'), () => imgEdit(wrap, () => { img.dataset.rot = String((((+img.dataset.rot || 0) + 90) % 360 + 360) % 360); }));
+  row('flipH', t('imgMenuFlipH'), () => imgEdit(wrap, () => { img.dataset.fx = img.dataset.fx === '1' ? '0' : '1'; }));
+  row('flipV', t('imgMenuFlipV'), () => imgEdit(wrap, () => { img.dataset.fy = img.dataset.fy === '1' ? '0' : '1'; }));
   p.append(document.createElement('hr'));
-  row('refresh', t('imgMenuReset'), () => {
+  row('refresh', t('imgMenuReset'), () => imgEdit(wrap, () => {
     img.dataset.rot = '0'; img.dataset.fx = '0'; img.dataset.fy = '0';
     img.dataset.w = String(Math.min(img.naturalWidth || IMG_ED_W, IMG_ED_W));
-    applyImgBox(wrap);
-  });
-  row('x', t('imgMenuDel'), () => {
-    // Die Auswahl darf nicht auf dem entfernten Rahmen stehen bleiben.
-    if (imgSel === wrap) clearImgSel();
-    wrap.remove();
-    updTb();
-  });
+  }));
+  row('x', t('imgMenuDel'), () => imgDelete(wrap));
   const x = Math.min(ev ? ev.clientX : 40, innerWidth - 260), y = Math.min(ev ? ev.clientY : 40, innerHeight - 260);
   Object.assign(p.style, { left:Math.max(8, x) + 'px', top:Math.max(8, y) + 'px' });
   p.classList.remove('hidden');
@@ -2600,6 +2690,10 @@ function handleMarkdownTrigger() {
 }
 
 page.addEventListener('input', e => {
+  // Eigene Bildaenderungen halten den Rueckgaengig-Stapel der Bilder am Leben;
+  // jede Textaenderung leert ihn, damit Strg+Z wieder den Text trifft.
+  if (imgPulse) imgPulse = false;
+  else if (e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') { imgHist.length = 0; imgHistOn = false; }
   if (S.edMarkdown && (e.data === ' ' || e.inputType === 'insertText')) handleMarkdownTrigger();
   updWords(); scheduleScan(); clearTimeout(saveTimer);
   saveTimer = setTimeout(() => { try { localStorage.setItem('edDoc', page.innerHTML); } catch {} }, 800);
@@ -2649,7 +2743,7 @@ page.addEventListener('mouseup', () => setTimeout(showBar, 0));
 // sonst waere jeder Knopfdruck schon eine Abwahl.
 document.addEventListener('pointerdown', ev => {
   const t = ev.target;
-  if (t && t.closest && (t.closest('.edimg') || t.closest('#tb') || t.closest('#pop'))) return;
+  if (t && t.closest && t.closest('.edimg, #edTb, #tblBar, #pop')) return;
   clearImgSel(true);
 }, true);
 page.addEventListener('keyup', e => { if (e.shiftKey || e.key.startsWith('Arrow')) showBar(); });
