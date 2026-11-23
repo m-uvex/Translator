@@ -227,6 +227,7 @@ const K = {
   qTop:['sehr gut','very good'], qMid:['gut','good'], qLow:['einfach','basic'],
   pauseT:['Anhalten','Pause'], resumeT:['Fortsetzen','Resume'],
   ttsEngine:['Sprachausgabe wird eingerichtet …','Setting up speech …'], ttsVoiceLoad:['Stimme wird geladen','Downloading voice'],
+  ttsAuto:['Automatisch (Textsprache)','Automatic (text language)'],
   langsN:[n => `${n} Sprachen`, n => `${n} languages`],
   winMin:['Minimieren','Minimize'], winMax:['Maximieren','Maximize'], winRestore:['Wiederherstellen','Restore'], winClose:['Schließen','Close'],
   stopTr:['Stoppen','Stop'], stopped:['Übersetzung angehalten','Translation stopped'],
@@ -447,7 +448,7 @@ const NL = {
   spFast:'snel', spMid:'gemiddeld', spSlow:'langzaam',
   qTop:'zeer goed', qMid:'goed', qLow:'eenvoudig',
   pauseT:'Pauzeren', resumeT:'Hervatten',
-  ttsEngine:'Spraakuitvoer wordt ingericht …', ttsVoiceLoad:'Stem wordt gedownload',
+  ttsEngine:'Spraakuitvoer wordt ingericht …', ttsVoiceLoad:'Stem wordt gedownload', ttsAuto:'Automatisch (teksttaal)',
   langsN:n => `${n} talen`,
   appTitle:'Vertaler', winMin:'Minimaliseren', winMax:'Maximaliseren', winRestore:'Herstellen', winClose:'Sluiten',
   stopTr:'Stoppen', stopped:'Vertaling gestopt', on:'Aan', off:'Uit', s_bootModel:'Laatst gebruikte model voorverwarmen bij opstarten', s_profanity:'Vloekfilter inschakelen', s_profanityStyle:'Vervanging voor vloekwoorden', s_autoCopy:'Uitvoer automatisch kopiëren', s_autoCopyTyped:'Uitvoer alleen bij getypte invoer kopiëren', o_stars:'Sterretjes (****)', o_symbols:'Symbolen (@#$%&!)', s_mdMode:'Dynamische Markdown', s_spellAnim:'Spellingsgolven animeren', s_groupFeatures:'Extra instellingen', personalDict:'Persoonlijk woordenboek', dictWords:'Opgeslagen woorden', addWord:'Woord toevoegen', addWordPh:'Nieuw woord typen …', noDictWords:'Geen woorden in persoonlijk woordenboek', edit:'Bewerken', wordExists:'Woord bestaat al',
@@ -625,7 +626,7 @@ const ES = {
   spFast:'rápido', spMid:'medio', spSlow:'lento',
   qTop:'muy buena', qMid:'buena', qLow:'básica',
   pauseT:'Pausar', resumeT:'Continuar',
-  ttsEngine:'Preparando la voz …', ttsVoiceLoad:'Descargando la voz',
+  ttsEngine:'Preparando la voz …', ttsVoiceLoad:'Descargando la voz', ttsAuto:'Automático (idioma del texto)',
   langsN:n => `${n} idiomas`,
   appTitle:'Traductor', winMin:'Minimizar', winMax:'Maximizar', winRestore:'Restaurar', winClose:'Cerrar',
   settings:'Configuración', swap:'Intercambiar', reloadModels:'Recargar modelos', inputPh:'Escribe el texto o arrastra un archivo aquí …', attach:'Adjuntar archivo', translate:'Traducir', copy:'Copiar', copied:'Copiado',
@@ -804,7 +805,7 @@ const TR = {
   spFast:'hızlı', spMid:'orta', spSlow:'yavaş',
   qTop:'çok iyi', qMid:'iyi', qLow:'basit',
   pauseT:'Duraklat', resumeT:'Devam et',
-  ttsEngine:'Seslendirme hazırlanıyor …', ttsVoiceLoad:'Ses indiriliyor',
+  ttsEngine:'Seslendirme hazırlanıyor …', ttsVoiceLoad:'Ses indiriliyor', ttsAuto:'Otomatik (metin dili)',
   langsN:n => `${n} dil`,
   appTitle:'Çevirmen', winMin:'Simge durumuna küçült', winMax:'Ekranı kapla', winRestore:'Geri yükle', winClose:'Kapat',
   settings:'Ayarlar', swap:'Değiştir', reloadModels:'Modelleri yeniden yükle', inputPh:'Metin girin veya buraya bir dosya bırakın …', attach:'Dosya ekle', translate:'Çevir', copy:'Kopyala', copied:'Kopyalandı',
@@ -983,7 +984,7 @@ const AR = {
   spFast:'سريع', spMid:'متوسط', spSlow:'بطيء',
   qTop:'جيد جداً', qMid:'جيد', qLow:'بسيط',
   pauseT:'إيقاف مؤقت', resumeT:'متابعة',
-  ttsEngine:'جارٍ إعداد الصوت …', ttsVoiceLoad:'جارٍ تنزيل الصوت',
+  ttsEngine:'جارٍ إعداد الصوت …', ttsVoiceLoad:'جارٍ تنزيل الصوت', ttsAuto:'تلقائي (لغة النص)',
   langsN:n => `${n} لغة`,
   appTitle:'المترجم', winMin:'تصغير', winMax:'تكبير', winRestore:'استعادة', winClose:'إغلاق',
   settings:'الإعدادات', swap:'تبديل', reloadModels:'إعادة تحميل النماذج', inputPh:'اكتب نصاً أو أسقط ملفاً هنا …', attach:'إرفاق ملف', translate:'ترجمة', copy:'نسخ', copied:'تم النسخ',
@@ -1438,7 +1439,7 @@ function filterProfanity(text, final = true, tgt = S.tgt, src = S.src) {
   return out;
 }
 
-let caps = {}, images = [], lastSrc = '', lastTr = '', busy = false, retries = 0, MODEL_OPTS = [], currentAbortController = null, currentReq = null, currentMt = false, inputPasted = false;
+let caps = {}, images = [], lastSrc = '', lastTr = '', lastTgt = '', busy = false, retries = 0, MODEL_OPTS = [], currentAbortController = null, currentReq = null, currentMt = false, inputPasted = false;
 const MT_PREFIX = /^(nllb|omt|hy|milmmt):/;
 // Welche Familien es gibt, sagt der Server (/models). Die Praefixe sind nur der
 // Rueckfall, solange die Liste noch nicht geladen ist - etwa beim Start, wenn
@@ -1574,8 +1575,11 @@ async function loadVoices() {
   VOICES = VOICES_ALL.filter(v => v.installed);
   return VOICES;
 }
-function modelPop(btn) {
+async function modelPop(btn) {
   closePops(); const p = $('#pop'); p.innerHTML = '';
+  // Die Stimmenliste kommt aus dem Hauptprozess; frisch gelesen, damit eine
+  // gerade eingerichtete Stimme sofort im Waehler steht.
+  await loadVoices();
   const head = k => { const h = document.createElement('div'); h.className = 'row hd'; h.textContent = t(k); p.append(h); };
   head('nllbH');
   MODEL_OPTS.forEach(o => {
@@ -1588,6 +1592,15 @@ function modelPop(btn) {
   // ist kein Uebersetzungsmodell und darf die Uebersetzung nicht umstellen.
   p.append(document.createElement('hr'));
   head('s_ttsH');
+  // Die Sprache kommt aus dem Text; eine gewaehlte Stimme spricht nur, wenn sie
+  // zu ihm passt (main.js: ttsVoiceFor). „Automatisch“ ist deshalb die Vorgabe.
+  if (VOICES.length) {
+    const auto = document.createElement('div');
+    auto.className = 'row' + (S.ttsVoice ? '' : ' sel');
+    auto.innerHTML = `<span class="muted">${esc(t('ttsAuto'))}</span>`;
+    auto.onclick = () => { S.ttsVoice = ''; save(); closePops(); };
+    p.append(auto);
+  }
   if (!VOICES.length) {
     const r = document.createElement('div'); r.className = 'row';
     r.innerHTML = `<span class="muted">${esc(t('ttsInSettings'))}</span>`;
@@ -1932,16 +1945,19 @@ async function translate() {
   try {
     // lastTr faellt mit dem alten Text weg, damit der Lautsprecher waehrend
     // der neuen Uebersetzung nicht den vorigen Stand vorliest.
-    lastSrc = text; lastTr = ''; $('#output').textContent = ''; updSpeakTr();
+    lastSrc = text; lastTr = ''; lastTgt = ''; $('#output').textContent = ''; updSpeakTr();
     const live = x => $('#output').textContent = x;
     lastTr = await translateCore(text, { model:S.model, src:S.src, tgt:S.tgt, style:S.style, writer:S.style.writer, ctxt:S.ctxt, gloss:S.gloss, images, onToken:live, signal:currentAbortController.signal, req:currentReq });
+    // Die Sprache der Ausgabe, nicht die gerade eingestellte: der Lautsprecher
+    // soll den Satz in der Sprache vorlesen, in der er dasteht.
+    lastTgt = S.tgt;
     histAdd(lastSrc, lastTr);
     renderOut(); status(''); maybeAutoCopy();
   } catch (e) {
     if (e.name === 'AbortError' || currentAbortController?.signal.aborted) {
       // Teilübersetzung behalten und als Wörter klickbar machen.
       lastTr = $('#output').textContent;
-      if (lastTr) renderOut();
+      if (lastTr) { lastTgt = S.tgt; renderOut(); }
       status(t('stopped'));
     } else status(t('error', String(e.message).slice(0, 120)));
   } finally {
@@ -1991,7 +2007,7 @@ $('#histList').onclick = e => {
   // Der Eintrag laedt Quelle und Ausgabe zurueck in die Karten; das Paar wird
   // nur uebernommen, wenn beide Sprachen zur aktuellen Engine passen.
   $('#input').value = h.s; inputPasted = true; count();
-  lastSrc = h.s; lastTr = h.t; renderOut(); status('');
+  lastSrc = h.s; lastTr = h.t; lastTgt = h.tgt || S.tgt; renderOut(); status('');
   const has = c => c === 'auto' || activeLangs().some(l => l[0] === c);
   if (h.src && h.tgt && h.src !== h.tgt && has(h.src) && has(h.tgt)) { S.src = h.src; S.tgt = h.tgt; save(); upd(); }
 };
@@ -2215,7 +2231,7 @@ function upd() {
 $('#srcBtn').onclick = e => langPop(e.currentTarget, 'src', { hint: true, done: () => { fixLangs(); upd(); } });
 $('#tgtBtn').onclick = e => langPop(e.currentTarget, 'tgt', { hint: true, langs: tgtLangs() });
 $('#modelBtn').onclick = e => modelPop(e.currentTarget);
-$('#swap').onclick = () => { if (S.src === 'auto') return; [S.src, S.tgt] = [S.tgt, S.src]; if (lastTr) { $('#input').value = lastTr; inputPasted = false; lastTr = ''; $('#output').textContent = ''; count(); } fixLangs(); upd(); };
+$('#swap').onclick = () => {   if (S.src === 'auto') return; [S.src, S.tgt] = [S.tgt, S.src]; if (lastTr) { $('#input').value = lastTr; inputPasted = false; lastTr = ''; lastTgt = ''; $('#output').textContent = ''; count(); } fixLangs(); upd(); };
 
 function drawStyles() {
   // Klassik-Layout vorerst deaktiviert (Nutzerwunsch): immer Symbol-Layout.
@@ -2472,7 +2488,7 @@ $('#input').oninput = () => {
   if (!$('#input').value.trim()) {
     inputPasted = false;
     $('#output').textContent = '';
-    lastTr = ''; lastSrc = ''; status(''); updSpeakTr();
+    lastTr = ''; lastSrc = ''; lastTgt = ''; status(''); updSpeakTr();
   }
 };
 $('#input').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); translate(); } };
@@ -2496,7 +2512,7 @@ $('#speakTr').onclick = async () => {
   if (!String(txt || '').trim()) return;
   // Ohne Sprachausgabe im System sagt die Statuszeile, was fehlt, statt stumm
   // zu bleiben (Linux ohne speech-dispatcher und espeak-ng).
-  const ok = await speakText(txt, S.tgt);
+  const ok = await speakText(txt, lastTgt || S.tgt);
   status(ok ? '' : t('speakNone'));
   updSpeakIcon();
 };

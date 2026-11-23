@@ -663,7 +663,7 @@ function txAdd() {
     const tx = ST.texts.find(x => x.id === id);
     if (tx) {
       tx.title = title; tx.cat = cat; tx.text = text;
-      tx.pos = 0; tx.updated = Date.now();
+      tx.pos = 0; tx.anchor = null; tx.updated = Date.now();
       persist('texts');
       renderTexts();
       if (ST.cur && ST.cur.id === tx.id) drawReader();
@@ -743,10 +743,28 @@ function drawReader() {
   art.append(end);
   end.querySelector('#rendVoc').onclick = () => { savePos(); window.edShowView('voc'); };
   end.querySelector('#rendLib').onclick = () => { savePos(); window.edShowView('txt'); };
-  requestAnimationFrame(() => {
-    const wrap = $('#readerWrap');
-    if (wrap) wrap.scrollTop = (Number(tx.pos) || 0) * Math.max(1, wrap.scrollHeight - wrap.clientHeight);
-  });
+  // Zurueck an die Stelle, an der zuletzt gelesen wurde. Der Bruchteil allein
+  // reicht nicht mehr, seit Absaetze ausserhalb des Bildes nur geschaetzt hoch
+  // sind (content-visibility): die Lage wird ueber den Absatz gesucht und in
+  // einigen Bildern nachgezogen, bis die geschaetzten Hoehen durch echte
+  // ersetzt sind.
+  const wrap = $('#readerWrap');
+  if (wrap && tx.anchor && Number.isInteger(tx.anchor.i) && tx.anchor.i >= 0) {
+    const a = tx.anchor, to = Number(a.d) || 0;
+    const put = () => {
+      const p = art.querySelectorAll('p')[a.i]; if (!p) return;
+      const d = p.getBoundingClientRect().top - wrap.getBoundingClientRect().top - to;
+      if (Math.abs(d) >= 1) wrap.scrollTop += d;
+    };
+    // Sofort setzen (sonst blitzt der Text oben auf) und dann in einigen Bildern
+    // nachziehen, bis die geschaetzten Hoehen durch echte ersetzt sind.
+    put();
+    let n = 0;
+    const settle = () => { put(); if (++n < 6) requestAnimationFrame(settle); };
+    requestAnimationFrame(settle);
+  } else if (wrap) {
+    wrap.scrollTop = (Number(tx.pos) || 0) * Math.max(1, wrap.scrollHeight - wrap.clientHeight);
+  }
 }
 
 // Zahl der Vokabeln dieses Textes; wird nach jedem neuen Wort aufgefrischt,
@@ -761,6 +779,12 @@ function savePos() {
   const wrap = $('#readerWrap'); if (!wrap) return;
   const max = Math.max(1, wrap.scrollHeight - wrap.clientHeight);
   ST.cur.pos = Math.min(1, Math.max(0, wrap.scrollTop / max));
+  // Dazu der Absatz, der oben steht, und sein Abstand zum oberen Rand: nur so
+  // landet ein langer Text nach dem Wiederoeffnen an derselben Stelle.
+  const art = $('#reader'), wt = wrap.getBoundingClientRect().top;
+  const ps = art ? [...art.querySelectorAll('p')] : [];
+  const i = ps.findIndex(p => p.getBoundingClientRect().bottom > wt);
+  ST.cur.anchor = i < 0 ? null : { i, d: Math.round(ps[i].getBoundingClientRect().top - wt) };
   persist('texts');
 }
 window.studyRestore = () => { if (ST.cur) drawReader(); };

@@ -804,10 +804,12 @@ const ttsRoot = () => path.join(app.getPath('userData'), 'stimmen');
 const piperExe = () => path.join(ttsRoot(), 'piper', 'piper.exe');
 const voiceFile = (v, ext) => path.join(ttsRoot(), v.id + ext);
 const voiceReady = v => fs.existsSync(voiceFile(v, '.onnx')) && fs.existsSync(voiceFile(v, '.onnx.json'));
-// Fertig eingerichtete Stimme zur Sprache; eine ausdrueckliche Wahl gewinnt.
-function ttsVoiceFor(sel) {
-  const want = String(sel || '').slice(0, 2).toLowerCase();
-  return TTS_VOICES.find(v => v.id === sel && voiceReady(v)) ||
+// Fertig eingerichtete Stimme zur Sprache. Eine ausdrueckliche Wahl gilt nur,
+// wenn ihre Sprache zum Text passt: sonst spraeche ein deutscher Satz mit einer
+// englischen Stimme. Passt sie nicht, gewinnt die Stimme der Textsprache.
+function ttsVoiceFor(sel, lang) {
+  const want = String(lang || '').slice(0, 2).toLowerCase();
+  return TTS_VOICES.find(v => v.id === sel && v.lang === want && voiceReady(v)) ||
     TTS_VOICES.find(v => v.lang === want && voiceReady(v)) || null;
 }
 // Die Stimmenliste fuer die Oberflaeche: Groesse, Zustand und gemessener Faktor.
@@ -916,7 +918,7 @@ async function ttsSpeak(text, lang, voice) {
   ttsStop();
   // Eine heruntergeladene Stimme hat Vorrang: sie klingt natuerlicher und
   // liefert eine Datei, die der Renderer anhalten und fortsetzen kann.
-  const v = ttsVoiceFor(voice) || ttsVoiceFor(l);
+  const v = ttsVoiceFor(voice, l);
   if (v) {
     const out = await piperSay(txt, v);
     if (out) { ttsLastFile = out; return { ok:true, backend:'piper', voice:v.id, lang:l, file:pathToFileURL(out).href }; }
