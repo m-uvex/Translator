@@ -240,6 +240,9 @@ async function studyModelPop(btn) {
   closePops();
   const p = $('#pop');
   p.innerHTML = '';
+  // Das Menue geht sofort auf; die Aussprache-Gruppe kommt nach. Wird es bis
+  // dahin geschlossen, landet sie nicht mehr darin (renderer.js: POP_SEQ).
+  const seq = POP_SEQ;
   const head = k => { const h = document.createElement('div'); h.className = 'row hd'; h.textContent = t(k); p.append(h); };
   const row = (label, value, cur, icons, apply) => {
     const r = document.createElement('div');
@@ -259,12 +262,15 @@ async function studyModelPop(btn) {
     row(t('storyModelAuto'), '', !S.storyModel || !gens.includes(S.storyModel), '', () => { S.storyModel = ''; });
     gens.forEach(n => row(n, n, !!S.storyModel && n === S.storyModel, '', () => { S.storyModel = n; }));
   }
-  // Die Vorlesestimme und das Tempo stehen im selben Menue, aber unter einem
-  // Trennstrich: sie uebersetzen nichts und gehoeren nicht zur Wortuebersetzung.
-  await ttsMenuRows(p);
   const r = btn.getBoundingClientRect();
   Object.assign(p.style, { left: Math.max(8, Math.min(r.left, innerWidth - 320)) + 'px', top: r.bottom + 6 + 'px' });
   p.classList.remove('hidden');
+  // Die Vorlesestimme und das Tempo stehen im selben Menue, aber unter einem
+  // Trennstrich: sie uebersetzen nichts und gehoeren nicht zur Wortuebersetzung.
+  // Markiert wird die Stimme, die diesen Text jetzt wirklich lesen wuerde.
+  const g = await ttsMenuGroup(speechLang((ST.cur && ST.cur.src) || S.studySrc));
+  if (seq !== POP_SEQ) return;
+  p.append(g);
 }
 const langName = c => (!c || c === 'auto') ? 'the source language' : (window.trEngName ? window.trEngName(c) : c);
 

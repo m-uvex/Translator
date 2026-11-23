@@ -1580,9 +1580,9 @@ async function loadVoices() {
 }
 async function modelPop(btn) {
   closePops(); const p = $('#pop'); p.innerHTML = '';
-  // Die Stimmenliste kommt aus dem Hauptprozess; frisch gelesen, damit eine
-  // gerade eingerichtete Stimme sofort im Waehler steht.
-  await loadVoices();
+  // Das Menue geht sofort auf; die Aussprache-Gruppe kommt aus dem Hauptprozess
+  // nach. Wird der Waehler bis dahin geschlossen, landet sie nicht mehr darin.
+  const seq = POP_SEQ;
   const head = k => { const h = document.createElement('div'); h.className = 'row hd'; h.textContent = t(k); p.append(h); };
   head('nllbH');
   MODEL_OPTS.forEach(o => {
@@ -1591,10 +1591,13 @@ async function modelPop(btn) {
     r.onclick = () => { S.pref = S.model = o.value; fixLangs(); updModelBtn(); upd(); save(); closePops(); };
     p.append(r);
   });
+  const r = btn.getBoundingClientRect(); Object.assign(p.style, { left:Math.max(8, r.right - 300) + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden');
   // Die Aussprache steht im selben Waehler, aber als eigene Gruppe: eine Stimme
   // ist kein Uebersetzungsmodell und darf die Uebersetzung nicht umstellen.
-  await ttsMenuRows(p);
-  const r = btn.getBoundingClientRect(); Object.assign(p.style, { left:Math.max(8, r.right - 300) + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden');
+  // Sie gilt fuer die Sprache, in der gerade vorgelesen wuerde.
+  const g = await ttsMenuGroup(speechLang(lastTgt || S.tgt));
+  if (seq !== POP_SEQ) return;
+  p.append(g);
 }
 
 // ---------- Stimmen und Vorlesetempo fuer die Modellmenues ----------
@@ -1604,33 +1607,46 @@ async function modelPop(btn) {
 const ttsRate = () => Math.min(2, Math.max(0.5, Number(S.ttsRate) || 1));
 const ttsRateLabel = () => (Math.round(ttsRate() * 10) / 10)
   .toLocaleString(LANG === 'de' ? 'de-DE' : 'en-US', { minimumFractionDigits:1, maximumFractionDigits:1 }) + '×';
+// Welche eingerichtete Stimme fuer eine Sprache wirklich spricht: dieselbe
+// Regel wie im Hauptprozess (main.js: ttsVoiceFor) - eine gewaehlte Stimme nur,
+// wenn ihre Sprache passt, sonst die Stimme der Sprache selbst.
+const ttsSpeakVoice = lang => {
+  const want = String(lang || '').slice(0, 2).toLowerCase();
+  return VOICES.find(v => v.id === S.ttsVoice && v.lang === want) ||
+    VOICES.find(v => v.lang === want) || null;
+};
 // Dieselbe Gruppe haengt im Waehler des Uebersetzers und in dem des
 // Lese-Arbeitsplatzes (study.js: studyModelPop). Eine Stimme ist kein
-// Uebersetzungsmodell, deshalb steht sie unter einem Trennstrich.
-async function ttsMenuRows(p) {
-  await loadVoices();
-  p.append(document.createElement('hr'));
+// Uebersetzungsmodell, deshalb steht sie unter einem Trennstrich. Zurueck kommt
+// ein Fragment, das der Aufrufer erst anhaengt, wenn sein Menue noch offen ist.
+async function ttsMenuGroup(lang) {
+  try { await loadVoices(); } catch {}
+  const box = document.createDocumentFragment();
+  box.append(document.createElement('hr'));
   const head = document.createElement('div');
-  head.className = 'row hd'; head.textContent = t('s_ttsH'); p.append(head);
-  // Die Sprache kommt aus dem Text; eine gewaehlte Stimme spricht nur, wenn sie
-  // zu ihm passt (main.js: ttsVoiceFor). „Automatisch“ ist deshalb die Vorgabe.
+  head.className = 'row hd'; head.textContent = t('s_ttsH'); box.append(head);
+  // Markiert wird nicht die eingestellte, sondern die Stimme, die fuer diese
+  // Sprache sprechen wird. Eine gewaehlte Stimme mit falscher Sprache bleibt
+  // deshalb unmarkiert; „Automatisch“ ist nur dann markiert, wenn es fuer die
+  // Sprache gar keine eingerichtete Stimme gibt und die Systemstimme einspringt.
+  const pick = ttsSpeakVoice(lang);
   if (VOICES.length) {
     const auto = document.createElement('div');
-    auto.className = 'row' + (S.ttsVoice ? '' : ' sel');
+    auto.className = 'row' + (pick ? '' : ' sel');
     auto.innerHTML = `<span class="muted">${esc(t('ttsAuto'))}</span>`;
     auto.onclick = () => { S.ttsVoice = ''; save(); closePops(); };
-    p.append(auto);
+    box.append(auto);
   } else {
     const r = document.createElement('div'); r.className = 'row';
     r.innerHTML = `<span class="muted">${esc(t('ttsInSettings'))}</span>`;
     r.onclick = () => { closePops(); $('#openSettings').click(); };
-    p.append(r);
+    box.append(r);
   }
   VOICES.forEach(v => {
-    const r = document.createElement('div'); r.className = 'row' + (v.id === S.ttsVoice ? ' sel' : '');
+    const r = document.createElement('div'); r.className = 'row' + (pick && v.id === pick.id ? ' sel' : '');
     r.innerHTML = `<span>${esc(langLabel(v.lang))} · ${esc(v.name)}</span>`;
     r.onclick = () => { S.ttsVoice = v.id; save(); closePops(); };
-    p.append(r);
+    box.append(r);
   });
   const row = document.createElement('div');
   row.className = 'row ttsrate';
@@ -1643,7 +1659,8 @@ async function ttsMenuRows(p) {
     S.ttsRate = Number(inp.value); val.textContent = ttsRateLabel(); save();
     if (window.ttsRateChanged) window.ttsRateChanged();
   };
-  row.append(lab, inp, val); p.append(row);
+  row.append(lab, inp, val); box.append(row);
+  return box;
 }
 
 // ---------- Softwareweiter Hauptschalter: eine Erlaubnisliste ----------
@@ -2230,7 +2247,13 @@ function langPop(btn, key, o = {}) {
   search.oninput = draw; draw();
   const r = btn.getBoundingClientRect(); Object.assign(p.style, { left:Math.min(r.left, innerWidth - 260) + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden'); search.focus();
 }
+// Jedes Schliessen zaehlt: Menues, die ihre Eintraege erst nach einem await
+// aufbauen, merken sich den Zaehler beim Oeffnen und haengen nichts mehr an,
+// wenn er sich bis dahin geaendert hat - sonst ginge ein geschlossenes Menue
+// hinterher wieder auf.
+let POP_SEQ = 0;
 function closePops() {
+  POP_SEQ++;
   ['#pop', '#alt', '#cm'].forEach(x => $(x).classList.add('hidden'));
   $('#pop').dataset.opener = '';
 }
