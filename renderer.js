@@ -198,16 +198,36 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   // in 1.15.74 dem Exportsymbol gewichen und entfallen.)
   activity:'<path d="M3 12h3.4l2.6-7 4 14 2.6-7H21"/>',
   volume:'<path d="M11 5 6.6 9H3v6h3.6L11 19z"/><path d="M15 9.3a4 4 0 0 1 0 5.4M17.8 6.5a8 8 0 0 1 0 11"/>',
+  // Anhalten und Fortsetzen der Sprachausgabe: zwei Striche bzw. ein Dreieck.
+  pause:'<path d="M9 5v14M15 5v14"/>',
+  play:'<path d="M7.5 4.8 19 12 7.5 19.2z"/>',
   power:'<path d="M12 3.2v8.4"/><path d="M7.4 6.6a7 7 0 1 0 9.2 0"/>'
 };
 // Tabelle: Rahmen mit Kopf- und Trennlinien fuer den Werkzeugleisten-Knopf.
 IC.table = '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9.5 9.5v10M15 9.5v10"/>';
-const ic = (n, s = 18, sw = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
+// Einzelne Symbole brauchen weniger Strichstaerke: Der Zauberstab hat viele
+// kurze Striche und wirkt mit 1,8 neben den uebrigen Knoepfen zu fett.
+const IC_SW = { wand:1.5 };
+const ic = (n, s = 18, sw) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw || IC_SW[n] || 1.8}" stroke-linecap="round" stroke-linejoin="round">${IC[n] || ''}</svg>`;
 const esc = x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 document.querySelectorAll('[data-i]').forEach(e => e.innerHTML = ic(e.dataset.i));
 
 const K = {
   appTitle:['Übersetzer','Translator'],
+  // Aussprache: herunterladbare Stimmen, ihre Angaben und der Vergleich der
+  // Modelle (Einstellungen, Modellwaehler).
+  s_ttsH:['Aussprache','Speech'],
+  s_ttsHint:['Stimmen werden einmal heruntergeladen und sprechen danach ohne Netz. Ohne eigene Stimme spricht die Systemstimme.','Voices are downloaded once and then speak offline. Without a downloaded voice the system voice speaks.'],
+  ttsInSettings:['Stimme in den Einstellungen herunterladen','Download a voice in the settings'],
+  infoShow:['Infos ansehen','See details'],
+  infoH:['Modelle im Vergleich','Models compared'],
+  infoIntro:['Tempo, Umfang und Qualität in Worten – gemessen auf diesem Rechner, nicht geschätzt.','Speed, scope and quality in plain words – measured on this machine, not guessed.'],
+  infoModel:['Modell','Model'], infoScope:['Umfang','Scope'], infoSpeed:['Tempo','Speed'], infoQuality:['Qualität','Quality'],
+  spFast:['schnell','fast'], spMid:['mittel','medium'], spSlow:['langsam','slow'],
+  qTop:['sehr gut','very good'], qMid:['gut','good'], qLow:['einfach','basic'],
+  pauseT:['Anhalten','Pause'], resumeT:['Fortsetzen','Resume'],
+  ttsEngine:['Sprachausgabe wird eingerichtet …','Setting up speech …'], ttsVoiceLoad:['Stimme wird geladen','Downloading voice'],
+  langsN:[n => `${n} Sprachen`, n => `${n} languages`],
   winMin:['Minimieren','Minimize'], winMax:['Maximieren','Maximize'], winRestore:['Wiederherstellen','Restore'], winClose:['Schließen','Close'],
   stopTr:['Stoppen','Stop'], stopped:['Übersetzung angehalten','Translation stopped'],
   on:['An','On'], off:['Aus','Off'],
@@ -418,6 +438,17 @@ const K = {
   confDel:[id => `${id} wirklich löschen? Das Modell kann später erneut geladen werden.`, id => `Really delete ${id}? You can download it again later.`]
 };
 const NL = {
+  s_ttsH:'Uitspraak',
+  s_ttsHint:'Stemmen worden één keer gedownload en spreken daarna zonder netwerk. Zonder eigen stem spreekt de systeemstem.',
+  ttsInSettings:'Stem downloaden in de instellingen',
+  infoShow:'Details bekijken', infoH:'Modellen vergeleken',
+  infoIntro:'Tempo, bereik en kwaliteit in woorden – gemeten op deze computer, niet geschat.',
+  infoModel:'Model', infoScope:'Bereik', infoSpeed:'Tempo', infoQuality:'Kwaliteit',
+  spFast:'snel', spMid:'gemiddeld', spSlow:'langzaam',
+  qTop:'zeer goed', qMid:'goed', qLow:'eenvoudig',
+  pauseT:'Pauzeren', resumeT:'Hervatten',
+  ttsEngine:'Spraakuitvoer wordt ingericht …', ttsVoiceLoad:'Stem wordt gedownload',
+  langsN:n => `${n} talen`,
   appTitle:'Vertaler', winMin:'Minimaliseren', winMax:'Maximaliseren', winRestore:'Herstellen', winClose:'Sluiten',
   stopTr:'Stoppen', stopped:'Vertaling gestopt', on:'Aan', off:'Uit', s_bootModel:'Laatst gebruikte model voorverwarmen bij opstarten', s_profanity:'Vloekfilter inschakelen', s_profanityStyle:'Vervanging voor vloekwoorden', s_autoCopy:'Uitvoer automatisch kopiëren', s_autoCopyTyped:'Uitvoer alleen bij getypte invoer kopiëren', o_stars:'Sterretjes (****)', o_symbols:'Symbolen (@#$%&!)', s_mdMode:'Dynamische Markdown', s_spellAnim:'Spellingsgolven animeren', s_groupFeatures:'Extra instellingen', personalDict:'Persoonlijk woordenboek', dictWords:'Opgeslagen woorden', addWord:'Woord toevoegen', addWordPh:'Nieuw woord typen …', noDictWords:'Geen woorden in persoonlijk woordenboek', edit:'Bewerken', wordExists:'Woord bestaat al',
   settings:'Instellingen', swap:'Wisselen', reloadModels:'Modellen opnieuw laden', inputPh:'Typ tekst of sleep een bestand hierheen …', attach:'Bestand toevoegen', translate:'Vertalen', copy:'Kopiëren', copied:'Gekopieerd',
@@ -585,6 +616,17 @@ const NL = {
 };
 
 const ES = {
+  s_ttsH:'Pronunciación',
+  s_ttsHint:'Las voces se descargan una vez y después hablan sin red. Sin una voz propia habla la voz del sistema.',
+  ttsInSettings:'Descargar una voz en los ajustes',
+  infoShow:'Ver detalles', infoH:'Modelos comparados',
+  infoIntro:'Velocidad, alcance y calidad en palabras: medido en este equipo, no estimado.',
+  infoModel:'Modelo', infoScope:'Alcance', infoSpeed:'Velocidad', infoQuality:'Calidad',
+  spFast:'rápido', spMid:'medio', spSlow:'lento',
+  qTop:'muy buena', qMid:'buena', qLow:'básica',
+  pauseT:'Pausar', resumeT:'Continuar',
+  ttsEngine:'Preparando la voz …', ttsVoiceLoad:'Descargando la voz',
+  langsN:n => `${n} idiomas`,
   appTitle:'Traductor', winMin:'Minimizar', winMax:'Maximizar', winRestore:'Restaurar', winClose:'Cerrar',
   settings:'Configuración', swap:'Intercambiar', reloadModels:'Recargar modelos', inputPh:'Escribe el texto o arrastra un archivo aquí …', attach:'Adjuntar archivo', translate:'Traducir', copy:'Copiar', copied:'Copiado',
   chars:n => `${n} caracteres`, auto:'Detectar idioma', searchLang:'Buscar idioma …', noHits:'Sin resultados', pin:'Fijar', h_style:'Estilo de traducción', l_type:'Tipo', l_formal:'Tono', l_gender:'Receptor*', l_writer:'Remitente*',
@@ -753,6 +795,17 @@ const ES = {
 };
 
 const TR = {
+  s_ttsH:'Seslendirme',
+  s_ttsHint:'Sesler bir kez indirilir, sonra ağ olmadan konuşur. Kendi sesiniz yoksa sistem sesi konuşur.',
+  ttsInSettings:'Ayarlardan ses indirin',
+  infoShow:'Bilgileri gör', infoH:'Modeller karşılaştırması',
+  infoIntro:'Hız, kapsam ve kalite kelimelerle – bu bilgisayarda ölçüldü, tahmin değil.',
+  infoModel:'Model', infoScope:'Kapsam', infoSpeed:'Hız', infoQuality:'Kalite',
+  spFast:'hızlı', spMid:'orta', spSlow:'yavaş',
+  qTop:'çok iyi', qMid:'iyi', qLow:'basit',
+  pauseT:'Duraklat', resumeT:'Devam et',
+  ttsEngine:'Seslendirme hazırlanıyor …', ttsVoiceLoad:'Ses indiriliyor',
+  langsN:n => `${n} dil`,
   appTitle:'Çevirmen', winMin:'Simge durumuna küçült', winMax:'Ekranı kapla', winRestore:'Geri yükle', winClose:'Kapat',
   settings:'Ayarlar', swap:'Değiştir', reloadModels:'Modelleri yeniden yükle', inputPh:'Metin girin veya buraya bir dosya bırakın …', attach:'Dosya ekle', translate:'Çevir', copy:'Kopyala', copied:'Kopyalandı',
   chars:n => `${n} karakter`, auto:'Dili algıla', searchLang:'Dil ara …', noHits:'Sonuç bulunamadı', pin:'Sabitle', h_style:'Çeviri stili', l_type:'Tür', l_formal:'Ton', l_gender:'Alıcı*', l_writer:'Gönderen*',
@@ -921,6 +974,17 @@ const TR = {
 };
 
 const AR = {
+  s_ttsH:'النطق',
+  s_ttsHint:'تُنزَّل الأصوات مرة واحدة ثم تتحدث دون شبكة. وبدون صوت خاص يتحدث صوت النظام.',
+  ttsInSettings:'نزّل صوتاً من الإعدادات',
+  infoShow:'عرض التفاصيل', infoH:'مقارنة النماذج',
+  infoIntro:'السرعة والنطاق والجودة بالكلمات — مقيسة على هذا الحاسوب، لا مقدّرة.',
+  infoModel:'النموذج', infoScope:'النطاق', infoSpeed:'السرعة', infoQuality:'الجودة',
+  spFast:'سريع', spMid:'متوسط', spSlow:'بطيء',
+  qTop:'جيد جداً', qMid:'جيد', qLow:'بسيط',
+  pauseT:'إيقاف مؤقت', resumeT:'متابعة',
+  ttsEngine:'جارٍ إعداد الصوت …', ttsVoiceLoad:'جارٍ تنزيل الصوت',
+  langsN:n => `${n} لغة`,
   appTitle:'المترجم', winMin:'تصغير', winMax:'تكبير', winRestore:'استعادة', winClose:'إغلاق',
   settings:'الإعدادات', swap:'تبديل', reloadModels:'إعادة تحميل النماذج', inputPh:'اكتب نصاً أو أسقط ملفاً هنا …', attach:'إرفاق ملف', translate:'ترجمة', copy:'نسخ', copied:'تم النسخ',
   chars:n => `${n} حرف`, auto:'تحديد تلقائي للغة', searchLang:'بحث عن لغة …', noHits:'لا توجد نتائج', pin:'تثبيت', h_style:'أسلوب الترجمة', l_type:'النوع', l_formal:'النبرة', l_gender:'المستلم*', l_writer:'المرسل*',
@@ -1181,6 +1245,8 @@ const D = { url:'http://localhost:11434', nllb:'http://127.0.0.1:8765', model:''
   // Bevorzugtes Modell zum Beschreiben von Bildern; '' heisst: das erste
   // installierte Modell mit Bilderkennung.
   imgModel:'',
+  // Gewaehlte Aussprache-Stimme (Piper). Leer heisst: die Stimme zur Sprache.
+  ttsVoice:'',
   // Bilder beim Einfuegen begrenzen (Abschnitt 125); abschaltbar.
   imgLimit:true,
   // Gesamtgrenze fuer alle Bilder eines Dokuments (Abschnitt 129).
@@ -1500,12 +1566,38 @@ function warmupModel(model) {
 }
 
 function updModelBtn() { const o = MODEL_OPTS.find(x => x.value === S.model); $('#modelBtn').innerHTML = o ? `<span>${esc(o.label)}</span>${modelIcons(o)}` : '<span>—</span>'; }
+// Heruntergeladene Stimmen fuer den Waehler oben; die Liste kommt aus dem
+// Hauptprozess und wird nach jeder Einrichtung neu gelesen.
+let VOICES = [], VOICES_ALL = [];
+async function loadVoices() {
+  try { VOICES_ALL = ((await window.api.ttsList()) || {}).voices || []; } catch { VOICES_ALL = []; }
+  VOICES = VOICES_ALL.filter(v => v.installed);
+  return VOICES;
+}
 function modelPop(btn) {
   closePops(); const p = $('#pop'); p.innerHTML = '';
+  const head = k => { const h = document.createElement('div'); h.className = 'row hd'; h.textContent = t(k); p.append(h); };
+  head('nllbH');
   MODEL_OPTS.forEach(o => {
     const r = document.createElement('div'); r.className = 'row' + (o.value === S.model ? ' sel' : '');
     r.innerHTML = `<span>${esc(o.label)}</span><span>${modelIcons(o)}</span>`;
     r.onclick = () => { S.pref = S.model = o.value; fixLangs(); updModelBtn(); upd(); save(); closePops(); };
+    p.append(r);
+  });
+  // Die Aussprache steht im selben Waehler, aber als eigene Gruppe: eine Stimme
+  // ist kein Uebersetzungsmodell und darf die Uebersetzung nicht umstellen.
+  p.append(document.createElement('hr'));
+  head('s_ttsH');
+  if (!VOICES.length) {
+    const r = document.createElement('div'); r.className = 'row';
+    r.innerHTML = `<span class="muted">${esc(t('ttsInSettings'))}</span>`;
+    r.onclick = () => { closePops(); $('#openSettings').click(); };
+    p.append(r);
+  }
+  VOICES.forEach(v => {
+    const r = document.createElement('div'); r.className = 'row' + (v.id === S.ttsVoice ? ' sel' : '');
+    r.innerHTML = `<span>${esc(langLabel(v.lang))} · ${esc(v.name)}</span>`;
+    r.onclick = () => { S.ttsVoice = v.id; save(); closePops(); };
     p.append(r);
   });
   const r = btn.getBoundingClientRect(); Object.assign(p.style, { left:Math.max(8, r.right - 300) + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden');
@@ -2389,12 +2481,24 @@ $('#copy').onclick = async () => {
   const ok = await copyText(lastTr || $('#output').textContent);
   status(t(ok ? 'copied' : 'copyErr'));
 };
+// Der Knopf zeigt, was gerade gilt: Lautsprecher (nichts laeuft), zwei Striche
+// (spricht, Klick haelt an), Dreieck (angehalten, Klick setzt fort).
+function updSpeakIcon() {
+  const b = $('#speakTr'); if (!b) return;
+  const st = window.ttsState ? window.ttsState() : {};
+  const i = st.paused ? 'play' : st.playing ? 'pause' : 'volume';
+  b.dataset.i = i; b.dataset.tt = st.paused ? 'resumeT' : st.playing ? 'pauseT' : 'speak';
+  b.innerHTML = ic(i); b.title = t(b.dataset.tt);
+}
+window.addEventListener('tts-state', updSpeakIcon);
 $('#speakTr').onclick = async () => {
   const txt = lastTr || $('#output').textContent;
   if (!String(txt || '').trim()) return;
   // Ohne Sprachausgabe im System sagt die Statuszeile, was fehlt, statt stumm
   // zu bleiben (Linux ohne speech-dispatcher und espeak-ng).
-  status(await speakText(txt, S.tgt) ? '' : t('speakNone'));
+  const ok = await speakText(txt, S.tgt);
+  status(ok ? '' : t('speakNone'));
+  updSpeakIcon();
 };
 $('#refresh').onclick = async () => {
   if ($('#refresh').classList.contains('spinning')) return;
@@ -2512,10 +2616,13 @@ function drawSettings() {
   const tbField = () => subCard('s_edTbGroup', TB_SUB);
   const byKey = Object.fromEntries(FIELDS.map(f => [f[0], f]));
   $('#setBody').innerHTML = GROUPS.map(([h, ks]) => `<h3 class="sect">${t(h)}</h3>` + ks.map(k => typeof k === 'string' ? field(byKey[k]) : (k.bar ? barField() : tbField())).join('')).join('') +
-    `<h3 class="sect">${t('nllbH')}</h3><div id="mtBox"></div><p class="muted" data-htk="1" data-t="${hotkeyKey()}"></p>`;
+    `<h3 class="sect">${t('nllbH')}<button class="ghost minib" data-info="mt">${esc(t('infoShow'))}</button></h3><div id="mtBox"></div>` +
+    `<h3 class="sect">${t('s_ttsH')}<button class="ghost minib" data-info="tts">${esc(t('infoShow'))}</button></h3><div id="ttsBox"></div>` +
+    `<p class="muted" data-htk="1" data-t="${hotkeyKey()}"></p>`;
   $('#setBody').querySelectorAll('[data-k]').forEach(el => { const v = S[el.dataset.k]; el.value = el.dataset.bool ? (v ? '1' : '0') : v; });
   applyI18n();
   drawMt();
+  drawTts();
 }
 // Die weisse Optionskarte im Symbol-Layout beginnt auf derselben Hoehe wie das
 // Uebersetzungsausgabefeld; Kontext und Glossar ruecken dadurch mit nach unten.
@@ -2548,6 +2655,7 @@ try {
   }).catch(() => {});
 } catch {}
 $('#setBody').onclick = e => {
+  const inf = e.target.closest('[data-info]'); if (inf) return openInfo(inf.dataset.info);
   const act = e.target.closest('[data-act]'); if (act) return mtAction(act);
   const wsBtn = e.target.closest('[data-ws]');
   if (wsBtn) {
@@ -2577,7 +2685,7 @@ $('#setBody').onclick = e => {
   drawSettings(); if (k === 'url' || k === 'nllb') { retries = 0; loadModels(); }
 };
 $('#resetAll').onclick = () => { for (const [k] of FIELDS) S[k] = D[k]; save(); applyTheme(); renderAll(); drawHist(); drawSettings(); retries = 0;   loadModels(); if (window.edWorkspace) window.edWorkspace(); if (window.studyStorySync) window.studyStorySync(); applyDiag(); };
-$('#openSettings').onclick = () => { drawSettings(); $('#settings').showModal(); };
+$('#openSettings').onclick = async () => { await loadVoices(); drawSettings(); $('#settings').showModal(); };
 $('#closeSet').onclick = () => $('#settings').close(); $('#settings').addEventListener('close', () => clearTimeout(mtPoll));
 
 let mtPoll = null, mtBusy = false, mtTgBusy = false;
@@ -2605,6 +2713,73 @@ function tgRow(tag) {
   return `<div class="mgroup"><b>TranslateGemma</b><div class="mrow"><div><b>${esc(name)}</b><div class="muted">${state}</div></div>` +
     `<button class="ghost" data-act="${tag ? 'tg-delete' : 'tg-install'}" data-id="${esc(tag || TG_TAG)}" data-gb="${(tag && MODEL_GB[tag]) || TG_GB}"${mtTgBusy ? ' disabled' : ''}>${mtTgBusy ? t('bBusy') : tag ? t('bDel') : t('bDl')}</button></div></div>`;
 }
+// ---------- Aussprache: Stimmen mit Angaben ----------
+// Jede Zeile nennt Groesse, Tempo und Qualitaet in Worten. Die Zahlen sind auf
+// diesem Rechner gemessen (Echtzeitfaktor), nicht geschaetzt; der Fortschritt
+// steht waehrend des Downloads an der Zeile selbst.
+const speedWord = rtf => rtf <= 0.5 ? 'spFast' : rtf <= 1 ? 'spMid' : 'spSlow';
+const qWord = q => q === 'hoch' ? 'qTop' : q === 'mittel' ? 'qMid' : 'qLow';
+const ttsStep = r => (r && r.step === 'voice' ? t('ttsVoiceLoad') : t('ttsEngine')) + ' ' + Math.round(((r && r.pct) || 0) * 100) + ' %';
+const progId = id => 'ttsprog-' + String(id).replace(/[^\w-]/g, '_');
+let ttsBusyId = '';
+async function drawTts() {
+  const box = $('#ttsBox'); if (!box) return;
+  await loadVoices();
+  box.innerHTML = `<div class="muted">${esc(t('s_ttsHint'))}</div>` + VOICES_ALL.map(v =>
+    `<div class="mrow"><div><b>${esc(langLabel(v.lang))} · ${esc(v.name)}</b>` +
+    `<div class="muted">${esc([v.mb.toFixed(0) + ' MB', t(speedWord(v.rtf)), t(qWord(v.quality))].join(' · '))}</div>` +
+    `<div class="muted" id="${progId(v.id)}">${v.installed ? esc(t('mInst')) : esc(t('mNot'))}</div></div>` +
+    `<button class="ghost" data-act="tts-${v.installed ? 'delete' : 'install'}" data-id="${esc(v.id)}"${ttsBusyId === v.id ? ' disabled' : ''}>${ttsBusyId === v.id ? t('bBusy') : v.installed ? t('bDel') : t('bDl')}</button></div>`).join('');
+}
+async function ttsAction(act, id) {
+  if (act === 'tts-delete') {
+    if (!confirm(t('confDel', id))) return;
+    try { await window.api.ttsDelete(id); } catch {}
+    if (S.ttsVoice === id) { S.ttsVoice = ''; save(); }
+    await drawTts(); return;
+  }
+  ttsBusyId = id;
+  const el = () => document.getElementById(progId(id));
+  const off = window.api.onTtsProgress ? window.api.onTtsProgress(d => {
+    if (!d || d.id !== id || d.done) return;
+    const e = el(); if (e) e.textContent = ttsStep(d);
+  }) : null;
+  await drawTts();
+  let res = null;
+  try { res = await window.api.ttsInstall(id); } catch (e) { res = { ok:false, error:String((e && e.message) || e) }; }
+  if (typeof off === 'function') off();
+  ttsBusyId = '';
+  await drawTts();
+  if (res && !res.ok && res.error && res.error !== 'laeuft') status(t('mErr', res.error));
+}
+// Vergleichstabelle fuer Anfaenger: Umfang, Tempo und Qualitaet in Worten.
+const MT_INFO = {
+  'nllb:600M': { n:200, speed:'spFast', q:'qLow' },
+  'nllb:1.3B': { n:200, speed:'spMid', q:'qMid' },
+  'nllb:3.3B': { n:200, speed:'spSlow', q:'qTop' },
+  'hy:1.8B': { n:37, speed:'spMid', q:'qMid' },
+  'hy:7B': { n:37, speed:'spSlow', q:'qTop' },
+  'milmmt:1B': { n:46, speed:'spFast', q:'qMid' },
+  'milmmt:4B': { n:46, speed:'spSlow', q:'qTop' }
+};
+const mtInfoText = (fam, id) => {
+  const i = MT_INFO[fam + ':' + id];
+  return i ? [t('langsN', i.n), t(i.speed), t(i.q)].join(' · ') : '';
+};
+function openInfo() {
+  const b = $('#infoBody'); if (!b) return;
+  const row = cells => '<tr>' + cells.map(c => `<td>${esc(String(c))}</td>`).join('') + '</tr>';
+  const th = `<tr><th>${esc(t('infoModel'))}</th><th>${esc(t('infoScope'))}</th><th>${esc(t('infoSpeed'))}</th><th>${esc(t('infoQuality'))}</th></tr>`;
+  const voices = VOICES_ALL.map(v => row([`${langLabel(v.lang)} · ${v.name}`, v.mb.toFixed(0) + ' MB', `${t(speedWord(v.rtf))} (${(1 / v.rtf).toFixed(1)}×)`, t(qWord(v.quality))])).join('');
+  const mt = MT_MODELS.map(m => { const i = MT_INFO[m.family + ':' + m.id]; return i ? row([`${m.familyLabel || m.family} ${m.id}`, t('langsN', i.n), t(i.speed), t(i.q)]) : ''; }).join('') +
+    row(['TranslateGemma', t('langsN', 55), t('spFast'), t('qMid')]);
+  b.innerHTML = `<p class="muted">${esc(t('infoIntro'))}</p>` +
+    `<h4>${esc(t('s_ttsH'))}</h4><table class="infotbl">${th}${voices}</table>` +
+    `<h4>${esc(t('nllbH'))}</h4><table class="infotbl">${th}${mt}</table>`;
+  $('#infoDlg').showModal();
+}
+$('#infoClose').onclick = () => $('#infoDlg').close();
+
 async function drawMt() {
   const box = $('#mtBox'); if (!box) return;
   const tg = await tgInstalled();
@@ -2620,7 +2795,8 @@ async function drawMt() {
   const fam = {}, groups = {};
   list.forEach(m => { fam[m.family] = m.familyLabel || m.family; (groups[m.family] ||= []).push(m); });
   box.innerHTML = Object.entries(groups).map(([f, ms]) => `<div class="mgroup"><b>${fam[f] || f}</b>` + ms.map(m =>
-    `<div class="mrow"><div><b>${m.id}</b><div class="muted">${[gbTxt(m.gb), m.downloading ? t('mLoad', Math.round((m.progress || 0) * 100)) : m.error ? t('mErr', m.error) : m.installed ? t('mInst') : t('mNot')].filter(Boolean).join(' · ')}</div></div>` +
+    `<div class="mrow"><div><b>${m.id}</b><div class="muted">${[gbTxt(m.gb), m.downloading ? t('mLoad', Math.round((m.progress || 0) * 100)) : m.error ? t('mErr', m.error) : m.installed ? t('mInst') : t('mNot')].filter(Boolean).join(' · ')}</div>` +
+    (mtInfoText(m.family, m.id) ? `<div class="muted">${esc(mtInfoText(m.family, m.id))}</div>` : '') + '</div>' +
     `<button class="ghost" data-act="${m.installed ? 'delete' : 'install'}" data-id="${m.family}:${m.id}" data-gb="${m.gb == null ? '' : m.gb}"${m.downloading ? ' disabled' : ''}>${m.downloading ? t('bBusy') : m.installed ? t('bDel') : t('bDl')}</button></div>`).join('') + '</div>').join('') + tgRow(tg);
   const busyNow = list.some(m => m.downloading); clearTimeout(mtPoll);
   if (busyNow) { mtBusy = true; if ($('#settings').open) mtPoll = setTimeout(drawMt, 1500); }
@@ -2628,6 +2804,7 @@ async function drawMt() {
 }
 async function mtAction(b) {
   const { act, id, gb } = b.dataset, mid = (id || '').split(':')[1];
+  if (act === 'tts-install' || act === 'tts-delete') return ttsAction(act, id);
   if (act === 'tg-install') {
     mtTgBusy = true; await drawMt();
     await pullModel(TG_TAG);

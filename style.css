@@ -766,3 +766,19 @@ body.tblresizing #page{user-select:none}
 #ttip{position:fixed;left:0;top:0;z-index:90;max-width:min(360px,80vw);padding:5px 11px 6px;border:1px solid var(--line);border-radius:10px;background:var(--soft);color:var(--text);font-size:12.5px;line-height:1.4;white-space:pre-line;pointer-events:none;opacity:0;box-shadow:0 6px 18px #00000024;transition:opacity .12s ease}
 #ttip.on{opacity:1}
 @media print{#ttip{display:none!important}}
+
+/* ---------- Aussprache und Modellvergleich ---------- */
+/* Die Abschnittsueberschrift der Einstellungen traegt rechts den Knopf
+   „Infos ansehen“; der Knopf bleibt in normaler Schrift, die Ueberschrift
+   nicht. */
+.sect{display:flex;align-items:center;gap:10px}
+.sect .minib{margin-left:auto;text-transform:none;letter-spacing:0;font-size:12px;padding:4px 10px}
+.infotbl{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0 14px}
+.infotbl th{text-align:left;font-weight:600;color:var(--muted);padding:4px 6px;border-bottom:1px solid var(--line)}
+.infotbl td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+#infoBody h4{margin:14px 0 2px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+/* Viele Dokumente: Karten ausserhalb des Bildes werden nicht mehr gelayoutet,
+   das haelt das Sitzungsmenue auch bei vielen Seiten schnell. */
+.dockcard{content-visibility:auto;contain-intrinsic-size:118px 136px}
+/* Lange Lesetexte: Absaetze ausserhalb des Bildes kosten kein Layout. */
+#reader p{content-visibility:auto;contain-intrinsic-size:auto 220px}

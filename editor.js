@@ -36,7 +36,10 @@ Object.assign(IC, {
   shorten:'<path d="M12 3v7M8.5 7l3.5 3 3.5-3M12 21v-7M8.5 17l3.5-3 3.5 3M4 12h16"/>', lengthen:'<path d="M12 10V3M8.5 6l3.5-3 3.5 3M12 14v7M8.5 18l3.5 3 3.5-3M4 12h16"/>',
   summarize:'<path d="M4 6h16M6 10h12M8 14h8M10 18h4"/>',
   proofread:'<path d="M3 17l3-9 3 9M4.2 14h3.6M13 17l3 3 6-7"/>', synonyms:'<path d="M4 8h13l-3-3M20 16H7l3 3"/>',
-  wand:'<path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/>',
+  // Zauberstab fuer die Stiländerung: Stiel plus zwei kleine Funken. Die
+  // frühere Fassung hatte acht kurze Striche und wirkte dadurch neben den
+  // übrigen Knöpfen zu fett (Strichstärke siehe IC_SW in renderer.js).
+  wand:'<path d="m3 21 9.6-9.6"/><path d="M15.4 3.6v4M13.4 5.6h4"/><path d="M19.2 12.4v2.6M17.9 13.7h2.6"/>',
   plus:'<path d="M12 5v14M5 12h14"/>', pencil:'<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>',
   cpu:'<rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
   chev:'<path d="M6 9l6 6 6-6"/>', arrowR:'<path d="M5 12h14M13 6l6 6-6 6"/>',
@@ -267,6 +270,15 @@ function applyContent(html, beforeHTML) {
   const target = (html && html.trim()) ? html : '<p><br></p>';
   const before = beforeHTML || '<p><br></p>';
   const hadFocus = page.contains(document.activeElement);
+  // Der Zwischenstand (KI-Markierung, halb ausgetauschte Auswahl) faellt aus dem
+  // Stapel. Sonst legt die Einfuegung der Marke einen eigenen Schritt an und
+  // Strg+Z landet bei einem Zustand, den es nie als Ergebnis gab - genau der
+  // Grund, warum nach einer Stiländerung kein Weg zum Originaltext fuehrte.
+  if (!edStates.length) edReset();
+  if (edStates[edPos].html !== before) {
+    edStates.length = edPos + 1;
+    edStates[edPos] = { html: before, sel: null };
+  }
   page.innerHTML = before;
   if (hadFocus || true) page.focus();
   const range = document.createRange();
@@ -280,6 +292,9 @@ function applyContent(html, beforeHTML) {
   } finally { ED.writing = false; }
   page.dispatchEvent(new Event('input'));
   resetSpellRanges();
+  // Genau ein Schritt: der Stand von vor der Operation steht oben im Stapel.
+  const st = edState();
+  if (st.html !== edStates[edPos].html) { edGroupBlock = null; edCommit(st); }
 }
 // Entfernt alle Diff-/AI-Reste aus dem DOM - Text bleibt erhalten,
 // ausser bei diff-del (die sind "geloescht").
@@ -1441,10 +1456,12 @@ function imgDelete(wrap) {
 }
 function edUndo() {
   if (!edStates.length) edReset();
-  if (edPos <= 0) return false;
   // Eine laufende KI-Operation sieht den Rueckgaengig-Schritt wie ein echtes
-  // Strg+Z und bricht ab, statt ihr Ergebnis auf den alten Stand zu setzen.
-  if (ED.busy) ED.cancelled = true;
+  // Strg+Z und bricht ab. Der Stapel bleibt dabei stehen: die Operation
+  // verwirft ihren Zwischenstand selbst, ein Schritt zurueck wuerde zu weit
+  // greifen (der Text ist ja noch der von vor dem Auftrag).
+  if (ED.busy) { ED.cancelled = true; return true; }
+  if (edPos <= 0) return false;
   edPos--;
   edApply(edStates[edPos]);
   return true;
@@ -2347,7 +2364,11 @@ function renderDock(center = true) {
     const card = document.createElement('div');
     card.className = 'dockcard' + (d.key === ED.docKey ? ' on' : '');
     card.dataset.key = d.key; card.tabIndex = 0;
-    card.innerHTML = `<div class="dockprev"><div class="doc">${cleanHtml(d.html)}</div></div><div class="dockname">${esc(d.name || t('libUntitled'))}</div><button class="rm dockrm" title="${esc(t('dockClose'))}">${ic('x', 12)}</button>`;
+    // Vorschau aus dem Anfang des Textes: Das ganze Dokument je Karte zu
+    // parsen kostete bei vielen Seiten die Zeit, die das Menue zum Aufgehen
+    // braucht. Der Rest steht hinter der Karte ohnehin nicht im Bild.
+    const pre = String(d.html || '');
+    card.innerHTML = `<div class="dockprev"><div class="doc">${cleanHtml(pre.length > 4000 ? pre.slice(0, 4000) : pre)}</div></div><div class="dockname">${esc(d.name || t('libUntitled'))}</div><button class="rm dockrm" title="${esc(t('dockClose'))}">${ic('x', 12)}</button>`;
     card.onclick = ev => {
       if (ev.target.closest('.rm')) return;
       if (dockSkipClick) { dockSkipClick = false; return; }
@@ -2832,7 +2853,17 @@ function renderSb() {
   };
   updWords();
 }
-function updWords() { const w = (page.innerText.trim().match(/\S+/g) || []).length; const e = $('#sbWords'); if (e) e.textContent = t('words', w); }
+// Wortzahl: `innerText` erzwingt bei jedem Anschlag ein neues Layout und wird
+// bei langen Texten spuerbar langsam. `textContent` zaehlt ohne Layout, und
+// gezaehlt wird erst, wenn das Tippen kurz ruht.
+let wordsTimer = 0;
+function updWords() {
+  clearTimeout(wordsTimer);
+  wordsTimer = setTimeout(() => {
+    const w = (page.textContent.trim().match(/\S+/g) || []).length;
+    const e = $('#sbWords'); if (e) e.textContent = t('words', w);
+  }, 250);
+}
 
 document.execCommand('defaultParagraphSeparator', false, 'p');
 page.innerHTML = localStorage.getItem('edDoc') || '<p><br></p>';

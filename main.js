@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, session, clipboard, Tray, Menu, globalShortcut, nativeImage } = require('electron');
 const { spawn, spawnSync } = require('child_process');
 const http = require('http'), path = require('path'), fs = require('fs'), os = require('os');
+const { pathToFileURL } = require('url');
 let nllb = null, ollama = null, nllbWanted = false, win = null;
 
 // Erlaubt queryLocalFonts() im Renderer (fuer die Schriftartenliste)
@@ -772,27 +773,164 @@ const TTS_PS = [
   '$txt = [IO.File]::ReadAllText($env:TTS_FILE, [Text.Encoding]::UTF8)',
   "$v = $s.GetInstalledVoices() | Where-Object { $_.Enabled -and $_.VoiceInfo.Culture.Name -like ($env:TTS_LANG + '-*') } | Select-Object -First 1",
   'if ($v) { $s.SelectVoice($v.VoiceInfo.Name) }',
-  '$s.Speak($txt)'
+  // In eine Datei statt direkt auf das Geraet: nur eine Datei laesst sich im
+  // Renderer anhalten und an derselben Stelle fortsetzen.
+  '$s.SetOutputToWaveFile($env:TTS_WAV)',
+  '$s.Speak($txt)',
+  '$s.Dispose()'
 ].join('; ');
 const TTS_PS_B64 = Buffer.from(TTS_PS, 'utf16le').toString('base64');
+// ---------- Aussprache: herunterladbare Stimmen (Piper) ----------
+// SAPI klingt mechanisch. Piper ist ein kleines neuronales Modell, das auf der
+// CPU schneller als Echtzeit rechnet und eine WAV-Datei liefert; die Datei kann
+// der Renderer anhalten und fortsetzen, ein laufender Sprechprozess nicht.
+// Engine und Stimmen werden bei Bedarf in den Benutzerordner geladen, damit
+// weder Installer noch Programmordner wachsen. Gemessene Groessen stehen in
+// der Liste und gehen so in die Oberflaeche (Einstellungen, Modellwaehler).
+const PIPER_ZIP = 'https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_windows_amd64.zip';
+const PIPER_HF = 'https://huggingface.co/rhasspy/piper-voices/resolve/main/';
+// `mb` ist die Groesse der ONNX-Datei, `rtf` der gemessene Echtzeitfaktor auf
+// diesem Rechner (0,41 heisst: 2,5-mal so schnell wie die Sprachausgabe dauert).
+const TTS_VOICES = [
+  { id:'de_DE-thorsten-high', lang:'de', name:'Thorsten', size:'hoch', mb:108.6, rtf:0.41, path:'de/de_DE/thorsten/high/' },
+  { id:'en_US-hfc_female-medium', lang:'en', name:'HFC Female', size:'mittel', mb:60.3, rtf:0.24, path:'en/en_US/hfc_female/medium/' },
+  { id:'es_ES-davefx-medium', lang:'es', name:'DaveFX', size:'mittel', mb:60.3, rtf:0.24, path:'es/es_ES/davefx/medium/' }
+];
+const ttsRoot = () => path.join(app.getPath('userData'), 'stimmen');
+const piperExe = () => path.join(ttsRoot(), 'piper', 'piper.exe');
+const voiceFile = (v, ext) => path.join(ttsRoot(), v.id + ext);
+const voiceReady = v => fs.existsSync(voiceFile(v, '.onnx')) && fs.existsSync(voiceFile(v, '.onnx.json'));
+// Fertig eingerichtete Stimme zur Sprache; eine ausdrueckliche Wahl gewinnt.
+function ttsVoiceFor(sel) {
+  const want = String(sel || '').slice(0, 2).toLowerCase();
+  return TTS_VOICES.find(v => v.id === sel && voiceReady(v)) ||
+    TTS_VOICES.find(v => v.lang === want && voiceReady(v)) || null;
+}
+// Die Stimmenliste fuer die Oberflaeche: Groesse, Zustand und gemessener Faktor.
+const ttsList = () => ({ engine: fs.existsSync(piperExe()), dir: ttsRoot(),
+  voices: TTS_VOICES.map(v => ({ id:v.id, lang:v.lang, name:v.name, quality:v.size, mb:v.mb, rtf:v.rtf, installed: voiceReady(v) })) });
+// Ein Download mit Fortschritt. Hugging Face und GitHub leiten beide um, deshalb
+// wird der Weiterleitung gefolgt; geschrieben wird erst in eine .part-Datei,
+// damit ein Abbruch keine halbe Stimme als fertig hinterlaesst.
+function ttsDownload(url, dest, onPct, hops = 0) {
+  return new Promise((resolve, reject) => {
+    const lib = url.startsWith('https:') ? require('https') : http;
+    const req = lib.get(url, { headers:{ 'User-Agent':'Uebersetzer' } }, res => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && hops < 6) {
+        res.resume();
+        return ttsDownload(new URL(res.headers.location, url).toString(), dest, onPct, hops + 1).then(resolve, reject);
+      }
+      if (res.statusCode !== 200) { res.resume(); return reject(new Error('HTTP ' + res.statusCode)); }
+      const total = Number(res.headers['content-length'] || 0), out = fs.createWriteStream(dest);
+      let got = 0;
+      res.on('data', c => { got += c.length; if (total && onPct) onPct(got / total); });
+      res.on('error', reject);
+      out.on('error', reject);
+      out.on('finish', () => out.close(() => resolve()));
+      res.pipe(out);
+    });
+    req.on('error', reject);
+  });
+}
+// Entpacken uebernimmt PowerShell; unter Linux gibt es Piper in dieser App
+// nicht, dort sprechen weiter spd-say und espeak-ng.
+function ttsUnzip(zip, dir) {
+  fs.mkdirSync(dir, { recursive: true });
+  const q = s => String(s).replace(/'/g, "''");
+  const r = spawnSync('powershell', ['-NoProfile', '-Command', `Expand-Archive -LiteralPath '${q(zip)}' -DestinationPath '${q(dir)}' -Force`], { windowsHide:true, stdio:'ignore' });
+  return r.status === 0;
+}
+const ttsSend = d => { try { if (win && !win.isDestroyed()) win.webContents.send('tts:progress', d); } catch {} };
+let ttsBusy = '';
+async function ttsInstall(id) {
+  const v = TTS_VOICES.find(x => x.id === id);
+  if (!v) return { ok:false, error:'unbekannte Stimme' };
+  if (!IS_WIN) return { ok:false, error:'nur unter Windows' };
+  if (ttsBusy) return { ok:false, error:'laeuft' };
+  ttsBusy = id;
+  try {
+    fs.mkdirSync(ttsRoot(), { recursive:true });
+    if (!fs.existsSync(piperExe())) {
+      ttsSend({ id, step:'engine', pct:0 });
+      const zip = path.join(ttsRoot(), 'piper.zip');
+      await ttsDownload(PIPER_ZIP, zip, p => ttsSend({ id, step:'engine', pct:p }));
+      if (!ttsUnzip(zip, ttsRoot())) throw new Error('entpacken');
+      try { fs.unlinkSync(zip); } catch {}
+    }
+    for (const ext of ['.onnx', '.onnx.json']) {
+      const f = voiceFile(v, ext);
+      if (fs.existsSync(f)) continue;
+      ttsSend({ id, step:'voice', pct:0 });
+      await ttsDownload(PIPER_HF + v.path + v.id + ext, f + '.part', p => ttsSend({ id, step:'voice', pct:p }));
+      fs.renameSync(f + '.part', f);
+    }
+    return { ok:true };
+  } catch (e) {
+    return { ok:false, error:String((e && e.message) || e) };
+  } finally { ttsBusy = ''; ttsSend({ id, done:true }); }
+}
+function ttsDelete(id) {
+  const v = TTS_VOICES.find(x => x.id === id);
+  if (!v) return { ok:false };
+  ttsStop();
+  for (const ext of ['.onnx', '.onnx.json']) { try { fs.unlinkSync(voiceFile(v, ext)); } catch {} }
+  return { ok:true };
+}
 function ttsStop() {
   if (!ttsProc) return;
   try { ttsProc.kill(); } catch {}
   ttsProc = null;
 }
-function ttsSpeak(text, lang) {
+// Die zuletzt erzeugte WAV-Datei wird beim naechsten Sprechen geloescht: sonst
+// sammeln sich im Temp-Ordner mit der Zeit Hunderte Dateien.
+let ttsLastFile = '';
+function ttsForgetFile() {
+  if (!ttsLastFile) return;
+  try { fs.unlinkSync(ttsLastFile); } catch {}
+  ttsLastFile = '';
+}
+// WAV erzeugen und ihren Pfad liefern; null, wenn Piper nicht sprechen konnte.
+function piperSay(text, v) {
+  return new Promise(resolve => {
+    ttsForgetFile();
+    const out = path.join(app.getPath('temp'), 'uebersetzer-tts.wav');
+    let p;
+    try {
+      p = spawn(piperExe(), ['--model', voiceFile(v, '.onnx'), '--output_file', out],
+        { windowsHide:true, stdio:['pipe', 'ignore', 'ignore'], cwd:path.dirname(piperExe()) });
+    } catch { return resolve(null); }
+    ttsProc = p;
+    p.on('error', () => { ttsProc = null; resolve(null); });
+    p.on('close', code => { ttsProc = null; resolve(code === 0 && fs.existsSync(out) ? out : null); });
+    try { p.stdin.write(String(text) + '\n', 'utf8'); p.stdin.end(); } catch { resolve(null); }
+  });
+}
+async function ttsSpeak(text, lang, voice) {
   const txt = String(text || '').trim();
   if (!txt) return { ok: false, reason: 'leer' };
   const l = String(lang || 'en').slice(0, 2).toLowerCase();
   ttsStop();
+  // Eine heruntergeladene Stimme hat Vorrang: sie klingt natuerlicher und
+  // liefert eine Datei, die der Renderer anhalten und fortsetzen kann.
+  const v = ttsVoiceFor(voice) || ttsVoiceFor(l);
+  if (v) {
+    const out = await piperSay(txt, v);
+    if (out) { ttsLastFile = out; return { ok:true, backend:'piper', voice:v.id, lang:l, file:pathToFileURL(out).href }; }
+  }
   if (IS_WIN) {
     const file = path.join(app.getPath('temp'), 'uebersetzer-tts.txt');
+    ttsForgetFile();
+    const wav = path.join(app.getPath('temp'), `uebersetzer-tts-${Date.now()}.wav`);
     try { fs.writeFileSync(file, txt, 'utf8'); } catch { return { ok: false, reason: 'datei' }; }
-    const env = Object.assign({}, process.env, { TTS_FILE: file, TTS_LANG: l });
-    ttsProc = spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', TTS_PS_B64],
+    const env = Object.assign({}, process.env, { TTS_FILE: file, TTS_LANG: l, TTS_WAV: wav });
+    const p = spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', TTS_PS_B64],
       { windowsHide: true, stdio: 'ignore', env });
-    ttsProc.on('error', () => { ttsProc = null; });
-    return { ok: true, backend: 'sapi', lang: l };
+    ttsProc = p;
+    return await new Promise(resolve => {
+      const done = ok => { ttsProc = null; try { fs.unlinkSync(file); } catch {}; if (ok && fs.existsSync(wav)) ttsLastFile = wav; resolve(ok && fs.existsSync(wav) ? { ok:true, backend:'sapi', lang:l, file:pathToFileURL(wav).href } : { ok:false, reason:'sprachausgabe' }); };
+      p.on('error', () => done(false));
+      p.on('close', code => done(code === 0));
+    });
   }
   const has = cmd => { try { return spawnSync('sh', ['-c', `command -v ${cmd}`]).status === 0; } catch { return false; } };
   if (!ttsBackend) ttsBackend = has('spd-say') ? 'spd-say' : has('espeak-ng') ? 'espeak-ng' : has('espeak') ? 'espeak' : 'keine';
@@ -831,7 +969,10 @@ function createTray() {
 
 let forceQuit = false;
 ipcMain.handle('app:hotkey', () => hotkeyOk);
-ipcMain.handle('tts:speak', (_e, text, lang) => ttsSpeak(text, lang));
+ipcMain.handle('tts:speak', (_e, text, lang, voice) => ttsSpeak(text, lang, voice));
+ipcMain.handle('tts:list', () => ttsList());
+ipcMain.handle('tts:install', (_e, id) => ttsInstall(id));
+ipcMain.handle('tts:delete', (_e, id) => ttsDelete(id));
 ipcMain.handle('tts:stop', () => { ttsStop(); return true; });
 ipcMain.handle('app:forceQuit', () => {
   forceQuit = true;

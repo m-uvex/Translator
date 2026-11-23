@@ -42,8 +42,13 @@ contextBridge.exposeInMainWorld('api', {
   hotkeyOk: () => ipcRenderer.invoke('app:hotkey'),
   // Vorlesen: Chromium hat in Electron keine Stimmen, deshalb spricht der
   // Hauptprozess ueber die Ausgabe des Systems (SAPI bzw. spd-say/espeak-ng).
-  ttsSpeak: (text, lang) => ipcRenderer.invoke('tts:speak', text, lang),
+  ttsSpeak: (text, lang, voice) => ipcRenderer.invoke('tts:speak', text, lang, voice),
   ttsStop: () => ipcRenderer.invoke('tts:stop'),
+  // Herunterladbare Stimmen (Piper): Liste, Einrichten mit Fortschritt, Loeschen.
+  ttsList: () => ipcRenderer.invoke('tts:list'),
+  ttsInstall: id => ipcRenderer.invoke('tts:install', id),
+  ttsDelete: id => ipcRenderer.invoke('tts:delete', id),
+  onTtsProgress: cb => { const f = (_e, d) => cb(d); ipcRenderer.on('tts:progress', f); return () => ipcRenderer.removeListener('tts:progress', f); },
   forceQuit: () => ipcRenderer.invoke('app:forceQuit'),
   winMinimize: () => ipcRenderer.invoke('win:minimize'),
   winToggleMax: () => ipcRenderer.invoke('win:toggleMax'),

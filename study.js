@@ -50,20 +50,46 @@ function legacySpeak(s, lang) {
     return true;
   } catch { return false; }
 }
+// Der Hauptprozess liefert eine WAV-Datei (Piper-Stimme oder SAPI). Gespielt
+// wird sie hier, damit sich dieselbe Ausgabe anhalten und an derselben Stelle
+// fortsetzen laesst; ein laufender Sprechprozess koennte das nicht.
+const TTS_PLAY = { el:null, key:'', paused:false };
+// Zustand fuer die Knoepfe: spielt gerade, oder steht sie angehalten da?
+window.ttsState = () => ({ playing: !!(TTS_PLAY.el && !TTS_PLAY.paused), paused: !!(TTS_PLAY.el && TTS_PLAY.paused) });
+const ttsAnnounce = () => { try { window.dispatchEvent(new Event('tts-state')); } catch {} };
+// Alles anhalten und die Wiedergabe vergessen; der naechste Klick faengt vorn an.
+function ttsHalt() {
+  if (TTS_PLAY.el) { try { TTS_PLAY.el.pause(); TTS_PLAY.el.src = ''; } catch {} }
+  TTS_PLAY.el = null; TTS_PLAY.key = ''; TTS_PLAY.paused = false;
+  try { if (window.api && window.api.ttsStop) window.api.ttsStop(); } catch {}
+  ttsAnnounce();
+}
+window.ttsHalt = ttsHalt;
 // Die eine Stelle, die ueber Systemweg und Rueckfall entscheidet. Liefert
-// Promise<boolean>: true, wenn wirklich gesprochen wurde. Der Ausgabeknopf
-// wertet das aus (ohne Sprachausgabe sagt er, was fehlt), die kleinen
-// Lautsprecher an den Vokabeln ignorieren es.
+// Promise<boolean>: true, wenn wirklich gesprochen wurde. Derselbe Text noch
+// einmal geklickt haelt an, ein weiteres Mal setzt er fort.
 async function speakText(text, code) {
   const s = String(text || '').trim();
   if (!s) return false;
-  const lang = speechLang(code);
-  try {
-    if (window.api && window.api.ttsSpeak) {
-      const r = await window.api.ttsSpeak(s, lang);
-      if (r && r.ok) return true;
-    }
-  } catch {}
+  const lang = speechLang(code), key = lang + '|' + s;
+  if (TTS_PLAY.el && TTS_PLAY.key === key) {
+    if (TTS_PLAY.paused) { try { await TTS_PLAY.el.play(); } catch {} TTS_PLAY.paused = false; }
+    else { TTS_PLAY.el.pause(); TTS_PLAY.paused = true; }
+    ttsAnnounce();
+    return true;
+  }
+  let r = null;
+  try { if (window.api && window.api.ttsSpeak) r = await window.api.ttsSpeak(s, lang, S.ttsVoice); } catch {}
+  if (r && r.ok && r.file) {
+    ttsHalt();
+    const a = new Audio(r.file);
+    TTS_PLAY.el = a; TTS_PLAY.key = key; TTS_PLAY.paused = false;
+    a.onended = () => { if (TTS_PLAY.el === a) { TTS_PLAY.el = null; TTS_PLAY.key = ''; TTS_PLAY.paused = false; ttsAnnounce(); } };
+    a.onerror = () => { if (TTS_PLAY.el === a) { TTS_PLAY.el = null; TTS_PLAY.key = ''; ttsAnnounce(); } };
+    try { await a.play(); } catch {}
+    ttsAnnounce();
+    return true;
+  }
   // Rueckfall nur, wenn er wirklich Stimmen hat; sonst waere "gesprochen" eine
   // Luege (getVoices() ist in Electron leer, siehe oben).
   const voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
@@ -2061,7 +2087,13 @@ function wire() {
     if (open) { $('#vocFind').value = ST.vocFind; $('#vocFind').focus(); }
     else { $('#vocFind').value = ''; ST.vocFind = ''; renderVocab(); }
   };
-  $('#vocFind').addEventListener('input', () => { ST.vocFind = $('#vocFind').value; renderVocab(); });
+  // Die ganze Liste neu zu bauen kostet bei vielen Vokabeln je Anschlag Zeit;
+  // gesucht wird deshalb erst, wenn das Tippen kurz ruht.
+  $('#vocFind').addEventListener('input', () => {
+    ST.vocFind = $('#vocFind').value;
+    clearTimeout(ST.findTimer);
+    ST.findTimer = setTimeout(renderVocab, 120);
+  });
   $('#vocFindClear').onclick = () => { $('#vocFind').value = ''; ST.vocFind = ''; renderVocab(); $('#vocFind').focus(); };
   $('#vocFilterBtn').onclick = () => vocFilterPop($('#vocFilterBtn'));
   $('#vocSelBtn').onclick = () => vocSelMode();
