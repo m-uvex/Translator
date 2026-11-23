@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 23. November 2026, App-Version 1.15.145 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 23. November 2026, App-Version 1.15.146 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2373,8 +2373,8 @@ Konsole ohne Fehler. Die Ecken sind unveraendert; Bilder in Tabellenzellen behal
 
 **Stimmen als Download (2).** Drei Stimmen, alle lokal und ohne Netz nach dem Download:
 - `de_DE-thorsten-high` (Deutsch, 108,6 MB, Echtzeitfaktor **0,41** = 2,4× schneller als Echtzeit, Güte „hoch“),
-- `en_US-hfc_female-medium` (Englisch, 60,3 MB, 0,24, „mittel“),
-- `es_ES-davefx-medium` (Spanisch, 60,3 MB, 0,24, „mittel“).
+- `en_US-lessac-medium` (Englisch, 60,3 MB, Echtzeitfaktor **0,099** = 10× schneller als Echtzeit, „mittel“),
+- `es_MX-claude-high` (Spanisch, 63,1 MB, **0,116** = 8,6×, „hoch“).
 Die Liste steht als `TTS_VOICES` in `main.js`. Beim ersten Download holt `ttsInstall()` zusätzlich die Piper-Engine (`piper_windows_amd64.zip`, 22,5 MB) nach `%APPDATA%\Uebersetzer\stimmen\piper` und entpackt sie mit `Expand-Archive`; die Stimmen liegen als `.onnx` + `.onnx.json` in `…\stimmen`. Geschrieben wird in `.part`-Dateien, damit ein Abbruch keine halbe Stimme als fertig hinterlässt. Fortschritt kommt als `tts:progress` (`step: 'engine'|'voice'`, `pct`) und steht an der Zeile in den Einstellungen. IPC: `tts:list`, `tts:install`, `tts:delete`; Preload: `ttsList`, `ttsInstall`, `ttsDelete`, `onTtsProgress`.
 - In den Einstellungen gibt es den Abschnitt „Aussprache“ (`#ttsBox`, `drawTts()`): je Zeile Sprache, Name, Größe, Tempo und Qualität in Worten, Zustand und Herunterladen/Löschen. Der Knopf „Infos ansehen“ (`openInfo()`, `<dialog id="infoDlg">`) zeigt zwei Tabellen (Aussprache und Übersetzermodelle) mit Spalten Modell, Umfang, Tempo, Qualität; die Angaben der Übersetzermodelle stehen zusätzlich als Zeile an jedem Modell (`MT_INFO`, `mtInfoText()`) und umfassen NLLB-200 600M/1.3B/3.3B, HY-MT 1.8B/7B, MiLMMT-46 1B/4B und TranslateGemma.
 - Der Wähler oben (`modelPop()` in `renderer.js`) hat jetzt zwei Gruppen mit Trennlinie: „Übersetzungsmodelle“ (wie bisher) und „Aussprache“ mit den heruntergeladenen Stimmen; die Wahl setzt `S.ttsVoice` und stellt die Übersetzung nicht um. Ohne Stimme steht dort „Stimme in den Einstellungen herunterladen“ und öffnet die Einstellungen.
@@ -2391,3 +2391,15 @@ Die Liste steht als `TTS_VOICES` in `main.js`. Beim ersten Download holt `ttsIns
 - **Nicht gemessen:** das Öffnen des Sitzungsmenüs mit vielen echten Dokumenten. Die Karten entstehen aus geöffneten Bibliotheksdokumenten; 25 Dokumente ließen sich im Test nicht ohne Speichern je Dokument anlegen. Gemessen ist nur der Vorschau-Anteil (oben).
 
 **Zauberstab (5).** Das Symbol hatte acht kurze Striche und wirkte mit Strichstärke 1,8 neben den übrigen Knöpfen zu fett. Es ist jetzt Stiel plus zwei Funken (drei Pfade) und wird über `IC_SW = { wand: 1.5 }` in `renderer.js` dünner gezeichnet; `ic()` nimmt die Stärke je Symbol, wenn keine übergeben wird. Gemessen im Fenster: `stroke-width="1.5"`, **3** Pfade am Knopf der Kontextleiste.
+
+## 171. Zwei Stimmen waren mit der mitgelieferten Piper-Fassung unbrauchbar (1.15.146)
+
+**Gefunden beim Prüfen.** In 1.15.145 standen `en_US-hfc_female-medium` und `es_ES-davefx-medium` in `TTS_VOICES`. Beide liefern mit der mitgelieferten Engine (`piper_windows_amd64.zip`, Fassung 2023.11.14-2) keine Datei, sondern nur die Zeile `[piper] [error] "aɪ" is not a single codepoint (ids=161,)`. Die neueren Stimmen benutzen Phonemfolgen, die in dieser Engine nicht auf einzelne Zeichen abgebildet sind; sie brauchen eine neuere Piper-Fassung.
+
+**Behoben.** Die Liste enthält nur noch Stimmen, die mit dieser Engine gemessen laufen; jede wurde über die CLI mit einem Satz geprüft (Echtzeitfaktor aus der Piper-Ausgabe):
+- `de_DE-thorsten-high` – spricht, **0,41** (2,4× schneller als Echtzeit).
+- `en_US-lessac-medium` – spricht, **0,0985** (10,2×), 60,3 MB.
+- `es_MX-claude-high` – spricht, **0,1156** (8,6×), 63,1 MB.
+Verworfen, weil sie mit dieser Engine abbrechen: `en_US-hfc_female-medium`, `es_ES-davefx-medium`, `es_ES-sharvard-medium`, `fr_FR-siwis-medium` (alle mit demselben `aɪ`-Fehler). `tr_TR-dfki-medium` spricht ebenfalls (**0,1158**), ist aber nicht im Angebot; die drei oben decken die Sprachen ab, in denen hier gelesen wird.
+**Grenze:** Wer die Engine auf eine neuere Piper-Fassung hebt, kann die neueren Stimmen wieder aufnehmen; dann muss die Liste erneut gemessen werden.
+**Geprüft 1.15.146 (installierte Fassung, `--remote-debugging-port=9337`).** `en_US-lessac-medium` über `api.ttsInstall` eingerichtet (`installed: true`), danach gesprochen: **1.737 ms** bis zur Wiedergabe, Audio **3,62 s**; Anhalten bei 0,43 s, Fortsetzen ab 0,83 s; der Wähler oben zeigt in der Gruppe „Aussprache“ den Eintrag „Englisch · Lessac“.

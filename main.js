@@ -791,10 +791,14 @@ const PIPER_ZIP = 'https://github.com/rhasspy/piper/releases/download/2023.11.14
 const PIPER_HF = 'https://huggingface.co/rhasspy/piper-voices/resolve/main/';
 // `mb` ist die Groesse der ONNX-Datei, `rtf` der gemessene Echtzeitfaktor auf
 // diesem Rechner (0,41 heisst: 2,5-mal so schnell wie die Sprachausgabe dauert).
+// Nur Stimmen, die mit der mitgelieferten Piper-Fassung (2023.11.14-2) wirklich
+// laufen: Neuere Stimmen (en_US-hfc_female, es_ES-davefx, es_ES-sharvard,
+// fr_FR-siwis) brechen dort mit `"aɪ" is not a single codepoint` ab, weil sie
+// Mehrzeichen-Phoneme verwenden, die diese Fassung nicht kennt (Abschnitt 171).
 const TTS_VOICES = [
   { id:'de_DE-thorsten-high', lang:'de', name:'Thorsten', size:'hoch', mb:108.6, rtf:0.41, path:'de/de_DE/thorsten/high/' },
-  { id:'en_US-hfc_female-medium', lang:'en', name:'HFC Female', size:'mittel', mb:60.3, rtf:0.24, path:'en/en_US/hfc_female/medium/' },
-  { id:'es_ES-davefx-medium', lang:'es', name:'DaveFX', size:'mittel', mb:60.3, rtf:0.24, path:'es/es_ES/davefx/medium/' }
+  { id:'en_US-lessac-medium', lang:'en', name:'Lessac', size:'mittel', mb:60.3, rtf:0.099, path:'en/en_US/lessac/medium/' },
+  { id:'es_MX-claude-high', lang:'es', name:'Claude', size:'hoch', mb:63.1, rtf:0.116, path:'es/es_MX/claude/high/' }
 ];
 const ttsRoot = () => path.join(app.getPath('userData'), 'stimmen');
 const piperExe = () => path.join(ttsRoot(), 'piper', 'piper.exe');
