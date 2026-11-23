@@ -887,19 +887,30 @@ function ttsStop() {
   try { ttsProc.kill(); } catch {}
   ttsProc = null;
 }
-// Die zuletzt erzeugte WAV-Datei wird beim naechsten Sprechen geloescht: sonst
-// sammeln sich im Temp-Ordner mit der Zeit Hunderte Dateien.
+// Jede Ausgabe bekommt eine eigene WAV-Datei: beim Vorlesen eines Textes laeuft
+// ein Absatz, waehrend der naechste schon erzeugt wird - eine gemeinsame Datei
+// wuerde ihm den Ton unter den Fuessen wegziehen. Aufgeraeumt wird nach Alter
+// und nicht sofort: eine Datei, die gerade abgespielt wird, liesse sich unter
+// Windows ohnehin nicht loeschen.
 let ttsLastFile = '';
-function ttsForgetFile() {
-  if (!ttsLastFile) return;
-  try { fs.unlinkSync(ttsLastFile); } catch {}
-  ttsLastFile = '';
+const ttsTempWav = () => path.join(app.getPath('temp'),
+  `uebersetzer-tts-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.wav`);
+function ttsPrune() {
+  const dir = app.getPath('temp'), now = Date.now();
+  let names = [];
+  try { names = fs.readdirSync(dir); } catch { return; }
+  for (const f of names) {
+    if (!/^uebersetzer-tts.*\.wav$/.test(f)) continue;
+    const p = path.join(dir, f);
+    if (p === ttsLastFile) continue;
+    try { if (now - fs.statSync(p).mtimeMs > 5 * 60 * 1000) fs.unlinkSync(p); } catch {}
+  }
 }
 // WAV erzeugen und ihren Pfad liefern; null, wenn Piper nicht sprechen konnte.
 function piperSay(text, v) {
   return new Promise(resolve => {
-    ttsForgetFile();
-    const out = path.join(app.getPath('temp'), 'uebersetzer-tts.wav');
+    ttsPrune();
+    const out = ttsTempWav();
     let p;
     try {
       p = spawn(piperExe(), ['--model', voiceFile(v, '.onnx'), '--output_file', out],
@@ -925,8 +936,8 @@ async function ttsSpeak(text, lang, voice) {
   }
   if (IS_WIN) {
     const file = path.join(app.getPath('temp'), 'uebersetzer-tts.txt');
-    ttsForgetFile();
-    const wav = path.join(app.getPath('temp'), `uebersetzer-tts-${Date.now()}.wav`);
+    ttsPrune();
+    const wav = ttsTempWav();
     try { fs.writeFileSync(file, txt, 'utf8'); } catch { return { ok: false, reason: 'datei' }; }
     const env = Object.assign({}, process.env, { TTS_FILE: file, TTS_LANG: l, TTS_WAV: wav });
     const p = spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', TTS_PS_B64],

@@ -228,6 +228,7 @@ const K = {
   pauseT:['Anhalten','Pause'], resumeT:['Fortsetzen','Resume'],
   ttsEngine:['Sprachausgabe wird eingerichtet …','Setting up speech …'], ttsVoiceLoad:['Stimme wird geladen','Downloading voice'],
   ttsAuto:['Automatisch (Textsprache)','Automatic (text language)'],
+  ttsRate:['Vorlesetempo','Reading speed'],
   langsN:[n => `${n} Sprachen`, n => `${n} languages`],
   winMin:['Minimieren','Minimize'], winMax:['Maximieren','Maximize'], winRestore:['Wiederherstellen','Restore'], winClose:['Schließen','Close'],
   stopTr:['Stoppen','Stop'], stopped:['Übersetzung angehalten','Translation stopped'],
@@ -448,7 +449,7 @@ const NL = {
   spFast:'snel', spMid:'gemiddeld', spSlow:'langzaam',
   qTop:'zeer goed', qMid:'goed', qLow:'eenvoudig',
   pauseT:'Pauzeren', resumeT:'Hervatten',
-  ttsEngine:'Spraakuitvoer wordt ingericht …', ttsVoiceLoad:'Stem wordt gedownload', ttsAuto:'Automatisch (teksttaal)',
+  ttsEngine:'Spraakuitvoer wordt ingericht …', ttsVoiceLoad:'Stem wordt gedownload', ttsAuto:'Automatisch (teksttaal)', ttsRate:'Voorleessnelheid',
   langsN:n => `${n} talen`,
   appTitle:'Vertaler', winMin:'Minimaliseren', winMax:'Maximaliseren', winRestore:'Herstellen', winClose:'Sluiten',
   stopTr:'Stoppen', stopped:'Vertaling gestopt', on:'Aan', off:'Uit', s_bootModel:'Laatst gebruikte model voorverwarmen bij opstarten', s_profanity:'Vloekfilter inschakelen', s_profanityStyle:'Vervanging voor vloekwoorden', s_autoCopy:'Uitvoer automatisch kopiëren', s_autoCopyTyped:'Uitvoer alleen bij getypte invoer kopiëren', o_stars:'Sterretjes (****)', o_symbols:'Symbolen (@#$%&!)', s_mdMode:'Dynamische Markdown', s_spellAnim:'Spellingsgolven animeren', s_groupFeatures:'Extra instellingen', personalDict:'Persoonlijk woordenboek', dictWords:'Opgeslagen woorden', addWord:'Woord toevoegen', addWordPh:'Nieuw woord typen …', noDictWords:'Geen woorden in persoonlijk woordenboek', edit:'Bewerken', wordExists:'Woord bestaat al',
@@ -626,7 +627,7 @@ const ES = {
   spFast:'rápido', spMid:'medio', spSlow:'lento',
   qTop:'muy buena', qMid:'buena', qLow:'básica',
   pauseT:'Pausar', resumeT:'Continuar',
-  ttsEngine:'Preparando la voz …', ttsVoiceLoad:'Descargando la voz', ttsAuto:'Automático (idioma del texto)',
+  ttsEngine:'Preparando la voz …', ttsVoiceLoad:'Descargando la voz', ttsAuto:'Automático (idioma del texto)', ttsRate:'Velocidad de lectura',
   langsN:n => `${n} idiomas`,
   appTitle:'Traductor', winMin:'Minimizar', winMax:'Maximizar', winRestore:'Restaurar', winClose:'Cerrar',
   settings:'Configuración', swap:'Intercambiar', reloadModels:'Recargar modelos', inputPh:'Escribe el texto o arrastra un archivo aquí …', attach:'Adjuntar archivo', translate:'Traducir', copy:'Copiar', copied:'Copiado',
@@ -805,7 +806,7 @@ const TR = {
   spFast:'hızlı', spMid:'orta', spSlow:'yavaş',
   qTop:'çok iyi', qMid:'iyi', qLow:'basit',
   pauseT:'Duraklat', resumeT:'Devam et',
-  ttsEngine:'Seslendirme hazırlanıyor …', ttsVoiceLoad:'Ses indiriliyor', ttsAuto:'Otomatik (metin dili)',
+  ttsEngine:'Seslendirme hazırlanıyor …', ttsVoiceLoad:'Ses indiriliyor', ttsAuto:'Otomatik (metin dili)', ttsRate:'Okuma hızı',
   langsN:n => `${n} dil`,
   appTitle:'Çevirmen', winMin:'Simge durumuna küçült', winMax:'Ekranı kapla', winRestore:'Geri yükle', winClose:'Kapat',
   settings:'Ayarlar', swap:'Değiştir', reloadModels:'Modelleri yeniden yükle', inputPh:'Metin girin veya buraya bir dosya bırakın …', attach:'Dosya ekle', translate:'Çevir', copy:'Kopyala', copied:'Kopyalandı',
@@ -984,7 +985,7 @@ const AR = {
   spFast:'سريع', spMid:'متوسط', spSlow:'بطيء',
   qTop:'جيد جداً', qMid:'جيد', qLow:'بسيط',
   pauseT:'إيقاف مؤقت', resumeT:'متابعة',
-  ttsEngine:'جارٍ إعداد الصوت …', ttsVoiceLoad:'جارٍ تنزيل الصوت', ttsAuto:'تلقائي (لغة النص)',
+  ttsEngine:'جارٍ إعداد الصوت …', ttsVoiceLoad:'جارٍ تنزيل الصوت', ttsAuto:'تلقائي (لغة النص)', ttsRate:'سرعة القراءة',
   langsN:n => `${n} لغة`,
   appTitle:'المترجم', winMin:'تصغير', winMax:'تكبير', winRestore:'استعادة', winClose:'إغلاق',
   settings:'الإعدادات', swap:'تبديل', reloadModels:'إعادة تحميل النماذج', inputPh:'اكتب نصاً أو أسقط ملفاً هنا …', attach:'إرفاق ملف', translate:'ترجمة', copy:'نسخ', copied:'تم النسخ',
@@ -1248,6 +1249,8 @@ const D = { url:'http://localhost:11434', nllb:'http://127.0.0.1:8765', model:''
   imgModel:'',
   // Gewaehlte Aussprache-Stimme (Piper). Leer heisst: die Stimme zur Sprache.
   ttsVoice:'',
+  // Vorlesetempo als Faktor auf die Wiedergabe (1 = normal).
+  ttsRate:1,
   // Bilder beim Einfuegen begrenzen (Abschnitt 125); abschaltbar.
   imgLimit:true,
   // Gesamtgrenze fuer alle Bilder eines Dokuments (Abschnitt 129).
@@ -1590,8 +1593,25 @@ async function modelPop(btn) {
   });
   // Die Aussprache steht im selben Waehler, aber als eigene Gruppe: eine Stimme
   // ist kein Uebersetzungsmodell und darf die Uebersetzung nicht umstellen.
+  await ttsMenuRows(p);
+  const r = btn.getBoundingClientRect(); Object.assign(p.style, { left:Math.max(8, r.right - 300) + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden');
+}
+
+// ---------- Stimmen und Vorlesetempo fuer die Modellmenues ----------
+// Das Tempo wirkt auf die Wiedergabe der fertigen WAV-Datei (playbackRate), nicht
+// auf ihre Erzeugung: die Tonhoehe bleibt erhalten, und ein Wechsel gilt sofort
+// auch fuer eine laufende Ausgabe.
+const ttsRate = () => Math.min(2, Math.max(0.5, Number(S.ttsRate) || 1));
+const ttsRateLabel = () => (Math.round(ttsRate() * 10) / 10)
+  .toLocaleString(LANG === 'de' ? 'de-DE' : 'en-US', { minimumFractionDigits:1, maximumFractionDigits:1 }) + '×';
+// Dieselbe Gruppe haengt im Waehler des Uebersetzers und in dem des
+// Lese-Arbeitsplatzes (study.js: studyModelPop). Eine Stimme ist kein
+// Uebersetzungsmodell, deshalb steht sie unter einem Trennstrich.
+async function ttsMenuRows(p) {
+  await loadVoices();
   p.append(document.createElement('hr'));
-  head('s_ttsH');
+  const head = document.createElement('div');
+  head.className = 'row hd'; head.textContent = t('s_ttsH'); p.append(head);
   // Die Sprache kommt aus dem Text; eine gewaehlte Stimme spricht nur, wenn sie
   // zu ihm passt (main.js: ttsVoiceFor). „Automatisch“ ist deshalb die Vorgabe.
   if (VOICES.length) {
@@ -1600,8 +1620,7 @@ async function modelPop(btn) {
     auto.innerHTML = `<span class="muted">${esc(t('ttsAuto'))}</span>`;
     auto.onclick = () => { S.ttsVoice = ''; save(); closePops(); };
     p.append(auto);
-  }
-  if (!VOICES.length) {
+  } else {
     const r = document.createElement('div'); r.className = 'row';
     r.innerHTML = `<span class="muted">${esc(t('ttsInSettings'))}</span>`;
     r.onclick = () => { closePops(); $('#openSettings').click(); };
@@ -1613,7 +1632,18 @@ async function modelPop(btn) {
     r.onclick = () => { S.ttsVoice = v.id; save(); closePops(); };
     p.append(r);
   });
-  const r = btn.getBoundingClientRect(); Object.assign(p.style, { left:Math.max(8, r.right - 300) + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden');
+  const row = document.createElement('div');
+  row.className = 'row ttsrate';
+  const lab = document.createElement('span'); lab.textContent = t('ttsRate');
+  const inp = document.createElement('input');
+  inp.type = 'range'; inp.min = '0.5'; inp.max = '2'; inp.step = '0.1'; inp.value = String(ttsRate());
+  inp.setAttribute('aria-label', t('ttsRate'));
+  const val = document.createElement('b'); val.textContent = ttsRateLabel();
+  inp.oninput = () => {
+    S.ttsRate = Number(inp.value); val.textContent = ttsRateLabel(); save();
+    if (window.ttsRateChanged) window.ttsRateChanged();
+  };
+  row.append(lab, inp, val); p.append(row);
 }
 
 // ---------- Softwareweiter Hauptschalter: eine Erlaubnisliste ----------

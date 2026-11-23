@@ -621,6 +621,12 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .glbar .ib:hover{background:var(--accent-hover);color:var(--on-accent)}
 #glossName{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
 .pop .row .rowend{display:flex;align-items:center;gap:6px}
+/* Vorlesetempo im Modellmenue: Regler mit Wert in einer Zeile wie die Eintraege
+   darueber, damit er nicht als eigener Kasten wirkt. */
+.pop .row.ttsrate{cursor:default;gap:10px}
+.pop .row.ttsrate:hover{background:none}
+.pop .row.ttsrate input{flex:1;min-width:70px;accent-color:var(--accent);cursor:pointer}
+.pop .row.ttsrate b{font-weight:600;font-variant-numeric:tabular-nums;min-width:36px;text-align:right}
 .pop .row .rm{width:22px;height:22px;padding:0;border:0;border-radius:50%;background:none;color:var(--muted);display:grid;place-items:center;cursor:pointer}
 .pop .row .rm:hover{background:var(--card);color:var(--accent-ink)}
 /* Verlauf: die Ausgangsfassung oben, die Uebersetzung darunter, beide auf eine

@@ -3401,6 +3401,9 @@ function showView(v) {
   if (v === 'lib') drawLib();
   if (v === 'txt' && window.studyTextsRender) window.studyTextsRender();
   if (v === 'read' && window.studyRestore) window.studyRestore();
+  // Eine laufende Vorlesung gehoert zur Leseoberflaeche; in jedem anderen
+  // Arbeitsplatz waere sie ohne sichtbaren Knopf weitergelaufen (study.js).
+  if (v !== 'read' && window.ttsReadHalt) window.ttsReadHalt();
   if (v === 'voc' && window.studyVocRender) window.studyVocRender();
   if (v === 'srs' && window.studySrsRender) window.studySrsRender();
   if (v === 'tr' && window.trAlignSide) window.trAlignSide();

@@ -83,6 +83,7 @@ async function speakText(text, code) {
   if (r && r.ok && r.file) {
     ttsHalt();
     const a = new Audio(r.file);
+    a.playbackRate = ttsRate();
     TTS_PLAY.el = a; TTS_PLAY.key = key; TTS_PLAY.paused = false;
     a.onended = () => { if (TTS_PLAY.el === a) { TTS_PLAY.el = null; TTS_PLAY.key = ''; TTS_PLAY.paused = false; ttsAnnounce(); } };
     a.onerror = () => { if (TTS_PLAY.el === a) { TTS_PLAY.el = null; TTS_PLAY.key = ''; ttsAnnounce(); } };
@@ -96,6 +97,103 @@ async function speakText(text, code) {
   return voices.length ? legacySpeak(s, lang) : false;
 }
 const speakVocab = e => !!e && speakText(e.term, e.src || S.studySrc);
+
+// ---------- Ganzen Lesetext vorlesen ----------
+// Gelesen wird absatzweise: ein langer Text in einem Stueck liesse lange auf den
+// ersten Ton warten und ergaebe eine riesige WAV-Datei. Anhalten wirkt sofort
+// auf den laufenden Absatz, Fortsetzen spielt denselben weiter.
+const READ = { on:false, paused:false, stop:false, el:null, wake:null };
+
+function readIcon() {
+  const b = $('#rSpeak'); if (!b) return;
+  const i = READ.on && READ.paused ? 'play' : READ.on ? 'pause' : 'volume';
+  b.dataset.i = i;
+  b.dataset.tt = READ.on && READ.paused ? 'resumeT' : READ.on ? 'pauseT' : 'speak';
+  b.innerHTML = ic(i);
+  b.title = READ.on ? t(b.dataset.tt) : (b.dataset.vn ? `${t('speak')} · ${b.dataset.vn}` : t('speak'));
+}
+// Verlassen des Lesens, neuer Text, anderes Vorlesen: alles anhalten. Der
+// Hauptprozess wird mit abgebrochen, sonst rechnet Piper weiter.
+function readHalt() {
+  const was = READ.on || !!READ.el || !!READ.wake;
+  READ.stop = true; READ.on = false; READ.paused = false;
+  const a = READ.el; READ.el = null;
+  if (a) { try { a.pause(); a.src = ''; } catch {} }
+  const w = READ.wake; READ.wake = null;
+  if (w) w();
+  if (was) { try { if (window.api && window.api.ttsStop) window.api.ttsStop(); } catch {} }
+  readIcon();
+}
+window.ttsReadHalt = readHalt;
+// Das Warten auf das Fortsetzen; geloest wird es beim Fortsetzen oder Abbruch.
+const readHold = () => new Promise(res => { READ.wake = res; });
+// Ein Tempowechsel am Regler gilt sofort, auch fuer das, was gerade laeuft.
+window.ttsRateChanged = () => {
+  if (TTS_PLAY.el) TTS_PLAY.el.playbackRate = ttsRate();
+  if (READ.el) READ.el.playbackRate = ttsRate();
+};
+
+async function readPart(txt, lang) {
+  let r = null;
+  try { if (window.api && window.api.ttsSpeak) r = await window.api.ttsSpeak(txt, lang, S.ttsVoice); } catch {}
+  if (READ.stop) return false;
+  if (!r || !r.ok || !r.file) return false;
+  while (READ.paused && !READ.stop) await readHold();
+  if (READ.stop) return false;
+  const a = new Audio(r.file);
+  a.playbackRate = ttsRate();
+  READ.el = a;
+  await new Promise(res => { a.onended = res; a.onerror = res; a.play().catch(res); });
+  if (READ.el === a) READ.el = null;
+  return !READ.stop;
+}
+
+// Von der Stelle an, die gerade oben steht: wer mitten im Text ist, will nicht
+// jedes Mal von vorn hoeren.
+async function readStart(tx) {
+  const art = $('#reader'), wrap = $('#readerWrap');
+  if (!art || !tx) return;
+  const ps = [...art.querySelectorAll('p')];
+  const parts = ps.map(p => String(p.dataset.txt || p.textContent || '').trim());
+  if (!parts.length) return;
+  const wt = wrap ? wrap.getBoundingClientRect().top : 0;
+  let from = ps.findIndex(p => p.getBoundingClientRect().bottom > wt);
+  if (from < 0) from = 0;
+  const lang = speechLang(tx.src || S.studySrc);
+  // Eine laufende Einzelausgabe (Uebersetzung, Vokabel) darf nicht dazwischenreden.
+  ttsHalt();
+  READ.on = true; READ.paused = false; READ.stop = false;
+  readIcon();
+  for (let i = from; i < parts.length && !READ.stop; i++) {
+    if (!parts[i]) continue;
+    if (!await readPart(parts[i], lang)) break;
+  }
+  if (!READ.stop) readHalt();
+}
+
+function readToggle() {
+  READ.paused = !READ.paused;
+  if (READ.paused) { if (READ.el) { try { READ.el.pause(); } catch {} } }
+  else if (READ.el) { try { READ.el.play(); } catch {} }
+  else { const w = READ.wake; READ.wake = null; if (w) w(); }
+  readIcon();
+}
+
+// Der Knopf erscheint nur, wenn ein eingerichtetes Modell die Sprache dieses
+// Textes spricht; ohne Modell gibt es nichts zu hoeren und deshalb keinen Knopf.
+// Der Tooltip nennt die Stimme, die dann sprechen wuerde (main.js: ttsVoiceFor).
+async function updRSpeak(tx) {
+  const b = $('#rSpeak'); if (!b || !tx) return;
+  const id = tx.id, lang = speechLang(tx.src || S.studySrc);
+  let vs = [];
+  try { vs = (await loadVoices()) || []; } catch {}
+  if (!ST.cur || ST.cur.id !== id) return;
+  const pick = (S.ttsVoice && vs.find(v => v.id === S.ttsVoice && v.lang === lang)) || vs.find(v => v.lang === lang) || null;
+  b.dataset.vn = pick ? `${langLabel(lang)} · ${pick.name}` : '';
+  b.classList.toggle('hidden', !pick);
+  if (!pick) readHalt();
+  readIcon();
+}
 
 // Textarten: gespeichert wird der Schluessel, angezeigt die Sprache der App.
 const CATS = [['news', 'Nachrichten', 'News'], ['story', 'Erzählung', 'Story'], ['nonfiction', 'Sachtext', 'Non-fiction'], ['dialog', 'Dialog', 'Dialogue'], ['poem', 'Gedicht', 'Poem'], ['other', 'Sonstiges', 'Other']];
@@ -138,7 +236,7 @@ function renderStudyModel() {
 // Modellwahl des Lese-Arbeitsplatzes. Oben, womit Woerter uebersetzt werden;
 // darunter - nur wenn der Kurzgeschichten-Generator an ist - das Schreibmodell
 // fuer die Geschichten. Dieselbe Aufteilung wie im Texteditor.
-function studyModelPop(btn) {
+async function studyModelPop(btn) {
   closePops();
   const p = $('#pop');
   p.innerHTML = '';
@@ -161,6 +259,9 @@ function studyModelPop(btn) {
     row(t('storyModelAuto'), '', !S.storyModel || !gens.includes(S.storyModel), '', () => { S.storyModel = ''; });
     gens.forEach(n => row(n, n, !!S.storyModel && n === S.storyModel, '', () => { S.storyModel = n; }));
   }
+  // Die Vorlesestimme und das Tempo stehen im selben Menue, aber unter einem
+  // Trennstrich: sie uebersetzen nichts und gehoeren nicht zur Wortuebersetzung.
+  await ttsMenuRows(p);
   const r = btn.getBoundingClientRect();
   Object.assign(p.style, { left: Math.max(8, Math.min(r.left, innerWidth - 320)) + 'px', top: r.bottom + 6 + 'px' });
   p.classList.remove('hidden');
@@ -666,7 +767,7 @@ function txAdd() {
       tx.pos = 0; tx.anchor = null; tx.updated = Date.now();
       persist('texts');
       renderTexts();
-      if (ST.cur && ST.cur.id === tx.id) drawReader();
+      if (ST.cur && ST.cur.id === tx.id) { readHalt(); drawReader(); }
     }
     if (d) d.close();
     return window.trStatus(t('txSaved'));
@@ -694,6 +795,7 @@ function openText(id) {
   ST.cur = ST.texts.find(x => x.id === id) || null;
   // Eine Geschichte, die noch geschrieben wird, hat keinen Text zum Lesen.
   if (!ST.cur || Number(ST.cur.pending)) return;
+  readHalt();
   // `showView` liegt in der IIFE von editor.js; nach aussen reicht sie nur als
   // window.edShowView - der direkte Name ist hier nicht sichtbar.
   window.edShowView('read');
@@ -715,6 +817,7 @@ function drawReader() {
   const tx = ST.cur; if (!tx) return;
   $('#rTitle').textContent = tx.title;
   readerMeta(tx);
+  updRSpeak(tx);
   const art = $('#reader');
   art.innerHTML = '';
   const paras = String(tx.text || '').split(/\r?\n\s*\r?\n|\r?\n/).filter(p => p.trim());
@@ -787,7 +890,7 @@ function savePos() {
   ST.cur.anchor = i < 0 ? null : { i, d: Math.round(ps[i].getBoundingClientRect().top - wt) };
   persist('texts');
 }
-window.studyRestore = () => { if (ST.cur) drawReader(); };
+window.studyRestore = () => { readHalt(); if (ST.cur) drawReader(); };
 
 // ---------- Antippen im Text ----------
 // Eine Vokabel bekommt eine Blase ueber dem Wort. Ein Klick darauf streicht das
@@ -2066,7 +2169,12 @@ function wire() {
   document.querySelectorAll('#stLen .stseg').forEach(b => {
     b.onclick = () => { S.storyLen = b.dataset.len; save(); drawStoryLen(); };
   });
-  $('#rBack').onclick = () => { savePos(); window.edShowView('txt'); };
+  $('#rBack').onclick = () => { readHalt(); savePos(); window.edShowView('txt'); };
+  $('#rSpeak').onclick = () => {
+    if (!ST.cur) return;
+    if (READ.on) return readToggle();
+    readStart(ST.cur);
+  };
   const wrap = $('#readerWrap');
   if (wrap) wrap.addEventListener('scroll', () => { clearTimeout(ST.posTimer); ST.posTimer = setTimeout(savePos, 600); });
   bindPicking($('#reader'), '.rw');
