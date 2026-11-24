@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.166 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.167 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2712,3 +2712,24 @@ Die Seite misst wie bisher erst auf Klick; die Stimmenzeile wird beim selben Lau
 **Geprüft (Quelllauf 1.15.166, 1600 × 1000, Profil `%TEMP%\u242`, drei Vokabeln, dunkles Erscheinungsbild):** Im vergrößerten Ausschnitt sitzt der blaue Kreis vollständig innerhalb der Pill-Rundung mit gleichmäßigem Rand; die Linie steht genau zwischen der Auswahl-Checkliste und dem Nachtragen-Symbol, mit Luft zu beiden Seiten. Im Suchzustand steht sie an derselben Stelle, das Kreuz liegt ebenfalls im Feld.
 
 **Grenzen:** Nur dunkles Erscheinungsbild, nur bei 1600 px Breite angesehen; bei schmalem Fenster bricht die Reihe um und die Linie sitzt dann am Zeilenwechsel (nicht angesehen).
+
+## 192. Wiederholen: Rückmeldung über den Bewertungsknöpfen (1.15.167)
+
+**Beobachtung.** Die vier Bewertungen (Nochmal, Schwer, Gut, Einfach) reagierten als einzige Knöpfe der App gar nicht auf den Zeiger: `.ghost` und `.primary` hatten nie eine `:hover`-Regel, alle Symbolknöpfe dagegen schon (`.ib:hover`). Beim Überfahren blieb also alles stehen — das wirkte inkonsistent.
+
+**Was jetzt gilt.**
+
+- **Nochmal · Schwer · Einfach** (`.ghost`): beim Überfahren legt sich ein sanfter Akzentfilm über das Feld (`color-mix(in srgb,var(--accent) 22%,var(--soft))`) und die Schrift wechselt auf die Akzentfarbe (`.srsbtns.rate .ghost:hover`).
+- **Gut** (`.primary`): wird heller, wie andere gefüllte Knöpfe der App (`var(--accent-hover)`).
+- Nur diese vier Knöpfe sind geändert (`.srsbtns.rate`), damit nicht unbemerkt jeder Ghost-Knopf im Programm anders aussieht.
+
+**Geprüft (Quelllauf 1.15.167, 1600 × 1000, zwei fällige Vokabeln, aufgedeckte Karte, dunkles Erscheinungsbild), mit echten Mausbewegungen über CDP:**
+
+| Knopf | ohne Zeiger | mit Zeiger |
+|---|---|---|
+| Nochmal (`ghost`) | `rgb(43,43,45)` / `#ececec` | `color(srgb 0.209 0.277 0.331)` / `#8cc8f5` (Akzentton) |
+| Gut (`primary`) | `#5aa9e0` | `#82bdea` (`--accent-hover`) |
+
+Auf den Screenshots ist der Unterschied deutlich: „Nochmal“ liegt beim Überfahren als bläulich getöntes Feld mit hellblauer Schrift, „Gut“ wird sichtbar heller.
+
+**Grenzen:** Nur dunkles Erscheinungsbild geprüft; die helle Fassung nutzt dieselben Variablen, angesehen ist sie nicht. Die übrigen `.ghost`-Knöpfe im Programm (z. B. „Text übernehmen“ im Editor) haben weiterhin keine Hover-Regel — bewusst nicht mitgeändert.
