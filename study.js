@@ -754,7 +754,7 @@ function renderTexts() {
     const sub = state < 0 ? t('stRetry') : t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length);
     const stat = state ? '' : txStatText(tx);
     card.innerHTML = `<div class="libprev"><div class="doc">${esc(excerpt)}</div></div>
-      <div class="libmeta">${badge}<div class="libname">${esc(tx.title)}</div><div class="libdate">${esc(langLabel(tx.src))} → ${esc(langLabel(tx.tgt))} · ${esc(sub)}</div>${stat ? `<div class="libstat">${esc(stat)}</div>` : ''}</div>
+      <div class="libmeta">${badge}<div class="libname">${esc(tx.title)}</div><div class="libdate">${esc(sub)}</div>${stat ? `<div class="libstat">${esc(stat)}</div>` : ''}</div>
       ${state ? '' : `<button class="rm ed" title="${esc(t('edit'))}">${ic('pencil', 13)}</button>`}
       <button class="rm" title="${esc(t('remove'))}">${ic('x', 14)}</button>`;
     card.onclick = ev => {
@@ -975,10 +975,12 @@ function drawReader() {
 
 // Zahl der Vokabeln dieses Textes; wird nach jedem neuen Wort aufgefrischt,
 // damit der Kopf nicht bei 0 stehen bleibt.
+// Im Lesefenster zaehlt nur, wie der Text dasteht: Anteil, neue Woerter,
+// Lesezeit. Sprachpaar (steht im Kopf der Liste), Textart und Vokabelzahl
+// sagen beim Lesen nichts - der Text ist offen, das Paar ist gesetzt.
 function readerMeta(tx) {
   const el = $('#rMeta'); if (!el || !tx) return;
-  const stat = Number(tx.pending) ? '' : txStatText(tx);
-  el.textContent = [`${langLabel(tx.src || S.studySrc)} → ${langLabel(tx.tgt || S.studyTgt)}`, catLabel(tx.cat), t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length), stat].filter(Boolean).join(' · ');
+  el.textContent = Number(tx.pending) ? '' : txStatText(tx);
 }
 
 function savePos() {

@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.181 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.182 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2992,3 +2992,18 @@ Dieselbe Knopfzeile schließt auch die Liste der Übersetzermodelle ab — hinte
 - Angesehen als Bild (Fenster 1500 × 1125, 120 % Skalierung): Karte mit Bekanntheitszeile, Lesetext mit feinen Punktlinien unter den beiden Wörtern.
 
 **Grenzen:** Nur dunkles Erscheinungsbild und deutsch; andere Sprachen der Texte (Tabelle) und die Bildschirmfotos sind nicht geprüft. Ein echtes Antippen eines markierten Wortes lief nicht (das braucht das Übersetzungsmodell), die Blase kam wie in §205 über `showChip()`. Die Lesezeit ist eine Schätzung mit 180 Wörtern/Minute, keine Messung. Beugungsformen außer der einfachen Mehrzahl zählen als neu (`hablo` gegen `hablar`).
+## 207. Lesekopf ohne Sprachpaar und Beiwerk (1.15.182)
+
+**Anlass.** „Muss man hier angeben, welche Sprache zu welcher, die verschiedenen Sprachpaare sind ja sowieso voneinander gespeichert und im Menü wird es ja vorher schon angezeigt, bei welcher Sprache man ist. Die meisten beim Lesen angezeigten Informationen sind generell irrelevant.“
+
+**Karte in der Liste.** Die Zeile unter dem Titel trug „Spanisch → Deutsch · 1 Vokabel“. Das Paar ist doppelt: jede Liste zeigt nur Texte des gewählten Paars, und der Kopf der Liste trägt es als zwei Pillen (`#libPair`). Übrig bleibt die Zahl der Vokabeln: „0 Vokabeln“. Darunter weiter die leise Zeile mit dem Bekanntheitsgrad.
+
+**Lesefenster.** `readerMeta()` schrieb vier Angaben in `#rMeta`: Paar, Textart, Vokabelzahl, Bekanntheitsgrad. Beim Lesen ist der Text offen (die Textart hat man beim Öffnen gewählt, sie steht auf der Karte), das Paar ist gesetzt, und die Vokabelzahl wächst erst durch das Antippen. Im Kopf bleibt deshalb nur, was den Text selbst beschreibt: „43 % bekannt · 9 neu · ~1 Min“. Damit ist die Zeile kurz genug, dass die Kürzung aus §206 im Normalfall nicht mehr greift.
+
+**Geprüft (Quelllauf, Messung über CDP, Fenster 1200 px):**
+
+- Karte: `.libdate` = „0 Vokabeln“ (vorher „Spanisch → Deutsch · 0 Vokabeln“), `.libstat` = „0 % bekannt · 12 neu · ~1 Min“.
+- Lesekopf: `#rMeta` = „0 % bekannt · 12 neu · ~1 Min“; der ganze Kopf im Text „Fremd 0 % bekannt · 12 neu · ~1 Min“.
+- Angesehen als Bild: Liste mit zwei Karten (Badge, Titel, Vokabelzahl, Bekanntheit), Lesefenster mit Titel links und der kurzen Zeile rechts neben dem Modellknopf.
+
+**Grenzen:** Nur deutsch und dunkles Erscheinungsbild, nur der Quelllauf; die installierte Fassung wurde gestartet und über `/health` geprüft, ihr Kopf aber nicht angesehen. Die Textart bleibt als Abzeichen auf der Karte; ob sie im Lesekopf fehlt, ist eine Entscheidung dieser Änderung, keine Messung.
