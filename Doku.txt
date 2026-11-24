@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.174 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.175 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2870,3 +2870,30 @@ Die Regeln der Optionsspalte aus §945 bleiben stehen; sie sind jetzt Wiederholu
 - Nach einem Klick in `#input` ist das Feld fokussiert (`document.activeElement.id` = `input`), Tippen bleibt also unberührt.
 
 **Grenzen:** Ein echtes Ziehen mit der Maus ließ sich in dieser Umgebung nicht nachstellen — synthetische Mausereignisse über CDP erzeugen auch auf einer ungeschützten Probediv keine Auswahl, das Messwerkzeug taugt dafür nicht. Geprüft ist deshalb der berechnete `user-select`-Wert, also die Regel, die der Browser auswertet; zusätzlich, dass die als Inhalt gedachten Stellen ihn auf `text` setzen. Nur dunkles Erscheinungsbild geprüft; Dialoge und das helle Erscheinungsbild nicht einzeln durchgeklickt.
+## 200. Zähler in allen Köpfen hinter dem Titel (1.15.175)
+
+**Was falsch war.** In §198 standen die Zähler als gefüllte Kapsel mitten in der Reihe der Bedienelemente — zwischen Sprachwahl und Übungsarten. Damit sahen sie aus wie ein dritter Knopf („614 fällig“ als Schalter) und standen zwischen lauter Dingen, die man anklickt; die Fläche machte sie zusätzlich lauter als die Angabe wert ist.
+
+**Jetzt.** Alle vier Köpfe tragen ihre Angabe an derselben Stelle: direkt hinter dem Titel, als leiser Text ohne Fläche und Rahmen (`.hmeta`: 13 px, `--muted`, Ziffern mit fester Breite, `margin-inline-start:-2px`, leer `display:none`). Rechts stehen nur noch die Bedienelemente: Sprachwahl, Übungsarten, Werkzeuge.
+
+- **Vokabeln:** nur die Zahl (`617`) — der Titel nennt die Sache schon, „Vokabeln 617 Vokabeln“ las sich wie ein Fehler. Gibt es Einträge in anderen Paaren, steht dahinter `· 5 in anderen Sprachen`.
+- **Vokabeln üben:** `614 fällig`, in der Endlos-Runde der Serienzähler.
+- **Lesen** (`#txOther`): `5 in anderen Sprachen`.
+- **Dokumentenablage** (`#libCount`): `12 Dokumente`.
+
+Die vollen Texte bleiben, wo sie gebraucht werden: `vocCount` in den Karten der Ablage, `libCount` im Kopf selbst.
+
+**Übungsarten.** Die Kapsel aus §198 ist weg. Die beiden Knöpfe rücken nur noch zusammen (Lücke 2 px statt 12 px) und bleiben 28 × 28 px; die Nähe gruppiert sie, die Akzentfläche zeigt weiter die gewählte Art. Ohne zusätzliche Fläche wirkt die Kopfzeile ruhig, obwohl sie dieselbe Ordnung hat.
+
+**Geprüft (Quelllauf 1.15.175, 1600 × 1000, dunkles Erscheinungsbild, Paar Spanisch → Deutsch):**
+
+- Reihenfolge der Kinder im Kopf: Vokabeln `H2, vocCount, sp, vocPair, ib`; Üben `H2, srsCount, sp, srsPair, srsModes`; Lesen `H2, txOther, sp, libPair, ib`; Bibliothek `H2, libCount, sp`.
+- `.hmeta` viermal im Dokument vorhanden, `.hcount` null.
+- Zähler „3 · 2 in anderen Sprachen“: 145 × 20 px, 10 px rechts vom Titel, gleiche Zeile (Mittenversatz unter 12 px), Fläche `rgba(0, 0, 0, 0)`, Radius 0 px, Schrift 13 px, Farbe `rgb(154, 154, 159)`.
+- „3 fällig“: 38 × 20 px, 10 px hinter „Vokabeln üben“, dieselbe Schrift und Farbe, Mittenversatz 0 px.
+- Lesen (`#txOther`): „1 in anderen Sprachen“ aus einem Text in einem anderen Sprachpaar (`renderTexts`), 129 × 20 px, 10 px hinter dem Titel, gleiche Zeile.
+- Dokumentenablage (`#libCount`): das Testprofil hatte keine Dokumente, deshalb wurde „12 Dokumente“ für die Messung in den Zähler geschrieben — 85 × 20 px, 13 px, `rgb(154, 154, 159)`, ohne Fläche. Im leeren Zustand ist der Zähler leer und `display:none`.
+- Alle vier Köpfe: Abstand Zähler zu Titel 10 px, Mittenversatz 0 px.
+- Übungsgruppe: Lücke 2 px, Fläche `rgba(0, 0, 0, 0)`, Innenabstand 0, beide Knöpfe 28 × 28 px.
+
+**Grenzen:** Nur dunkles Erscheinungsbild und nur Spanisch → Deutsch gemessen. Der Text der Ablage („12 Dokumente“) kam im Testprofil nicht vor und wurde für die Messung eingesetzt; die Ansicht selbst war sichtbar. Die übrigen Sprachen sind gesetzt, aber nicht im Fenster geprüft, und die Köpfe wurden nicht als Bild angesehen, sondern über berechnete Maße.

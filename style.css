@@ -183,15 +183,16 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
 #vL{display:flex;flex-direction:column;padding:12px 12px 12px 0;gap:8px;min-height:0}
 .libhead{display:flex;align-items:center;gap:12px;margin:0;padding:4px 6px}
 .libhead h2{margin:0;font-size:20px}
-/* Zaehler im Kopf ("617 Vokabeln", "614 faellig"): eine leise Kapsel ohne
-   Rahmen, damit er als Angabe neben der Sprachwahl steht und nicht wie ein
-   weiterer Knopf oder wie vergessener Text dazwischen wirkt. Leer ist er weg. */
-.hcount{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:var(--soft);color:var(--muted);font-size:12px;letter-spacing:.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
-.hcount:empty{display:none}
-/* Die beiden Uebungsarten als eine Umschaltgruppe: eine gemeinsame leise
-   Kapsel haelt sie zusammen, die gewaehlte Art traegt die Akzentfarbe. Vorher
-   standen zwei gleich aussehende Kreise lose zwischen Zaehler und Rand. */
-.libhead .seg{gap:2px;padding:3px;border-radius:999px;background:var(--soft)}
+/* Zaehler und Hinweise im Kopf ("614 faellig", "12 Dokumente", "5 in anderen
+   Sprachen") stehen als leise Angabe direkt hinter dem Titel: dort gehoeren
+   sie zur Liste und nicht in die Reihe der Bedienelemente. Keine Flaeche und
+   kein Rahmen, nur kleinere, gedaempfte Schrift; leer sind sie ganz weg. */
+.hmeta{margin-inline-start:-2px;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hmeta:empty{display:none}
+/* Die beiden Uebungsarten ruecken als Paar zusammen (2 px statt 12 px), ohne
+   eigene Flaeche: die Naehe gruppiert sie, die gewaehlte Art traegt weiter die
+   Akzentfarbe. */
+.libhead .seg{gap:2px}
 .libhead .seg .ib{width:28px;height:28px;border-radius:50%}
 .libgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px;align-content:start;overflow:auto;padding:4px 6px 20px;min-height:0}
 .libcard{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;min-width:0;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}

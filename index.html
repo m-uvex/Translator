@@ -43,12 +43,12 @@
     <input type="file" id="edImgFile" hidden accept="image/png,image/jpeg,image/gif,image/webp" multiple>
   </div>
   <div id="vL" class="view hidden">
-    <header class="libhead"><h2 data-t="libTitle"></h2><span class="sp"></span><span class="muted" id="libCount"></span></header>
+    <header class="libhead"><h2 data-t="libTitle"></h2><span class="hmeta" id="libCount"></span><span class="sp"></span></header>
     <div id="libGrid" class="libgrid"></div>
     <div id="libEmpty" class="libempty hidden"><p data-t="libEmpty"></p><p class="muted" data-t="libEmptyHint"></p></div>
   </div>
   <div id="vTxt" class="view hidden">
-    <header class="libhead"><h2 data-t="readTitle"></h2><span class="sp"></span><span class="pairbar" id="libPair"></span><span class="muted" id="txOther"></span><button class="ib" data-study-model></button></header>
+    <header class="libhead"><h2 data-t="readTitle"></h2><span class="hmeta" id="txOther"></span><span class="sp"></span><span class="pairbar" id="libPair"></span><button class="ib" data-study-model></button></header>
     <div id="txtGrid" class="libgrid"></div>
     <div id="txtEmpty" class="libempty hidden"><p data-t="txEmpty"></p><p class="muted" data-t="txEmptyHint"></p></div>
     <div class="rfootbar"><span class="sp"></span><button class="ib" id="txStory" data-i="story" data-tt="storyT"></button><button class="ib" id="txAdd" data-i="plus" data-tt="txAdd"></button><button class="ib" id="txExp" data-i="download" data-tt="txtExp"></button><button class="ib" id="txImp" data-i="upload" data-tt="txtImp"></button></div>
@@ -58,7 +58,7 @@
     <div id="readerWrap"><article id="reader"></article></div>
   </div>
   <div id="vV" class="view hidden">
-    <header class="libhead"><h2 data-t="vocTitle"></h2><span class="sp"></span><span class="pairbar" id="vocPair"></span><span class="hcount" id="vocCount"></span><button class="ib" data-study-model></button></header>
+    <header class="libhead"><h2 data-t="vocTitle"></h2><span class="hmeta" id="vocCount"></span><span class="sp"></span><span class="pairbar" id="vocPair"></span><button class="ib" data-study-model></button></header>
     <!-- Eingabe und Suche teilen sich denselben Platz; die Werkzeuge rechts
          bleiben dabei stehen. Links die Lupe/der Trichter/die Auswahl (wirken
          auf die Liste), rechts Nachtragen und die beiden Dateiknoepfe. -->
@@ -77,7 +77,7 @@
     <div id="vocEmpty" class="libempty hidden"><p data-t="vocEmpty"></p><p class="muted" data-t="vocEmptyHint"></p></div>
   </div>
   <div id="vP" class="view hidden">
-    <header class="libhead"><h2 data-t="srsTitle"></h2><span class="sp"></span><span class="pairbar" id="srsPair"></span><span class="hcount" id="srsCount"></span><span class="seg" id="srsModes"><button class="ib" id="srsQuiz" data-i="quiz" data-tt="srsQuizT"></button><button class="ib" id="srsType" data-i="type" data-tt="srsTypeT"></button></span></header>
+    <header class="libhead"><h2 data-t="srsTitle"></h2><span class="hmeta" id="srsCount"></span><span class="sp"></span><span class="pairbar" id="srsPair"></span><span class="seg" id="srsModes"><button class="ib" id="srsQuiz" data-i="quiz" data-tt="srsQuizT"></button><button class="ib" id="srsType" data-i="type" data-tt="srsTypeT"></button></span></header>
     <div id="srsBox" class="srsbox"></div>
   </div>
 </div>

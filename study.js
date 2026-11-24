@@ -450,7 +450,10 @@ function renderVocab() {
   const list = vocVisible();
   box.innerHTML = list.map(e => vocRow(e, { due: true })).join('');
   const other = ST.vocab.length - mine.length;
-  $('#vocCount').textContent = (mine.length ? t('vocCount', mine.length) : '') + (other > 0 ? ` · ${t('vocOther', other)}` : '');
+  // Im Kopf steht nur die Zahl: der Titel daneben nennt die Sache schon, und
+  // "Vokabeln 617 Vokabeln" las sich wie ein Fehler. Die Karten der Ablage
+  // tragen weiter den vollen Text `vocCount`.
+  $('#vocCount').textContent = [mine.length ? String(mine.length) : '', other > 0 ? t('vocOther', other) : ''].filter(Boolean).join(' · ');
   $('#vocEmpty').classList.toggle('hidden', mine.length > 0);
   box.classList.toggle('hidden', mine.length === 0);
   // Filter und Suche duerfen ins Leere laufen; das soll nicht wie "keine
