@@ -1,6 +1,6 @@
 {
  "name": "uebersetzer",
- "version": "1.15.151",
+ "version": "1.15.152",
  "private": true,
  "description": "Lokaler Übersetzer und Texteditor mit Ollama, NLLB-200, HY-MT, MiLMMT-46 und TranslateGemma",
  "author": "Janek",
@@ -12,16 +12,16 @@
   "dist:linux": "electron-builder --linux AppImage deb rpm tar.gz"
  },
  "dependencies": {
-  "electron": "^33.0.0",
-  "mammoth": "^1.13.0",
-  "pdf-parse": "^2.4.5",
-  "nspell": "^2.1.5",
   "dictionary-de": "^3.0.0",
   "dictionary-en": "^4.0.0",
-  "dictionary-nl": "^2.0.0",
   "dictionary-es": "^4.0.0",
+  "dictionary-nl": "^2.0.0",
   "dictionary-tr": "^2.0.0",
-  "jszip": "^3.10.2"
+  "electron": "^33.0.0",
+  "hunspell-wasm": "^0.3.0",
+  "jszip": "^3.10.2",
+  "mammoth": "^1.13.0",
+  "pdf-parse": "^2.4.5"
  },
  "devDependencies": {
   "electron-builder": "^25.0.0"
@@ -44,7 +44,8 @@
    "nllb_server.py",
    "requirements.txt",
    "dict/**",
-   "build/icon.png"
+   "build/icon.png",
+   "node_modules/hunspell-wasm/**"
   ],
   "extraResources": [
    "install.ps1"

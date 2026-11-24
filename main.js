@@ -466,33 +466,45 @@ function setPersonal(list) {
   personal = Array.isArray(list) ? list : [];
   personalKeys = new Set(personal.map(persKey));
 }
-function speller(lang) {
+// Wo die Woerterbuecher liegen: `dict/<sprache>` ist die ausgelieferte Fassung
+// (auch fuer Arabisch, das kein npm-Paket hat), das npm-Paket ist der Rueckfall.
+function spellDir(lang) {
+  const local = path.join(__dirname, 'dict', lang);
+  if (fs.existsSync(path.join(local, 'index.aff')) && fs.existsSync(path.join(local, 'index.dic'))) return local;
+  return path.join(__dirname, 'node_modules', 'dictionary-' + lang);
+}
+// Die Engine ist echtes Hunspell als WebAssembly (`hunspell-wasm`) mit denselben
+// Woerterbuchdateien. `nspell` hat nur einen Teil der Hunspell-Regeln umgesetzt;
+// damit galten Komposita („Bahnhof“, „Kindergarten“), Formen wie „macht“ und
+// Bindestrichwoerter wie „E-Mail“ als falsch - gemessen 66 von 134 Woertern,
+// echtes Hunspell 6. Das Paket ist ESM, main.js ist CommonJS, deshalb das
+// dynamische import(); danach ist die API synchron. Ein Speller je Sprache
+// bleibt im Speicher, damit nicht jeder Scan das Woerterbuch neu baut.
+async function speller(lang) {
   if (spellers[lang]) return spellers[lang];
-  let dir = path.join(__dirname, 'node_modules', 'dictionary-' + lang);
-  if (!fs.existsSync(path.join(dir, 'index.aff'))) {
-    const localDir = path.join(__dirname, 'dict', lang);
-    if (fs.existsSync(path.join(localDir, 'index.aff'))) dir = localDir;
-  }
+  const dir = spellDir(lang);
   try {
-    const sp = require('nspell')(fs.readFileSync(path.join(dir, 'index.aff')), fs.readFileSync(path.join(dir, 'index.dic')));
-    personal.forEach(w => sp.add(w)); return (spellers[lang] = sp);
-  } catch {
-    return { correct: () => true, suggest: () => [], add: () => {} };
+    const { createHunspellFromFiles } = await import('hunspell-wasm');
+    const sp = await createHunspellFromFiles(path.join(dir, 'index.aff'), path.join(dir, 'index.dic'));
+    personal.forEach(w => sp.addWord(w));
+    return (spellers[lang] = sp);
+  } catch (e) {
+    // Fehler NICHT schlucken - der Renderer loggt sie.
+    console.error('Rechtschreibpruefung: Woerterbuch ' + lang + ' nicht ladbar:', (e && e.message) || e);
+    return { testSpelling: () => true, getSpellingSuggestions: () => [], addWord: () => {} };
   }
 }
-const wordOk = (sp, w) => sp.correct(w) || (/[-'’]/.test(w) && w.split(/['’-]/).every(p => !p || sp.correct(p)));
-// Fehler NICHT schlucken - der Renderer loggt sie.
-// Das persoenliche Woerterbuch entscheidet zuerst: nspell kann ein Wort nicht
-// freischalten, das im Grundbestand nur als Teil eines Kompositums steht
-// (Flag `o` = ONLYINCOMPOUND, etwa „ernaehren“, „macht“ oder „schloss“).
-// `.add()` haengt dort nur weitere Flags an den gesperrten Eintrag, das Wort
-// blieb also fuer immer falsch und die rote Welle kam nach dem naechsten Scan
-// zurueck. Wer im Woerterbuch steht, gilt deshalb ohne Rueckfrage als richtig.
-ipcMain.handle('spell:check', (_e, lang, words) => {
-  const sp = speller(lang);
+const wordOk = (sp, w) => sp.testSpelling(w) || (/[-'’]/.test(w) && w.split(/['’-]/).every(p => !p || sp.testSpelling(p)));
+// Das persoenliche Woerterbuch entscheidet zuerst: Wer ein Wort dort eintraegt,
+// will es ohne Rueckfrage als richtig sehen - auch dann, wenn die Engine es
+// anders sieht und ein spaeterer Scan die Welle zurueckbringen wuerde.
+ipcMain.handle('spell:check', async (_e, lang, words) => {
+  const sp = await speller(lang);
   return words.filter(w => !personalKeys.has(persKey(w)) && !wordOk(sp, w));
 });
-ipcMain.handle('spell:suggest', (_e, lang, word) => { try { return speller(lang).suggest(word).slice(0, 5); } catch { return []; } });
+ipcMain.handle('spell:suggest', async (_e, lang, word) => {
+  try { return (await speller(lang)).getSpellingSuggestions(word).slice(0, 5); } catch { return []; }
+});
 ipcMain.handle('spell:add', (_e, word) => {
   const w = String(word == null ? '' : word).trim();
   if (!w) return false;
@@ -500,7 +512,7 @@ ipcMain.handle('spell:add', (_e, word) => {
   if (!personalKeys.has(key)) {
     personal.push(w); personalKeys.add(key);
     try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {}
-    Object.values(spellers).forEach(s => s.add(w));
+    Object.values(spellers).forEach(s => s.addWord(w));
   }
   return true;
 });
