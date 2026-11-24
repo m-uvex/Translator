@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.171 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.172 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2815,3 +2815,24 @@ Auf dem Screenshot liegt „Abbrechen“ bläulich getönt mit hellblauer Schrif
 - Daten: 15 Stichproben stimmen, keine Formangabe mehr im Wort, kein „(Artikel …)“ mehr in einer Übersetzung, kein kaputter Beispielsatz der oben genannten Muster, kein Eintrag ohne Übersetzung.
 
 **Grenzen:** Nur dunkles Erscheinungsbild und nur das Paar Spanisch → Deutsch angesehen. Die Lücke entsteht nur, wenn das Wort (oder seine Form ohne Artikel) im Satz vorkommt; bei stark gebeugten Formen („voy“ in „fui“) bleibt der Satz unverändert und die Karte zeigt nur die Übersetzung — dann verrät der Satz aber auch nichts. Die Beispielsätze der 617 Einträge sind inhaltlich nicht neu geschrieben, nur die genannten Muster bereinigt; Sätze mit freier Wortstellung oder falscher Zeit bleiben, wie sie sind.
+## 197. Auswahl-Modus aufgeräumt, richtige Antwort geht von allein weiter (1.15.172)
+
+**Weiter nach richtig.** In beiden Schreib-Übungen — Tippen (§196) und Auswahl (§195) — bleibt die Karte nach einer richtigen Antwort kurz stehen (1,5 s, `TYPE_PAUSE`), zeigt „Richtig“ und holt dann von selbst die nächste. Ein Fehlversuch bleibt mit der Korrektur stehen („Leider falsch — richtig ist: …“) und wartet auf „Weiter“; der Knopf erscheint nur noch dort. Die Timer (`typeTimer`, `quizTimer`) werden beim Umschalten des Modus, beim Sprachpaarwechsel und beim nächsten Aufbau gelöscht, damit keine alte Karte nachzieht.
+
+**Vier Felder statt einer Reihe.** Die Optionen stehen jetzt in einem 2×2-Raster (`.srsquiz`): bei 600 px Kartenbreite zwei Spalten à 263,2 px, 12 px Abstand, jedes Feld 263 × 78 px mit Radius 20 px (vorher 14 px, vier Felder nebeneinander). Die Nummer ist eine kleine Taste oben links (`.qkey`: Radius 6 px, Unterkante als 2 px-Rand, Fläche `--soft`, Schrift 11 px); das Wort steht mittig — gemessener Versatz der Wortmitte zur Feldmitte: 0 px. Der Hinweis „Tasten 1–4“ unter der Auswahl ist weg, die Taste steht jetzt am Feld selbst; die Übersetzung `srsQuizKeys` wurde in allen sechs Sprachen entfernt. Unter dem Zeiger liegt ein weicher Schatten unter dem Feld.
+
+**Neues Symbol.** `quiz` ist statt vier Kästchen eine Sprechblase mit Haken: die Frage und die eine richtige Antwort.
+
+**Prüfliste der Datenreparatur.** `tools/vocab-diff-es.py` vergleicht die Sicherung vom Vortag (`vocab.json.bak-20261124-111546`) mit dem Bestand: 202 geänderte spanische Einträge — 6 Wörter ohne Formangabe, 38 Übersetzungen, 66 Artikel, 67 Geschlechtsangaben, 112 Beispielsätze, 5 Grundformen. Die vollständige Liste (alt → neu, nach Feld gruppiert) liegt als Dokument „Prüfliste: reparierte spanische Vokabeln“ vor.
+
+**Geprüft (Quelllauf 1.15.172, 1600 × 1000, dunkles Erscheinungsbild, Paar Spanisch → Deutsch, fünf Einträge, Messung über CDP):**
+
+- Auswahl: Frage „Welches Wort bedeutet hier ‚die Großeltern‘?“, vier Felder `el semáforo`, `la acera`, `los abuelos`, `el guion bajo`; `grid-template-columns` = `263.2px 263.2px`, Lücke 12 px, Radius 20 px, Feld 263 × 78 px, `text-align: center`, Wortmitte 0 px versetzt.
+- Taste im Feld: Radius 6 px, Unterkante 1,6 px, Fläche `rgb(43, 43, 45)`, Schrift 11 px, Beschriftung `1` … `4` ohne eckige Klammern.
+- Fuß der Karte vor der Antwort: leer; „Tasten 1–4“ kommt im Fenstertext nicht mehr vor.
+- Richtige Antwort angeklickt: „Richtig“ steht auf der Karte, kein „Weiter“-Knopf, nach **1531 ms** steht die nächste Frage da („die Ampel“ → „der Unterstrich“).
+- Falsche Antwort: „Leider falsch — richtig ist: la acera“, Karte bleibt stehen, „Weiter“ ist da und führt zur nächsten Karte.
+- Tippen, richtig („acera“ für „la acera“): „Richtig“, kein Knopf, nach **1520 ms** die nächste Karte („die Ampel“).
+- Tippen, falsch: „Leider falsch — richtig ist: el semáforo“, Feld gesperrt, Karte bleibt, „Weiter“ da.
+
+**Grenzen:** Nur dunkles Erscheinungsbild und nur das Paar Spanisch → Deutsch angesehen. Geklickt wurde programmatisch (`click()` über CDP), nicht mit der echten Maus; der Schatten unter dem Zeiger ist gesetzt, aber nicht durch Howern gemessen. Die arabische und türkische Beschriftung ist gesetzt, nicht im laufenden Fenster geprüft. Das neue Symbol ist im Quelllauf gemessen (SVG-Inhalt des Knopfes), nicht als Bild angesehen.

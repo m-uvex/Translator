@@ -25,8 +25,9 @@ const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M
   know:'<circle cx="12" cy="12" r="9"/><path d="m8 12.4 2.6 2.6L16 9.6"/>',
   // Tastatur fuer den Tipp-Modus beim Ueben.
   type:'<rect x="2.5" y="6.5" width="19" height="11" rx="2.6"/><path d="M6.2 10h.01M9.6 10h.01M13 10h.01M16.4 10h.01M6.2 14h11.6"/>',
-  // Vier Felder: der Auswahl-Modus, in dem man eines von vier Woertern antippt.
-  quiz:'<rect x="3" y="4" width="7.6" height="7.6" rx="2.2"/><rect x="13.4" y="4" width="7.6" height="7.6" rx="2.2"/><rect x="3" y="12.4" width="7.6" height="7.6" rx="2.2"/><rect x="13.4" y="12.4" width="7.6" height="7.6" rx="2.2"/>',
+  // Auswahl-Modus: eine Sprechblase mit Haken - die Frage nach dem passenden
+  // Wort und die eine richtige Antwort. Vier Kaestchen sahen wie ein Raster aus.
+  quiz:'<path d="M4 7.4A2.8 2.8 0 0 1 6.8 4.6h10.4A2.8 2.8 0 0 1 20 7.4v7.4a2.8 2.8 0 0 1-2.8 2.8h-6.9L6.4 21v-3.4h-.4A2.8 2.8 0 0 1 4 14.8z"/><path d="m8.4 10.4 2 2 3.9-4.3"/>',
   // Aufgeschlagenes Buch fuer den Lese-Arbeitsplatz. Bewusst ein eigener
   // Schluessel: `book` ist in editor.js das persoenliche Woerterbuch in der
   // Statusleiste und wird von dort ueberschrieben.
@@ -385,7 +386,7 @@ const K = {
   srsQuizQ:[x => `Welches Wort bedeutet hier „${x}“?`, x => `Which word means “${x}” here?`],
   srsQuizQ2:[x => `Welches Wort bedeutet „${x}“?`, x => `Which word means “${x}”?`],
   srsQuizFew:['Für die Auswahl braucht es mindestens zwei Wörter in diesem Paar.','Choosing needs at least two words in this pair.'],
-  srsQuizKeys:['Tasten 1–4','Keys 1–4'], srsQuizNext:['Weiter','Next'],
+  srsQuizNext:['Weiter','Next'],
   // Modellwahl für Wortübersetzungen (Lesen und Vokabeln).
   studyModelT:['Modell für Wortübersetzungen','Model for word translations'],
   studyModelAuto:['Standard (Modell des Übersetzers)','Default (translator model)'],
@@ -544,7 +545,7 @@ const NL = {
   srsQuizQ:x => `Welk woord betekent hier „${x}“?`,
   srsQuizQ2:x => `Welk woord betekent „${x}“?`,
   srsQuizFew:'Voor een keuze zijn minstens twee woorden in dit paar nodig.',
-  srsQuizKeys:'Toetsen 1–4', srsQuizNext:'Verder',
+  srsQuizNext:'Verder',
   vocSelAll:'Alles selecteren',
   vocSelDel:'Geselecteerde verwijderen',
   vocSelEnd:'Selectie beëindigen',
@@ -734,7 +735,7 @@ const ES = {
   srsQuizQ:x => `¿Qué palabra significa aquí «${x}»?`,
   srsQuizQ2:x => `¿Qué palabra significa «${x}»?`,
   srsQuizFew:'Para elegir hacen falta al menos dos palabras en este par.',
-  srsQuizKeys:'Teclas 1–4', srsQuizNext:'Seguir',
+  srsQuizNext:'Seguir',
   vocSelAll:'Seleccionar todo',
   vocSelDel:'Eliminar seleccionadas',
   vocSelEnd:'Terminar la selección',
@@ -924,7 +925,7 @@ const TR = {
   srsQuizQ:x => `Burada „${x}“ anlamına gelen kelime hangisi?`,
   srsQuizQ2:x => `„${x}“ anlamına gelen kelime hangisi?`,
   srsQuizFew:'Seçim için bu çiftte en az iki kelime gerekiyor.',
-  srsQuizKeys:'1–4 tuşları', srsQuizNext:'Devam',
+  srsQuizNext:'Devam',
   vocSelAll:'Tümünü seç',
   vocSelDel:'Seçilenleri sil',
   vocSelEnd:'Seçimi bitir',
@@ -1114,7 +1115,7 @@ const AR = {
   srsQuizQ:x => `أي كلمة تعني هنا «${x}»؟`,
   srsQuizQ2:x => `أي كلمة تعني «${x}»؟`,
   srsQuizFew:'يتطلب الاختيار كلمتين على الأقل في هذا الزوج.',
-  srsQuizKeys:'المفاتيح 1–4', srsQuizNext:'التالي',
+  srsQuizNext:'التالي',
   vocSelAll:'تحديد الكل',
   vocSelDel:'حذف المحدد',
   vocSelEnd:'إنهاء التحديد',

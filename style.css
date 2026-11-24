@@ -437,16 +437,23 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .srscard.quiz{width:min(600px,92%);min-height:0;text-align:start}
 .qask{font-size:19px;line-height:1.45;font-weight:600}
 .srscard.quiz .srsctx{font-size:17px;color:var(--text);margin-inline:0;max-width:none}
-.srsquiz{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:6px}
-.qopt{display:flex;align-items:center;gap:8px;min-height:54px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);font-size:14px;line-height:1.25;text-align:start}
-.qopt .qn{flex:none;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-.qopt:hover:not(:disabled){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--card))}
+/* Vier Felder im Quadrat, je zwei nebeneinander: in einer Zeile wurden die
+   Woerter gequetscht und die Karte wirkte wie eine Tabelle. */
+.srsquiz{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:8px}
+.qopt{position:relative;display:grid;place-items:center;min-height:78px;padding:24px 16px 14px;border:1px solid var(--line);border-radius:20px;background:var(--card);color:var(--text);font-size:15px;font-weight:500;line-height:1.3;text-align:center;
+  transition:border-color .12s,background .12s,box-shadow .12s}
+/* Die Zahl als Taste: kleiner Kasten mit Unterkante, wie eine Taste auf der
+   Tastatur. Sie steht in der Ecke, damit das Wort die Mitte behaelt. */
+.qopt .qkey{position:absolute;top:9px;inset-inline-start:10px;display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 4px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;background:var(--soft);color:var(--muted);font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.qopt:hover:not(:disabled){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card));box-shadow:0 4px 14px #0000001a}
+.qopt:hover:not(:disabled) .qkey{border-color:var(--accent);color:var(--accent-ink)}
 .qopt:disabled{cursor:default}
 .qopt.ok{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 26%,var(--card));color:var(--accent-ink)}
+.qopt.ok .qkey{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 22%,var(--card));color:var(--accent-ink)}
 .qopt.bad{border-color:#c9605a;background:color-mix(in srgb,#c9605a 16%,var(--card))}
 .qopt.dim{opacity:.45}
 .qfoot{display:flex;align-items:center;justify-content:center;min-height:38px;margin-top:2px}
-.qkeys{font-size:12px}
+.qfoot:empty{display:none}
 /* Stift über der Bewertungsreihe: die aufgedeckte Karte lässt sich vor der
    Bewertung korrigieren. Leise gehalten, damit die vier Bewertungen die
    Handlung bleiben. */

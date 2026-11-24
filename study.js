@@ -653,7 +653,7 @@ function pairChanged() {
   if (S.studySrc === S.studyTgt) S.studyTgt = S.studySrc === 'en' ? 'de' : 'en';
   save();
   renderPairs(); renderVocab(); renderTexts();
-  if (S.view === 'srs') { srsShow = false; typeQueue = []; srsQueue = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO()); renderSrs(); }
+  if (S.view === 'srs') { srsShow = false; typeQueue = []; typeHold = null; clearTimeout(typeTimer); quizDone = null; quizOpts = []; clearTimeout(quizTimer); srsQueue = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO()); renderSrs(); }
 }
 
 // ---------- Texte ----------
@@ -1498,6 +1498,10 @@ function typeFill() {
 // das, was in die Luecke gehoert. Vorher stand dort das Wort selbst und gefragt
 // war die Uebersetzung, was mit dem Satz darueber nichts zu tun hatte.
 let typeHold = null;
+// Nach einer richtigen Antwort geht die Karte von allein weiter; nur ein
+// Fehlversuch bleibt mit der Korrektur stehen, bis „Weiter“ kommt.
+const TYPE_PAUSE = 1500;
+let typeTimer = null;
 function typeCheck() {
   if (typeHold) return;
   const e = ST.vocab.find(v => v.id === typeQueue[0]); if (!e) return;
@@ -1522,9 +1526,14 @@ function typeCheck() {
   persist('vocab');
   renderVocab();
   renderSrs();
+  if (ok) {
+    clearTimeout(typeTimer);
+    typeTimer = setTimeout(typeNext, TYPE_PAUSE);
+  }
 }
 
 function typeNext() {
+  clearTimeout(typeTimer); typeTimer = null;
   if (!typeHold) return;
   typeHold = null;
   srsNote = null;
@@ -1554,7 +1563,7 @@ function renderType(box, due) {
     ${chars ? `<div class="charbar" title="${esc(t('srsChars'))}">${chars}</div>` : ''}
     <div class="srsmastery muted">${esc(t('srsMastered'))} ${Math.min(MASTER, Number(e.mastery) || 0)} / ${MASTER}</div>
     ${note}
-    ${typeHold ? `<div class="srsbtns one"><button class="primary" id="typeNext">${esc(t('srsQuizNext'))}</button></div>` : ''}
+    ${typeHold && !typeHold.ok ? `<div class="srsbtns one"><button class="primary" id="typeNext">${esc(t('srsQuizNext'))}</button></div>` : ''}
   </div>`;
   if (typeHold) {
     const nx = box.querySelector('#typeNext');
@@ -1577,6 +1586,9 @@ function renderType(box, due) {
 // Woerter aus dem eigenen Bestand - genau eines passt. Getippt wird nur die
 // Ziffer (1-4); die Knoepfe zeigen sie mit an.
 let quizQueue = [], quizOpts = [], quizPick = -1, quizDone = null;
+// Wie im Tipp-Modus: richtig geht nach kurzer Pause weiter, falsch bleibt mit
+// der Korrektur stehen.
+let quizTimer = null;
 
 function quizFill() {
   // Nur Karten, deren Uebersetzung bekannt ist: ohne sie gibt es keine Frage.
@@ -1624,11 +1636,16 @@ function quizChoose(i) {
   quizPick = i;
   quizDone = quizOpts[i].id === e.id;
   renderSrs();
+  if (quizDone) {
+    clearTimeout(quizTimer);
+    quizTimer = setTimeout(quizNext, TYPE_PAUSE);
+  }
 }
 
 // Erst auf "Weiter" wird bewertet: die Antwort bleibt so lange stehen, wie man
 // sie ansehen will. Richtig schiebt die Karte nach vorn, falsch ans Ende.
 function quizNext() {
+  clearTimeout(quizTimer); quizTimer = null;
   if (quizDone === null) return;
   const e = ST.vocab.find(v => v.id === quizQueue[0]);
   if (e) {
@@ -1656,9 +1673,11 @@ function renderQuiz(box, due) {
   const ctx = e.context ? maskTerm(e.context, e.term) : '';
   const sol = solutionOf(e);
   const ask = ctx ? t('srsQuizQ', sol) : t('srsQuizQ2', sol);
+  // Jedes Feld traegt seine Taste als kleine Taste oben links; die Zahl allein
+  // in eckigen Klammern las sich wie ein Listenindex. Das Wort steht mittig.
   const opts = quizOpts.map((v, i) => {
     const cls = quizDone === null ? '' : v.id === e.id ? ' ok' : (i === quizPick ? ' bad' : ' dim');
-    return `<button class="qopt${cls}" data-q="${i}"${quizDone === null ? '' : ' disabled'}><span class="qn">[${i + 1}]</span><span class="qw">${esc(v.term)}</span></button>`;
+    return `<button class="qopt${cls}" data-q="${i}"${quizDone === null ? '' : ' disabled'}><span class="qkey" aria-hidden="true">${i + 1}</span><span class="qw">${esc(v.term)}</span></button>`;
   }).join('');
   const note = quizDone === null ? ''
     : `<div class="srsnote ${quizDone ? 'ok' : 'bad'}">${esc(quizDone ? t('srsRight') : t('srsWrong') + ' ' + e.term)}</div>`;
@@ -1667,9 +1686,7 @@ function renderQuiz(box, due) {
     ${ctx ? `<div class="srsctx">${ctx}</div>` : ''}
     <div class="srsquiz">${opts}</div>
     ${note}
-    <div class="qfoot">${quizDone === null
-      ? `<span class="qkeys muted">${esc(t('srsQuizKeys'))}</span>`
-      : `<button class="primary" id="qNext">${esc(t('srsQuizNext'))}</button>`}</div>
+    <div class="qfoot">${quizDone === false ? `<button class="primary" id="qNext">${esc(t('srsQuizNext'))}</button>` : ''}</div>
   </div>`;
   box.querySelectorAll('[data-q]').forEach(b => b.onclick = () => quizChoose(Number(b.dataset.q)));
   const nx = box.querySelector('#qNext');
@@ -2450,6 +2467,7 @@ function vocFindClearSync() {
     S.srsType = !S.srsType;
     if (S.srsType) S.srsQuiz = false;
     save();
+    clearTimeout(typeTimer); clearTimeout(quizTimer);
     typeQueue = []; srsNote = null; typeHold = null;
     quizQueue = []; quizOpts = []; quizPick = -1; quizDone = null;
     renderSrs();
@@ -2460,6 +2478,7 @@ function vocFindClearSync() {
     S.srsQuiz = !S.srsQuiz;
     if (S.srsQuiz) S.srsType = false;
     save();
+    clearTimeout(typeTimer); clearTimeout(quizTimer);
     typeQueue = []; srsNote = null; typeHold = null;
     quizQueue = []; quizOpts = []; quizPick = -1; quizDone = null;
     renderSrs();
