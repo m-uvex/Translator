@@ -229,7 +229,8 @@ function renderStudyModel() {
   const eff = studyModel();
   document.querySelectorAll('[data-study-model]').forEach(b => {
     b.innerHTML = ic('cpu');
-    b.title = `${t('studyModelT')}: ${eff || '—'}` + (S.storyOn ? `\n${t('storyModelT')}: ${storyModel() || '—'}` : '');
+    b.title = `${t('studyModelT')}: ${eff ? shortModel(eff) : '—'}` +
+      (S.storyOn ? `\n${t('storyModelT')}: ${storyModel() ? shortModel(storyModel()) : '—'}` : '');
   });
 }
 
@@ -260,7 +261,9 @@ async function studyModelPop(btn) {
     head('writeModel');
     const gens = storyModels();
     row(t('storyModelAuto'), '', !S.storyModel || !gens.includes(S.storyModel), '', () => { S.storyModel = ''; });
-    gens.forEach(n => row(n, n, !!S.storyModel && n === S.storyModel, '', () => { S.storyModel = n; }));
+    // Angezeigt wird der kurze Name (renderer.js: shortModel), gewaehlt wird die
+    // volle Kennung - sonst stuende hier "hf.co/<nutzer>/..." wie frueher.
+    gens.forEach(n => row(shortModel(n), n, !!S.storyModel && n === S.storyModel, '', () => { S.storyModel = n; }));
   }
   const r = btn.getBoundingClientRect();
   Object.assign(p.style, { left: Math.max(8, Math.min(r.left, innerWidth - 320)) + 'px', top: r.bottom + 6 + 'px' });
