@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.167 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.168 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2733,3 +2733,16 @@ Die Seite misst wie bisher erst auf Klick; die Stimmenzeile wird beim selben Lau
 Auf den Screenshots ist der Unterschied deutlich: „Nochmal“ liegt beim Überfahren als bläulich getöntes Feld mit hellblauer Schrift, „Gut“ wird sichtbar heller.
 
 **Grenzen:** Nur dunkles Erscheinungsbild geprüft; die helle Fassung nutzt dieselben Variablen, angesehen ist sie nicht. Die übrigen `.ghost`-Knöpfe im Programm (z. B. „Text übernehmen“ im Editor) haben weiterhin keine Hover-Regel — bewusst nicht mitgeändert.
+
+## 193. Lücke im Beispielsatz als solider Strich (1.15.168)
+
+**Vorher.** Die Lücke war Text: `_____` in fünf Unterstrich-Zeichen, in der Akzentfarbe. Das las sich wie getippte Zeichen, nicht wie eine Lücke im Satz.
+
+**Jetzt.** `maskTerm()` setzt an die Stelle des Wortes ein leeres `span.srsblank`: ein Inline-Block mit 3 px starkem Rand unten in der Akzentfarbe, 2,2 bis 5 em breit (Breite nach der Länge der Lösung ohne Leerzeichen, damit lange Wörter die Zeile nicht sprengen). Als Inline-Block liegt seine Unterkante auf der Grundlinie, der Satz behält also seinen Rhythmus.
+
+- Gilt an beiden Stellen, an denen der Satz erscheint: Karte im Wiederholen („Übersetzung zeigen“) und Tipp-Modus (Karte über dem Eingabefeld), weil beide `maskTerm()` benutzen.
+- Der Strich ist `aria-hidden`: die Sprachausgabe liest den Satz ohne „Unterstrich“-Zeichen vor.
+
+**Geprüft (Quelllauf 1.15.168, 1600 × 1000, zwei Vokabeln mit Kontextsatz, dunkles Erscheinungsbild):** „She had ▁▁▁▁ so the baby would not wake up.“ — der Strich misst 81 px Breite und 2,4 px Höhe (3 px Rand bei Faktor 0,8 der Bildschirmauflösung), liegt auf der Grundlinie, ohne Textinhalt (`.textContent` leer). Im Tipp-Modus dieselbe Linie über dem Eingabefeld.
+
+**Grenzen:** Nur dunkles Erscheinungsbild; bei sehr kurzen Wörtern („a“) greift die Mindestbreite 2,2 em, das ist etwas breiter als das Wort — bewusst, damit die Lücke als Lücke erkennbar bleibt. Sehr lange Wörter werden bei 5 em gedeckelt.

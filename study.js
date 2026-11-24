@@ -1231,7 +1231,14 @@ let srsQueue = [], srsShow = false;
 function maskTerm(text, term) {
   if (!text) return '';
   const re = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'giu');
-  return esc(text).replace(re, '<span class="srsblank">_____</span>');
+  // Die Luecke ist ein Strich, keine Unterstrich-Zeichen: Breite nach der Laenge
+  // der Loesung (ohne Leerzeichen), gedeckelt, damit lange Woerter die Zeile
+  // nicht sprengen. Fuer die Sprachausgabe ist der Strich stumm (aria-hidden).
+  const bar = m => {
+    const w = Math.min(5, Math.max(2.2, m.replace(/\s+/g, '').length * 0.5)).toFixed(1);
+    return `<span class="srsblank" style="min-width:${w}em" aria-hidden="true"></span>`;
+  };
+  return esc(text).replace(re, bar);
 }
 
 // ---------- Mastery-Modus: tippen ----------

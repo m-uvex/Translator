@@ -413,7 +413,10 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
    dieser Zeile, damit er nicht unter die Symbole laeuft. */
 .srscard.has-acts{padding-top:48px}
 .srsctx{font-size:18px;line-height:1.7;max-width:46ch;margin-inline:auto}
-.srsblank{color:var(--accent-ink);font-weight:600;letter-spacing:.05em}
+/* Luecke im Beispielsatz: ein solider Strich in der Akzentfarbe. Als
+   Inline-Block liegt seine Unterkante auf der Grundlinie, der Satz steht also
+   so ruhig wie mit einem Text darin. */
+.srsblank{display:inline-block;height:.62em;min-width:2.2em;margin:0 .18em;border-bottom:3px solid var(--accent);border-radius:2px;vertical-align:baseline}
 .srsword{font-size:30px;font-weight:600;letter-spacing:-.01em}
 .srsres{font-size:21px;color:var(--accent-ink)}
 .srsbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
