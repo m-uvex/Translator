@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.175 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.176 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2376,7 +2376,7 @@ Konsole ohne Fehler. Die Ecken sind unveraendert; Bilder in Tabellenzellen behal
 - `en_US-lessac-medium` (Englisch, 60,3 MB, Echtzeitfaktor **0,099** = 10× schneller als Echtzeit, „mittel“),
 - `es_MX-claude-high` (Spanisch, 63,1 MB, **0,116** = 8,6×, „hoch“).
 Die Liste steht als `TTS_VOICES` in `main.js`. Beim ersten Download holt `ttsInstall()` zusätzlich die Piper-Engine (`piper_windows_amd64.zip`, 22,5 MB) nach `%APPDATA%\Uebersetzer\stimmen\piper` und entpackt sie mit `Expand-Archive`; die Stimmen liegen als `.onnx` + `.onnx.json` in `…\stimmen`. Geschrieben wird in `.part`-Dateien, damit ein Abbruch keine halbe Stimme als fertig hinterlässt. Fortschritt kommt als `tts:progress` (`step: 'engine'|'voice'`, `pct`) und steht an der Zeile in den Einstellungen. IPC: `tts:list`, `tts:install`, `tts:delete`; Preload: `ttsList`, `ttsInstall`, `ttsDelete`, `onTtsProgress`.
-- In den Einstellungen gibt es den Abschnitt „Aussprache“ (`#ttsBox`, `drawTts()`): je Zeile Sprache, Name, Größe, Tempo und Qualität in Worten, Zustand und Herunterladen/Löschen. Der Knopf „Infos ansehen“ (`openInfo()`, `<dialog id="infoDlg">`) zeigt zwei Tabellen (Aussprache und Übersetzermodelle) mit Spalten Modell, Umfang, Tempo, Qualität; die Angaben der Übersetzermodelle stehen zusätzlich als Zeile an jedem Modell (`MT_INFO`, `mtInfoText()`) und umfassen NLLB-200 600M/1.3B/3.3B, HY-MT 1.8B/7B, MiLMMT-46 1B/4B und TranslateGemma.
+- In den Einstellungen gibt es den Abschnitt „Aussprache“ (`#ttsBox`, `drawTts()`): je Zeile Sprache, Name, Größe, Tempo und Qualität in Worten, Zustand und Herunterladen/Löschen. Der Knopf „Infos ansehen“ (`openInfo()`, `<dialog id="infoDlg">`) zeigt zwei Tabellen (Aussprache und Übersetzermodelle) mit Spalten Modell, Größe (Aussprache, in MB) bzw. Umfang (Übersetzermodelle, Zahl der Sprachen), Tempo, Qualität; die Angaben der Übersetzermodelle stehen zusätzlich als Zeile an jedem Modell (`MT_INFO`, `mtInfoText()`) und umfassen NLLB-200 600M/1.3B/3.3B, HY-MT 1.8B/7B, MiLMMT-46 1B/4B und TranslateGemma.
 - Der Wähler oben (`modelPop()` in `renderer.js`) hat jetzt zwei Gruppen mit Trennlinie: „Übersetzungsmodelle“ (wie bisher) und „Aussprache“ mit den heruntergeladenen Stimmen; die Wahl setzt `S.ttsVoice` und stellt die Übersetzung nicht um. Ohne Stimme steht dort „Stimme in den Einstellungen herunterladen“ und öffnet die Einstellungen.
 - Gemessen: Engine 22,5 MB in **20 s**, Stimme 108,6 MB in **55 s** (insgesamt 77 s bis „Eingerichtet“); Wähler zeigt danach „Aussprache / Deutsch · Thorsten“; Infodialog listet alle drei Stimmen und acht Übersetzermodelle.
 
@@ -2897,3 +2897,17 @@ Die vollen Texte bleiben, wo sie gebraucht werden: `vocCount` in den Karten der 
 - Übungsgruppe: Lücke 2 px, Fläche `rgba(0, 0, 0, 0)`, Innenabstand 0, beide Knöpfe 28 × 28 px.
 
 **Grenzen:** Nur dunkles Erscheinungsbild und nur Spanisch → Deutsch gemessen. Der Text der Ablage („12 Dokumente“) kam im Testprofil nicht vor und wurde für die Messung eingesetzt; die Ansicht selbst war sichtbar. Die übrigen Sprachen sind gesetzt, aber nicht im Fenster geprüft, und die Köpfe wurden nicht als Bild angesehen, sondern über berechnete Maße.
+## 201. Infofenster: Satz gekürzt, Stimmen mit „Größe“ (1.15.176)
+
+**Der Satz.** Über den beiden Tabellen im Fenster „Infos ansehen“ (`#infoDlg`, `openInfo()`) stand „Tempo, Umfang und Qualität in Worten – gemessen auf diesem Rechner, nicht geschätzt.“ Die zweite Hälfte ist weg; jetzt steht dort nur noch „Tempo, Umfang und Qualität in Worten.“ In allen sechs Sprachen entsprechend gekürzt (`infoIntro`): Englisch „Speed, scope and quality in plain words.“, Niederländisch „Tempo, bereik en kwaliteit in woorden.“, Spanisch „Velocidad, alcance y calidad en palabras.“, Türkisch „Hız, kapsam ve kalite kelimelerle.“, Arabisch „السرعة والنطاق والجودة بالكلمات.“ Der Hinweis auf die Messung verschwindet damit aus der Oberfläche; die Zahlen selbst bleiben gemessen (Echtzeitfaktor der Stimmen, Sprachen der Übersetzermodelle).
+
+**Größe statt Umfang bei Stimmen.** Die Tabelle der Vorlesemodelle und die der Übersetzermodelle teilten sich eine Kopfzeile mit „Umfang“. Bei einer Stimme steht in dieser Spalte aber die Dateigröße („120 MB“), bei einem Übersetzermodell die Zahl der Sprachen („200 Sprachen“). Die beiden Tabellen haben deshalb getrennte Überschriften: `infoSize` („Größe“, Size, Grootte, Tamaño, Boyut, الحجم) für die Aussprache, `infoScope` („Umfang“) für die Übersetzermodelle. `openInfo()` baut die Kopfzeile dafür über `th(scopeKey)`; die Zeilen der Stimmen in den Einstellungen (`drawTts()`) nannten die Größe schon vorher ohne eigene Überschrift als „120 MB“.
+
+**Geprüft (Quelllauf 1.15.176, deutsches Erscheinungsbild, `openInfo()` über CDP):**
+
+- Einleitungstext im Fenster: „Tempo, Umfang und Qualität in Worten.“ — der Zusatz nach dem Gedankenstrich fehlt.
+- Kopfzeilen: Aussprache-Tabelle „Modell | Größe | Tempo | Qualität“, Übersetzer-Tabelle „Modell | Umfang | Tempo | Qualität“.
+- Kein „undefined“ im Fenstertext, Dialog offen (`#infoDlg.open` true).
+- `infoSize` in allen sechs Sprachblöcken; im installierten `app.asar` steht der neue Satz und `infoSize` sechsmal.
+
+**Grenzen:** Das Fenster wurde nicht als Bild angesehen, nur sein Text gelesen. Die Aussprache-Tabelle hatte im Testprofil keine Zeilen (die Stimmenliste lädt erst mit den Einstellungen), belegt sind dort nur die Kopfzeilen; die Tabellenbreite mit der kürzeren Überschrift wurde nicht neu gemessen. Übersetzungen der fünf anderen Sprachen sind gesetzt, aber nicht im Fenster angesehen.

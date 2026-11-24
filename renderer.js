@@ -228,8 +228,8 @@ const K = {
   ttsMore:['Weitere Stimmen …','More voices …'],
   infoShow:['Infos ansehen','See details'],
   infoH:['Stimmen und Modelle im Vergleich','Voices and models compared'],
-  infoIntro:['Tempo, Umfang und Qualität in Worten – gemessen auf diesem Rechner, nicht geschätzt.','Speed, scope and quality in plain words – measured on this machine, not guessed.'],
-  infoModel:['Modell','Model'], infoScope:['Umfang','Scope'], infoSpeed:['Tempo','Speed'], infoQuality:['Qualität','Quality'],
+  infoIntro:['Tempo, Umfang und Qualität in Worten.','Speed, scope and quality in plain words.'],
+  infoModel:['Modell','Model'], infoScope:['Umfang','Scope'], infoSize:['Größe','Size'], infoSpeed:['Tempo','Speed'], infoQuality:['Qualität','Quality'],
   spFast:['schnell','fast'], spMid:['mittel','medium'], spSlow:['langsam','slow'],
   qTop:['sehr gut','very good'], qMid:['gut','good'], qLow:['einfach','basic'],
   pauseT:['Anhalten','Pause'], resumeT:['Fortsetzen','Resume'],
@@ -466,8 +466,8 @@ const NL = {
   mtMore:'Meer modellen …',
   ttsMore:'Meer stemmen …',
   infoShow:'Details bekijken', infoH:'Stemmen en modellen vergeleken',
-  infoIntro:'Tempo, bereik en kwaliteit in woorden – gemeten op deze computer, niet geschat.',
-  infoModel:'Model', infoScope:'Bereik', infoSpeed:'Tempo', infoQuality:'Kwaliteit',
+  infoIntro:'Tempo, bereik en kwaliteit in woorden.',
+  infoModel:'Model', infoScope:'Bereik', infoSize:'Grootte', infoSpeed:'Tempo', infoQuality:'Kwaliteit',
   spFast:'snel', spMid:'gemiddeld', spSlow:'langzaam',
   qTop:'zeer goed', qMid:'goed', qLow:'eenvoudig',
   pauseT:'Pauzeren', resumeT:'Hervatten',
@@ -655,8 +655,8 @@ const ES = {
   mtMore:'Más modelos …',
   ttsMore:'Más voces …',
   infoShow:'Ver detalles', infoH:'Voces y modelos comparados',
-  infoIntro:'Velocidad, alcance y calidad en palabras: medido en este equipo, no estimado.',
-  infoModel:'Modelo', infoScope:'Alcance', infoSpeed:'Velocidad', infoQuality:'Calidad',
+  infoIntro:'Velocidad, alcance y calidad en palabras.',
+  infoModel:'Modelo', infoScope:'Alcance', infoSize:'Tamaño', infoSpeed:'Velocidad', infoQuality:'Calidad',
   spFast:'rápido', spMid:'medio', spSlow:'lento',
   qTop:'muy buena', qMid:'buena', qLow:'básica',
   pauseT:'Pausar', resumeT:'Continuar',
@@ -845,8 +845,8 @@ const TR = {
   mtMore:'Daha fazla model …',
   ttsMore:'Daha fazla ses …',
   infoShow:'Bilgileri gör', infoH:'Sesler ve modeller karşılaştırması',
-  infoIntro:'Hız, kapsam ve kalite kelimelerle – bu bilgisayarda ölçüldü, tahmin değil.',
-  infoModel:'Model', infoScope:'Kapsam', infoSpeed:'Hız', infoQuality:'Kalite',
+  infoIntro:'Hız, kapsam ve kalite kelimelerle.',
+  infoModel:'Model', infoScope:'Kapsam', infoSize:'Boyut', infoSpeed:'Hız', infoQuality:'Kalite',
   spFast:'hızlı', spMid:'orta', spSlow:'yavaş',
   qTop:'çok iyi', qMid:'iyi', qLow:'basit',
   pauseT:'Duraklat', resumeT:'Devam et',
@@ -1035,8 +1035,8 @@ const AR = {
   mtMore:'نماذج أخرى …',
   ttsMore:'أصوات أخرى …',
   infoShow:'عرض التفاصيل', infoH:'مقارنة الأصوات والنماذج',
-  infoIntro:'السرعة والنطاق والجودة بالكلمات — مقيسة على هذا الحاسوب، لا مقدّرة.',
-  infoModel:'النموذج', infoScope:'النطاق', infoSpeed:'السرعة', infoQuality:'الجودة',
+  infoIntro:'السرعة والنطاق والجودة بالكلمات.',
+  infoModel:'النموذج', infoScope:'النطاق', infoSize:'الحجم', infoSpeed:'السرعة', infoQuality:'الجودة',
   spFast:'سريع', spMid:'متوسط', spSlow:'بطيء',
   qTop:'جيد جداً', qMid:'جيد', qLow:'بسيط',
   pauseT:'إيقاف مؤقت', resumeT:'متابعة',
@@ -2974,13 +2974,16 @@ const mtInfoText = (fam, id) => {
 function openInfo() {
   const b = $('#infoBody'); if (!b) return;
   const row = cells => '<tr>' + cells.map(c => `<td>${esc(String(c))}</td>`).join('') + '</tr>';
-  const th = `<tr><th>${esc(t('infoModel'))}</th><th>${esc(t('infoScope'))}</th><th>${esc(t('infoSpeed'))}</th><th>${esc(t('infoQuality'))}</th></tr>`;
+  // Die Spalte nach dem Modell heisst bei Stimmen "Groesse" (Megabyte) und bei
+  // Uebersetzermodellen "Umfang" (Zahl der Sprachen) - dieselbe Ueberschrift war
+  // fuer beide falsch.
+  const th = scopeKey => `<tr><th>${esc(t('infoModel'))}</th><th>${esc(t(scopeKey))}</th><th>${esc(t('infoSpeed'))}</th><th>${esc(t('infoQuality'))}</th></tr>`;
   const voices = VOICES_ALL.map(v => row([`${langLabel(v.lang)} · ${v.name}`, v.mb.toFixed(0) + ' MB', `${t(speedWord(v.rtf))} (${(1 / v.rtf).toFixed(1)}×)`, t(qWord(v.quality))])).join('');
   const mt = MT_MODELS.map(m => { const i = MT_INFO[m.family + ':' + m.id]; return i ? row([`${m.familyLabel || m.family} ${m.id}`, t('langsN', i.n), t(i.speed), t(i.q)]) : ''; }).join('') +
     row(['TranslateGemma', t('langsN', 55), t('spFast'), t('qMid')]);
   b.innerHTML = `<p class="muted">${esc(t('infoIntro'))}</p>` +
-    `<h4>${esc(t('s_ttsH'))}</h4><table class="infotbl">${th}${voices}</table>` +
-    `<h4>${esc(t('nllbH'))}</h4><table class="infotbl">${th}${mt}</table>`;
+    `<h4>${esc(t('s_ttsH'))}</h4><table class="infotbl">${th('infoSize')}${voices}</table>` +
+    `<h4>${esc(t('nllbH'))}</h4><table class="infotbl">${th('infoScope')}${mt}</table>`;
   $('#infoDlg').showModal();
 }
 $('#infoClose').onclick = () => $('#infoDlg').close();
