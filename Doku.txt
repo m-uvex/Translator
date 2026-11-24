@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.180 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.181 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2967,3 +2967,28 @@ Dieselbe Knopfzeile schließt auch die Liste der Übersetzermodelle ab — hinte
 - `typeof window.studyChipHalt` = `function`.
 
 **Grenzen:** Nur der Quelllauf; ein echtes Antippen eines Wortes wurde nicht ausgelöst (das braucht das Übersetzungsmodell), die Blase kam über dieselbe Funktion `showChip()`, die auch `pickWord()` benutzt. Nicht als Bild angesehen. Ob eine Blase auch beim Löschen des offenen Textes verschwindet, wurde nicht geprüft.
+## 206. Bekanntheitsgrad, leise Markierung und Sortierung nach Passung (1.15.181)
+
+**Idee.** Drei kleine Leser-Hilfen aus `QoL-Ideen` ohne Modell: wie viel ein Text schon kann, welche Wörter sich zu lernen lohnen und eine Textliste, die sich nach dem eigenen Stand ordnet. Alles nur aus zwei vorhandenen Daten — dem Text und dem Vokabelbestand desselben Paars.
+
+**Zählen (`study.js`).** `textStats(tx)` zerlegt den Text mit demselben Muster wie `drawReader` (`WORD_RE`) und vergleicht jedes Wort mit `knownWords()`: Bestand des Paars, Form ohne Artikel (`bareTerm`) und Lemma, jeweils ohne Groß-/Kleinschreibung und ohne Akzente (`wkey`, NFD + `\u0300-\u036f`). Eine einfache Mehrzahl gilt als bekannt, wenn die Grundform im Bestand steht (`abuelos` gegen `abuelo`: `+s`, ohne `es`/`s`). Ergebnis: Wortzahl, Anteil bekannter Wörter in Prozent, Zahl der neuen, Lesezeit (180 Wörter/Minute, mindestens 1) und die Menge der Wörter, die mehrfach vorkommen. Der Rechner läuft einmal je Text; `TX_STATS` hält das Ergebnis unter `id | updated | Länge | Bestandsgröße | Paar` (bei über 300 Einträgen geleert).
+
+**Wo es steht.** Dieselbe Zeile `txStatText()` an zwei Stellen, damit Karte und Leseoberfläche nicht auseinanderlaufen: unter dem Sprachpaar der Karte als eigene leise Zeile `.libstat` (11,5 px, gedämpft, `tabular-nums`, 3 px über sich, 5 px nach dem Datum) und im Kopf des Lesefensters hinter Vokabelzahl und Textart (`#rMeta`). Die Karte trägt also „Sachtext / Titel / Spanisch → Deutsch · 1 Vokabel / 92 % bekannt · 8 neu · ~4 Min“.
+
+**Markieren.** `drawReader` hängt an jedes Wort, das mehrfach vorkommt und länger als drei Zeichen ist, die Klasse `fresh`; die Maus bekommt den Hinweis „3× im Text · noch nicht im Bestand“ (`title`, den der Tooltip-Beobachter nach `data-tip` übernimmt). Kurze Wörter bleiben außen vor, sonst wären `und`, `de`, `la` überall gepunktet — lauter als hilfreich. Die Markierung ist eine feine Punktlinie (`underline dotted`, 1 px, 3 px Abstand, 55 % der Akzentfarbe), beim Überfahren wird sie durchgezogen. Ein Klick legt das Wort wie bisher mit genau diesem Satz an (`pickWord`).
+
+**Sortieren.** Neuer Knopf `#txSort` im Kopf der Lesetexte (Symbol `know`, „Passend zu mir“ / „Neueste zuerst“ als Hinweis, `aria-pressed`, Akzentfläche bei aktivem Zustand über `.ib.on`). `ST.txSort` ist `new` (Vorgabe, Reihenfolge wie abgelegt) oder `fit` (`textStats(b).pct - textStats(a).pct`, bei Gleichstand der neuere Text). Der zweite Klick stellt die alte Reihenfolge wieder her; die Wahl gilt für die Sitzung. Der Knopf sitzt bei den Texten und nicht in der Dokumentenablage: dort liegen Editor-Dokumente, keine Lesetexte.
+
+**Kopfzeile im Lesefenster.** Mit dem Zusatz wurde `#rMeta` lang. `.rhead #rMeta` darf jetzt schrumpfen und schneidet mit Auslassungspunkten ab (`min-width:0`, `nowrap`, `ellipsis`), statt in schmalen Fenstern aus dem Bild zu laufen; bei 980 px Fensterbreite passt die volle Zeile noch (429 px), erst darunter greift die Kürzung.
+
+**Texte (6 Sprachen).** `txFitPct`, `txFitNew`, `txFitMin`, `txSortFit`, `txSortNew`, `txNewWord` — deutsch/englisch als Paar in `K`, die übrigen Sprachen in `NL`, `ES`, `TR`, `AR`.
+
+**Geprüft (Quelllauf, Messung über CDP):**
+
+- Zwei Prüftexte, Bestand von 8 spanischen Wörtern: Karte „Bekannt“ zeigt `43 % bekannt · 9 neu · ~1 Min`, Karte „Fremd“ `0 % bekannt · 12 neu · ~1 Min`; im Lesefenster steht dieselbe Angabe hinter der Vokabelzahl.
+- Sortierung: bei `fit` stand `Bekannt` (43 %) vor `Fremd` (0 %); der Klick schaltete auf die Ablage-Reihenfolge `Fremd`, `Bekannt` zurück. `aria-pressed` und der Hinweis („Passend zu mir“ / „Neueste zuerst“) wechseln mit, der Knopf trägt bei `fit` die Akzentfläche.
+- Markierung: nur `Zwiebeln` und `Knoblauch` (je 2×, 8 Buchstaben) tragen `fresh`; `und` (3 Buchstaben, 2×) nicht; Stil `dotted underline 1px color(srgb 0.549 0.784 0.961 / 0.55)`, Hinweis „3× im Text …“ am Element.
+- Kopfzeile: bei 980 px Fensterbreite `#rMeta` 429 px breit, keine Kürzung, kein Überlauf des Dokuments (`scrollWidth - innerWidth` = 0).
+- Angesehen als Bild (Fenster 1500 × 1125, 120 % Skalierung): Karte mit Bekanntheitszeile, Lesetext mit feinen Punktlinien unter den beiden Wörtern.
+
+**Grenzen:** Nur dunkles Erscheinungsbild und deutsch; andere Sprachen der Texte (Tabelle) und die Bildschirmfotos sind nicht geprüft. Ein echtes Antippen eines markierten Wortes lief nicht (das braucht das Übersetzungsmodell), die Blase kam wie in §205 über `showChip()`. Die Lesezeit ist eine Schätzung mit 180 Wörtern/Minute, keine Messung. Beugungsformen außer der einfachen Mehrzahl zählen als neu (`hablo` gegen `hablar`).

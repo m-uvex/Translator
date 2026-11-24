@@ -15,7 +15,7 @@
 const ST = { texts: [], vocab: [], cur: null, pick: false, chip: null, chipTimer: 0, para: 0 };
 // Suche, Sortierung, Filter und Mehrfachauswahl der Vokabelliste. Nur fuer die
 // Sitzung: nach einem Neustart steht die Liste wieder vollstaendig da.
-ST.vocFind = ''; ST.vocSort = 'due'; ST.vocFilter = 'all'; ST.selMode = false; ST.sel = new Set();
+ST.vocFind = ''; ST.vocSort = 'due'; ST.vocFilter = 'all'; ST.selMode = false; ST.sel = new Set(); ST.txSort = 'new';
 const V = () => $('#vocList');
 const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const nrm = s => String(s || '').toLocaleLowerCase().trim();
@@ -660,11 +660,81 @@ function pairChanged() {
 }
 
 // ---------- Texte ----------
+// ---------- Bekanntheitsgrad eines Textes ----------
+// Wie viel ein Text schon kann, ergibt sich aus zwei vorhandenen Dingen: den
+// Woertern im Text und den Vokabeln desselben Paars. Kein Modell, nur Zaehlen.
+// Verglichen wird ohne Gross-/Kleinschreibung und ohne Akzente; eine einfache
+// Mehrzahl gilt als bekannt, wenn die Grundform im Bestand steht ("abuelos"
+// gegen "abuelo").
+const stripAcc = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const wkey = s => stripAcc(nrm(s));
+const WORD_RE = /([\p{L}\p{M}]+(?:['’\-][\p{L}\p{M}]+)*)/gu;
+const TX_STATS = new Map();
+
+function knownWords() {
+  const set = new Set();
+  for (const e of ST.vocab) {
+    if (!inPair(e)) continue;
+    for (const s of [e.term, e.lemma, bareTerm(e.term), bareTerm(e.lemma)]) {
+      const k = wkey(s);
+      if (!k) continue;
+      set.add(k);
+      if (!k.includes(' ')) { set.add(k + 's'); set.add(k.replace(/es$/, '')); set.add(k.replace(/s$/, '')); }
+    }
+  }
+  return set;
+}
+
+// Zaehlt Woerter, Treffer, neue Woerter und die Lesezeit (~180 Woerter/Minute).
+// Das Ergebnis haengt an Textstand, Textlaenge, Bestand und Sprachpaar; mehr
+// als 300 Eintraege werden nicht behalten.
+function textStats(tx) {
+  const p = pairOf(tx);
+  const key = [tx.id, tx.updated || 0, String(tx.text || '').length, ST.vocab.length, p.src, p.tgt].join('|');
+  const old = TX_STATS.get(key);
+  if (old) return old;
+  const known = knownWords();
+  const words = String(tx.text || '').match(WORD_RE) || [];
+  const fresh = new Map();
+  let hit = 0;
+  for (const w of words) {
+    const k = wkey(w);
+    if (!k) continue;
+    if (known.has(k)) { hit++; continue; }
+    fresh.set(k, (fresh.get(k) || 0) + 1);
+  }
+  const st = {
+    words: words.length,
+    pct: words.length ? Math.round(hit / words.length * 100) : 0,
+    fresh: fresh.size,
+    minutes: Math.max(1, Math.round(words.length / 180)),
+    // Nur Woerter, die mehrfach vorkommen und laenger als drei Zeichen sind:
+    // Einmaliges sind meist Namen, und kurze Woerter sind fast immer
+    // Funktionswoerter ("und", "de", "la") - die gepunktet zu sehen waere
+    // lauter als hilfreich.
+    marks: new Map([...fresh].filter(([k, n]) => n >= 2 && k.length >= 4))
+  };
+  if (TX_STATS.size > 300) TX_STATS.clear();
+  TX_STATS.set(key, st);
+  return st;
+}
+
+// Dieselbe Angabe an beiden Stellen: auf der Karte in der Liste und im Kopf
+// der Leseoberflaeche.
+function txStatText(tx) {
+  const st = textStats(tx);
+  if (!st.words) return '';
+  return [t('txFitPct', st.pct), t('txFitNew', st.fresh), t('txFitMin', st.minutes)].join(' · ');
+}
+
 function renderTexts() {
   const grid = $('#txtGrid'); if (!grid) return;
   grid.querySelectorAll('.txtcard').forEach(c => c.remove());
   const frag = document.createDocumentFragment();
-  const mine = ST.texts.filter(inPair);
+  let mine = ST.texts.filter(inPair);
+  // "Passend zu mir": nach Bekanntheitsgrad statt nach Datum. Bei gleichem
+  // Anteil bleibt der neuere Text oben.
+  if (ST.txSort === 'fit') mine = mine.slice().sort((a, b) => textStats(b).pct - textStats(a).pct || (b.created || 0) - (a.created || 0));
   const other = ST.texts.length - mine.length;
   for (const tx of mine) {
     // Eine Kurzgeschichte entsteht erst im Hintergrund: Solange sie geschrieben
@@ -682,8 +752,9 @@ function renderTexts() {
       : state < 0 ? `<span class="txbadge bad">${esc(t('stFailed'))}</span>`
       : `<span class="txbadge">${esc(catLabel(tx.cat))}</span>`;
     const sub = state < 0 ? t('stRetry') : t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length);
+    const stat = state ? '' : txStatText(tx);
     card.innerHTML = `<div class="libprev"><div class="doc">${esc(excerpt)}</div></div>
-      <div class="libmeta">${badge}<div class="libname">${esc(tx.title)}</div><div class="libdate">${esc(langLabel(tx.src))} → ${esc(langLabel(tx.tgt))} · ${esc(sub)}</div></div>
+      <div class="libmeta">${badge}<div class="libname">${esc(tx.title)}</div><div class="libdate">${esc(langLabel(tx.src))} → ${esc(langLabel(tx.tgt))} · ${esc(sub)}</div>${stat ? `<div class="libstat">${esc(stat)}</div>` : ''}</div>
       ${state ? '' : `<button class="rm ed" title="${esc(t('edit'))}">${ic('pencil', 13)}</button>`}
       <button class="rm" title="${esc(t('remove'))}">${ic('x', 14)}</button>`;
     card.onclick = ev => {
@@ -702,6 +773,13 @@ function renderTexts() {
   if (hint) hint.textContent = other > 0 ? t('vocOther', other) : '';
   const empty = $('#txtEmpty');
   if (empty) empty.classList.toggle('hidden', mine.length > 0);
+  const sb = $('#txSort');
+  if (sb) {
+    const fit = ST.txSort === 'fit';
+    sb.classList.toggle('on', fit);
+    sb.title = t(fit ? 'txSortNew' : 'txSortFit');
+    sb.setAttribute('aria-pressed', fit ? 'true' : 'false');
+  }
   renderStoryBtn();
 }
 window.studyTextsRender = renderTexts;
@@ -841,6 +919,7 @@ function drawReader() {
   art.innerHTML = '';
   const paras = String(tx.text || '').split(/\r?\n\s*\r?\n|\r?\n/).filter(p => p.trim());
   const RE = /([\p{L}\p{M}]+(?:['’\-][\p{L}\p{M}]+)*)/gu;
+  const marks = textStats(tx).marks;
   paras.forEach((p, pi) => {
     const el = document.createElement(pi === 0 ? 'p' : 'p');
     el.dataset.txt = p;
@@ -849,7 +928,12 @@ function drawReader() {
     while ((m = RE.exec(p))) {
       if (m.index > last) el.append(p.slice(last, m.index));
       const s = document.createElement('span');
-      s.className = 'rw'; s.dataset.w = m[0]; s.dataset.o = String(m.index); s.dataset.p = String(pi);
+      // Ein Wort, das mehrfach vorkommt und noch fehlt, wird fein gepunktet -
+      // der Klick darauf legt es mit genau diesem Satz an (pickWord).
+      const rep = marks.get(wkey(m[0])) || 0;
+      s.className = 'rw' + (rep ? ' fresh' : '');
+      s.dataset.w = m[0]; s.dataset.o = String(m.index); s.dataset.p = String(pi);
+      if (rep) s.title = t('txNewWord', rep);
       s.textContent = m[0];
       el.append(s);
       last = m.index + m[0].length;
@@ -893,7 +977,8 @@ function drawReader() {
 // damit der Kopf nicht bei 0 stehen bleibt.
 function readerMeta(tx) {
   const el = $('#rMeta'); if (!el || !tx) return;
-  el.textContent = [`${langLabel(tx.src || S.studySrc)} → ${langLabel(tx.tgt || S.studyTgt)}`, catLabel(tx.cat), t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length)].join(' · ');
+  const stat = Number(tx.pending) ? '' : txStatText(tx);
+  el.textContent = [`${langLabel(tx.src || S.studySrc)} → ${langLabel(tx.tgt || S.studyTgt)}`, catLabel(tx.cat), t('vocCount', ST.vocab.filter(v => v.textId === tx.id).length), stat].filter(Boolean).join(' · ');
 }
 
 function savePos() {
@@ -2511,6 +2596,10 @@ function vocFindClearSync() {
   });
 
   $('#txAdd').onclick = txOpen;
+  // "Passend zu mir": sortiert die Lesetexte nach Bekanntheitsgrad statt nach
+  // Datum; der zweite Klick stellt die Reihenfolge wieder her.
+  const txSort = $('#txSort');
+  if (txSort) txSort.onclick = () => { ST.txSort = ST.txSort === 'fit' ? 'new' : 'fit'; renderTexts(); };
   $('#txClose').onclick = () => $('#txDlg').close();
   $('#txCancel').onclick = () => $('#txDlg').close();
   $('#txOk').onclick = txAdd;
