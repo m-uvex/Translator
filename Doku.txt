@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.164 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.165 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2678,3 +2678,26 @@ Zustandsabfrage im laufenden Fenster: `#vocAddRow` und `#vocFindRow` sind nie gl
 Messwerte im Fenster: beide Werkzeuggruppen je 112 px breit, 16 px Abstand dazwischen, 6 Knöpfe in `.vacts`; `node --check study.js` ohne Fehler.
 
 **Grenzen:** Nur dunkles Erscheinungsbild. Schmales Fenster nicht erneut geprüft — die Reihe bricht weiterhin um (`flex-wrap`), dann stehen die Werkzeuge unter dem Feld. Die Tastaturbedienung (Fokusreihenfolge im DOM) hat sich geändert, weil die Knöpfe jetzt im Feld-Container statt im Kopf liegen; mit Tab durchgegangen ist das nicht.
+
+## 190. Verbindungen: Karte für die Vorlesestimmen (1.15.165)
+
+**Vorschlag übernommen.** Die Diagnose-Seite zeigte nur die zwei Dienste, die über eine Adresse antworten (Ollama, NLLB-Server). Die Stimmen hängen an keiner Adresse, sondern liegen im Programmordner — man sah nirgends, ob überhaupt eine bereitsteht. Jetzt gibt es eine dritte Karte.
+
+**Die Karte.** Kopf „Vorlesestimmen“ mit Abzeichen **Bereit** (Engine vorhanden und mindestens eine Stimme eingerichtet) oder **Nicht eingerichtet**, darunter drei Zeilen im selben Muster wie die anderen Karten:
+
+- **Piper-Engine** — „vorhanden“ / „fehlt“ (`piper/piper.exe` im Stimmenordner)
+- **Stimmen** — „*n* / 8“ (eingerichtet / angeboten); ohne Auffälligkeit grün, sonst neutral
+- **Sprachen** — die Sprachen der eingerichteten Stimmen in der Oberflächensprache („Deutsch, Englisch, Französisch“) oder „nichts“
+
+Die Zahlen kommen aus demselben `tts:list`, das auch der Stimmen-Wähler benutzt (`voiceReady()` prüft `.onnx` **und** `.onnx.json`), die Sprachnamen aus `langLabel()`. Texte in allen sechs Sprachen ergänzt (`diagTts`, `diagTtsEngine`, `diagVoices`, `diagTtsLangs`, `diagTtsOk`, `diagTtsBad`, `diagTtsYes`, `diagTtsNo`).
+
+**Geprüft (Quelllauf 1.15.165, 1600 × 1000, dunkles Erscheinungsbild, Diagnose-Seite in den Einstellungen eingeschaltet):**
+
+| Profil | Karte |
+|---|---|
+| `%TEMP%\u240` mit Piper und drei Stimmen (en, de, fr) | **Bereit** · Piper-Engine vorhanden · Stimmen **3 / 8** · Sprachen **Deutsch, Englisch, Französisch** |
+| dasselbe Profil, `stimmen/` gelöscht, „Neu messen“ | **Nicht eingerichtet** · Piper-Engine **fehlt** · Stimmen **0 / 8** · Sprachen **nichts** |
+
+Die Seite misst wie bisher erst auf Klick; die Stimmenzeile wird beim selben Lauf mitgelesen (kein zusätzlicher Netzaufruf, nur zwei `existsSync` je Stimme).
+
+**Grenzen:** Nur dunkles Erscheinungsbild. Die englische Fassung ist gesetzt, aber nicht im laufenden Fenster angesehen (nur die deutschen Texte geprüft). Ein Klick auf die Karte führt bewusst nirgendwohin — eingerichtet werden Stimmen weiter im Aussprache-Menü; das steht so nicht auf der Seite.

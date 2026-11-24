@@ -328,6 +328,10 @@ const K = {
   diagUnload:['Modelle entladen','Unload models'], diagUnloaded:['Modelle entladen','Models unloaded'],
   diagNoUnload:['Nichts geladen','Nothing loaded'],
   diagOllama:['Ollama','Ollama'], diagNllb:['NLLB-Server','NLLB server'],
+  diagTts:['Vorlesestimmen','Read-aloud voices'], diagTtsEngine:['Piper-Engine','Piper engine'],
+  diagVoices:['Stimmen','Voices'], diagTtsLangs:['Sprachen','Languages'],
+  diagTtsOk:['Bereit','Ready'], diagTtsBad:['Nicht eingerichtet','Not set up'],
+  diagTtsYes:['vorhanden','present'], diagTtsNo:['fehlt','missing'],
   diagHint:['Die Adressen stehen in den Einstellungen unter „Verbindungen“.','The addresses are set in the settings under “Connections”.'], hotkeyHint:['Schnellaufruf aus jedem Programm: Strg+Shift+Leertaste','Quick access from any app: Ctrl+Shift+Space'], hotkeyTaken:['Der Schnellaufruf aus jedem Programm ist von einem anderen Programm belegt; nach einem Neustart wird es erneut versucht.','Quick access from any app is taken by another program; it is tried again after a restart.'],
   startTr:['Übersetzer öffnen','Open translator'], startEd:['Textbearbeitung öffnen','Open text editor'], startStudy:['Lernen öffnen','Open study'], startLast:['Zuletzt verwendetes öffnen','Open last used'],
   // Namen der Arbeitsplatz-Gruppen fuer die Kaestchen in den Einstellungen.
@@ -501,7 +505,9 @@ const NL = {
   speak:'Voorlezen', speakNone:'Geen spraakuitvoer aanwezig — installeer espeak-ng of speech-dispatcher (sudo apt install espeak-ng)', diagH:'Verbindingen', diagRefresh:'Opnieuw meten', diagOk:'Bereikbaar', diagFail:'Niet bereikbaar',
   diagModels:'Modellen', diagLoaded:'Geladen', diagNone:'niets', diagVersion:'Versie',
   diagUnload:'Modellen vrijgeven', diagUnloaded:'Modellen vrijgegeven', diagNoUnload:'Niets geladen',
-  diagOllama:'Ollama', diagNllb:'NLLB-server', diagHint:'De adressen staan in de instellingen onder „Verbindingen“.', hotkeyHint:'Snel openen vanuit elk programma: Ctrl+Shift+Spatie', hotkeyTaken:'Snel openen vanuit elk programma is bezet door een ander programma; na een herstart wordt het opnieuw geprobeerd.',
+  diagOllama:'Ollama', diagNllb:'NLLB-server',
+  diagTts:'Voorleesstemmen', diagTtsEngine:'Piper-engine', diagVoices:'Stemmen', diagTtsLangs:'Talen',
+  diagTtsOk:'Gereed', diagTtsBad:'Niet ingesteld', diagTtsYes:'aanwezig', diagTtsNo:'ontbreekt', diagHint:'De adressen staan in de instellingen onder „Verbindingen“.', hotkeyHint:'Snel openen vanuit elk programma: Ctrl+Shift+Spatie', hotkeyTaken:'Snel openen vanuit elk programma is bezet door een ander programma; na een herstart wordt het opnieuw geprobeerd.',
   startTr:'Vertaler openen', startEd:'Tekstbewerking openen', startLast:'Laatst gebruikte openen', wsTr:'Vertaler', wsEd:'Tekstbewerking', wsStudy:'Leren',
   reset:'Herstellen', resetAll:'Alles herstellen', autoSys:'Automatisch (systeem)', autoO:'Automatisch', autoModel:'Automatisch', light:'Licht', dark:'Donker',
   nllbH:'Vertaalmodellen', srvSetup:'Server instellen', mInst:'Geïnstalleerd', mNot:'Niet geïnstalleerd', mLoad:p => `Downloaden … ${p} %`, mErr:e => `Fout: ${e}`, bDl:'Downloaden', bDel:'Verwijderen', bBusy:'Bezig …',
@@ -682,6 +688,8 @@ const ES = {
   speak:'Leer en voz alta', speakNone:'No hay salida de voz — instala espeak-ng o speech-dispatcher (sudo apt install espeak-ng)', diagH:'Conexiones', diagRefresh:'Medir de nuevo', diagOk:'Accesible', diagFail:'No accesible',
   diagModels:'Modelos', diagLoaded:'Cargado', diagNone:'nada', diagVersion:'Versión',
   diagUnload:'Liberar modelos', diagUnloaded:'Modelos liberados', diagNoUnload:'Nada cargado',
+  diagTts:'Voces de lectura', diagTtsEngine:'Motor Piper', diagVoices:'Voces', diagTtsLangs:'Idiomas',
+  diagTtsOk:'Listo', diagTtsBad:'Sin configurar', diagTtsYes:'presente', diagTtsNo:'falta',
   diagNllb:'Servidor NLLB', diagHint:'Las direcciones se ajustan en la configuración, en «Conexiones».', hotkeyHint:'Acceso rápido desde cualquier programa: Ctrl+Shift+Espacio', hotkeyTaken:'El acceso rápido desde cualquier programa está ocupado por otro programa; se volverá a intentar tras reiniciar.',
   startTr:'Abrir traductor', startEd:'Abrir editor', startLast:'Abrir último usado', wsTr:'Traductor', wsEd:'Editor', wsStudy:'Aprendizaje',
   reset:'Restablecer', resetAll:'Restablecer todo', autoSys:'Automático (sistema)', autoO:'Automático', autoModel:'Automático', light:'Claro', dark:'Oscuro',
@@ -865,6 +873,8 @@ const TR = {
   speak:'Sesli oku', speakNone:'Ses çıkışı yok — espeak-ng veya speech-dispatcher kurun (sudo apt install espeak-ng)', diagH:'Bağlantılar', diagRefresh:'Yeniden ölç', diagOk:'Erişilebilir', diagFail:'Erişilemiyor',
   diagModels:'Modeller', diagLoaded:'Yüklü', diagNone:'yok', diagVersion:'Sürüm',
   diagUnload:'Modelleri boşalt', diagUnloaded:'Modeller boşaltıldı', diagNoUnload:'Yüklü model yok',
+  diagTts:'Okuma sesleri', diagTtsEngine:'Piper motoru', diagVoices:'Sesler', diagTtsLangs:'Diller',
+  diagTtsOk:'Hazır', diagTtsBad:'Kurulmadı', diagTtsYes:'var', diagTtsNo:'yok',
   diagNllb:'NLLB sunucusu', diagHint:'Adresler ayarlarda „Bağlantılar“ altında.', hotkeyHint:'Her programdan hızlı erişim: Ctrl+Shift+Boşluk', hotkeyTaken:'Her programdan hızlı erişim başka bir program tarafından kullanılıyor; yeniden başlatmadan sonra tekrar denenecek.',
   startTr:'Çevirmeni aç', startEd:'Metin düzenleyiciyi aç', startLast:'Son kullanılanı aç', wsTr:'Çevirmen', wsEd:'Editör', wsStudy:'Öğrenme',
   reset:'Sıfırla', resetAll:'Tümünü sıfırla', autoSys:'Otomatik (sistem)', autoO:'Otomatik', autoModel:'Otomatik', light:'Açık', dark:'Koyu',
@@ -1048,6 +1058,8 @@ const AR = {
   speak:'قراءة بصوت عالٍ', speakNone:'لا يوجد إخراج صوتي — ثبّت espeak-ng أو speech-dispatcher (sudo apt install espeak-ng)', diagH:'الاتصالات', diagRefresh:'قياس مرة أخرى', diagOk:'متاح', diagFail:'غير متاح',
   diagModels:'النماذج', diagLoaded:'محمّل', diagNone:'لا شيء', diagVersion:'الإصدار',
   diagUnload:'إفراغ النماذج', diagUnloaded:'تم إفراغ النماذج', diagNoUnload:'لا شيء محمّل',
+  diagTts:'أصوات القراءة', diagTtsEngine:'محرك Piper', diagVoices:'الأصوات', diagTtsLangs:'اللغات',
+  diagTtsOk:'جاهز', diagTtsBad:'غير مُهيّأ', diagTtsYes:'موجود', diagTtsNo:'غير موجود',
   diagNllb:'خادم NLLB', diagHint:'تُضبط العناوين في الإعدادات ضمن «الاتصالات».', hotkeyHint:'وصول سريع من أي تطبيق: Ctrl+Shift+Space', hotkeyTaken:'وصول سريع من أي تطبيق محجوز من برنامج آخر؛ ستُعاد المحاولة بعد إعادة التشغيل.',
   startTr:'فتح المترجم', startEd:'فتح المحرر', startLast:'فتح آخر مستخدم', wsTr:'المترجم', wsEd:'المحرر', wsStudy:'التعلّم',
   reset:'إعادة تعيين', resetAll:'إعادة تعيين الكل', autoSys:'تلقائي (النظام)', autoO:'تلقائي', autoModel:'تلقائي', light:'فاتح', dark:'داكن',
@@ -3038,6 +3050,15 @@ async function drawDiag() {
   const nInst = nm.ok && Array.isArray(nm.j) ? nm.j.filter(m => m.installed).length : null;
   const nLoad = nh.ok && nh.j && nh.j.loaded ? String(nh.j.loaded) : '';
   const oVer = ov.ok && ov.j && ov.j.version ? String(ov.j.version) : '—';
+  // Vorlesestimmen stehen nicht hinter einer Adresse, sondern liegen im
+  // Programmordner: Die Karte zaehlt, was eingerichtet ist, und nennt die
+  // Sprachen. Ohne die Piper-Engine spricht auch eine geladene Stimme nicht.
+  let tts = { engine: false, voices: [] };
+  try { tts = await window.api.ttsList(); } catch {}
+  const ttsAll = Array.isArray(tts.voices) ? tts.voices : [];
+  const ttsIn = ttsAll.filter(v => v.installed);
+  const ttsLangs = [...new Set(ttsIn.map(v => v.lang))];
+  const ttsOk = !!(tts.engine && ttsIn.length);
   box.innerHTML =
     `<div class="diagcard">
       <div class="diaghead"><b>${esc(t('diagOllama'))}</b>${diagPill(ov)}<span class="sp"></span>
@@ -3052,6 +3073,12 @@ async function drawDiag() {
       ${diagRow(S.nllb, `${nh.ok ? 'HTTP ' + nh.status : esc(nh.err || '—')} · ${nh.ms} ms`)}
       ${diagRow(t('diagModels'), nInst == null ? '—' : String(nInst))}
       ${diagRow(t('diagLoaded'), nLoad ? esc(nLoad) : esc(t('diagNone')))}
+    </div>
+    <div class="diagcard">
+      <div class="diaghead"><b>${esc(t('diagTts'))}</b><span class="diagpill ${ttsOk ? 'ok' : 'bad'}">${esc(t(ttsOk ? 'diagTtsOk' : 'diagTtsBad'))}</span></div>
+      ${diagRow(t('diagTtsEngine'), tts.engine ? esc(t('diagTtsYes')) : esc(t('diagTtsNo')))}
+      ${diagRow(t('diagVoices'), `${ttsIn.length} / ${ttsAll.length}`)}
+      ${diagRow(t('diagTtsLangs'), ttsLangs.length ? esc(ttsLangs.map(l => langLabel(l)).join(', ')) : esc(t('diagNone')))}
     </div>`;
 }
 async function unloadOllama() {
