@@ -462,7 +462,13 @@ function renderVocab() {
   const fb = $('#vocFilterBtn');
   if (fb) fb.classList.toggle('on', ST.vocFilter !== 'all');
   const fr = $('#vocFindRow'), sb = $('#vocFindBtn');
-  if (sb) sb.classList.toggle('on', !!fr && !fr.classList.contains('hidden'));
+  const finding = !!fr && !fr.classList.contains('hidden');
+  if (sb) sb.classList.toggle('on', finding);
+  // Immer nur eine Leiste: die Suche ersetzt das Eingabefeld, die Auswahl
+  // ebenso. Zwei gleich aussehende Felder uebereinander waren der
+  // unuebersichtlichste Teil dieser Ansicht.
+  const addRow = $('#vocAddRow');
+  if (addRow) addRow.classList.toggle('hidden', finding || !!ST.selMode);
 }
 window.studyVocRender = renderVocab;
 
@@ -508,7 +514,9 @@ function vocSelSync() {
   const bar = $('#vocSelBar');
   if (bar) bar.classList.toggle('hidden', !ST.selMode);
   const n = ST.sel.size;
-  const c = $('#vocSelCount'); if (c) c.textContent = n ? t('vocSelN', n) : '';
+  // Auch bei null eine Zahl zeigen: eine Leiste, die nur aus vier Symbolen
+  // besteht, sieht aus wie eine zufaellige Knopfreihe.
+  const c = $('#vocSelCount'); if (c) c.textContent = t('vocSelN', n);
   const del = $('#vocSelDelBtn'); if (del) del.disabled = !n;
   const rp = $('#vocSelRepeatBtn'); if (rp) rp.disabled = !n;
   const all = $('#vocSelAllBtn');
@@ -2225,17 +2233,35 @@ function wire() {
     const open = row.classList.contains('hidden');
     row.classList.toggle('hidden', !open);
     $('#vocFindBtn').classList.toggle('on', open);
-    if (open) { $('#vocFind').value = ST.vocFind; $('#vocFind').focus(); }
+    // Das Eingabefeld weicht der Suche, statt sich darunter zu stapeln.
+    const addRow = $('#vocAddRow');
+    if (addRow) addRow.classList.toggle('hidden', open);
+    if (open) { $('#vocFind').value = ST.vocFind; vocFindClearSync(); $('#vocFind').focus(); }
     else { $('#vocFind').value = ''; ST.vocFind = ''; renderVocab(); }
   };
-  // Die ganze Liste neu zu bauen kostet bei vielen Vokabeln je Anschlag Zeit;
+  // Das Kreuz im Suchfeld raeumt den Text weg - solange keiner drinsteht, ist es
+// nur ein Knopf ohne Aufgabe und bleibt deshalb unsichtbar.
+function vocFindClearSync() {
+  const cl = $('#vocFindClear');
+  if (cl) cl.classList.toggle('hidden', !($('#vocFind') && $('#vocFind').value));
+}
+
+// Die ganze Liste neu zu bauen kostet bei vielen Vokabeln je Anschlag Zeit;
   // gesucht wird deshalb erst, wenn das Tippen kurz ruht.
   $('#vocFind').addEventListener('input', () => {
+    vocFindClearSync();
     ST.vocFind = $('#vocFind').value;
     clearTimeout(ST.findTimer);
     ST.findTimer = setTimeout(renderVocab, 120);
   });
-  $('#vocFindClear').onclick = () => { $('#vocFind').value = ''; ST.vocFind = ''; renderVocab(); $('#vocFind').focus(); };
+  $('#vocFindClear').onclick = () => { $('#vocFind').value = ''; vocFindClearSync(); ST.vocFind = ''; renderVocab(); $('#vocFind').focus(); };
+  // Escape schliesst die Suche und gibt das Eingabefeld zurueck.
+  $('#vocFind').addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    e.preventDefault();
+    $('#vocFindBtn').click();
+    $('#vocTerm').focus();
+  });
   $('#vocFilterBtn').onclick = () => vocFilterPop($('#vocFilterBtn'));
   $('#vocSelBtn').onclick = () => vocSelMode();
   $('#vocSelAllBtn').onclick = vocSelAll;

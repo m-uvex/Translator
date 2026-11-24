@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.160 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.161 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2594,3 +2594,29 @@ Verworfen, weil sie mit dieser Engine abbrechen: `en_US-hfc_female-medium`, `es_
 
 - **Geprüft (Quelllauf 1.15.160, `--remote-debugging-port=9334`, Profil `%TEMP%\u228`, Kurzgeschichten eingeschaltet):** Wähler im Lese-Arbeitsplatz (Vokabeln-Ansicht) zeigt „Standard (Modell des Übersetzers)“, gemma3:4b, translategemma:4b, qwen3.5:2b, **Ministral-3-3B-Instruct-2512-GGUF:Q4_K_M**; darunter „Standard (Schreibmodell des Editors)“, gemma3:4b, qwen3.5:2b, **Ministral-3-3B-Instruct-2512-GGUF:Q4_K_M** — kein `hf.co/…` mehr. Tooltip nach dem Umschalten: „Modell für Wortübersetzungen: gemma3:4b · Schreibmodell für Kurzgeschichten: Ministral-3-3B-Instruct-2512-GGUF:Q4_K_M“ (der Tooltip-Beobachter aus Abschnitt 161 schreibt `title` nach `data-tip`, deshalb 400 ms später gelesen); `aria-label` gleichlautend. `node --check study.js` ohne Fehler.
 - **Grenzen:** Der Modellwähler des Texteditors (`editor.js`, Gruppe „Schreibmodell“, `row({ label:n … })`) zeigt weiterhin die vollen Kennungen — nicht angefasst, weil der Auftrag den Lese-Arbeitsplatz betraf. Geprüft im dunklen Erscheinungsbild; ein Klick auf eine Zeile wurde nicht ausgelöst (die Wahl selbst ist unverändert).
+
+## 186. Vokabeln: eine Leiste, gruppierte Kopfzeile (1.15.161)
+
+**Das Problem.** Im Kopf der Vokabel-Ansicht standen zwei fast gleiche, volle Eingabeleisten untereinander — oben „Wort oder Wendung eingeben …“ mit rundem Plus, darunter die Suche mit Kreuz. Wer die Lupe anklickte, sah zwei Felder, die sich nur im Platzhalter unterschieden; welches davon gerade etwas tut, war nicht zu erkennen. Rechts daneben hing eine Reihe von acht Symbolen ohne Gliederung (Paar-Pillen, Lupe, Trichter, Checkliste, Prozessor, Plus, Nachfüllen, Export, Import). Im Auswahlmodus kam eine dritte Leiste dazu, die bei leerer Auswahl nur aus vier Symbolen bestand — sie sah aus wie eine zufällige Knopfreihe.
+
+**Was jetzt anders ist.**
+
+- **Ein Feld zur Zeit.** Die Suche ersetzt das Eingabefeld, statt sich darunter zu stapeln; der Auswahlmodus blendet das Eingabefeld ebenfalls aus. Es steht nie mehr als eine Leiste unter dem Kopf.
+- **Die Lupe sitzt im Suchfeld** (`.vadd.has-lead .lead`), links im Pill. Damit ist auch im Screenshot sofort klar, welches Feld die Suche ist.
+- **Kopfzeile gegliedert.** Die Symbole stecken in Gruppen (`.hgrp`): Lupe/Trichter/Checkliste als Werkzeuge der Liste, dahinter ein 18 px hoher Trenner und das Prozessor-Symbol für das Modell. Vorher war das eine lange Reihe gleicher Knöpfe; ein einzelner Knopf zwischen zwei Trennern wirkte wie ein Kasten, deshalb liegen die drei Werkzeuge zusammen.
+- **Dateiknöpfe abgesetzt.** Zwischen dem Plus und „Übersetzungen nachtragen / Export / Import“ steht ein Trenner (`.vsep`), die drei gehören sichtbar zusammen.
+- **Zahl statt Leere.** Die Auswahl-Leiste zeigt immer „*n* ausgewählt“, auch bei 0 — eine Leiste mit nur vier Symbolen wirkte wie eine zweite Werkzeugreihe.
+- **Kreuz nur bei Text.** Das Löschkreuz der Suche ist unsichtbar, solange nichts im Feld steht (`vocFindClearSync`); Escape schließt die Suche und setzt den Fokus zurück ins Eingabefeld.
+
+**Geprüft (Quelllauf 1.15.161, CDP-Screenshots 1500 × 840, Profil `%TEMP%\u230` mit fünf eingetragenen Vokabeln, dunkles Erscheinungsbild):**
+
+| Zustand | Leisten unter dem Kopf | Beobachtung |
+|---|---|---|
+| normal | Eingabe + Plus, dahinter Trenner und drei Dateiknöpfe | eine Leiste, Kopf: Pillen · 5 Vokabeln · Lupe/Trichter/Checkliste ┊ Prozessor |
+| Suche offen | nur die Suchleiste, Lupe im Feld, Text „ha“, Liste auf „house Haus“ gefiltert | Eingabefeld verschwunden, kein Stapeln |
+| Escape | Eingabefeld zurück, Suchleiste weg | Lupe im Kopf nicht mehr hervorgehoben |
+| Auswahl | „1 ausgewählt“ + vier Symbole, keine Eingabe | Zeile eindeutig als Auswahl zu erkennen |
+
+Zustandsabfrage im laufenden Fenster: `#vocAddRow` und `#vocFindRow` sind nie gleichzeitig sichtbar (`display:none` für die jeweils andere), `#vocSelCount` liest „1 ausgewählt“. `node --check study.js` ohne Fehler.
+
+**Grenzen:** Nur das dunkle Erscheinungsbild angesehen; die helle Fassung (falls genutzt) nicht geprüft. Die Reihenfolge und Funktion der Knöpfe ist unverändert, nur ihre Anordnung und Sichtbarkeit. Ein echtes Eintragen über das Feld wurde nicht versucht (die Vokabeln kamen über `addVocab` in die Testkopie). Schmales Fenster (unter ~700 px) nicht durchgespielt — die Leisten brechen dort weiterhin um (`flex-wrap`).

@@ -367,6 +367,14 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .vadd{display:flex;gap:6px;flex:1 1 320px;min-width:0}
 .vadd input{flex:1;min-width:0;font:inherit;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 16px;outline:0}
 .vadd input:focus{border-color:var(--accent)}
+/* Suchfeld: die Lupe sitzt im Feld selbst, damit das eine Feld im Kopf der
+   Ansicht sofort als Suche zu erkennen ist und nicht wie das Eingabefeld
+   darueber aussieht. */
+.vadd.has-lead{position:relative}
+.vadd.has-lead .lead{position:absolute;inset-inline-start:14px;top:50%;transform:translateY(-50%);display:grid;place-items:center;color:var(--muted);pointer-events:none}
+.vadd.has-lead input{padding-inline-start:42px}
+/* Trenner zwischen dem Eingabefeld und den Dateiknoepfen rechts. */
+.vsep{width:1px;height:20px;background:var(--line);margin:0 5px;align-self:center}
 /* Die Leiste traegt nur Symbolknoepfe wie die uebrigen Leisten der App; das
    Eintragen ist der eine gefuellte Knopf (Kreis in der Akzentfarbe). */
 .vacts{display:flex;gap:2px;align-items:center;flex-wrap:wrap}
@@ -422,6 +430,12 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .pairbar .ib{width:30px;height:30px;border-radius:50%}
 .pairbar .pill:hover{border-color:var(--accent)}
 .libhead .pairbar{margin-inline-start:auto}
+/* Die Symbolknoepfe im Kopf gehoeren zu verschiedenen Aufgaben; duenne
+   Trenner fassen sie zu Gruppen zusammen (suchen/filtern, auswaehlen,
+   Modell), statt sie als eine lange Reihe gleicher Knoepfe zu zeigen. */
+.libhead .hgrp{display:flex;align-items:center;gap:2px}
+.libhead .hgrp + .hgrp{padding-inline-start:12px;position:relative}
+.libhead .hgrp + .hgrp::before{content:'';position:absolute;inset-inline-start:2px;top:50%;transform:translateY(-50%);width:1px;height:18px;background:var(--line)}
 
 /* Lese-Arbeitsplatz: eigene Liste der Lesetexte. Die Dokumentenablage (#vL)
    zeigt nur Dokumente; beide nutzen dasselbe Kartenraster, damit sie sich
