@@ -504,6 +504,11 @@ function umlautForm(w) {
   for (const [from, to] of UMLAUT_PAIRS) out = out.split(from).join(to);
   return out;
 }
+// Nur im Deutschen ist „ue/oe/ae“ eine Umschrift fuer Umlaute. Im
+// Niederlaendischen, Spanischen und Tuerkischen sind das gewoehnliche
+// Buchstabenfolgen; dort liesse der Rueckfall falsche Schreibweisen durch
+// („mueduer“ fuer „müdür“, „agueero“ fuer „agüero“, „reuenie“ fuer „reünie“).
+const umlautLang = lang => /^de\b/i.test(String(lang || ''));
 // „ss“ gilt in der Umlaut-Schreibweise als „ß“ (Groesse -> Größe), aber nur in
 // Woertern, die auch ae/oe/ue enthalten: sonst wuerde die deutsche Fassung
 // „Strasse“ schlucken, obwohl dort „Straße“ gilt - dafuer gibt es de-ch.
@@ -515,19 +520,20 @@ const formsOf = w => {
   const u = umlautForm(w);
   return u === w ? [w] : [u, sharpForm(w, u)].filter(Boolean);
 };
-const wordOk = (sp, w) => {
+const wordOk = (sp, w, lang) => {
   if (sp.testSpelling(w)) return true;
+  const um = umlautLang(lang);
+  const okPart = p => !p || sp.testSpelling(p) || (um && formsOf(p).some(f => sp.testSpelling(f)));
   const parts = /[-'’]/.test(w) ? w.split(/['’-]/) : null;
-  const okPart = p => !p || sp.testSpelling(p) || formsOf(p).some(f => sp.testSpelling(f));
   if (parts && parts.every(okPart)) return true;
-  return formsOf(w).some(f => sp.testSpelling(f));
+  return um && formsOf(w).some(f => sp.testSpelling(f));
 };
 // Das persoenliche Woerterbuch entscheidet zuerst: Wer ein Wort dort eintraegt,
 // will es ohne Rueckfrage als richtig sehen - auch dann, wenn die Engine es
 // anders sieht und ein spaeterer Scan die Welle zurueckbringen wuerde.
 ipcMain.handle('spell:check', async (_e, lang, words) => {
   const sp = await speller(lang);
-  return words.filter(w => !personalKeys.has(persKey(w)) && !wordOk(sp, w));
+  return words.filter(w => !personalKeys.has(persKey(w)) && !wordOk(sp, w, lang));
 });
 ipcMain.handle('spell:suggest', async (_e, lang, word) => {
   try { return (await speller(lang)).getSpellingSuggestions(word).slice(0, 5); } catch { return []; }
