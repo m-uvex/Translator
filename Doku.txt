@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.177 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.178 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2927,3 +2927,16 @@ Dieselbe Knopfzeile schließt auch die Liste der Übersetzermodelle ab — hinte
 - Textende eines geöffneten Lesetextes: `.rendbtns` = [„Zu den Vokabeln“, „Zurück“].
 
 **Grenzen:** Nur das deutsche Erscheinungsbild und nur der Quelllauf; die installierte Fassung wurde gestartet und über `/health` geprüft, die Einstellungen darin aber nicht durchgeklickt. Die Abstände sind an einer Probe mit denselben Klassen gemessen, nicht im echten Abschnitt „Aussprache“ (dort hätte erst die Stimmenliste geladen werden müssen). Die fünf anderen Sprachen sind gesetzt, nicht im Fenster angesehen. Ein Bild des Bereichs wurde nicht angesehen.
+## 203. Zwei gleich große Knöpfe am Textende (1.15.178)
+
+**Vorher.** Unter dem letzten Absatz eines offenen Lesetextes standen „Zu den Vokabeln“ als Primärknopf (`padding:8px 22px`, 15 px Schrift) und „Zurück“ als Geist-Knopf (`6px 14px`, 13 px) — zwei verschieden große Pillen nebeneinander, die Zeile wirkte linkslastig.
+
+**Jetzt.** `.rendbtns` ist ein Raster mit zwei gleichen Spalten (`grid-template-columns:repeat(2,minmax(0,1fr))`, 10 px Lücke, Zeile `width:min(360px,100%)`, in der Mitte). Jeder Knopf ist `width:100%`, 38 px hoch, `padding:0 18px`, 13,5 px Schrift, Radius 999 px, Inhalt mittig. Gleich sind Größe und Form; die Akzentfläche des ersten Knopfes und der leisere Geist-Knopf bleiben, damit die Reihenfolge weiter lesbar ist.
+
+**Geprüft (Quelllauf 1.15.178, 1600 × 1000, deutsches Erscheinungsbild, Text „Hola mundo. ¿Cómo estás? …“ geöffnet, Messung über CDP):**
+
+- Raster `175px 175px`, Zeile 360 × 38 px.
+- „Zu den Vokabeln“ 175 × 38 px, „Zurück“ 175 × 38 px; beide 13,5 px Schrift, `padding:0 18px`, Radius 999 px; `sameSize` true.
+- Gewicht bleibt unterschiedlich (600 gegen 400) — gleiche Größe, nicht gleiche Betonung.
+
+**Grenzen:** Nur deutsches Erscheinungsbild und nur der Quelllauf; die installierte Fassung wurde gestartet und über `/health` geprüft, der Textabschluss darin aber nicht geöffnet. Nicht als Bild angesehen. Sehr lange Beschriftungen anderer Sprachen wurden nicht geprüft: bei mehr Zeilen als in 38 px passen würde der Text abgeschnitten, weil die Höhe fest ist.
