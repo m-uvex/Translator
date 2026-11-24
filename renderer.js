@@ -1633,12 +1633,16 @@ async function ttsMenuGroup(lang) {
   if (VOICES.length) {
     const auto = document.createElement('div');
     auto.className = 'row' + (pick ? '' : ' sel');
-    auto.innerHTML = `<span class="muted">${esc(t('ttsAuto'))}</span>`;
+    // Wie die Stimmen darunter eine ganz normale Zeile: mit .muted sah der
+    // Eintrag wie ein Beschreibungstext aus und nicht wie etwas Waehlbares.
+    auto.textContent = t('ttsAuto');
     auto.onclick = () => { S.ttsVoice = ''; save(); closePops(); };
     box.append(auto);
   } else {
     const r = document.createElement('div'); r.className = 'row';
-    r.innerHTML = `<span class="muted">${esc(t('ttsInSettings'))}</span>`;
+    // Auch das ist eine anklickbare Zeile (sie oeffnet die Einstellungen),
+    // deshalb ohne .muted.
+    r.textContent = t('ttsInSettings');
     r.onclick = () => { closePops(); $('#openSettings').click(); };
     box.append(r);
   }
@@ -1651,15 +1655,27 @@ async function ttsMenuGroup(lang) {
   const row = document.createElement('div');
   row.className = 'row ttsrate';
   const lab = document.createElement('span'); lab.textContent = t('ttsRate');
+  // Der Regler ist ein eigener Balken statt des nativen Elements: runde Spur,
+  // gefuellter Teil in der Akzentfarbe des Modus und ein runder Griff. Die
+  // Spur zeichnet `.trk` (CSS), das Eingabefeld liegt unsichtbar darueber und
+  // traegt weiterhin Bedienung, Tastatur und Vorlesehilfe.
+  const wrap = document.createElement('div'); wrap.className = 'rng';
+  const trk = document.createElement('div'); trk.className = 'trk';
+  trk.innerHTML = '<i style="left:25%"></i><i style="left:50%"></i><i style="left:75%"></i>';
   const inp = document.createElement('input');
   inp.type = 'range'; inp.min = '0.5'; inp.max = '2'; inp.step = '0.1'; inp.value = String(ttsRate());
   inp.setAttribute('aria-label', t('ttsRate'));
   const val = document.createElement('b'); val.textContent = ttsRateLabel();
+  // 0 bis 1 im Reglerbereich (0,5 bis 2), damit das CSS den gefuellten Teil
+  // ohne Umrechnung zeichnen kann.
+  const setFill = () => wrap.style.setProperty('--p', String((ttsRate() - 0.5) / 1.5));
+  setFill();
   inp.oninput = () => {
-    S.ttsRate = Number(inp.value); val.textContent = ttsRateLabel(); save();
+    S.ttsRate = Number(inp.value); val.textContent = ttsRateLabel(); setFill(); save();
     if (window.ttsRateChanged) window.ttsRateChanged();
   };
-  row.append(lab, inp, val); box.append(row);
+  wrap.append(trk, inp);
+  row.append(lab, wrap, val); box.append(row);
   return box;
 }
 

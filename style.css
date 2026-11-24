@@ -622,10 +622,23 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 #glossName{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
 .pop .row .rowend{display:flex;align-items:center;gap:6px}
 /* Vorlesetempo im Modellmenue: Regler mit Wert in einer Zeile wie die Eintraege
-   darueber, damit er nicht als eigener Kasten wirkt. */
+   darueber, damit er nicht als eigener Kasten wirkt. Gezeichnet wird ein
+   eigener Balken statt des nativen Reglers - runde Spur, gefuellter Teil in
+   der Akzentfarbe des Modus, runder Griff mit Schatten und drei Punkte auf der
+   Spur. `.rng` ist der sichtbare Balken, das Eingabefeld liegt unsichtbar
+   darueber und bleibt bedienbar (Maus, Tastatur, Vorlesehilfe). Die Variable
+   `--p` (0 bis 1) setzt renderer.js beim Aufbau und bei jeder Bewegung. */
 .pop .row.ttsrate{cursor:default;gap:10px}
 .pop .row.ttsrate:hover{background:none}
-.pop .row.ttsrate input{flex:1;min-width:70px;accent-color:var(--accent);cursor:pointer}
+.pop .row.ttsrate .rng{position:relative;flex:1;min-width:76px;height:26px;border-radius:999px}
+.pop .row.ttsrate .rng:focus-within{outline:2px solid var(--accent-ink);outline-offset:2px}
+.pop .row.ttsrate .trk{position:absolute;inset:0;border-radius:999px;background:var(--soft);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden;pointer-events:none}
+.pop .row.ttsrate .trk::before{content:'';position:absolute;left:0;top:0;bottom:0;width:calc(11px + (100% - 22px) * var(--p,0.3333));border-radius:999px;background:var(--accent)}
+.pop .row.ttsrate .trk i{position:absolute;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:color-mix(in srgb,var(--accent-ink) 40%,transparent)}
+.pop .row.ttsrate input{-webkit-appearance:none;appearance:none;position:absolute;inset:0;width:100%;height:26px;margin:0;background:none;cursor:pointer;outline:0}
+.pop .row.ttsrate input::-webkit-slider-runnable-track{height:26px;background:none;border:0}
+.pop .row.ttsrate input::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:2px;border:0;border-radius:50%;background:#fff;box-shadow:0 1px 4px #00000059,0 0 0 .5px #00000021}
+.pop .row.ttsrate input:active::-webkit-slider-thumb{box-shadow:0 2px 6px #00000073,0 0 0 .5px #00000021}
 .pop .row.ttsrate b{font-weight:600;font-variant-numeric:tabular-nums;min-width:36px;text-align:right}
 .pop .row .rm{width:22px;height:22px;padding:0;border:0;border-radius:50%;background:none;color:var(--muted);display:grid;place-items:center;cursor:pointer}
 .pop .row .rm:hover{background:var(--card);color:var(--accent-ink)}
