@@ -1712,12 +1712,16 @@ function renderSrs() {
     for (const id of ['#srsType', '#srsQuiz']) {
       const b = $(id); if (b) { b.classList.add('hidden'); b.classList.remove('on'); }
     }
+    // Ohne die beiden Knoepfe haette die Kapsel nichts zu halten und bliebe als
+    // leerer Streifen stehen.
+    const mg = $('#srsModes'); if (mg) mg.classList.add('hidden');
     $('#srsCount').textContent = t('repStreak', rep.streak);
     return renderRepeat(box);
   }
   const due = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO());
   $('#srsCount').textContent = due.length ? t('vocabDue', due.length) : '';
   const tg = $('#srsType'), qg = $('#srsQuiz');
+  const mg = $('#srsModes'); if (mg) mg.classList.remove('hidden');
   if (tg) { tg.classList.remove('hidden'); tg.classList.toggle('on', !!S.srsType); }
   if (qg) { qg.classList.remove('hidden'); qg.classList.toggle('on', !!S.srsQuiz); }
   if (S.srsQuiz) return renderQuiz(box, due);

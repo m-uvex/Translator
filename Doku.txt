@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.172 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.173 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2836,3 +2836,20 @@ Auf dem Screenshot liegt „Abbrechen“ bläulich getönt mit hellblauer Schrif
 - Tippen, falsch: „Leider falsch — richtig ist: el semáforo“, Feld gesperrt, Karte bleibt, „Weiter“ da.
 
 **Grenzen:** Nur dunkles Erscheinungsbild und nur das Paar Spanisch → Deutsch angesehen. Geklickt wurde programmatisch (`click()` über CDP), nicht mit der echten Maus; der Schatten unter dem Zeiger ist gesetzt, aber nicht durch Howern gemessen. Die arabische und türkische Beschriftung ist gesetzt, nicht im laufenden Fenster geprüft. Das neue Symbol ist im Quelllauf gemessen (SVG-Inhalt des Knopfes), nicht als Bild angesehen.
+## 198. Kopfzeilen: Zähler als Kapsel, Übungsarten als eine Gruppe (1.15.173)
+
+**Der Zähler.** „617 Vokabeln“ im Kopf von „Vokabeln“ und „614 fällig“ im Kopf von „Vokabeln üben“ standen als loser, grauer Text zwischen der Sprachwahl und den Symbolknöpfen — ohne Rahmen, ohne Fläche, als wäre er dort liegen geblieben. Beide sitzen jetzt in `.hcount`: eine leise Kapsel ohne Rahmen (24 px hoch, `padding:0 10px`, Radius 999 px, Fläche `--soft`, Schrift 12 px, Ziffern mit fester Breite). Ist der Zähler leer, verschwindet er ganz (`.hcount:empty{display:none}`), statt als leerer Klecks stehen zu bleiben. Die Stelle bleibt dieselbe — nach der Sprachwahl, vor den Symbolen; die Reihenfolge im Kopf ist Titel, Sprachwahl, Zähler, Symbole.
+
+**Die beiden Übungsarten.** Auswahl und Tippen standen als zwei gleich aussehende Kreise 12 px auseinander, einer davon im Akzentton, ohne dass etwas sie als Paar zeigte. Sie stecken jetzt in `#srsModes` mit der vorhandenen Klasse `.seg`: eine gemeinsame Kapsel (Fläche `--soft`, Radius 999 px, Innenabstand 3 px, Lücke 2 px), darin zwei 28-px-Kreise. Die gewählte Art trägt die Akzentfläche (`--accent` auf `--on-accent`), die andere bleibt leer; damit liest sich der Kopf als „eine Übung, zwei Arten“ statt als zwei zufällige Knöpfe. Die alte Regel `#srsType{width:34px;height:34px}` ist entfallen, sonst wäre der Tippen-Kreis größer als der Auswahl-Kreis geblieben.
+
+**Endlos-Runde.** Dort verschwinden beide Knöpfe; die Kapsel verschwindet mit ihnen (`#srsModes` bekommt `hidden`), sonst bliebe ein leerer grauer Streifen im Kopf.
+
+**Geprüft (Quelllauf 1.15.173, 1600 × 1000, dunkles Erscheinungsbild, Paar Spanisch → Deutsch, Messung über CDP):**
+
+- Kopf „Vokabeln üben“: Zähler 56 × 24 px bei „5 fällig“ (Radius 999 px, `padding:0 10px`, Fläche `rgb(43, 43, 45)`, Schrift 12 px), Kapsel `#srsModes` 64 × 34 px (`padding:3px`, Lücke 2 px), darin beide Knöpfe 28 × 28 px rund; Auswahl aktiv mit Fläche `rgb(90, 169, 224)`, Tippen leer.
+- Kopf „Vokabeln“: Zähler 80 × 24 px bei „5 Vokabeln“; die Sprachwahl steht rechts davor, der Prozessor-Knopf dahinter.
+- Leerer Zähler: `display` wechselt von `flex` auf `none`.
+- Endlos-Runde: `#srsModes` hat `hidden`, `display:none`.
+- Kopfhöhe: 42 px in „Vokabeln üben“, 44 px in „Vokabeln“ (vorher 44 px, die Kapsel ist 3 px höher als die alte Knopfreihe).
+
+**Grenzen:** Nur dunkles Erscheinungsbild und nur das Paar Spanisch → Deutsch gemessen; das helle Erscheinungsbild und die übrigen Sprachen sind gesetzt, aber nicht im Fenster geprüft. Angesehen wurde die Kopfzeile nicht als Bild, sondern über berechnete Maße und Klassen; ein Klick mit der echten Maus (Hover auf den Knöpfen in der Kapsel) wurde nicht gemessen.

@@ -175,6 +175,16 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
 #vL{display:flex;flex-direction:column;padding:12px 12px 12px 0;gap:8px;min-height:0}
 .libhead{display:flex;align-items:center;gap:12px;margin:0;padding:4px 6px}
 .libhead h2{margin:0;font-size:20px}
+/* Zaehler im Kopf ("617 Vokabeln", "614 faellig"): eine leise Kapsel ohne
+   Rahmen, damit er als Angabe neben der Sprachwahl steht und nicht wie ein
+   weiterer Knopf oder wie vergessener Text dazwischen wirkt. Leer ist er weg. */
+.hcount{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:var(--soft);color:var(--muted);font-size:12px;letter-spacing:.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hcount:empty{display:none}
+/* Die beiden Uebungsarten als eine Umschaltgruppe: eine gemeinsame leise
+   Kapsel haelt sie zusammen, die gewaehlte Art traegt die Akzentfarbe. Vorher
+   standen zwei gleich aussehende Kreise lose zwischen Zaehler und Rand. */
+.libhead .seg{gap:2px;padding:3px;border-radius:999px;background:var(--soft)}
+.libhead .seg .ib{width:28px;height:28px;border-radius:50%}
 .libgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px;align-content:start;overflow:auto;padding:4px 6px 20px;min-height:0}
 .libcard{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;min-width:0;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
 .libcard:hover,.libcard:focus-visible{border-color:var(--accent);box-shadow:0 6px 18px #0000001f;transform:translateY(-2px);outline:0}
@@ -525,7 +535,6 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .srsinput input{flex:1;min-width:0;font:inherit;color:var(--text);background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:9px 16px;outline:0}
 /* Der Umschalter im Kopf von „Üben“ ist ein runder Knopf wie in einer
    Segment-Leiste: blauer Kreis beim Zeigen und wenn das Tippen läuft. */
-#srsType{width:34px;height:34px;border-radius:50%}
 #srsType:hover{background:var(--accent-hover);color:var(--on-accent)}
 /* Ein Knopf im Kopf einer Liste ist unterlegt, solange seine Sache laeuft:
    Suche offen, Filter gesetzt, Mehrfachauswahl an, Tippen im Ueben. */
