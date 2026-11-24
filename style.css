@@ -396,25 +396,40 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .vrow .rm:hover{background:var(--soft);color:var(--text)}
 /* Abfrage */
 #vP{display:flex;flex-direction:column;padding:12px 12px 12px 0;gap:8px;min-height:0}
-.srsbox{flex:1;display:grid;place-items:center;overflow:auto;min-height:0;padding:8px}
-.srscard{width:min(470px,92%);min-height:320px;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:28px 26px;text-align:center;
-  display:flex;flex-direction:column;justify-content:center;gap:14px;box-shadow:0 2px 14px #00000012}
-.srscard.typing{width:min(560px,92%)}
-.srsctx{font-size:19px;line-height:1.75}
+.srsbox{flex:1;display:grid;place-items:center;overflow:auto;min-height:0;padding:12px 8px 24px}
+/* Die Karte steht allein in der Ansicht. Breiter zum Lesen, mit weichem
+   Schatten als einziger Tiefe; die Mindesthoehe bleibt klein, damit die Frage
+   nicht in leerem Raum schwimmt. */
+.srscard{position:relative;width:min(520px,92%);min-height:220px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:30px 30px 26px;text-align:center;
+  display:flex;flex-direction:column;justify-content:center;gap:14px;box-shadow:0 8px 26px #0000001f}
+.srscard.typing{width:min(580px,92%);min-height:0}
+/* Oben rechts stehen Sprachausgabe und Stift; der Satz beginnt erst unter
+   dieser Zeile, damit er nicht unter die Symbole laeuft. */
+.srscard.has-acts{padding-top:48px}
+.srsctx{font-size:18px;line-height:1.7;max-width:46ch;margin-inline:auto}
 .srsblank{color:var(--accent-ink);font-weight:600;letter-spacing:.05em}
-.srsword{font-size:28px;font-weight:600}
-.srsres{font-size:23px;color:var(--accent-ink)}
+.srsword{font-size:30px;font-weight:600;letter-spacing:-.01em}
+.srsres{font-size:21px;color:var(--accent-ink)}
 .srsbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+/* Aufgedeckte Karte: die vier Bewertungen teilen sich die Kartenbreite, statt
+   als loses Knopfpaeckchen in der Mitte zu haengen. Die Karte zum Zeigen hat
+   einen einzelnen, breiteren Knopf. */
+.srsbtns.rate{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%}
+.srsbtns.rate button{height:36px;padding:0 6px;font-size:13px;border-radius:999px}
+.srsbtns.one .primary{min-width:240px;padding:10px 26px}
 /* Stift über der Bewertungsreihe: die aufgedeckte Karte lässt sich vor der
    Bewertung korrigieren. Leise gehalten, damit die vier Bewertungen die
    Handlung bleiben. */
-.srseditrow{display:flex;justify-content:center;margin-top:10px}
+/* Stift und Sprachausgabe sitzen in der Ecke der Karte: sie gehoeren zur
+   Antwort, sollen aber nicht zwischen Antwort und Bewertung stehen. */
+.srseditrow{position:absolute;top:12px;inset-inline-end:12px;display:flex;gap:2px;margin:0}
 /* Hinweis ohne Sprachausgabe: steht in der Karte selbst, nicht in einer
    anderen Ansicht (gleiche Farbe wie .vmsg.err). */
 .srssay{font-size:13px;line-height:1.4;color:#c9605a;margin-top:10px}
 .srsedit{width:32px;height:32px;border-radius:50%;color:var(--muted);padding:0}
 .srsedit:hover{background:var(--soft);color:var(--text)}
-.srsempty{color:var(--muted);text-align:center;display:flex;flex-direction:column;gap:4px}
+.srsempty{color:var(--muted);text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center}
+.srsempty .badge{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--soft);color:var(--accent-ink);margin-bottom:6px}
 .srsempty p{margin:0}
 @media print{#vR,#vV,#vP,#pickLayer{display:none!important}}
 

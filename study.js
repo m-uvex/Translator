@@ -1538,7 +1538,7 @@ function renderSrs() {
   if (S.srsType) return renderType(box, due);
   srsQueue = srsQueue.filter(inPair);
   if (!due.length) {
-    box.innerHTML = `<div class="srsempty"><p>${esc(t('srsNone'))}</p><p class="muted">${esc(t('srsDone'))}</p></div>`;
+    box.innerHTML = `<div class="srsempty"><span class="badge">${ic('check', 22)}</span><p>${esc(t('srsNone'))}</p><p class="muted">${esc(t('srsDone'))}</p></div>`;
     return;
   }
   const e = srsQueue[0] || due[0];
@@ -1552,20 +1552,22 @@ function renderSrs() {
   const sub = [e.lemma && e.lemma !== e.term ? esc(e.lemma) : '', e.pos ? esc(e.pos) : ''].filter(Boolean).join(' · ');
   const subLine = !sub ? (ctx ? `<div class="srsctx2 muted">${esc(e.term)}</div>` : '')
     : `<div class="srsctx2 muted">${ctx ? esc(e.term) + ' · ' : ''}${sub}</div>`;
-  box.innerHTML = `<div class="srscard">
+  // Die aufgedeckte Karte traegt oben rechts Sprachausgabe und Stift; der
+  // zusaetzliche Innenabstand haelt den Satz davon frei (has-acts).
+  box.innerHTML = `<div class="srscard${srsShow ? ' has-acts' : ''}">
     ${ctx ? `<div class="srsctx">${ctx}</div>` : ''}
     <div class="srsword">${srsShow || !ctx ? esc(e.term) : ''}</div>
     ${srsShow ? `<div class="srsres">${e.gender ? `<span class="vg">${genderMark(e)}</span>` : ''}${sol ? esc(sol) : `<span class="muted">${esc(t('srsNoTr'))}</span>`}</div>
       ${subLine}
       <div class="srseditrow"><button class="ib srsedit" id="srsSay" title="${esc(t('speak'))}" aria-label="${esc(t('speak'))}">${ic('volume', 16)}</button><button class="ib srsedit" id="srsEdit" title="${esc(t('edit'))}" aria-label="${esc(t('edit'))}">${ic('pencil', 16)}</button></div>
       <div class="srssay hidden"></div>
-      <div class="srsbtns">
+      <div class="srsbtns rate">
         <button class="ghost" data-r="again">${esc(t('srsAgain'))}</button>
         <button class="ghost" data-r="hard">${esc(t('srsHard'))}</button>
         <button class="primary" data-r="good">${esc(t('srsGood'))}</button>
         <button class="ghost" data-r="easy">${esc(t('srsEasy'))}</button>
       </div>`
-      : `<div class="srsbtns"><button class="primary" id="srsReveal">${esc(t('srsReveal'))}</button></div>`}
+      : `<div class="srsbtns one"><button class="primary" id="srsReveal">${esc(t('srsReveal'))}</button></div>`}
   </div>`;
   const rv = box.querySelector('#srsReveal');
   if (rv) rv.onclick = () => { srsShow = true; renderSrs(); };

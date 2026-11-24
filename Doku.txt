@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.162 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.163 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2630,3 +2630,27 @@ Zustandsabfrage im laufenden Fenster: `#vocAddRow` und `#vocFindRow` sind nie gl
 **Geprüft (Quelllauf 1.15.162):** `document.querySelectorAll('.vsep').length` → 0, `getComputedStyle(.libhead .hgrp + .hgrp, '::before').content` → `none`; Screenshot der installierten 1.15.162 zeigt Lupe, Trichter, Checkliste und Prozessor ohne Linien, die drei Dateiknöpfe ohne Trenner.
 
 **Grenzen:** Nur dunkles Erscheinungsbild; schmales Fenster nicht erneut durchgespielt (an den Umbrüchen hat sich nichts geändert).
+
+## 188. Wiederholen: Karte aufgeräumt (1.15.163)
+
+**Was vorher störte.** Die Karte stand mit `min-height:320px` in der Mitte, war gefüllt mit einer Zeile Satz und einem Knopf — oben und unten blieb viel leerer Raum, die Karte wirkte unfertig. Die vier Bewertungen hingen als loses Knopfpäckchen in der Mitte, und Sprachausgabe/Stift standen in einer eigenen Reihe *zwischen* Antwort und Bewertung. Der Zustand „nichts fällig“ war nur zwei Zeilen Text.
+
+**Was jetzt anders ist.**
+
+- **Karte größer und flacher.** Breite 470 → 520 px (Tipp-Modus 560 → 580), Mindesthöhe 320 → 220 px; der Innenabstand ist oben und unten gleichmäßig (30/26 px), Ecken 22 → 20 px, Schatten weicher. Die Frage steht damit nicht mehr in leerem Raum.
+- **Satz als ruhiger Block:** 18 px, Zeilenhöhe 1,7 und auf 46 Zeichen begrenzt (`max-width`), damit lange Sätze nicht über die ganze Breite laufen.
+- **Wort 30 px** mit leicht engerer Spalte; die Übersetzung 21 px in der Akzentfarbe.
+- **Bewertungen teilen die Kartenbreite.** `.srsbtns.rate` ist ein 4-Spalten-Raster in voller Breite, alle Knöpfe 36 px hoch; „Gut“ bleibt der gefüllte. Der einzelne „Übersetzung zeigen“-Knopf hat jetzt 240 px Mindestbreite.
+- **Sprachausgabe und Stift in der Ecke** oben rechts (`.srseditrow` absolut), damit sie nicht mehr zwischen Antwort und Bewertung stehen; die Karte bekommt dafür oben 48 px Innenabstand (`has-acts`), der Satz läuft nicht unter die Symbole.
+- **Leerer Zustand mit Abzeichen:** ein weicher Kreis mit Haken über „Nichts fällig. / Für heute fertig.“
+
+**Geprüft (Quelllauf 1.15.163, 1280 × 816, Profil `%TEMP%\u235` mit vier fälligen Vokabeln und Kontextsätzen, dunkles Erscheinungsbild):**
+
+| Zustand | Beobachtung |
+|---|---|
+| Frage | Karte ~520 × 250 px, Satz „She had _____ so the baby would not wake up.“ (Lücke in der Akzentfarbe), darunter der breite Knopf „Übersetzung zeigen“ — kein großer Leerraum mehr |
+| Aufgedeckt | Satz, „to whisper“ (30 px), „flüstern“ (Akzent), „to whisper · verb“; Lautsprecher und Stift rechts oben, darunter die vier gleich breiten Bewertungen Nochmal · Schwer · Gut · Einfach |
+| Tipp-Modus | Karte 580 × 311 px mit Feld, Umlaut-Pillen und „Gemeistert 0 / 3“ |
+| Nichts fällig | Kreis mit Haken, „Nichts fällig.“ und der gedämpfte Hinweis darunter |
+
+**Grenzen:** Nur dunkles Erscheinungsbild. Sehr lange Kontextsätze (mehr als zwei Zeilen) nicht durchgespielt — die Begrenzung auf 46 Zeichen und die Mindesthöhe sind so gewählt, dass die Karte mitwächst, geprüft ist das aber nicht. Die Endlos-Runde (`.srscard.typing` mit eigener Beschriftung) übernimmt die neuen Maße, wurde aber nur im Tipp-Modus des Wiederholens angesehen. An der Bewertungslogik und den Tastenkürzeln hat sich nichts geändert.
