@@ -846,7 +846,17 @@ const TTS_VOICES = [
   { id:'es_MX-claude-high', lang:'es', name:'Claude', size:'hoch', mb:63.1, rtf:0.116, path:'es/es_MX/claude/high/' },
   // Tuerkisch: schon in 1.15.146 mit dieser Engine gemessen (dort 0,1158);
   // nachgemessen beim Aufnehmen 0,0932 (0,42 s Rechnen fuer 4,54 s Ton).
-  { id:'tr_TR-dfki-medium', lang:'tr', name:'DFKI', size:'mittel', mb:63.2, rtf:0.0932, path:'tr/tr_TR/dfki/medium/' }
+  { id:'tr_TR-dfki-medium', lang:'tr', name:'DFKI', size:'mittel', mb:63.2, rtf:0.0932, path:'tr/tr_TR/dfki/medium/' },
+  // Französisch: fr_FR-tom-medium spricht (0,169, 44,1 kHz); fr_FR-upmc-medium
+  // spricht ebenfalls (0,078, 76,7 MB) - im Angebot ist die kleinere Stimme.
+  { id:'fr_FR-tom-medium', lang:'fr', name:'Tom', size:'mittel', mb:63.5, rtf:0.169, path:'fr/fr_FR/tom/medium/' },
+  // Italienisch: paola-medium und serena-medium brechen mit dieser Engine ab
+  // („aɪ“ nicht auf ein Zeichen abbildbar); nur riccardo-x_low spricht.
+  { id:'it_IT-riccardo-x_low', lang:'it', name:'Riccardo', size:'niedrig', mb:28.1, rtf:0.066, path:'it/it_IT/riccardo/x_low/' },
+  // Portugiesisch: faber, cadu und jeff (alle medium) brechen ab, edresson-low spricht.
+  { id:'pt_BR-edresson-low', lang:'pt', name:'Edresson', size:'niedrig', mb:63.1, rtf:0.066, path:'pt/pt_BR/edresson/low/' },
+  // Arabisch: kareem-medium (0,094) und -low (0,066) sprechen; die medium ist im Angebot.
+  { id:'ar_JO-kareem-medium', lang:'ar', name:'Kareem', size:'mittel', mb:63.2, rtf:0.0944, path:'ar/ar_JO/kareem/medium/' }
 ];
 const ttsRoot = () => path.join(app.getPath('userData'), 'stimmen');
 const piperExe = () => path.join(ttsRoot(), 'piper', 'piper.exe');

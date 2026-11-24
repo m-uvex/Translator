@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.157 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.158 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2551,3 +2551,28 @@ Verworfen, weil sie mit dieser Engine abbrechen: `en_US-hfc_female-medium`, `es_
 
 - **Geprüft (Quelllauf 1.15.157, eigenes Profil `%TEMP%\u221`, keine Stimme vorinstalliert):** Abschnittsliste zeigt vier Zeilen — Deutsch · Thorsten, Englisch · Lessac, Spanisch · Claude und **Türkisch · DFKI (63 MB · schnell · gut)** mit „Herunterladen“; Schlusszeile wie oben. `api.ttsInstall('tr_TR-dfki-medium')` → `{ ok: true }` in **44 s** (darin die Engine mit 22,5 MB und die Stimme mit 63 MB); `api.ttsSpeak('Merhaba …', 'tr', 'tr_TR-dfki-medium')` → `backend: 'piper'`, `voice: 'tr_TR-dfki-medium'`, **1.024 ms** bis zur WAV-Datei. Im Modellmenü steht danach unter „Aussprache“ der Eintrag „Türkisch · DFKI“ zwischen „Automatisch (Textsprache)“ und „Weitere Stimmen …“.
 - **Grenzen:** Die Stimme wurde über die API eingerichtet und gesprochen, nicht über den Knopf in der Oberfläche geklickt (derselbe Aufruf, `ttsAction()` ruft `api.ttsInstall`). Die Wiedergabe über das Audio-Element habe ich nicht abgehört; gemessen ist die Erzeugung. Für Niederländisch und Arabisch bleibt es bei der Systemstimme.
+
+## 183. Französisch, Italienisch, Portugiesisch und Arabisch als Vorlesesprachen (1.15.158)
+
+**Geprüft mit der mitgelieferten CLI** (`piper.exe`, Engine 2023.11.14-2), je ein Satz in der Landessprache, Echtzeitfaktor aus der Piper-Ausgabe, Größe aus der Antwort des Servers. Aufgenommen ist je Sprache eine Stimme:
+
+| Stimme | Größe | Echtzeitfaktor | Ergebnis |
+|---|---|---|---|
+| `fr_FR-tom-medium` | 63,5 MB | 0,169 (44,1 kHz) | **aufgenommen** |
+| `fr_FR-upmc-medium` | 76,7 MB | 0,078 (22,05 kHz) | spricht, nicht aufgenommen — größer, „Tom“ deckt Französisch ab |
+| `it_IT-paola-medium` | 63,2 MB | — | bricht ab: `"aɪ" is not a single codepoint` |
+| `it_IT-serena-medium` | 63,5 MB | — | bricht ab, gleicher Fehler |
+| `it_IT-riccardo-x_low` | 28,1 MB | 0,066 (16 kHz) | **aufgenommen** (einzige laufende italienische Stimme) |
+| `pt_BR-faber-medium` | 63,2 MB | — | bricht ab, gleicher Fehler |
+| `pt_BR-cadu-medium` | 63,2 MB | — | bricht ab, gleicher Fehler |
+| `pt_BR-jeff-medium` | 63,2 MB | — | bricht ab, gleicher Fehler |
+| `pt_BR-edresson-low` | 63,1 MB | 0,066 (16 kHz) | **aufgenommen** (einzige laufende portugiesische Stimme) |
+| `ar_JO-kareem-medium` | 63,2 MB | 0,094 (22,05 kHz) | **aufgenommen** |
+| `ar_JO-kareem-low` | 63,2 MB | 0,066 | spricht, nicht aufgenommen — die medium klingt besser |
+
+**Warum die Ausfälle.** Dieselbe Ursache wie in §171: die neueren Stimmen schreiben Phonemfolgen, die die alte Engine nicht auf einzelne Zeichen abbilden kann (`aɪ`, `ids=161`). Für Italienisch und Portugiesisch bleiben deshalb nur die älteren `x_low`/`low`-Stimmen — 16 kHz und in der Zeile als „einfach“ gekennzeichnet, dafür sprechen sie. Bei Französisch und Arabisch gibt es gute `medium`-Stimmen; dort ist die Qualität „gut“.
+
+**Im Angebot** (`TTS_VOICES` in `main.js`) stehen jetzt acht Stimmen. Die Schlusszeile im Abschnitt „Aussprache“ nennt nur noch Niederländisch als Sprache ohne eigene Stimme (`ttsOnlySys` in allen sechs Oberflächensprachen angepasst).
+
+- **Geprüft (Quelllauf 1.15.158, eigenes Profil `%TEMP%\u223`):** Liste zeigt acht Zeilen — Deutsch · Thorsten, Englisch · Lessac, Spanisch · Claude, Türkisch · DFKI, **Französisch · Tom (64 MB · schnell · gut)**, **Italienisch · Riccardo (28 MB · schnell · einfach)**, **Portugiesisch · Edresson (63 MB · schnell · einfach)**, **Arabisch · Kareem (63 MB · schnell · gut)**; Hinweiszeile „Für Niederländisch spricht die Systemstimme.“ `api.ttsInstall('fr_FR-tom-medium')` → `{ ok: true }` in **72 s** (Engine 22,5 MB + Stimme 63,5 MB), danach `api.ttsSpeak('Bonjour …', 'fr', 'fr_FR-tom-medium')` → `backend: 'piper'`, **1.654 ms** bis zur WAV-Datei. `api.ttsList()` nennt alle acht mit Größe und Zustand.
+- **Grenzen:** Nur die französische Stimme wurde über die App eingerichtet und gesprochen; Italienisch, Portugiesisch und Arabisch sind über die CLI gemessen (derselbe Aufruf, den die App macht) und nicht über den Knopf geladen. Die 16-kHz-Stimmen klingen entsprechend einfacher; ein Abhören der Wiedergabe steht aus. Niederländisch bleibt bei der Systemstimme, weil `nl_NL`-Stimmen zu den neueren gehören und mit dieser Engine nicht laufen (nicht erneut geprüft).
