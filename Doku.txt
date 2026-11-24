@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.173 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.174 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2853,3 +2853,20 @@ Auf dem Screenshot liegt „Abbrechen“ bläulich getönt mit hellblauer Schrif
 - Kopfhöhe: 42 px in „Vokabeln üben“, 44 px in „Vokabeln“ (vorher 44 px, die Kapsel ist 3 px höher als die alte Knopfreihe).
 
 **Grenzen:** Nur dunkles Erscheinungsbild und nur das Paar Spanisch → Deutsch gemessen; das helle Erscheinungsbild und die übrigen Sprachen sind gesetzt, aber nicht im Fenster geprüft. Angesehen wurde die Kopfzeile nicht als Bild, sondern über berechnete Maße und Klassen; ein Klick mit der echten Maus (Hover auf den Knöpfen in der Kapsel) wurde nicht gemessen.
+## 199. Feste Oberflächentexte sind nicht mehr markierbar (1.15.174)
+
+**Vorher.** Ein Ziehen über Kopfzeilen, Knöpfe oder Dialogtexte begann eine Auswahl; nach einem Klick auf die Werkzeugleiste blieb eine blau markierte Zeile wie „Vokabeln üben“ oder „614 fällig“ stehen. Nur einzelne Stellen hatten eigene Regeln dagegen: die Optionsspalte (§945), die Fensterleiste, der Seitenumbruch und die Bildrahmen.
+
+**Jetzt.** `body{user-select:none}` gilt für die ganze Oberfläche. Markierbar bleibt ausdrücklich, was Inhalt ist: `input`, `textarea`, `select`, `[contenteditable="true"]` (Editorseite, Wortfelder im Wörterbuch), `#output` (Übersetzung), `#reader` (Lesetext samt Wörtern, damit die Wendungsauswahl per Ziehen weiter funktioniert), `.doc` (Textvorschauen der Ablage) und `.sumtxt` (Zusammenfassung im Dialog). Alle diese Stellen setzen `user-select:text` und überschreiben damit die geerbte Regel.
+
+Die Vokabelzeilen bleiben bewusst unmarkierbar: in der Mehrfachauswahl bedient ein Zug über die Zeile das An- und Abwählen, eine Textauswahl würde dort nur dazwischenfunken. Kopiert wird über die vorhandenen Wege (Kopier-Knopf, CSV-Export).
+
+Die Regeln der Optionsspalte aus §945 bleiben stehen; sie sind jetzt Wiederholungen der neuen Grundregel und schaden nicht.
+
+**Geprüft (Quelllauf 1.15.174, 1600 × 1000, dunkles Erscheinungsbild, `getComputedStyle(el).userSelect`):**
+
+- `none`: `.tbname` (Fensterleiste), `.rb` (Seitenleiste), `#vV .libhead h2` (Titel „Vokabeln“), `#vocPair .pill` (Sprachwahl), `#srsModes .ib` (Übungsart), `#srsCount` (Zähler), `.side summary` (Einstellung).
+- `text`: `.side textarea`, `#input`, `#output`, `#ctx`, `#reader`, `#reader .rw`, `#page` (Editorseite).
+- Nach einem Klick in `#input` ist das Feld fokussiert (`document.activeElement.id` = `input`), Tippen bleibt also unberührt.
+
+**Grenzen:** Ein echtes Ziehen mit der Maus ließ sich in dieser Umgebung nicht nachstellen — synthetische Mausereignisse über CDP erzeugen auch auf einer ungeschützten Probediv keine Auswahl, das Messwerkzeug taugt dafür nicht. Geprüft ist deshalb der berechnete `user-select`-Wert, also die Regel, die der Browser auswertet; zusätzlich, dass die als Inhalt gedachten Stellen ihn auf `text` setzen. Nur dunkles Erscheinungsbild geprüft; Dialoge und das helle Erscheinungsbild nicht einzeln durchgeklickt.

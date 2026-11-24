@@ -11,6 +11,14 @@
 ::-webkit-scrollbar-button{display:none;width:0;height:0}
 ::-webkit-scrollbar-corner{background:transparent}
 body{font:15px/1.5 "Segoe UI Variable","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+/* Feste Beschriftungen der Oberflaeche sind nicht markierbar: Ziehen ueber
+   Knoepfe, Kopfzeilen, Karten und Dialogtexte waehlt nichts mehr aus. Markierbar
+   bleibt nur, was Inhalt ist - Eingabefelder, die Uebersetzung, der Lesetext,
+   Seitentexte und Textvorschauen; dort wird kopiert. Die Regeln der Options-
+   spalte (.side, Abschnitt 945 der Doku) bleiben daneben stehen und sind jetzt
+   nur noch Wiederholungen. */
+body{user-select:none}
+input,textarea,select,[contenteditable="true"],#output,#reader,.doc,.sumtxt{user-select:text}
 /* Eigene Fensterleiste statt der weissen Windows-Leiste. Sie ist die einzige
    Draggable-Region (die Knoepfe sind no-drag) und uebernimmt die Farben der
    App. Die Hoehe von 32px entspricht der frueheren Windows-Titelleiste, damit
