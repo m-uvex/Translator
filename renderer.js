@@ -2,7 +2,7 @@ const $ = s => document.querySelector(s);
 const IC = { sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/>', swap:'<path d="M17 4l4 4-4 4M21 8H7M7 20l-4-4 4-4M3 16h14"/>', refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>', clip:'<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>', copy:'<rect x="9" y="9" width="11" height="11" rx="3"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
   // Stoppschild als reine Linie (Achteck) im Stil der uebrigen Icons, ohne
   // Fuellung und ohne eigene Farbe. Bewusst kein Quadrat (Kamera-Optik).
-  stop:'<path d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86z"/>', star:'<path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-3-5.5 3 1-6.2L3 9.6l6.2-.9z"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>', check:'<path d="M5 12l5 5 9-10"/>',
+  stop:'<path d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86z"/>', star:'<path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-3-5.5 3 1-6.2L3 9.6l6.2-.9z"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>', check:'<path d="M5 12l5 5 9-10"/>', trash:'<path d="M4 7h16"/><path d="M9.6 4h4.8"/><path d="M6.4 7l.9 13h9.4l.9-13"/><path d="M10 11v5.6M14 11v5.6"/>',
   // "Alle auswaehlen": ein gesetztes Kaestchen, dahinter ein zweites. Das
   // einfache Haekchen sah in der Auswahlleiste nach "bestaetigen" aus.
   checkAll:'<rect x="3" y="3" width="13" height="13" rx="3.4"/><path d="M6.1 9.9l2.4 2.4 4.7-5.1"/><path d="M20.4 8.2v9.2a3 3 0 0 1-3 3H8.2"/>',
@@ -218,9 +218,12 @@ const K = {
   // Modelle (Einstellungen, Modellwaehler).
   s_ttsH:['Aussprache','Speech'],
   s_ttsHint:['Stimmen werden einmal heruntergeladen und sprechen danach ohne Netz. Ohne eigene Stimme spricht die Systemstimme.','Voices are downloaded once and then speak offline. Without a downloaded voice the system voice speaks.'],
-  ttsInSettings:['Stimme in den Einstellungen herunterladen','Download a voice in the settings'],
+  ttsOn:['Installiert','Installed'],
+  ttsOnlySys:['Für Niederländisch, Türkisch und Arabisch spricht die Systemstimme.','For Dutch, Turkish and Arabic the system voice speaks.'],
+  ttsMeta:['Was bedeuten die Angaben?','What do these details mean?'],
+  ttsMore:['Weitere Stimmen …','More voices …'],
   infoShow:['Infos ansehen','See details'],
-  infoH:['Modelle im Vergleich','Models compared'],
+  infoH:['Stimmen und Modelle im Vergleich','Voices and models compared'],
   infoIntro:['Tempo, Umfang und Qualität in Worten – gemessen auf diesem Rechner, nicht geschätzt.','Speed, scope and quality in plain words – measured on this machine, not guessed.'],
   infoModel:['Modell','Model'], infoScope:['Umfang','Scope'], infoSpeed:['Tempo','Speed'], infoQuality:['Qualität','Quality'],
   spFast:['schnell','fast'], spMid:['mittel','medium'], spSlow:['langsam','slow'],
@@ -442,8 +445,11 @@ const K = {
 const NL = {
   s_ttsH:'Uitspraak',
   s_ttsHint:'Stemmen worden één keer gedownload en spreken daarna zonder netwerk. Zonder eigen stem spreekt de systeemstem.',
-  ttsInSettings:'Stem downloaden in de instellingen',
-  infoShow:'Details bekijken', infoH:'Modellen vergeleken',
+  ttsOn:'Geïnstalleerd',
+  ttsOnlySys:'Voor Nederlands, Turks en Arabisch spreekt de systeemstem.',
+  ttsMeta:'Wat betekenen de gegevens?',
+  ttsMore:'Meer stemmen …',
+  infoShow:'Details bekijken', infoH:'Stemmen en modellen vergeleken',
   infoIntro:'Tempo, bereik en kwaliteit in woorden – gemeten op deze computer, niet geschat.',
   infoModel:'Model', infoScope:'Bereik', infoSpeed:'Tempo', infoQuality:'Kwaliteit',
   spFast:'snel', spMid:'gemiddeld', spSlow:'langzaam',
@@ -620,8 +626,11 @@ const NL = {
 const ES = {
   s_ttsH:'Pronunciación',
   s_ttsHint:'Las voces se descargan una vez y después hablan sin red. Sin una voz propia habla la voz del sistema.',
-  ttsInSettings:'Descargar una voz en los ajustes',
-  infoShow:'Ver detalles', infoH:'Modelos comparados',
+  ttsOn:'Instalada',
+  ttsOnlySys:'Para neerlandés, turco y árabe habla la voz del sistema.',
+  ttsMeta:'¿Qué significan los datos?',
+  ttsMore:'Más voces …',
+  infoShow:'Ver detalles', infoH:'Voces y modelos comparados',
   infoIntro:'Velocidad, alcance y calidad en palabras: medido en este equipo, no estimado.',
   infoModel:'Modelo', infoScope:'Alcance', infoSpeed:'Velocidad', infoQuality:'Calidad',
   spFast:'rápido', spMid:'medio', spSlow:'lento',
@@ -799,8 +808,11 @@ const ES = {
 const TR = {
   s_ttsH:'Seslendirme',
   s_ttsHint:'Sesler bir kez indirilir, sonra ağ olmadan konuşur. Kendi sesiniz yoksa sistem sesi konuşur.',
-  ttsInSettings:'Ayarlardan ses indirin',
-  infoShow:'Bilgileri gör', infoH:'Modeller karşılaştırması',
+  ttsOn:'Yüklü',
+  ttsOnlySys:'Hollandaca, Türkçe ve Arapça için sistem sesi konuşur.',
+  ttsMeta:'Bu bilgiler ne anlama geliyor?',
+  ttsMore:'Daha fazla ses …',
+  infoShow:'Bilgileri gör', infoH:'Sesler ve modeller karşılaştırması',
   infoIntro:'Hız, kapsam ve kalite kelimelerle – bu bilgisayarda ölçüldü, tahmin değil.',
   infoModel:'Model', infoScope:'Kapsam', infoSpeed:'Hız', infoQuality:'Kalite',
   spFast:'hızlı', spMid:'orta', spSlow:'yavaş',
@@ -978,8 +990,11 @@ const TR = {
 const AR = {
   s_ttsH:'النطق',
   s_ttsHint:'تُنزَّل الأصوات مرة واحدة ثم تتحدث دون شبكة. وبدون صوت خاص يتحدث صوت النظام.',
-  ttsInSettings:'نزّل صوتاً من الإعدادات',
-  infoShow:'عرض التفاصيل', infoH:'مقارنة النماذج',
+  ttsOn:'مثبّت',
+  ttsOnlySys:'للغة الهولندية والتركية والعربية يتحدث صوت النظام.',
+  ttsMeta:'ماذا تعني هذه البيانات؟',
+  ttsMore:'أصوات أخرى …',
+  infoShow:'عرض التفاصيل', infoH:'مقارنة الأصوات والنماذج',
   infoIntro:'السرعة والنطاق والجودة بالكلمات — مقيسة على هذا الحاسوب، لا مقدّرة.',
   infoModel:'النموذج', infoScope:'النطاق', infoSpeed:'السرعة', infoQuality:'الجودة',
   spFast:'سريع', spMid:'متوسط', spSlow:'بطيء',
@@ -1630,28 +1645,31 @@ async function ttsMenuGroup(lang) {
   // deshalb unmarkiert; „Automatisch“ ist nur dann markiert, wenn es fuer die
   // Sprache gar keine eingerichtete Stimme gibt und die Systemstimme einspringt.
   const pick = ttsSpeakVoice(lang);
-  if (VOICES.length) {
-    const auto = document.createElement('div');
-    auto.className = 'row' + (pick ? '' : ' sel');
-    // Wie die Stimmen darunter eine ganz normale Zeile: mit .muted sah der
-    // Eintrag wie ein Beschreibungstext aus und nicht wie etwas Waehlbares.
-    auto.textContent = t('ttsAuto');
-    auto.onclick = () => { S.ttsVoice = ''; save(); closePops(); };
-    box.append(auto);
-  } else {
-    const r = document.createElement('div'); r.className = 'row';
-    // Auch das ist eine anklickbare Zeile (sie oeffnet die Einstellungen),
-    // deshalb ohne .muted.
-    r.textContent = t('ttsInSettings');
-    r.onclick = () => { closePops(); $('#openSettings').click(); };
-    box.append(r);
-  }
+  const auto = document.createElement('div');
+  auto.className = 'row' + (pick ? '' : ' sel');
+  // Wie die Stimmen darunter eine ganz normale Zeile: mit .muted sah der
+  // Eintrag wie ein Beschreibungstext aus und nicht wie etwas Waehlbares.
+  auto.textContent = t('ttsAuto');
+  auto.onclick = () => { S.ttsVoice = ''; save(); closePops(); };
+  box.append(auto);
   VOICES.forEach(v => {
-    const r = document.createElement('div'); r.className = 'row' + (pick && v.id === pick.id ? ' sel' : '');
+    const r = document.createElement('div');
+    r.className = 'row' + (pick && v.id === pick.id ? ' sel' : '');
     r.innerHTML = `<span>${esc(langLabel(v.lang))} · ${esc(v.name)}</span>`;
     r.onclick = () => { S.ttsVoice = v.id; save(); closePops(); };
     box.append(r);
   });
+  // Das Menue zeigt nur eingerichtete Stimmen. Der Weg zu den anderen steht als
+  // letzte Zeile da (frueher ein langer Satz an ihrer Stelle) und oeffnet die
+  // Einstellungen beim Aussprache-Abschnitt.
+  const more = document.createElement('div');
+  more.className = 'row';
+  more.textContent = t('ttsMore');
+  more.onclick = () => {
+    closePops(); $('#openSettings').click();
+    setTimeout(() => { const b = $('#ttsBox'); if (b) b.scrollIntoView({ block:'center' }); }, 300);
+  };
+  box.append(more);
   const row = document.createElement('div');
   row.className = 'row ttsrate';
   const lab = document.createElement('span'); lab.textContent = t('ttsRate');
@@ -2702,7 +2720,7 @@ function drawSettings() {
   const byKey = Object.fromEntries(FIELDS.map(f => [f[0], f]));
   $('#setBody').innerHTML = GROUPS.map(([h, ks]) => `<h3 class="sect">${t(h)}</h3>` + ks.map(k => typeof k === 'string' ? field(byKey[k]) : (k.bar ? barField() : tbField())).join('')).join('') +
     `<h3 class="sect">${t('nllbH')}<button class="ghost minib" data-info="mt">${esc(t('infoShow'))}</button></h3><div id="mtBox"></div>` +
-    `<h3 class="sect">${t('s_ttsH')}<button class="ghost minib" data-info="tts">${esc(t('infoShow'))}</button></h3><div id="ttsBox"></div>` +
+    `<h3 class="sect">${t('s_ttsH')}</h3><div id="ttsBox"></div>` +
     `<p class="muted" data-htk="1" data-t="${hotkeyKey()}"></p>`;
   $('#setBody').querySelectorAll('[data-k]').forEach(el => { const v = S[el.dataset.k]; el.value = el.dataset.bool ? (v ? '1' : '0') : v; });
   applyI18n();
@@ -2810,12 +2828,28 @@ let ttsBusyId = '';
 async function drawTts() {
   const box = $('#ttsBox'); if (!box) return;
   await loadVoices();
-  box.innerHTML = `<div class="muted">${esc(t('s_ttsHint'))}</div>` + VOICES_ALL.map(v =>
-    `<div class="mrow"><div><b>${esc(langLabel(v.lang))} · ${esc(v.name)}</b>` +
-    `<div class="muted">${esc([v.mb.toFixed(0) + ' MB', t(speedWord(v.rtf)), t(qWord(v.quality))].join(' · '))}</div>` +
-    `<div class="muted" id="${progId(v.id)}">${v.installed ? esc(t('mInst')) : esc(t('mNot'))}</div></div>` +
-    `<button class="ghost" data-act="tts-${v.installed ? 'delete' : 'install'}" data-id="${esc(v.id)}"${ttsBusyId === v.id ? ' disabled' : ''}>${ttsBusyId === v.id ? t('bBusy') : v.installed ? t('bDel') : t('bDl')}</button></div>`).join('');
+  // Eingerichtete Stimmen zuerst: gesucht wird meist, was schon da ist.
+  const list = VOICES_ALL.slice().sort((a, b) => (b.installed ? 1 : 0) - (a.installed ? 1 : 0));
+  const rows = list.map(v => {
+    const busy = ttsBusyId === v.id;
+    // Der Fortschritt tritt an die Stelle der Angaben; eine dritte graue Zeile
+    // ("Nicht eingerichtet") sagte dasselbe wie der Knopf daneben.
+    const meta = busy
+      ? `<div class="muted" id="${progId(v.id)}">${esc(ttsStep({ step:'engine', pct:0 }))}</div>`
+      : `<div class="mchips"><span>${v.mb.toFixed(0)} MB</span><span>${esc(t(speedWord(v.rtf)))}</span><span>${esc(t(qWord(v.quality)))}</span></div>`;
+    // Rechts genau eine Aktion: Laden als Textknopf, Loeschen als Papierkorb,
+    // damit ein 109-MB-Download nicht wie das Loeschen aussieht.
+    const act = v.installed
+      ? `<button class="ib" data-act="tts-delete" data-id="${esc(v.id)}" title="${esc(t('bDel'))}" aria-label="${esc(t('bDel'))}">${ic('trash', 16)}</button>`
+      : `<button class="ghost" data-act="tts-install" data-id="${esc(v.id)}"${busy ? ' disabled' : ''}>${busy ? esc(t('bBusy')) : esc(t('bDl'))}</button>`;
+    return `<div class="mrow"><div><b>${esc(langLabel(v.lang))} · ${esc(v.name)}</b>` +
+      (v.installed ? `<span class="mstat">${esc(t('ttsOn'))}</span>` : '') + meta + `</div>${act}</div>`;
+  }).join('');
+  box.innerHTML = `<div class="muted">${esc(t('s_ttsHint'))}</div>` + rows +
+    `<div class="muted mnote">${esc(t('ttsOnlySys'))}</div>` +
+    `<div class="mrow"><button class="ghost minib" data-info="tts">${esc(t('ttsMeta'))}</button></div>`;
 }
+
 async function ttsAction(act, id) {
   if (act === 'tts-delete') {
     if (!confirm(t('confDel', id))) return;

@@ -133,6 +133,10 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
 #llmOnly{display:flex;flex-direction:column;gap:10px}
 .plain .w{cursor:text}.plain .w:hover{background:none;color:inherit}
 .mrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.mrow button:disabled{opacity:.5}
+.mrow .mstat{margin-left:8px;background:color-mix(in srgb,var(--accent) 18%,var(--card));border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-radius:999px;padding:0 8px;font-size:11px;font-weight:600;line-height:1.6;vertical-align:1px;white-space:nowrap}
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+.mchips span{background:var(--soft);border-radius:999px;padding:1px 8px;font-size:12px;color:var(--muted)}
+.mnote{margin:12px 0 2px}
 .mgroup{margin:10px 0}.mgroup>b{display:block;margin:6px 0}
 .mi{display:inline-grid;color:var(--muted);margin-left:6px;vertical-align:middle}
 #ask{width:min(420px,92vw)}#ask .dh{gap:10px;margin-top:14px;justify-content:flex-end}#ask p{margin:0}
