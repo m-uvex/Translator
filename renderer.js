@@ -396,7 +396,7 @@ const K = {
   studyNoModel:['Für Wortübersetzungen wird ein allgemeines Ollama-Modell gebraucht (z. B. gemma3:4b).','Word translations need a general Ollama model (e.g. gemma3:4b).'],
   csvDone:[n => n === 1 ? '1 Vokabel übernommen' : `${n} Vokabeln übernommen`, n => `${n} words imported`], csvErr:['CSV konnte nicht gelesen werden','Could not read the CSV'],
   txtDone:[n => `${n} Texte übernommen`, n => `${n} texts imported`], txtErr:['Datei konnte nicht gelesen werden','Could not read the file'],
-  readEnd:['Ende des Textes','End of text'], readToVoc:['Zu den Vokabeln','To vocabulary'], readToLib:['Zum Lesearbeitsplatz','To the reading workspace'],
+  readEnd:['Ende des Textes','End of text'], readToVoc:['Zu den Vokabeln','To vocabulary'], readToLib:['Zurück','Back'],
   s_csvSrs:['Lernstände in Export-Dateien schreiben','Include practice state in exported files'],
   s_groupStudy:['Lesen und Vokabeln','Reading and vocabulary'],
   // KI-Funktionen im Lese-Arbeitsplatz: Hauptschalter und die beiden
@@ -562,7 +562,7 @@ const NL = {
   pickHint:'Typ of plak tekst en tik dan op woorden',
   readEnd:'Einde van de tekst',
   readTitle:'Leesteksten',
-  readToLib:'Naar de leeswerkplek',
+  readToLib:'Terug',
   readToVoc:'Naar de woorden',
   repAgain:'Typ het nog eens in.',
   repEndless:'Loopt door tot je op Stoppen drukt.',
@@ -752,7 +752,7 @@ const ES = {
   pickHint:'Escribe o pega un texto y toca las palabras',
   readEnd:'Fin del texto',
   readTitle:'Textos de lectura',
-  readToLib:'Al espacio de lectura',
+  readToLib:'Volver',
   readToVoc:'A las palabras',
   repAgain:'Escríbelo otra vez.',
   repEndless:'Sigue hasta que pulses Detener.',
@@ -942,7 +942,7 @@ const TR = {
   pickHint:'Metni yazın veya yapıştırın, sonra kelimelere dokunun',
   readEnd:'Metnin sonu',
   readTitle:'Okuma metinleri',
-  readToLib:'Okuma çalışma alanına',
+  readToLib:'Geri',
   readToVoc:'Kelimelere git',
   repAgain:'Lütfen tekrar yazın.',
   repEndless:'Durdur düğmesine basana kadar devam eder.',
@@ -1132,7 +1132,7 @@ const AR = {
   pickHint:'اكتب نصاً أو الصقه ثم اضغط على الكلمات',
   readEnd:'نهاية النص',
   readTitle:'نصوص القراءة',
-  readToLib:'إلى مساحة القراءة',
+  readToLib:'رجوع',
   readToVoc:'إلى المفردات',
   repAgain:'يُرجى كتابتها مرة أخرى.',
   repEndless:'يستمر حتى تضغط «إيقاف».',
@@ -2901,7 +2901,7 @@ function mtRow(m) {
 }
 // Der Weg zu den Vergleichstabellen steht am Ende der Liste, nicht im Kopf:
 // fuer Modelle und Stimmen derselbe Knopf, derselbe Dialog.
-const mtInfoLink = () => `<div class="mrow"><button class="ghost minib" data-info="mt">${esc(t('infoMore'))}</button></div>`;
+const mtInfoLink = () => `<div class="mrow minfo"><button class="ghost minib" data-info="mt">${esc(t('infoMore'))}</button></div>`;
 // ---------- Aussprache: Stimmen mit Angaben ----------
 // Jede Zeile nennt Groesse, Tempo und Qualitaet in Worten. Die Zahlen sind auf
 // diesem Rechner gemessen (Echtzeitfaktor), nicht geschaetzt; der Fortschritt
@@ -2933,7 +2933,7 @@ async function drawTts() {
   }).join('');
   box.innerHTML = `<div class="muted">${esc(t('s_ttsHint'))}</div>` + rows +
     `<div class="muted mnote">${esc(t('ttsOnlySys'))}</div>` +
-    `<div class="mrow"><button class="ghost minib" data-info="tts">${esc(t('infoMore'))}</button></div>`;
+    `<div class="mrow minfo"><button class="ghost minib" data-info="tts">${esc(t('infoMore'))}</button></div>`;
 }
 
 async function ttsAction(act, id) {

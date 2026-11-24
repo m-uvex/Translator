@@ -150,7 +150,15 @@ dialog::backdrop{background:#0006}.dh{display:flex;justify-content:space-between
 .mrow .mstat{margin-left:8px;background:color-mix(in srgb,var(--accent) 18%,var(--card));border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-radius:999px;padding:0 8px;font-size:11px;font-weight:600;line-height:1.6;vertical-align:1px;white-space:nowrap}
 .mchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
 .mchips span{background:var(--soft);border-radius:999px;padding:1px 8px;font-size:12px;color:var(--muted)}
-.mnote{margin:12px 0 2px}
+/* Schlusszeile eines Abschnitts ("Für Niederländisch spricht die
+   Systemstimme."): mehr Luft zur Trennlinie darunter, sonst klebt der Text
+   am Strich. */
+.mnote{margin:16px 0 10px}
+/* Die Zeile mit "Was bedeuten die Angaben?" schliesst eine Modellliste ab und
+   braucht mehr Abstand als eine Modellzeile: 14 px ueber und unter dem Knopf,
+   in der Aussprache wie bei den Uebersetzermodellen (auch hinter dem
+   TranslateGemma-Block). */
+.mrow.minfo{padding:14px 0}
 .mgroup{margin:10px 0}.mgroup>b{display:block;margin:6px 0}
 .mi{display:inline-grid;color:var(--muted);margin-left:6px;vertical-align:middle}
 #ask{width:min(420px,92vw)}#ask .dh{gap:10px;margin-top:14px;justify-content:flex-end}#ask p{margin:0}
