@@ -431,6 +431,22 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .srsbtns.rate{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%}
 .srsbtns.rate button{height:36px;padding:0 6px;font-size:13px;border-radius:999px}
 .srsbtns.one .primary{min-width:240px;padding:10px 26px}
+/* Auswahl-Modus: Frage, Satz mit Luecke, vier Woerter. Die Knoepfe tragen ihre
+   Nummer, weil sie sich auch ueber die Tastatur waehlen lassen; richtig und
+   falsch bleiben nach der Antwort stehen, bis "Weiter" kommt. */
+.srscard.quiz{width:min(600px,92%);min-height:0;text-align:start}
+.qask{font-size:19px;line-height:1.45;font-weight:600}
+.srscard.quiz .srsctx{font-size:17px;color:var(--text);margin-inline:0;max-width:none}
+.srsquiz{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:6px}
+.qopt{display:flex;align-items:center;gap:8px;min-height:54px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);font-size:14px;line-height:1.25;text-align:start}
+.qopt .qn{flex:none;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.qopt:hover:not(:disabled){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--card))}
+.qopt:disabled{cursor:default}
+.qopt.ok{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 26%,var(--card));color:var(--accent-ink)}
+.qopt.bad{border-color:#c9605a;background:color-mix(in srgb,#c9605a 16%,var(--card))}
+.qopt.dim{opacity:.45}
+.qfoot{display:flex;align-items:center;justify-content:center;min-height:38px;margin-top:2px}
+.qkeys{font-size:12px}
 /* Stift über der Bewertungsreihe: die aufgedeckte Karte lässt sich vor der
    Bewertung korrigieren. Leise gehalten, damit die vier Bewertungen die
    Handlung bleiben. */

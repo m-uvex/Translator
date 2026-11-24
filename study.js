@@ -1363,7 +1363,7 @@ function startRepeat(ids) {
 function stopRepeat() {
   clearTimeout(repTimer);
   rep = null;
-  const tg = $('#srsType'); if (tg) tg.classList.remove('hidden');
+  for (const id of ['#srsType', '#srsQuiz']) { const b = $(id); if (b) b.classList.remove('hidden'); }
   renderSrs();
 }
 
@@ -1516,6 +1516,98 @@ function renderType(box, due) {
   box.querySelectorAll('.ch').forEach(b => b.onclick = () => srsInsertChar(b.dataset.ch));
 }
 
+// ---------- Auswahl-Modus: eines von vier Woertern ----------
+// Dieselben faelligen Karten, aber als Multiple Choice: oben die Frage nach der
+// Uebersetzung, darunter der Beispielsatz mit der Luecke, darunter vier
+// Woerter aus dem eigenen Bestand - genau eines passt. Getippt wird nur die
+// Ziffer (1-4); die Knoepfe zeigen sie mit an.
+let quizQueue = [], quizOpts = [], quizPick = -1, quizDone = null;
+
+function quizFill() {
+  // Nur Karten, deren Uebersetzung bekannt ist: ohne sie gibt es keine Frage.
+  const due = ST.vocab.filter(e => inPair(e) && solutionOf(e) && (e.due || todayISO()) <= todayISO());
+  const ids = new Set(due.map(e => e.id));
+  quizQueue = quizQueue.filter(id => ids.has(id));
+  for (const e of due) if (!quizQueue.includes(e.id)) quizQueue.push(e.id);
+}
+
+// Die Loesung und bis zu drei andere Woerter aus demselben Paar. Gleiche
+// Wortart kommt zuerst, damit die Auswahl die Antwort nicht ueber die Wortart
+// verraet; doppelte Schreibweisen fliegen raus, sonst gaebe es zwei richtige.
+function quizChoices(e) {
+  const seen = new Set([ansNorm(e.term)]);
+  const others = [];
+  for (const v of ST.vocab) {
+    if (v.id === e.id || !inPair(v) || !v.term) continue;
+    const k = ansNorm(v.term);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    others.push(v);
+  }
+  const same = repShuffle(others.filter(v => e.pos && v.pos === e.pos));
+  const rest = repShuffle(others.filter(v => !(e.pos && v.pos === e.pos)));
+  return repShuffle([e, ...[...same, ...rest].slice(0, 3)]);
+}
+
+function quizChoose(i) {
+  if (quizDone !== null || !quizOpts.length) return;
+  const e = ST.vocab.find(v => v.id === quizQueue[0]);
+  if (!e || !quizOpts[i]) return;
+  quizPick = i;
+  quizDone = quizOpts[i].id === e.id;
+  renderSrs();
+}
+
+// Erst auf "Weiter" wird bewertet: die Antwort bleibt so lange stehen, wie man
+// sie ansehen will. Richtig schiebt die Karte nach vorn, falsch ans Ende.
+function quizNext() {
+  if (quizDone === null) return;
+  const e = ST.vocab.find(v => v.id === quizQueue[0]);
+  if (e) {
+    if (quizDone) { rate(e, 'good'); quizQueue.shift(); }
+    else { rate(e, 'again'); quizQueue.push(quizQueue.shift()); }
+    persist('vocab');
+    renderVocab();
+  }
+  quizOpts = []; quizPick = -1; quizDone = null;
+  renderSrs();
+}
+
+function renderQuiz(box, due) {
+  quizFill();
+  const e = ST.vocab.find(v => v.id === quizQueue[0]);
+  if (!e) {
+    box.innerHTML = `<div class="srsempty"><span class="badge">${ic('check', 22)}</span><p>${esc(t('srsNone'))}</p><p class="muted">${esc(t('srsDone'))}</p></div>`;
+    return;
+  }
+  if (quizDone === null || !quizOpts.some(v => v.id === e.id)) quizOpts = quizChoices(e);
+  if (quizOpts.length < 2) {
+    box.innerHTML = `<div class="srsempty"><p>${esc(t('srsQuizFew'))}</p></div>`;
+    return;
+  }
+  const ctx = e.context ? maskTerm(e.context, e.term) : '';
+  const sol = solutionOf(e);
+  const ask = ctx ? t('srsQuizQ', sol) : t('srsQuizQ2', sol);
+  const opts = quizOpts.map((v, i) => {
+    const cls = quizDone === null ? '' : v.id === e.id ? ' ok' : (i === quizPick ? ' bad' : ' dim');
+    return `<button class="qopt${cls}" data-q="${i}"${quizDone === null ? '' : ' disabled'}><span class="qn">[${i + 1}]</span><span class="qw">${esc(v.term)}</span></button>`;
+  }).join('');
+  const note = quizDone === null ? ''
+    : `<div class="srsnote ${quizDone ? 'ok' : 'bad'}">${esc(quizDone ? t('srsRight') : t('srsWrong') + ' ' + e.term)}</div>`;
+  box.innerHTML = `<div class="srscard quiz">
+    <div class="qask">${esc(ask)}</div>
+    ${ctx ? `<div class="srsctx">${ctx}</div>` : ''}
+    <div class="srsquiz">${opts}</div>
+    ${note}
+    <div class="qfoot">${quizDone === null
+      ? `<span class="qkeys muted">${esc(t('srsQuizKeys'))}</span>`
+      : `<button class="primary" id="qNext">${esc(t('srsQuizNext'))}</button>`}</div>
+  </div>`;
+  box.querySelectorAll('[data-q]').forEach(b => b.onclick = () => quizChoose(Number(b.dataset.q)));
+  const nx = box.querySelector('#qNext');
+  if (nx) nx.onclick = quizNext;
+}
+
 // Zeichen an der Cursorposition einfuegen und den Fokus im Feld lassen.
 function srsInsertChar(ch) {
   const inp = $('#srsIn'); if (!inp || !ch) return;
@@ -1529,18 +1621,21 @@ function srsInsertChar(ch) {
 
 function renderSrs() {
   const box = $('#srsBox'); if (!box) return;
-  // Die Endlos-Runde hat ihre eigene Anzeige: kein Faelligkeitszaehler, kein
-  // Umschalter fuer den Tipp-Modus.
+  // Die Endlos-Runde hat ihre eigene Anzeige: kein Faelligkeitszaehler, keine
+  // Umschalter fuer Tipp- und Auswahl-Modus.
   if (rep) {
-    const tg0 = $('#srsType');
-    if (tg0) { tg0.classList.add('hidden'); tg0.classList.remove('on'); }
+    for (const id of ['#srsType', '#srsQuiz']) {
+      const b = $(id); if (b) { b.classList.add('hidden'); b.classList.remove('on'); }
+    }
     $('#srsCount').textContent = t('repStreak', rep.streak);
     return renderRepeat(box);
   }
   const due = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO());
   $('#srsCount').textContent = due.length ? t('vocabDue', due.length) : '';
-  const tg = $('#srsType');
+  const tg = $('#srsType'), qg = $('#srsQuiz');
   if (tg) { tg.classList.remove('hidden'); tg.classList.toggle('on', !!S.srsType); }
+  if (qg) { qg.classList.remove('hidden'); qg.classList.toggle('on', !!S.srsQuiz); }
+  if (S.srsQuiz) return renderQuiz(box, due);
   if (S.srsType) return renderType(box, due);
   srsQueue = srsQueue.filter(inPair);
   if (!due.length) {
@@ -1601,6 +1696,7 @@ function renderSrs() {
 }
 window.studySrsRender = () => {
   srsShow = false; srsNote = null; typeQueue = [];
+  quizOpts = []; quizPick = -1; quizDone = null;
   srsQueue = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO());
   renderSrs();
 };
@@ -2284,10 +2380,37 @@ function vocFindClearSync() {
   });
   $('#srsType').onclick = () => {
     S.srsType = !S.srsType;
+    if (S.srsType) S.srsQuiz = false;
     save();
     typeQueue = []; srsNote = null;
+    quizQueue = []; quizOpts = []; quizPick = -1; quizDone = null;
     renderSrs();
   };
+  // Auswahl-Modus als zweite Uebung neben dem Tippen. Die beiden schliessen
+  // sich aus, sonst waere unklar, was die Karte gerade fragt.
+  $('#srsQuiz').onclick = () => {
+    S.srsQuiz = !S.srsQuiz;
+    if (S.srsQuiz) S.srsType = false;
+    save();
+    typeQueue = []; srsNote = null;
+    quizQueue = []; quizOpts = []; quizPick = -1; quizDone = null;
+    renderSrs();
+  };
+  // Tasten 1-4 waehlen, Enter geht weiter - solange die Auswahl auf dem
+  // Bildschirm steht und kein Dialog dazwischen liegt.
+  document.addEventListener('keydown', ev => {
+    if (S.view !== 'srs' || !S.srsQuiz || rep) return;
+    if (document.querySelector('dialog[open]')) return;
+    const el = ev.target;
+    const tag = String(el && el.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || (el && el.isContentEditable)) return;
+    if (/^[1-9]$/.test(ev.key)) {
+      const i = Number(ev.key) - 1;
+      if (quizOpts[i]) { ev.preventDefault(); quizChoose(i); }
+    } else if (ev.key === 'Enter' && quizDone !== null) {
+      ev.preventDefault(); quizNext();
+    }
+  });
 
   $('#txAdd').onclick = txOpen;
   $('#txClose').onclick = () => $('#txDlg').close();

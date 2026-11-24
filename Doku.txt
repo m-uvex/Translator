@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.169 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.170 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2767,3 +2767,24 @@ Betroffen sind damit unter anderem „Abbrechen“/„Speichern“ in den Dialog
 Auf dem Screenshot liegt „Abbrechen“ bläulich getönt mit hellblauer Schrift unter dem Zeiger, „Speichern“ ist sichtbar heller.
 
 **Grenzen:** Nur dunkles Erscheinungsbild geprüft; alle Stellen einzeln durchgehovered wurden nicht — geprüft sind Dialog-Ghost, Dialog-Primär und (aus §192) die Bewertungen, die übrigen erben dieselbe Deklaration. Gesperrte Knöpfe reagieren bewusst nicht; das ist über `:not(:disabled)` gesetzt, aber nicht mit einem gesperrten Knopf durchgeklickt.
+
+## 195. Auswahl-Modus: eines von vier Wörtern (1.15.170)
+
+**Was es ist.** Eine dritte Übungsart neben der Karte und dem Tippen: dieselben fälligen Wörter, aber als Auswahl. Oben steht die Frage nach der Übersetzung („Welches Wort bedeutet hier ‚flüstern‘?“), darunter der Beispielsatz mit der Lücke, darunter vier Wörter aus dem eigenen Bestand — genau eines davon füllt die Lücke. Ohne Beispielsatz lautet die Frage „Welches Wort bedeutet ‚flüstern‘?“.
+
+**Wie man es einschaltet.** In der Kopfzeile von „Vokabeln üben“ steht rechts neben dem Tastatur-Symbol (Tippen) ein neues Symbol mit vier Feldern; sein Tooltip ist „Wort auswählen“. Die beiden Modi schließen sich aus: wer den einen einschaltet, schaltet den anderen aus. Die Einstellung liegt in `S.srsQuiz` und wird mitgespeichert.
+
+**Woher die falschen Wörter kommen.** Aus den eigenen Vokabeln desselben Sprachpaars. Zuerst kommen Wörter gleicher Wortart (`pos`), dann die übrigen; doppelte Schreibweisen (nach `ansNorm`, also ohne Groß-/Kleinschreibung und Akzente) fliegen raus, damit es nie zwei richtige Antworten gibt. Sind weniger als zwei Wörter im Paar vorhanden, sagt die Karte das („Für die Auswahl braucht es mindestens zwei Wörter in diesem Paar.“) statt eine leere Frage zu zeigen.
+
+**Bedienung.** Klick auf ein Wort oder Taste `1`–`4` (die Knöpfe tragen die Nummer in eckigen Klammern), danach `Enter` oder „Weiter“. Nach der Antwort bleibt sie stehen: das richtige Wort ist blau umrandet, ein falsch gewähltes rot, die übrigen treten zurück — bewertet wird erst mit „Weiter“. Richtig heißt `rate(e,'good')`, falsch `rate(e,'again')`, und die Karte wandert ans Ende der Schlange. Die Meisterschaft des Tipp-Modus bleibt unberührt: Auswahl ist Wiedererkennen, kein Schreiben.
+
+**Geprüft (Quelllauf 1.15.170, 1600 × 1000, dunkel, sechs Vokabeln mit Kontextsätzen im Paar Englisch → Deutsch):**
+
+- Kopfzeile: `S.srsQuiz` true, `S.srsType` false, Symbol `on`, Karte 600 px breit.
+- Frage: „Welches Wort bedeutet hier ‚flüstern‘?“, Satz: „She had ▁▁▁▁ so the baby would not wake up.“ (Lücke als Strich aus §193), vier Optionen: `[1] to stumble`, `[2] to whisper`, `[3] gentle`, `[4] to borrow`; die Lösung steht an Position 2.
+- Taste `1` (falsch): Zustand `quizPick 0`, `quizDone false`, Klassen `qopt bad` / `qopt ok` / `qopt dim` / `qopt dim`, alle Knöpfe gesperrt, Hinweis „Leider falsch — richtig ist: to whisper“, Knopf „Weiter“.
+- `Enter`: nächste Karte „the lock“, Ablenkung „the ladder“ (gleiche Wortart Nomen), das falsch beantwortete Wort bleibt mit `level 0`, `due 2026-11-24` (heute) stehen.
+- Richtige Antwort angeklickt: `quizDone true`, genau ein `qopt ok`, kein `qopt bad`, Hinweis „Richtig“, „Weiter“ da.
+- Beim Zeigen der Maus über einer Option: Akzentrahmen und leichter Akzentfilm (dieselbe Rückmeldung wie bei den übrigen Knöpfen aus §194).
+
+**Grenzen:** Nur dunkles Erscheinungsbild und nur das Paar Englisch → Deutsch angesehen; die arabische und türkische Beschriftung ist gesetzt, aber nicht im laufenden Fenster geprüft. Die Endlos-Runde blendet beide Umschalter aus (unverändert), das wurde nicht neu durchgeklickt. Ein Eintrag ohne Übersetzung wird im Auswahl-Modus übersprungen, weil ohne Übersetzung keine Frage entsteht.
