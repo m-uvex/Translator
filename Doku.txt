@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.184 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.185 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -3035,3 +3035,14 @@ Dieselbe Knopfzeile schließt auch die Liste der Übersetzermodelle ab — hinte
 **Angesehen als Bild.** A4-Ansicht mit zwei Blättern: Blatt 1 endet nach Absatz 16 mit abgerundeter Unterkante, 24 px Lücke, darunter Blatt 2 ab Absatz 17; die Ecken sind gerundet wie bei der durchlaufenden Seite.
 
 **Grenzen.** Geprüft sind nur einfache Absätze, deutsch, dunkles Erscheinungsbild, ein Fenstergröße und der Quelllauf; Bilder, Tabellen und Kopfzeilen auf A4 sind nicht durchgespielt. Die PDF wurde als Datei erzeugt und ihr Text je Seite geprüft, aber nicht als Seitenbild angesehen. Ein einzelner Absatz, der höher als eine Seite ist, wird nicht geteilt, sondern läuft über die Seitengrenze. Die genaue Seitenhöhe im Druck ist 296,5 mm statt 297 mm, damit an der Blattkante keine leere Seite entsteht; der Unterschied liegt im unteren Rand.
+## 210. Einstellung „Seitenformat bei ‚Neu‘“ (1.15.185)
+
+**Anlass.** „Baue in den Einstellungen die Option ein, den Seitenformatwähler auszuschalten und standartmäßig immer entweder unendliche oder A4 Seiten zu öffnen, wenn der neues Dokuement erzeugen -Knopf gedrückt wird.“
+
+**Wo sie steht.** In den Einstellungen unter „Zusatzfunktionen“, direkt hinter „Dynamisches Markdown“. Neues Feld `edPageMode` (`FIELDS`: `['edPageMode','s_pageMode','pageMode']`, Gruppe `s_groupFeatures`), Standard `'ask'`. Der Typ `pageMode` hat drei Pillen, die `lists()` liefert: „Fragen“ (`ask`, gesetzt), „Unendliche Seite“ (`flow`) und „DIN-A4-Seiten“ (`a4`). Beschriftung und Optionen in allen sechs Sprachen (`s_pageMode`, `o_pageAsk`, `o_pageFlow`, `o_pageA4`).
+
+**Was sie tut.** `newDocDialog()` im Editor fragt nur noch, wenn `S.edPageMode === 'ask'` ist. Steht dort `'flow'` oder `'a4'`, öffnet der Knopf „Neu“ sofort ein Dokument in diesem Modus und der Dialog `#docNewDlg` erscheint gar nicht. Der Merker wird wie alle Einstellungen in `S` gespeichert und gilt nach einem Neustart weiter.
+
+**Gemessen im Quelllauf** (`--remote-debugging-port=9362`, Profil `%TEMP%/a4run`, dunkles Erscheinungsbild): Das Feld trägt die Beschriftung „Seitenformat bei „Neu““ und die drei Pillen „Fragen“ (an), „Unendliche Seite“, „DIN-A4-Seiten“. Mit `a4` geöffnet: „Neu“ zeigt keinen Dialog, `#page` trägt `a4`, ein Blatt steht. Mit `flow`: kein Dialog, keine Klasse, kein Blatt. Mit `ask`: Dialog erscheint. Nach dem Umschalten auf `flow` und einem Neuladen steht die Pille weiter auf „Unendliche Seite“, und „Neu“ öffnet ohne Dialog eine durchlaufende Seite.
+
+**Grenzen.** Nur deutsch und dunkles Erscheinungsbild geprüft; die anderen fünf Sprachen sind nur eingetragen, nicht angesehen. Wer den Wähler abschaltet, kann den Modus nur über diese Einstellung wechseln; einen zweiten Weg im Dokument gibt es nicht.

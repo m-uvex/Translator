@@ -1158,6 +1158,10 @@ function askDocMode() {
   });
 }
 async function newDocDialog() {
+  // In den Einstellungen laesst sich die Frage abschalten: dann oeffnet "Neu"
+  // sofort eine durchlaufende Seite oder A4-Blaetter.
+  const pref = S.edPageMode === 'a4' || S.edPageMode === 'flow' ? S.edPageMode : null;
+  if (pref) return newDoc(pref);
   const m = await askDocMode();
   if (m) newDoc(m);
 }

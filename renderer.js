@@ -248,6 +248,10 @@ const K = {
   o_stars:['Sternchen (****)','Asterisks (****)'],
   o_symbols:['Sonderzeichen (@#$%&!)','Symbols (@#$%&!)'],
   s_mdMode:['Dynamisches Markdown','Dynamic Markdown'],
+  s_pageMode:['Seitenformat bei „Neu“','Page format for “New”'],
+  o_pageAsk:['Fragen','Ask'],
+  o_pageFlow:['Unendliche Seite','Endless page'],
+  o_pageA4:['DIN-A4-Seiten','A4 pages'],
   s_spellAnim:['Rechtschreibwellen schlängeln','Animate spelling squiggles'],
   s_autoCopy:['Ausgabe automatisch kopieren','Copy output automatically'],
   // Kurzer Titel: erst die Ausgabe, dann die Bedingung. Wirksam wird die
@@ -477,7 +481,7 @@ const NL = {
   ttsEngine:'Spraakuitvoer wordt ingericht …', ttsVoiceLoad:'Stem wordt gedownload', ttsAuto:'Automatisch (teksttaal)', ttsRate:'Voorleessnelheid',
   langsN:n => `${n} talen`,
   appTitle:'Vertaler', winMin:'Minimaliseren', winMax:'Maximaliseren', winRestore:'Herstellen', winClose:'Sluiten',
-  stopTr:'Stoppen', stopped:'Vertaling gestopt', on:'Aan', off:'Uit', s_bootModel:'Laatst gebruikte model voorverwarmen bij opstarten', s_profanity:'Vloekfilter inschakelen', s_profanityStyle:'Vervanging voor vloekwoorden', s_autoCopy:'Uitvoer automatisch kopiëren', s_autoCopyTyped:'Uitvoer alleen bij getypte invoer kopiëren', o_stars:'Sterretjes (****)', o_symbols:'Symbolen (@#$%&!)', s_mdMode:'Dynamische Markdown', s_spellAnim:'Spellingsgolven animeren', s_groupFeatures:'Extra instellingen', personalDict:'Persoonlijk woordenboek', dictWords:'Opgeslagen woorden', addWord:'Woord toevoegen', addWordPh:'Nieuw woord typen …', noDictWords:'Geen woorden in persoonlijk woordenboek', edit:'Bewerken', wordExists:'Woord bestaat al',
+  stopTr:'Stoppen', stopped:'Vertaling gestopt', on:'Aan', off:'Uit', s_bootModel:'Laatst gebruikte model voorverwarmen bij opstarten', s_profanity:'Vloekfilter inschakelen', s_profanityStyle:'Vervanging voor vloekwoorden', s_autoCopy:'Uitvoer automatisch kopiëren', s_autoCopyTyped:'Uitvoer alleen bij getypte invoer kopiëren', o_stars:'Sterretjes (****)', o_symbols:'Symbolen (@#$%&!)', s_mdMode:'Dynamische Markdown', s_pageMode:'Paginaformaat bij “Nieuw”', o_pageAsk:'Vragen', o_pageFlow:'Doorlopende pagina', o_pageA4:'A4-pagina’s', s_spellAnim:'Spellingsgolven animeren', s_groupFeatures:'Extra instellingen', personalDict:'Persoonlijk woordenboek', dictWords:'Opgeslagen woorden', addWord:'Woord toevoegen', addWordPh:'Nieuw woord typen …', noDictWords:'Geen woorden in persoonlijk woordenboek', edit:'Bewerken', wordExists:'Woord bestaat al',
   settings:'Instellingen', swap:'Wisselen', reloadModels:'Modellen opnieuw laden', inputPh:'Typ tekst of sleep een bestand hierheen …', attach:'Bestand toevoegen', translate:'Vertalen', copy:'Kopiëren', copied:'Gekopieerd',
   chars:n => `${n} tekens`, auto:'Taal detecteren', searchLang:'Taal zoeken …', noHits:'Geen resultaten', pin:'Vastpinnen', h_style:'Vertaalstijl', l_type:'Type', l_formal:'Toon', l_gender:'Ontvanger*', l_writer:'Afzender*',
   s_uiMode:'Zijbalk', o_classic:'Klassiek (tekst)', o_icons:'Pictogrammen', imgMax:n => `Maximaal ${n} afbeeldingen mogelijk.`, imgOpenTip:'Afbeeldingen tonen',
@@ -722,7 +726,7 @@ const ES = {
   setupDoneMsg:'Listo. La aplicación está configurada.',
   setupFailMsg:'La configuración no terminó: ',
   confBig:(id, gb) => `${id} tiene un tamaño de ${gb} GB y requiere bastante memoria y tiempo. ¿Descargar igualmente?`, confDel:id => `¿Realmente eliminar ${id}? Puedes descargarlo nuevamente más tarde.`,
-  stopTr:'Detener', stopped:'Traducción detenida', on:'Activado', off:'Desactivado', s_bootModel:'Precargar último modelo al iniciar', s_profanity:'Filtro de malas palabras', s_profanityStyle:'Sustitución de palabras malsonantes', s_autoCopy:'Copiar la salida automáticamente', s_autoCopyTyped:'Copiar la salida solo con texto tecleado', o_stars:'Asteriscos (****)', o_symbols:'Símbolos (@#$%&!)', s_mdMode:'Markdown dinámico en el editor', s_spellAnim:'Animar las ondulaciones ortográficas',
+  stopTr:'Detener', stopped:'Traducción detenida', on:'Activado', off:'Desactivado', s_bootModel:'Precargar último modelo al iniciar', s_profanity:'Filtro de malas palabras', s_profanityStyle:'Sustitución de palabras malsonantes', s_autoCopy:'Copiar la salida automáticamente', s_autoCopyTyped:'Copiar la salida solo con texto tecleado', o_stars:'Asteriscos (****)', o_symbols:'Símbolos (@#$%&!)', s_mdMode:'Markdown dinámico en el editor', s_pageMode:'Formato de página al crear', o_pageAsk:'Preguntar', o_pageFlow:'Página continua', o_pageA4:'Páginas A4', s_spellAnim:'Animar las ondulaciones ortográficas',
   personalDict:'Diccionario personal', dictWords:'Palabras guardadas', addWord:'Añadir palabra', addWordPh:'Nueva palabra …', noDictWords:'No hay palabras en el diccionario personal', edit:'Editar', wordExists:'La palabra ya existe',
   // Tooltips der Vokabel- und Studium-Ansichten (Abschnitt 143)
   navVoc:'Vocabulario',
@@ -915,7 +919,7 @@ const TR = {
   setupDoneMsg:'Tamam. Uygulama kuruldu.',
   setupFailMsg:'Kurulum tamamlanmadı: ',
   confBig:(id, gb) => `${id} boyutu ${gb} GB ve çok bellek gerektirir. Yine de indirilsin mi?`, confDel:id => `${id} gerçekten silinsin mi? Daha sonra tekrar indirebilirsiniz.`,
-  stopTr:'Durdur', stopped:'Çeviri durduruldu', on:'Açık', off:'Kapalı', s_bootModel:'Başlangıçta son kullanılan modeli ön yükle', s_profanity:'Küfür filtresini etkinleştir', s_profanityStyle:'Küfürlerin değiştirilmesi', s_autoCopy:'Çıktıyı otomatik kopyala', s_autoCopyTyped:'Çıktıyı yalnızca yazılan metinde kopyala', o_stars:'Yıldızlar (****)', o_symbols:'Semboller (@#$%&!)', s_mdMode:'Editörde dinamik Markdown', s_spellAnim:'Yazım dalgalarını canlandır',
+  stopTr:'Durdur', stopped:'Çeviri durduruldu', on:'Açık', off:'Kapalı', s_bootModel:'Başlangıçta son kullanılan modeli ön yükle', s_profanity:'Küfür filtresini etkinleştir', s_profanityStyle:'Küfürlerin değiştirilmesi', s_autoCopy:'Çıktıyı otomatik kopyala', s_autoCopyTyped:'Çıktıyı yalnızca yazılan metinde kopyala', o_stars:'Yıldızlar (****)', o_symbols:'Semboller (@#$%&!)', s_mdMode:'Editörde dinamik Markdown', s_pageMode:'Yeni belgede sayfa biçimi', o_pageAsk:'Sor', o_pageFlow:'Sonsuz sayfa', o_pageA4:'A4 sayfaları', s_spellAnim:'Yazım dalgalarını canlandır',
   personalDict:'Kişisel sözlük', dictWords:'Kayıtlı kelimeler', addWord:'Kelime ekle', addWordPh:'Yeni kelime yazın …', noDictWords:'Kişisel sözlükte kayıtlı kelime yok', edit:'Düzenle', wordExists:'Kelime zaten mevcut',
   // Tooltips der Vokabel- und Studium-Ansichten (Abschnitt 143)
   navVoc:'Kelimeler',
@@ -1108,7 +1112,7 @@ const AR = {
   setupDoneMsg:'تم. التطبيق مُعد.',
   setupFailMsg:'لم يكتمل الإعداد: ',
   confBig:(id, gb) => `حجم ${id} هو ${gb} غيغابايت ويتطلب ذاكرة ووقت. هل تريد التنزيل؟`, confDel:id => `هل تريد حقاً حذف ${id}؟ يمكنك تنزيله لاحقاً.`,
-  stopTr:'إيقاف', stopped:'تم إيقاف الترجمة', on:'مفعّل', off:'معطّل', s_bootModel:'تحميل النموذج مسبقاً عند البدء', s_profanity:'فلتر الكلمات البذيئة', s_profanityStyle:'استبدال الكلمات البذيئة', s_autoCopy:'نسخ الناتج تلقائياً', s_autoCopyTyped:'نسخ الناتج فقط عند الكتابة يدوياً', o_stars:'نجوم (****)', o_symbols:'رموز (@#$%&!)', s_mdMode:'ماركداون ديناميكي في المحرر', s_spellAnim:'تحريك موجات التدقيق الإملائي',
+  stopTr:'إيقاف', stopped:'تم إيقاف الترجمة', on:'مفعّل', off:'معطّل', s_bootModel:'تحميل النموذج مسبقاً عند البدء', s_profanity:'فلتر الكلمات البذيئة', s_profanityStyle:'استبدال الكلمات البذيئة', s_autoCopy:'نسخ الناتج تلقائياً', s_autoCopyTyped:'نسخ الناتج فقط عند الكتابة يدوياً', o_stars:'نجوم (****)', o_symbols:'رموز (@#$%&!)', s_mdMode:'ماركداون ديناميكي في المحرر', s_pageMode:'تنسيق الصفحة عند إنشاء مستند', o_pageAsk:'السؤال', o_pageFlow:'صفحة مستمرة', o_pageA4:'صفحات A4', s_spellAnim:'تحريك موجات التدقيق الإملائي',
   personalDict:'القاموس الشخصي', dictWords:'الكلمات المحفوظة', addWord:'إضافة كلمة', addWordPh:'اكتب كلمة جديدة …', noDictWords:'لا توجد كلمات في القاموس الشخصي', edit:'تعديل', wordExists:'الكلمة موجودة بالفعل',
   // Tooltips der Vokabel- und Studium-Ansichten (Abschnitt 143)
   navVoc:'المفردات',
@@ -1306,7 +1310,7 @@ const STY = {
 };
 const D = { url:'http://localhost:11434', nllb:'http://127.0.0.1:8765', model:'', pref:'', theme:'auto', uiLang:'auto', start:'tr', workspace:'tr,ed,study', helper:'', src:'auto', tgt:'en',
   pins:{ ollama:['de','en'], nllb:['deu_Latn','eng_Latn'] }, style:{type:'natural',formal:'standard',gender:'unknown',writer:'unknown',genderGroup:'none',writerGroup:'none'}, uiMode:'icons',
-  gloss:[], ctxt:'', temp:0.3, numctx:4096, bootModel:true, profanityFilter:true, profanityStyle:'stars', edMarkdown:false, edSpellAnim:true, edSpellAnimDefault:false, autoCopy:false, autoCopyTyped:false,
+  gloss:[], ctxt:'', temp:0.3, numctx:4096, bootModel:true, profanityFilter:true, profanityStyle:'stars', edMarkdown:false, edPageMode:'ask', edSpellAnim:true, edSpellAnimDefault:false, autoCopy:false, autoCopyTyped:false,
   csvSrs:true, srsType:false, studySrc:'', studyTgt:'', studyModel:'',
   // Verlauf und Glossar-Sammlungen. Der Verlauf startet aus (Nutzerwunsch:
   // nur wer will, sammelt mit), die Sammlungen sind leer und S.gloss bleibt die
@@ -2687,7 +2691,7 @@ $('#refresh').onclick = async () => {
 const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['accent','s_accent','accent'],['start','s_start','start'],['workspace','s_workspace','workspaces'],
   // Klassik-Layout vorerst deaktiviert (Nutzerwunsch): Symbol-Layout ist fest.
   // Zum Reaktivieren ['uiMode','s_uiMode','uiMode'] hier wieder aufnehmen.
-  ['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['profanityStyle','s_profanityStyle','profanityStyle'],['edMarkdown','s_mdMode','bool'],['edSpellAnim','s_spellAnim','bool'],['autoCopy','s_autoCopy','bool'],['autoCopyTyped','s_autoCopyTyped','bool'],['historyOn','s_history','bool'],['diagOn','s_diag','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['csvSrs','s_csvSrs','bool'],['aiAll','s_aiAll','bool'],['studyWord','s_studyWord','bool'],['storyOn','s_story','bool'],['imgModel','s_imgModel','imgModel'],['imgLimit','s_imgLimit','bool'],['imgTotalLimit','s_imgTotalLimit','bool'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number'],
+  ['bootModel','s_bootModel','bool'],['profanityFilter','s_profanity','bool'],['profanityStyle','s_profanityStyle','profanityStyle'],['edMarkdown','s_mdMode','bool'],['edPageMode','s_pageMode','pageMode'],['edSpellAnim','s_spellAnim','bool'],['autoCopy','s_autoCopy','bool'],['autoCopyTyped','s_autoCopyTyped','bool'],['historyOn','s_history','bool'],['diagOn','s_diag','bool'],['url','s_url','text'],['nllb','s_nllb','text'],['helper','s_helper','helper'],['csvSrs','s_csvSrs','bool'],['aiAll','s_aiAll','bool'],['studyWord','s_studyWord','bool'],['storyOn','s_story','bool'],['imgModel','s_imgModel','imgModel'],['imgLimit','s_imgLimit','bool'],['imgTotalLimit','s_imgTotalLimit','bool'],['sys','s_sys','area'],['temp','s_temp','number'],['numctx','s_ctx','number'],
   // KI-Funktionen des Texteditors: erst der Hauptschalter, dann die Leiste bei
   // Textauswahl, dann die drei Knoepfe der Werkzeugleiste. Die Uebersetzungs-
   // funktionen der App haben hier bewusst keinen Schalter.
@@ -2695,7 +2699,7 @@ const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['accent','s_
   ['edCtxShorten','s_edCtxShorten','bool'],['edCtxLengthen','s_edCtxLengthen','bool'],['edCtxSummarize','s_edCtxSummarize','bool'],
   ['edCtxProofread','s_edCtxProofread','bool'],['edCtxSyn','s_edCtxSyn','bool'],['edCtxStyle','s_edCtxStyle','bool'],['edCtxTr','s_edCtxTr','bool'],
   ['edTbShorten','s_edTbShorten','bool'],['edTbLengthen','s_edTbLengthen','bool'],['edTbSum','s_edTbSum','bool']];
-const GROUPS = [['s_groupGeneral',['uiLang','theme','accent','start','workspace']],['s_groupAI',['aiAll']],['s_groupStudy',['studyWord','storyOn','csvSrs']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edSpellAnim','autoCopy','autoCopyTyped','historyOn','diagOn']],['s_groupImages',['imgModel','imgLimit','imgTotalLimit']],['s_groupEdAI',['edAI',{bar:1},{tb:1}]],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
+const GROUPS = [['s_groupGeneral',['uiLang','theme','accent','start','workspace']],['s_groupAI',['aiAll']],['s_groupStudy',['studyWord','storyOn','csvSrs']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edPageMode','edSpellAnim','autoCopy','autoCopyTyped','historyOn','diagOn']],['s_groupImages',['imgModel','imgLimit','imgTotalLimit']],['s_groupEdAI',['edAI',{bar:1},{tb:1}]],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
 // Der systemweite Kurzbefehl kann von einem anderen Programm belegt sein:
 // globalShortcut.register() scheitert dann still. main.js meldet ueber
 // `app:hotkey`, ob die Registrierung geklappt hat; bis die Antwort da ist,
@@ -2717,6 +2721,7 @@ function drawSettings() {
     // style.css und die Texte accentBabyPink.
     // ['babypink','accentBabyPink'],
     ['coral','accentCoral'],['amber','accentAmber'],['green','accentGreen'],['teal','accentTeal'],['slate','accentSlate']].map(([v, l]) => [v, t(l)]) :
+    k === 'edPageMode' ? [['ask', t('o_pageAsk')], ['flow', t('o_pageFlow')], ['a4', t('o_pageA4')]] :
     k === 'imgModel' ? [['', t('autoModel')], ...Object.keys(caps).filter(n => hasVision(n)).map(n => [n, n])] : null;
   // Zuruecksetzen ist ein reiner Icon-Button; der Name erscheint nur als Tooltip.
   // Das Icon wird direkt eingesetzt, weil reicon() nur im Editor-Scope existiert.
