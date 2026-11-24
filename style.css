@@ -911,3 +911,48 @@ body.tblresizing #page{user-select:none}
 .dockcard{content-visibility:auto;contain-intrinsic-size:118px 136px}
 /* Lange Lesetexte: Absaetze ausserhalb des Bildes kosten kein Layout. */
 #reader p{content-visibility:auto;contain-intrinsic-size:auto 220px}
+/* ---------- Seitenmodus: durchlaufende Seite und DIN-A4-Blaetter ----------
+   Auf A4 liegt unter dem Text eine Schicht Papierblaetter (#pageSheets); die
+   Seite selbst ist dort durchsichtig, damit jedes Blatt seine eigene Rundung
+   und seinen eigenen Schatten behaelt. Die Blattgroesse ist exakt A4
+   (210 x 297 mm), damit der Druck dieselben Seiten ergibt. */
+#pageSheets{position:absolute;left:0;right:0;top:0;z-index:0;pointer-events:none}
+#pageSheets .sheet{position:absolute;left:50%;margin-left:-105mm;width:210mm;height:297mm;background:var(--card);border-radius:22px;box-shadow:0 2px 14px #0000001a}
+#page.a4{position:relative;z-index:1;width:210mm;max-width:none;min-height:0;height:auto;margin:0 auto;padding:64px 72px;box-sizing:border-box;background:transparent;border-radius:0;box-shadow:none}
+#page.a4 .pggap{margin:0;padding:0;border:0;background:none;user-select:none}
+/* Ein alter Trennstrich aus einem durchlaufenden Dokument hat auf echten
+   Blaettern nichts zu suchen; dort entscheidet der Seitenumbruch. */
+#page.a4 .pagebreak{display:none}
+/* Druck der A4-Fassung: die Seite traegt nur noch die fertigen Blaetter. */
+#printPages{display:none}
+#page.printing{width:auto!important;max-width:none!important;height:auto!important;margin:0!important;padding:0!important;background:#fff!important;border-radius:0!important;box-shadow:none!important}
+#page.printing>*:not(#printPages){display:none!important}
+/* 296,9 mm statt 297: bei glatter Blatthoehe rundet Chromium die letzte
+   Zeile um ein Pixel ueber die Kante und druckt eine leere Seite hinterher. */
+/* 296,5 mm statt 297: bei glatter Blatthoehe rundet Chromium die Kante und
+   druckt hinter jedes Blatt eine leere Seite. Der Umbruch selbst wird in
+   editor.js gesetzt (nur zwischen den Blaettern). */
+#printPages .pp{width:210mm;height:296.5mm;box-sizing:border-box;padding:64px 72px;overflow:hidden;background:#fff}
+/* Die Frage beim neuen Dokument: zwei gleich grosse Wege mit kleiner Vorschau. */
+#docNewDlg{width:min(560px,94vw)}
+.docnew{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:6px}
+.dncard{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 12px 16px;background:var(--soft);border:1px solid var(--line);border-radius:16px;color:var(--text);font:inherit;text-align:center;cursor:pointer}
+.dncard:hover,.dncard:focus-visible{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--soft));outline:0}
+.dncard b{font-size:15px;font-weight:600}
+.dncard>span:last-child{font-size:12.5px;color:var(--muted);line-height:1.4}
+.dnprev{position:relative;display:block;width:72px;height:96px;margin-bottom:6px}
+.dnprev.flow{background:var(--card);border:1px solid var(--line);border-radius:9px;box-shadow:0 2px 8px #0000001a}
+.dnprev.a4 i{position:absolute;left:0;width:72px;height:96px;background:var(--card);border:1px solid var(--line);border-radius:9px}
+.dnprev.a4 i:first-child{top:0;transform:scale(.88);opacity:.5}
+.dnprev.a4 i:last-child{top:9px;box-shadow:0 2px 8px #0000001a}
+@media print{
+  #printPages{display:block}
+  /* Die Papierblaetter der Bildschirmansicht sind absolut gesetzt und wuerden
+     im Druck eigene Seiten anlegen; gedruckt wird nur #printPages. */
+  #pageSheets{display:none!important}
+  /* Ein offener Dialog (etwa die Einrichtung beim ersten Start) gehoert nicht
+     ins PDF; er liegt ueber der Seite, wird aber mitgedruckt. */
+  dialog{display:none!important}
+  body.print-pages .titlebar,body.print-pages .rail,body.print-pages .tb,body.print-pages .sbar,body.print-pages .ctxbar,body.print-pages #docDock,body.print-pages #vT,body.print-pages #vL{display:none!important}
+  @page{size:A4;margin:0}
+}

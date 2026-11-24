@@ -9,7 +9,7 @@ contextBridge.exposeInMainWorld('api', {
   spellEdit: (oldWord, newWord) => ipcRenderer.invoke('spell:edit', oldWord, newWord),
   dictExport: () => ipcRenderer.invoke('dict:export'),
   dictImport: () => ipcRenderer.invoke('dict:import'),
-  saveFile: (name, data, kind) => ipcRenderer.invoke('file:save', name, data, kind),
+  saveFile: (name, data, kind, opts) => ipcRenderer.invoke('file:save', name, data, kind, opts),
   libList: () => ipcRenderer.invoke('lib:list'),
   libRead: id => ipcRenderer.invoke('lib:read', id),
   libSave: doc => ipcRenderer.invoke('lib:save', doc),

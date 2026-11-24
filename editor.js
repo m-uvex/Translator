@@ -158,6 +158,11 @@ X('acceptAll','Alle verbleibenden übernehmen','Accept all remaining','Alle rest
 X('hl','Textmarker (Rechtsklick: Farbe wählen)','Highlighter (right-click: pick a color)','Tekstmarkeerder (rechtsklik: kleur kiezen)','Rotulador (clic derecho: elegir color)','Fosforlu kalem (sağ tık: renk seç)','قلم تظليل (زر الفأرة الأيمن: اختيار اللون)');
 X('ink','Schriftfarbe (Rechtsklick: Farbe wählen)','Text color (right-click: pick a color)','Tekstkleur (rechtsklik: kleur kiezen)','Color de texto (clic derecho: elegir color)','Yazı rengi (sağ tık: renk seç)','لون النص (زر الفأرة الأيمن: اختيار اللون)');
 X('pagebreak','Seitenumbruch','Page break','Pagina-einde','Salto de página','Sayfa sonu','فاصل صفحة');
+X('docNew','Neues Dokument','New document','Nieuw document','Documento nuevo','Yeni belge','مستند جديد');
+X('docNewFlow','Unendliche Seite','Endless page','Doorlopende pagina','Página continua','Sonsuz sayfa','صفحة مستمرة');
+X('docNewA4','DIN-A4-Seiten','A4 pages','A4-pagina’s','Páginas DIN A4','DIN A4 sayfaları','صفحات A4');
+X('docNewFlowHint','Eine fortlaufende Seite, wie bisher.','One continuous page, as before.','Eén doorlopende pagina, zoals tot nu toe.','Una página continua, como hasta ahora.','Baştan beri olduğu gibi tek sayfa.','صفحة واحدة متصلة كما كان.');
+X('docNewA4Hint','Einzelne Blätter in DIN A4 mit Rändern, wie in Word.','Separate A4 sheets with margins, like in Word.','Losse vellen in A4 met marges, zoals in Word.','Hojas DIN A4 separadas con márgenes, como en Word.','Word’deki gibi kenar boşluklu ayrı A4 sayfaları.','صفحات A4 منفصلة بهوامش، كما في Word.');
 
 S.ed = Object.assign({ src:'auto', tgt:'en', formal:'standard', wGender:'unknown', aGender:'unknown', wGroup:'none', aGroup:'none' }, S.ed || {});
 // Wie in der Stil-Karte des Uebersetzers: Eine Gruppenangabe (Plural) und die
@@ -820,6 +825,9 @@ async function addLink() { const keep = ED.sel; const u = await askText(t('linkQ
 // einfache gestrichelte Trenner; das echte Mehrseiten-Layout wurde auf
 // Nutzerwunsch zurueckgenommen, weil es im Betrieb zu unruhig aussah.
 function newPage() {
+  // Auf A4-Blaettern gibt es keine Trennlinie: der Cursor springt an den Anfang
+  // der naechsten Seite.
+  if (isA4()) return jumpNextPage();
   const sel = getSelection();
   let ref = null;
   if (sel.rangeCount && page.contains(sel.anchorNode)) {
@@ -900,7 +908,7 @@ window.addEventListener('scroll', () => colPop.classList.add('hidden'), true);
 // Der zweite Eintrag jeder Zeile ist der Schluessel fuer Symbol und Tooltip;
 // 'imgIns' traegt "Bild einfuegen" in allen Sprachen.
 const TB = [
-  ['btn','fNew','filenew', () => newDoc()], ['btn','fOpen','folder', () => $('#edFile').click()], ['btn','fSave','save', e => savePop(e.currentTarget)], ['sep'],
+  ['btn','fNew','filenew', () => newDocDialog()], ['btn','fOpen','folder', () => $('#edFile').click()], ['btn','fSave','save', e => savePop(e.currentTarget)], ['sep'],
   ['btn','undo','undo', () => edUndo()], ['btn','redo','redo', () => edRedoStep()], ['sep'], ['sel','font'], ['sel','size'], ['sel','heading'], ['sep'],
   ['tog','bold','bold','bold'], ['tog','italic','italic','italic'], ['tog','underline','underline','underline'], ['tog','strike','strike','strikeThrough'], ['btn','hl','marker', () => paint('mark')], ['btn','ink','textColor', () => paint('ink')], ['sep'],
   ['tog','ul','ul','insertUnorderedList'], ['tog','ol','ol','insertOrderedList'], ['btn','quote','quote', () => cmd('formatBlock', document.queryCommandValue('formatBlock') === 'blockquote' ? 'p' : 'blockquote')], ['sep'],
@@ -1028,13 +1036,217 @@ function toMd(node) {
   });
   return o;
 }
-function newDoc() {
+// ---------- Seitenmodus: durchlaufende Seite oder DIN-A4-Seiten ----------
+// Ein Dokument ist entweder eine einzige durchlaufende Seite (wie bisher) oder
+// eine Folge von DIN-A4-Seiten. Der Modus haengt am Dokument und wird mit ihm
+// gespeichert (Sitzung, localStorage, Ablage). Die A4-Ansicht bleibt ein
+// einziger editierbarer Fluss: die Seiten entstehen, indem vor dem Absatz, der
+// nicht mehr ganz auf seine Seite passt, ein leerer Platzhalter `.pggap`
+// eingefuegt wird, der genau bis zum naechsten Seitenanfang reicht. So bleibt
+// der Text an einer Stelle schreibbar, und jede Zeile steht auf derselben
+// Seite wie spaeter im PDF.
+const A4_MM = 96 / 25.4;              // CSS-Pixel je Millimeter bei 96 dpi
+const A4_H = 297 * A4_MM;             // Hoehe einer A4-Seite in CSS-Pixeln
+const A4_STRIDE = A4_H + 24;          // Seitenhoehe plus Luecke zum naechsten Blatt
+const A4_PAD_T = 64, A4_PAD_B = 64;   // oberer und unterer Seitenrand (wie in style.css)
+let a4Timer = null, a4Sheets = null;
+
+const isA4 = () => page.classList.contains('a4');
+const pageMode = () => (isA4() ? 'a4' : 'flow');
+
+// HTML ohne die berechneten Platzhalter: nur dieser Stand wird gespeichert.
+function docHtml() {
+  if (!isA4()) return page.innerHTML;
+  const c = page.cloneNode(true);
+  c.querySelectorAll('.pggap, #printPages').forEach(n => n.remove());
+  return c.innerHTML;
+}
+function sheetLayer() {
+  if (!a4Sheets) {
+    a4Sheets = document.createElement('div');
+    a4Sheets.id = 'pageSheets';
+    a4Sheets.setAttribute('aria-hidden', 'true');
+    $('#pageWrap').appendChild(a4Sheets);
+  }
+  return a4Sheets;
+}
+function clearGaps(all) {
+  page.querySelectorAll('.pggap').forEach(g => { if (all || !g.dataset.keep) g.remove(); });
+}
+// Absaetze, die nicht mehr ganz auf ihre Seite passen, rutschen an den Anfang
+// der naechsten. Ein Block, der hoeher als eine Seite ist (etwa ein sehr langes
+// Bild), bleibt stehen und laeuft ueber die Grenze; er laesst sich nicht
+// schieben, ohne den Text zu zerteilen.
+function paginateA4() {
+  if (!isA4() || $('#vE').classList.contains('hidden')) return;
+  clearTimeout(a4Timer);
+  clearGaps(false);
+  for (let pass = 0; pass < 3; pass++) {
+    let moved = false;
+    const top0 = page.getBoundingClientRect().top;
+    for (const el of [...page.children]) {
+      if (el.classList.contains('pggap')) continue;
+      const r = el.getBoundingClientRect();
+      if (r.height > A4_H - A4_PAD_T - A4_PAD_B - 2) continue;
+      const top = r.top - top0;
+      const idx = Math.max(0, Math.floor((top - A4_PAD_T + 1) / A4_STRIDE));
+      const limit = idx * A4_STRIDE + A4_H - A4_PAD_B;
+      if (r.bottom - top0 > limit + 0.5) {
+        const gap = document.createElement('div');
+        gap.className = 'pggap';
+        gap.contentEditable = 'false';
+        gap.style.height = Math.max(0, Math.round((idx + 1) * A4_STRIDE + A4_PAD_T - top)) + 'px';
+        el.before(gap);
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+  // Blattzahl aus dem tiefsten Inhalt, dann Hoehe und Papierblaetter setzen.
+  const top0 = page.getBoundingClientRect().top;
+  let bottom = 0;
+  for (const el of page.children) {
+    if (el.classList.contains('pggap')) continue;
+    bottom = Math.max(bottom, el.getBoundingClientRect().bottom - top0);
+  }
+  const count = Math.max(1, Math.ceil((bottom + A4_PAD_B - 1) / A4_STRIDE));
+  page.style.height = Math.round(count * A4_STRIDE - 24) + 'px';
+  const layer = sheetLayer();
+  layer.style.top = page.offsetTop + 'px';
+  layer.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const sheet = document.createElement('div');
+    sheet.className = 'sheet';
+    sheet.style.top = Math.round(i * A4_STRIDE) + 'px';
+    layer.append(sheet);
+  }
+}
+function schedulePaginate() {
+  if (!isA4()) return;
+  clearTimeout(a4Timer);
+  a4Timer = setTimeout(paginateA4, 60);
+}
+// Modus setzen: Klasse, Hoehe, Blaetter und der Merker am Dokument.
+function setMode(m) {
+  const mode = m === 'a4' ? 'a4' : 'flow';
+  page.classList.toggle('a4', mode === 'a4');
+  page.classList.remove('printing');
+  if (mode !== 'a4') {
+    clearGaps(true);
+    page.style.removeProperty('height');
+    if (a4Sheets) a4Sheets.innerHTML = '';
+  }
+  const cur = currentDocEntry();
+  if (cur) cur.mode = mode;
+  try { localStorage.setItem('edDocMode', mode); } catch {}
+  if (mode === 'a4') paginateA4();
+}
+
+// Die Frage beim Anlegen eines Dokuments: durchlaufende Seite oder A4-Blaetter.
+function askDocMode() {
+  const d = $('#docNewDlg');
+  if (!d) return Promise.resolve('flow');
+  return new Promise(res => {
+    let done = false;
+    const fin = v => { if (done) return; done = true; if (d.open) d.close(); res(v); };
+    $('#dnFlow').onclick = () => fin('flow');
+    $('#dnA4').onclick = () => fin('a4');
+    $('#docNewX').onclick = () => fin(null);
+    d.oncancel = e => { e.preventDefault(); fin(null); };
+    d.showModal();
+    setTimeout(() => { const b = $('#dnFlow'); if (b) b.focus(); }, 40);
+  });
+}
+async function newDocDialog() {
+  const m = await askDocMode();
+  if (m) newDoc(m);
+}
+function caretToStart(el) {
+  if (!el) return;
+  const r = document.createRange();
+  r.setStart(el, 0);
+  r.collapse(true);
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  page.focus();
+}
+// Strg+Enter auf A4: kein Umbruchzeichen, sondern der Cursor springt an den
+// Anfang der naechsten Seite. Gibt es dort noch keinen Text, entsteht ein
+// leerer Absatz, der auf die naechste Seite rutscht.
+function jumpNextPage() {
+  const s = getSelection();
+  if (!s.rangeCount || !page.contains(s.anchorNode)) return;
+  const top0 = page.getBoundingClientRect().top;
+  let el = s.anchorNode;
+  while (el && el.parentNode !== page) el = el.parentNode;
+  const top = el && el !== page ? el.getBoundingClientRect().top - top0 : 0;
+  const idx = Math.max(0, Math.floor((top - A4_PAD_T + 1) / A4_STRIDE));
+  const target = (idx + 1) * A4_STRIDE + A4_PAD_T;
+  const next = [...page.children].filter(n => !n.classList.contains('pggap'))
+    .find(n => n.getBoundingClientRect().top - top0 >= target - 1);
+  if (next) { caretToStart(next); next.scrollIntoView({ block: 'center' }); return; }
+  const p = document.createElement('p');
+  p.innerHTML = '<br>';
+  page.append(p);
+  const pTop = p.getBoundingClientRect().top - top0;
+  if (pTop < target - 1) {
+    const gap = document.createElement('div');
+    gap.className = 'pggap';
+    gap.contentEditable = 'false';
+    gap.dataset.keep = '1';
+    gap.style.height = Math.max(0, Math.round(target - pTop)) + 'px';
+    p.before(gap);
+  }
+  paginateA4();
+  caretToStart(p);
+  p.scrollIntoView({ block: 'center' });
+  page.dispatchEvent(new Event('input'));
+}
+
+// Fuer den PDF-Export: je Seite ein eigenes Blatt, gefuellt mit genau den
+// Bloecken, die im Fenster auf dieser Seite stehen. Was der Nutzer sieht, ist
+// damit auch das, was gedruckt wird — gleiche Seite, gleiche Zeile.
+function buildPrintPages() {
+  clearPrintPages();
+  const top0 = page.getBoundingClientRect().top;
+  const groups = [];
+  for (const el of page.children) {
+    if (el.classList.contains('pggap')) continue;
+    const r = el.getBoundingClientRect();
+    const idx = Math.max(0, Math.floor((r.top - top0 - A4_PAD_T + 1) / A4_STRIDE));
+    (groups[idx] = groups[idx] || []).push(el.cloneNode(true));
+  }
+  const wrap = document.createElement('div');
+  wrap.id = 'printPages';
+  const count = Math.max(1, groups.length);
+  for (let i = 0; i < count; i++) {
+    const sheet = document.createElement('div');
+    sheet.className = 'pp';
+    // Umbruch nur hinter einem Blatt, nicht hinter dem letzten: sonst haengt
+    // Chromium eine leere Seite an.
+    if (i < count - 1) { sheet.style.breakAfter = 'page'; sheet.style.pageBreakAfter = 'always'; }
+    (groups[i] || []).forEach(k => sheet.append(k));
+    wrap.append(sheet);
+  }
+  page.append(wrap);
+  page.classList.add('printing');
+}
+function clearPrintPages() {
+  const w = page.querySelector('#printPages');
+  if (w) w.remove();
+  page.classList.remove('printing');
+}
+
+function newDoc(mode) {
   // Ein bereits leeres, ungespeichertes Dokument wird wiederverwendet, statt
   // fuer jeden Klick auf "Neu" eine weitere leere Karte anzulegen.
+  const m = mode === 'a4' ? 'a4' : 'flow';
   const cur = currentDocEntry();
-  if (cur && !cur.id && !page.textContent.trim() && !page.querySelector('img,hr')) { applyDocEntry(cur); return; }
-  setDoc('<p><br></p>');
+  if (cur && !cur.id && !page.textContent.trim() && !page.querySelector('img,hr')) {
+    cur.mode = m; applyDocEntry(cur); return;
+  }
+  setDoc('<p><br></p>', null, m);
 }
+
 // ---------- Sitzungsdokumente ----------
 // Jedes in dieser Sitzung geoeffnete Dokument bleibt als Eintrag in ED.docs
 // erhalten. Der aktive Eintrag wird vor jedem Wechsel aus der Seite
@@ -1043,7 +1255,7 @@ function currentDocEntry() { return ED.docs.find(d => d.key === ED.docKey) || nu
 function syncDocEntry() {
   const e = currentDocEntry();
   if (!e) return;
-  e.html = page.innerHTML;
+  e.html = docHtml();
   e.name = docName();
 }
 // Die aktive Seite wird bei jeder Aenderung (kurz verzoegert) nach
@@ -1052,12 +1264,13 @@ function syncDocEntry() {
 // geschrieben werden - sonst steht in der Ablage noch der alte Text.
 function flushDoc() {
   clearTimeout(saveTimer);
-  try { localStorage.setItem('edDoc', page.innerHTML); } catch {}
+  try { localStorage.setItem('edDoc', docHtml()); } catch {}
   try { localStorage.setItem('edDocId', ED.docId || ''); } catch {}
+  try { localStorage.setItem('edDocMode', pageMode()); } catch {}
 }
 function isDocDirty(d) {
   if (!d) return false;
-  if (d.key === ED.docKey) d.html = page.innerHTML;
+  if (d.key === ED.docKey) d.html = docHtml();
   const temp = document.createElement('div');
   temp.innerHTML = d.html || '';
   const hasContent = !!(temp.textContent.trim() || temp.querySelector('img,hr'));
@@ -1073,18 +1286,19 @@ function applyDocEntry(e) {
   try { localStorage.setItem('edDocId', ED.docId || ''); } catch {}
   page.innerHTML = e.html || '<p><br></p>';
   initImages();
+  setMode(e.mode || 'flow');
   edReset();
   page.dispatchEvent(new Event('input'));
   page.scrollTop = 0;
 }
-function setDoc(html, id = null) {
+function setDoc(html, id = null, mode = null) {
   syncDocEntry();
   let e = id ? ED.docs.find(d => d.id === id) : null;
   if (!e) {
     const isBlank = !html || html === '<p><br></p>';
-    e = { key:'s' + (++ED.docSeq), id:id || null, name:t('libUntitled'), html: html || '<p><br></p>', savedHtml: isBlank ? (html || '<p><br></p>') : (id ? html : null) };
+    e = { key:'s' + (++ED.docSeq), id:id || null, name:t('libUntitled'), html: html || '<p><br></p>', savedHtml: isBlank ? (html || '<p><br></p>') : (id ? html : null), mode: mode === 'a4' ? 'a4' : 'flow' };
     ED.docs.push(e);
-  }
+  } else if (mode) e.mode = mode === 'a4' ? 'a4' : 'flow';
   applyDocEntry(e);
   e.name = docName();
 }
@@ -1126,11 +1340,12 @@ async function libUpsert() {
   const cur0 = currentDocEntry();
   const name = (cur0 && cur0.renamed && cur0.name) || docName();
   try {
-    const m = await window.api.libSave({ id: ED.docId, name, html: page.innerHTML });
+    const html = docHtml();
+    const m = await window.api.libSave({ id: ED.docId, name, html, mode: pageMode() });
     if (m && m.id) {
       ED.docId = m.id;
       const cur = currentDocEntry();
-      if (cur) { cur.id = m.id; cur.name = m.name || name; cur.html = page.innerHTML; cur.savedHtml = page.innerHTML; }
+      if (cur) { cur.id = m.id; cur.name = m.name || name; cur.html = html; cur.savedHtml = html; }
       try { localStorage.setItem('edDocId', m.id); } catch {}
     }
     return m;
@@ -1196,10 +1411,14 @@ async function doSave(kind) {
   // Nur der PDF-Export druckt die Seite: dort muessen die Bilder in die
   // bedruckbare Flaeche passen (Abschnitt 126).
   if (kind === 'pdf') fitImagesForPrint(true);
+  // Auf DIN-A4-Blaettern wird gedruckt, was auf dem Schirm steht: je Seite ein
+  // eigenes Blatt, gefuellt mit den Absaetzen genau dieser Seite.
+  const a4 = kind === 'pdf' && isA4();
+  if (a4) buildPrintPages();
   let saved = false;
-  try { saved = await window.api.saveFile(name, data, kind); }
+  try { saved = await window.api.saveFile(name, data, kind, { a4 }); }
   catch { edStatus(t('readErr')); }
-  finally { if (kind === 'pdf') fitImagesForPrint(false); }
+  finally { if (a4) clearPrintPages(); if (kind === 'pdf') fitImagesForPrint(false); }
   // Erst nach dem Zuruecksetzen der Druckwerte in die Ablage: sonst landete der
   // Zoom-Faktor im gespeicherten HTML. Ein erfolgreicher Export landet
   // zusaetzlich in der Ablage, damit erstellte Dateien dort ohne eigenen
@@ -2157,6 +2376,7 @@ function initImages() {
     const nw = im.naturalWidth || 0, nh = im.naturalHeight || 0;
     im.replaceWith(mkEdImage({ src: im.getAttribute('src') || '', w: nw ? Math.min(nw, IMG_ED_W) : IMG_ED_W, h: nh }));
   });
+  schedulePaginate();
 }
 
 // Rechtsklick auf ein Bild: drehen, spiegeln, loeschen.
@@ -2315,7 +2535,7 @@ async function libOpen(id) {
   try { e = await window.api.libRead(id); } catch {}
   if (!e) return edStatus(t('readErr'));
   const clean = cleanHtml(e.html);
-  setDoc(clean, id);
+  setDoc(clean, id, e.mode);
   const cur = currentDocEntry();
   // Ein in der Ablage vergebener Name gilt weiter, auch wenn die Ueberschrift
   // im Dokument anders lautet.
@@ -2937,8 +3157,9 @@ function updWords() {
 document.execCommand('defaultParagraphSeparator', false, 'p');
 page.innerHTML = localStorage.getItem('edDoc') || '<p><br></p>';
 ED.docId = localStorage.getItem('edDocId') || null;
-ED.docs = [{ key:'s0', id:ED.docId, name:docName(), html:page.innerHTML, savedHtml:null }];
+ED.docs = [{ key:'s0', id:ED.docId, name:docName(), html:page.innerHTML, savedHtml:null, mode: localStorage.getItem('edDocMode') === 'a4' ? 'a4' : 'flow' }];
 ED.docKey = 's0';
+setMode(ED.docs[0].mode);
 // Der geladene Stand ist der Anfang des Stapels; ohne diesen Punkt gaebe es
 // fuer die erste Tipp-Einheit keinen Zustand davor (Abschnitt 154).
 edReset();
@@ -3015,8 +3236,8 @@ page.addEventListener('input', e => {
   if (edPulse) edPulse = false;
   else if (e.inputType && e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') edTextTouch(e);
   if (S.edMarkdown && (e.data === ' ' || e.inputType === 'insertText')) handleMarkdownTrigger();
-  updWords(); scheduleScan(); clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => { try { localStorage.setItem('edDoc', page.innerHTML); } catch {} }, 800);
+  updWords(); scheduleScan(); schedulePaginate(); clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { try { localStorage.setItem('edDoc', docHtml()); } catch {} }, 800);
   // Undo/Redo: keine alten Diff-Markierungen wiederherstellen
   if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && diffPanel.classList.contains('hidden')) {
     cleanMarks();
@@ -3466,7 +3687,7 @@ function showView(v) {
   $('#nvSrs').classList.toggle('active', v === 'srs');
   S.view = v; save(); closePops(); $('#trPop').classList.add('hidden'); hideBar();
   dockClose();
-  if (v === 'ed') { updWords(); scheduleScan(); }
+  if (v === 'ed') { updWords(); scheduleScan(); paginateA4(); }
   if (v === 'lib') drawLib();
   if (v === 'txt' && window.studyTextsRender) window.studyTextsRender();
   if (v === 'read' && window.studyRestore) window.studyRestore();
