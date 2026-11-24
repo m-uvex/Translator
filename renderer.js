@@ -220,7 +220,8 @@ const K = {
   s_ttsHint:['Stimmen werden einmal heruntergeladen und sprechen danach ohne Netz. Ohne eigene Stimme spricht die Systemstimme.','Voices are downloaded once and then speak offline. Without a downloaded voice the system voice speaks.'],
   ttsOn:['Installiert','Installed'],
   ttsOnlySys:['Für Niederländisch, Türkisch und Arabisch spricht die Systemstimme.','For Dutch, Turkish and Arabic the system voice speaks.'],
-  ttsMeta:['Was bedeuten die Angaben?','What do these details mean?'],
+  infoMore:['Was bedeuten die Angaben?','What do these details mean?'],
+  mtMore:['Weitere Modelle …','More models …'],
   ttsMore:['Weitere Stimmen …','More voices …'],
   infoShow:['Infos ansehen','See details'],
   infoH:['Stimmen und Modelle im Vergleich','Voices and models compared'],
@@ -447,7 +448,8 @@ const NL = {
   s_ttsHint:'Stemmen worden één keer gedownload en spreken daarna zonder netwerk. Zonder eigen stem spreekt de systeemstem.',
   ttsOn:'Geïnstalleerd',
   ttsOnlySys:'Voor Nederlands, Turks en Arabisch spreekt de systeemstem.',
-  ttsMeta:'Wat betekenen de gegevens?',
+  infoMore:'Wat betekenen de gegevens?',
+  mtMore:'Meer modellen …',
   ttsMore:'Meer stemmen …',
   infoShow:'Details bekijken', infoH:'Stemmen en modellen vergeleken',
   infoIntro:'Tempo, bereik en kwaliteit in woorden – gemeten op deze computer, niet geschat.',
@@ -628,7 +630,8 @@ const ES = {
   s_ttsHint:'Las voces se descargan una vez y después hablan sin red. Sin una voz propia habla la voz del sistema.',
   ttsOn:'Instalada',
   ttsOnlySys:'Para neerlandés, turco y árabe habla la voz del sistema.',
-  ttsMeta:'¿Qué significan los datos?',
+  infoMore:'¿Qué significan los datos?',
+  mtMore:'Más modelos …',
   ttsMore:'Más voces …',
   infoShow:'Ver detalles', infoH:'Voces y modelos comparados',
   infoIntro:'Velocidad, alcance y calidad en palabras: medido en este equipo, no estimado.',
@@ -810,7 +813,8 @@ const TR = {
   s_ttsHint:'Sesler bir kez indirilir, sonra ağ olmadan konuşur. Kendi sesiniz yoksa sistem sesi konuşur.',
   ttsOn:'Yüklü',
   ttsOnlySys:'Hollandaca, Türkçe ve Arapça için sistem sesi konuşur.',
-  ttsMeta:'Bu bilgiler ne anlama geliyor?',
+  infoMore:'Bu bilgiler ne anlama geliyor?',
+  mtMore:'Daha fazla model …',
   ttsMore:'Daha fazla ses …',
   infoShow:'Bilgileri gör', infoH:'Sesler ve modeller karşılaştırması',
   infoIntro:'Hız, kapsam ve kalite kelimelerle – bu bilgisayarda ölçüldü, tahmin değil.',
@@ -992,7 +996,8 @@ const AR = {
   s_ttsHint:'تُنزَّل الأصوات مرة واحدة ثم تتحدث دون شبكة. وبدون صوت خاص يتحدث صوت النظام.',
   ttsOn:'مثبّت',
   ttsOnlySys:'للغة الهولندية والتركية والعربية يتحدث صوت النظام.',
-  ttsMeta:'ماذا تعني هذه البيانات؟',
+  infoMore:'ماذا تعني هذه البيانات؟',
+  mtMore:'نماذج أخرى …',
   ttsMore:'أصوات أخرى …',
   infoShow:'عرض التفاصيل', infoH:'مقارنة الأصوات والنماذج',
   infoIntro:'السرعة والنطاق والجودة بالكلمات — مقيسة على هذا الحاسوب، لا مقدّرة.',
@@ -1566,13 +1571,16 @@ async function loadModels() {
   const nllbUp = await loadNllb();
   const waiting = !ollamaUp || (/nllb=1/.test(location.search) && !nllbUp);
   if (waiting && retries++ < 40) setTimeout(loadModels, 3000);
-  MODEL_OPTS = Object.keys(caps).filter(n => caps[n].includes('completion')).map(n => ({ value:n, label:n, vision:hasVision(n), thinking:isThinking(n) }));
+  MODEL_OPTS = Object.keys(caps).filter(n => caps[n].includes('completion')).map(n => ({ value:n, label:shortModel(n), vision:hasVision(n), thinking:isThinking(n) }));
   MT_MODELS.filter(m => m.installed).forEach(m => MODEL_OPTS.push({ value:`${m.family}:${m.id}`, label:`${m.familyLabel || m.family} ${m.id}` }));
-  if (!ollamaUp && S.pref && !isMt(S.pref) && !MODEL_OPTS.some(o => o.value === S.pref)) MODEL_OPTS.unshift({ value:S.pref, label:S.pref });
+  if (!ollamaUp && S.pref && !isMt(S.pref) && !MODEL_OPTS.some(o => o.value === S.pref)) MODEL_OPTS.unshift({ value:S.pref, label:shortModel(S.pref) });
   if (!MODEL_OPTS.length) { S.model = ''; updModelBtn(); return status(ollamaUp ? t('noModels') : t('waitOllama')); }
   S.model = MODEL_OPTS.some(o => o.value === S.pref) ? S.pref : MODEL_OPTS[0].value;
   status(waiting ? t('waitOllama') : ''); fixLangs(); updModelBtn(); upd(); save(); if (S.bootModel && !window._warmedUp && S.model) { window._warmedUp = true; warmupModel(S.model); } if (window.edModels) window.edModels();
 }
+// Anzeigename fuer Modellzeilen: Hub-Tags beginnen mit "hf.co/<nutzer>/", das
+// sprengt Zeile und Pille. Der Pfad faellt weg, die Quantisierung bleibt.
+const shortModel = n => String(n || '').replace(/^hf\.co\/[^/]+\//, '');
 const modelIcons = o => (o.vision ? `<span class="mi" title="${t('visionTip')}">${ic('eye', 15)}</span>` : '') + (o.thinking ? `<span class="mi" title="${t('thinkTip')}">${ic('bulb', 15)}</span>` : '');
 
 function warmupModel(model) {
@@ -1606,6 +1614,16 @@ async function modelPop(btn) {
     r.onclick = () => { S.pref = S.model = o.value; fixLangs(); updModelBtn(); upd(); save(); closePops(); };
     p.append(r);
   });
+  // Nur eingerichtete Modelle stehen im Waehler. Der Weg zu den anderen ist die
+  // letzte Zeile der Gruppe (wie "Weitere Stimmen ..." unter der Aussprache) und
+  // oeffnet die Einstellungen beim Modell-Abschnitt.
+  const more = document.createElement('div');
+  more.className = 'row'; more.textContent = t('mtMore');
+  more.onclick = () => {
+    closePops(); $('#openSettings').click();
+    setTimeout(() => { const b = $('#mtBox'); if (b) b.scrollIntoView({ block:'center' }); }, 300);
+  };
+  p.append(more);
   const r = btn.getBoundingClientRect(); Object.assign(p.style, { left:Math.max(8, r.right - 300) + 'px', top:r.bottom + 6 + 'px' }); p.classList.remove('hidden');
   // Die Aussprache steht im selben Waehler, aber als eigene Gruppe: eine Stimme
   // ist kein Uebersetzungsmodell und darf die Uebersetzung nicht umstellen.
@@ -2719,7 +2737,7 @@ function drawSettings() {
   const tbField = () => subCard('s_edTbGroup', TB_SUB);
   const byKey = Object.fromEntries(FIELDS.map(f => [f[0], f]));
   $('#setBody').innerHTML = GROUPS.map(([h, ks]) => `<h3 class="sect">${t(h)}</h3>` + ks.map(k => typeof k === 'string' ? field(byKey[k]) : (k.bar ? barField() : tbField())).join('')).join('') +
-    `<h3 class="sect">${t('nllbH')}<button class="ghost minib" data-info="mt">${esc(t('infoShow'))}</button></h3><div id="mtBox"></div>` +
+    `<h3 class="sect">${t('nllbH')}</h3><div id="mtBox"></div>` +
     `<h3 class="sect">${t('s_ttsH')}</h3><div id="ttsBox"></div>` +
     `<p class="muted" data-htk="1" data-t="${hotkeyKey()}"></p>`;
   $('#setBody').querySelectorAll('[data-k]').forEach(el => { const v = S[el.dataset.k]; el.value = el.dataset.bool ? (v ? '1' : '0') : v; });
@@ -2811,11 +2829,37 @@ function tgRow(tag) {
   const name = String(tag || TG_TAG).split(':')[1] || TG_TAG;
   // Die Groesse ist nur fuer 4b bekannt; bei anderen Kennungen bleibt sie weg,
   // statt eine falsche Zahl zu behaupten.
-  const gb = gbTxt((tag && MODEL_GB[tag]) || (name === '4b' ? TG_GB : 0));
-  const state = [gb, tag ? t('mInst') : t('mNot')].filter(Boolean).join(' · ');
-  return `<div class="mgroup"><b>TranslateGemma</b><div class="mrow"><div><b>${esc(name)}</b><div class="muted">${state}</div></div>` +
-    `<button class="ghost" data-act="${tag ? 'tg-delete' : 'tg-install'}" data-id="${esc(tag || TG_TAG)}" data-gb="${(tag && MODEL_GB[tag]) || TG_GB}"${mtTgBusy ? ' disabled' : ''}>${mtTgBusy ? t('bBusy') : tag ? t('bDel') : t('bDl')}</button></div></div>`;
+  const gbNum = (tag && MODEL_GB[tag]) || (name === '4b' ? TG_GB : 0);
+  const meta = mtChips(gbTxt(gbNum), [t('langsN', 55), t('spFast'), t('qMid')].join(' · '));
+  const act = tag
+    ? `<button class="ib" data-act="tg-delete" data-id="${esc(tag)}" data-gb="${gbNum}" title="${esc(t('bDel'))}" aria-label="${esc(t('bDel'))}">${ic('trash', 16)}</button>`
+    : `<button class="ghost" data-act="tg-install" data-id="${esc(TG_TAG)}" data-gb="${TG_GB}"${mtTgBusy ? ' disabled' : ''}>${mtTgBusy ? esc(t('bBusy')) : esc(t('bDl'))}</button>`;
+  return `<div class="mgroup"><b>TranslateGemma</b><div class="mrow"><div><b>${esc(name)}</b>` +
+    (tag ? `<span class="mstat">${esc(t('mInst'))}</span>` : '') + meta + `</div>${act}</div></div>`;
 }
+// Zeile und Angaben-Marken fuer ein Uebersetzungsmodell. Dieselbe Ordnung wie
+// im Abschnitt "Aussprache": Name fett, Zustand nur als Abzeichen, Groesse und
+// Angaben als Marken; der Fortschritt tritt waehrend des Ladens an ihre Stelle.
+const mtChips = (gb, info) => {
+  const parts = [gb, ...(info ? String(info).split(' · ') : [])].filter(Boolean);
+  return parts.length ? `<div class="mchips">${parts.map(c => `<span>${esc(c)}</span>`).join('')}</div>` : '';
+};
+function mtRow(m) {
+  const id = `${m.family}:${m.id}`;
+  const meta = m.downloading
+    ? `<div class="muted">${esc(t('mLoad', Math.round((m.progress || 0) * 100)))}</div>`
+    : m.error ? `<div class="muted">${esc(t('mErr', m.error))}</div>`
+    : mtChips(gbTxt(m.gb), mtInfoText(m.family, m.id));
+  const gb = m.gb == null ? '' : m.gb;
+  const act = m.installed
+    ? `<button class="ib" data-act="delete" data-id="${esc(id)}" data-gb="${gb}" title="${esc(t('bDel'))}" aria-label="${esc(t('bDel'))}">${ic('trash', 16)}</button>`
+    : `<button class="ghost" data-act="install" data-id="${esc(id)}" data-gb="${gb}"${m.downloading ? ' disabled' : ''}>${m.downloading ? esc(t('bBusy')) : esc(t('bDl'))}</button>`;
+  return `<div class="mrow"><div><b>${esc(m.id)}</b>` +
+    (m.installed ? `<span class="mstat">${esc(t('mInst'))}</span>` : '') + meta + `</div>${act}</div>`;
+}
+// Der Weg zu den Vergleichstabellen steht am Ende der Liste, nicht im Kopf:
+// fuer Modelle und Stimmen derselbe Knopf, derselbe Dialog.
+const mtInfoLink = () => `<div class="mrow"><button class="ghost minib" data-info="mt">${esc(t('infoMore'))}</button></div>`;
 // ---------- Aussprache: Stimmen mit Angaben ----------
 // Jede Zeile nennt Groesse, Tempo und Qualitaet in Worten. Die Zahlen sind auf
 // diesem Rechner gemessen (Echtzeitfaktor), nicht geschaetzt; der Fortschritt
@@ -2847,7 +2891,7 @@ async function drawTts() {
   }).join('');
   box.innerHTML = `<div class="muted">${esc(t('s_ttsHint'))}</div>` + rows +
     `<div class="muted mnote">${esc(t('ttsOnlySys'))}</div>` +
-    `<div class="mrow"><button class="ghost minib" data-info="tts">${esc(t('ttsMeta'))}</button></div>`;
+    `<div class="mrow"><button class="ghost minib" data-info="tts">${esc(t('infoMore'))}</button></div>`;
 }
 
 async function ttsAction(act, id) {
@@ -2908,19 +2952,16 @@ async function drawMt() {
     // Ohne Server gibt es keine Modellliste, aber einen Knopf, der die
     // Python-Umgebung einrichtet; TranslateGemma bleibt unabhaengig davon holbar.
     box.innerHTML = `<div class="muted">${t('serverDown')}</div>` +
-      `<div class="mrow"><div></div><button class="ghost" data-act="setup">${t('srvSetup')}</button></div>` + tgRow(tg);
+      `<div class="mrow"><div></div><button class="ghost" data-act="setup">${t('srvSetup')}</button></div>` +
+      tgRow(tg) + mtInfoLink();
     return;
   }
   const fam = {}, groups = {};
   list.forEach(m => { fam[m.family] = m.familyLabel || m.family; (groups[m.family] ||= []).push(m); });
-  box.innerHTML = Object.entries(groups).map(([f, ms]) => `<div class="mgroup"><b>${fam[f] || f}</b>` + ms.map(m =>
-    `<div class="mrow"><div><b>${m.id}</b><div class="muted">${[gbTxt(m.gb), m.downloading ? t('mLoad', Math.round((m.progress || 0) * 100)) : m.error ? t('mErr', m.error) : m.installed ? t('mInst') : t('mNot')].filter(Boolean).join(' · ')}</div>` +
-    (mtInfoText(m.family, m.id) ? `<div class="muted">${esc(mtInfoText(m.family, m.id))}</div>` : '') + '</div>' +
-    `<button class="ghost" data-act="${m.installed ? 'delete' : 'install'}" data-id="${m.family}:${m.id}" data-gb="${m.gb == null ? '' : m.gb}"${m.downloading ? ' disabled' : ''}>${m.downloading ? t('bBusy') : m.installed ? t('bDel') : t('bDl')}</button></div>`).join('') + '</div>').join('') + tgRow(tg);
-  const busyNow = list.some(m => m.downloading); clearTimeout(mtPoll);
-  if (busyNow) { mtBusy = true; if ($('#settings').open) mtPoll = setTimeout(drawMt, 1500); }
-  else if (mtBusy) { mtBusy = false; loadModels(); }
+  box.innerHTML = Object.entries(groups).map(([f, ms]) => `<div class="mgroup"><b>${esc(fam[f] || f)}</b>` +
+    ms.map(mtRow).join('') + '</div>').join('') + tgRow(tg) + mtInfoLink();
 }
+
 async function mtAction(b) {
   const { act, id, gb } = b.dataset, mid = (id || '').split(':')[1];
   if (act === 'tts-install' || act === 'tts-delete') return ttsAction(act, id);
