@@ -1,6 +1,6 @@
 {
  "name": "uebersetzer",
- "version": "1.15.179",
+ "version": "1.15.180",
  "private": true,
  "description": "Lokaler Übersetzer und Texteditor mit Ollama, NLLB-200, HY-MT, MiLMMT-46 und TranslateGemma",
  "author": "Janek",

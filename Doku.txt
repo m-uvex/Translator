@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.179 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.180 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2953,3 +2953,17 @@ Dieselbe Knopfzeile schließt auch die Liste der Übersetzermodelle ab — hinte
 - Kopfzeile „Vokabeln üben · 3 fällig · Spanisch · Deutsch“ unverändert.
 
 **Grenzen:** Nur dunkles Erscheinungsbild und nur der Quelllauf; die installierte Fassung wurde gestartet und über `/health` geprüft, die Kopfzeile darin aber nicht angesehen. Nicht als Bild angesehen, kein Hover mit echter Maus.
+## 205. Wortblase verschwindet mit dem Lesefenster (1.15.180)
+
+**Fehler.** Ein angetipptes Wort hinterlässt eine Blase mit der Übersetzung (`.wchip`, `showChip()`), die an der Bildschirmstelle des Wortes hängt. Sie verschwand bei Fensterverlust, Minimieren und Scrollen (`blur`, `visibilitychange`, `scroll`), aber nicht beim Wechsel des Arbeitsplatzes: Wurde ein Lesetext über „Zurück“ geschlossen, blieb „der dürfen / nass werden / durchweichen“ mitten über der Textliste stehen — ohne Text, zu dem sie gehörte.
+
+**Jetzt.** `showView()` in `editor.js` meldet jeden Ansichtswechsel an einen neuen Hook `window.studyChipHalt` (in `study.js`: `() => killChip()`), direkt neben dem vorhandenen `ttsReadHalt`. Die Blase verschwindet damit beim Zurück, beim Wechsel über die Seitenleiste (Vokabeln, Üben, Ablage, Übersetzer) und über die Knöpfe am Textende. Der angetippte Eintrag selbst bleibt gespeichert; es geht nur die Blase.
+
+**Geprüft (Quelllauf 1.15.180, Messung über CDP):**
+
+- Lesetext geöffnet, Blase über `showChip()` gesetzt: 1 `.wchip` im Dokument; nach Klick auf `#rBack` (`S.view` = `txt`): 0.
+- Zweite Blase im Lesen, Wechsel nach `voc`: 1 → 0.
+- Blase im Übersetzer, Wechsel in die Ablage (`lib`): 1 → 0.
+- `typeof window.studyChipHalt` = `function`.
+
+**Grenzen:** Nur der Quelllauf; ein echtes Antippen eines Wortes wurde nicht ausgelöst (das braucht das Übersetzungsmodell), die Blase kam über dieselbe Funktion `showChip()`, die auch `pickWord()` benutzt. Nicht als Bild angesehen. Ob eine Blase auch beim Löschen des offenen Textes verschwindet, wurde nicht geprüft.

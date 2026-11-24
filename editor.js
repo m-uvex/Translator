@@ -3473,6 +3473,10 @@ function showView(v) {
   // Eine laufende Vorlesung gehoert zur Leseoberflaeche; in jedem anderen
   // Arbeitsplatz waere sie ohne sichtbaren Knopf weitergelaufen (study.js).
   if (v !== 'read' && window.ttsReadHalt) window.ttsReadHalt();
+  // Eine Wortblase haengt an der angetippten Stelle im Text. Wird der
+  // Arbeitsplatz gewechselt, schwebte sie ueber der fremden Liste weiter
+  // (study.js: studyChipHalt).
+  if (window.studyChipHalt) window.studyChipHalt();
   if (v === 'voc' && window.studyVocRender) window.studyVocRender();
   if (v === 'srs' && window.studySrsRender) window.studySrsRender();
   if (v === 'tr' && window.trAlignSide) window.trAlignSide();

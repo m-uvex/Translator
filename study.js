@@ -919,6 +919,10 @@ function killChip() {
   if (ST.chip) { ST.chip.remove(); ST.chip = null; }
   clearTimeout(ST.chipTimer);
 }
+// Ein Wechsel des Arbeitsplatzes nimmt die Blase mit: sie haengt an der
+// angetippten Stelle im Text und stand sonst ueber der Textliste weiter, wenn
+// das Lesefenster schon geschlossen war. editor.js: showView.
+window.studyChipHalt = () => killChip();
 
 // Fehlermeldung als Blase: bleibt vier Sekunden stehen und verschwindet dann.
 function chipFail(anchor, msg) {
