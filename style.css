@@ -961,3 +961,7 @@ body.tblresizing #page{user-select:none}
    Die Gruppen stehen als .dacts in der Zeile, damit Zaehler und Platzierelemente
    daneben unberuehrt bleiben. */
 .dacts{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(max-content,1fr);gap:8px}
+/* Ghost-Knoepfe tragen 13px, Primary erbt die 15px des Fensters. In einer
+   Zeile mit gleichen Rahmen sah das nach zwei verschiedenen Groessen aus:
+   hier bekommen alle Knoepfe einer Aktionszeile dieselbe Schrift und Hoehe. */
+.dacts button,.setupacts button,.txacts button,.stacts button,.vxacts button{font-size:15px;height:38px;padding:0 18px;display:inline-flex;align-items:center;justify-content:center}

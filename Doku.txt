@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.186 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.187 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -3057,3 +3057,16 @@ Dieselbe Knopfzeile schließt auch die Liste der Übersetzermodelle ab — hinte
 **Gemessen im Quelllauf** (`--remote-debugging-port=9363`, Profil `%TEMP%/a4run`, dunkles Erscheinungsbild): Knopfbreiten in den Dialogen — Text hinzufügen 123/123 px, Vokabel bearbeiten 111/111, ungespeichertes Schließen mit den Texten „Abbrechen“/„Verwerfen“ 114/114, Story 115/115/115, Bilddialog 44/44/44 (leere Beschriftungen im Ruhezustand). A4-Dokument mit 20 Absätzen: Strg+Enter am Ende ergibt 21 Absätze, Strg+Z wieder 20 bei unverändertem Text (2650 Zeichen, letzter Absatz vorhanden), die Seitenaufteilung steht danach wieder mit einem Platzhalter und zwei Blättern; Strg+Y führt zurück auf 21. Durchlaufende Seite: Strg+Enter 0 → 1 Trennlinie, Strg+Z wieder 0.
 
 **Grenzen.** Nur deutsch und dunkles Erscheinungsbild geprüft, die Zahlen gelten für die deutschen Beschriftungen; in anderen Sprachen gäbe das längste Wort die Breite vor. Die Dialoge wurden nicht als Bild angesehen. Der Sprung mit Strg+Enter ohne neuen Absatz (wenn auf der nächsten Seite schon Text steht) ändert nichts am Dokument und ist deshalb erwartungsgemäß kein eigener Rückgängig-Schritt.
+## 212. Eine Schriftgröße in den Dialogzeilen (1.15.187)
+
+**Anlass.** „Bei manchen oder vielleicht sogar allen der Knöpfe, deren Größe zu angleichen solltest, hast du zwar den Rahmen des Knopfes, aber nicht sie Schrift darin größer gemacht und bei ihnen sieht das noch immer merkwürdig vom Größenverhältnis aus.“
+
+**Ursache.** Die Rahmen waren seit 1.15.186 gleich breit, die Schrift darin aber nicht: `.ghost` trägt `font-size:13px` und `padding:6px 14px`, `.primary` erbt die 15px des Fensters und hat `padding:8px 22px`. In einer Zeile mit zwei gleich breiten Pillen stand also „Abbrechen“ in 13 px neben „Hinzufügen“ in 15 px, und die Höhen unterschieden sich um einige Pixel (31 gegen 38).
+
+**Jetzt.** Eine Regel für alle Knöpfe der Aktionszeilen: `.dacts button,.setupacts button,.txacts button,.stacts button,.vxacts button{font-size:15px;height:38px;padding:0 18px;display:inline-flex;align-items:center;justify-content:center}`. Damit tragen beide Arten dieselbe Schrift und dieselbe Höhe; die Farbe bleibt der einzige Unterschied. Die Zeile „Datei wählen / Einfügen“ im Text-Dialog hat dieselbe Höhe, damit die Reihe nicht auseinanderfällt.
+
+**Gemessen im Quelllauf** (`--remote-debugging-port=9364`, dunkles Erscheinungsbild, 120 %): Text hinzufügen — „Abbrechen“ 115 × 38 px/15 px, „Hinzufügen“ 115 × 38 px/15 px, daneben „Datei wählen“ 146 × 38 px/15 px und „Einfügen“ 118 × 38 px/15 px; Vokabel bearbeiten 108/108; ungespeichertes Schließen („Abbrechen“/„Verwerfen“) 108/108; Einrichtungsdialog („Später“/„Einrichten“) 146/146. Alle mit 15 px Schrift und 38 px Höhe.
+
+**Angesehen als Bild.** Der Dialog „Text hinzufügen“ mit allen vier Knöpfen: gleiche Höhe, gleiche Schriftgröße, „Abbrechen“ und „Hinzufügen“ gleich breit.
+
+**Grenzen.** Nur deutsch und dunkles Erscheinungsbild; die Zahlen gelten für die deutschen Beschriftungen. Die Wirkung in den anderen fünf Sprachen ist nicht angesehen.
