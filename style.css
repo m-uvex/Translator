@@ -363,9 +363,12 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .rfootbar .tsel{max-width:200px}
 /* Vokabel-Arbeitsplatz */
 #vV{display:flex;flex-direction:column;padding:12px 12px 12px 0;gap:8px;min-height:0}
-.vbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:0 4px}
-.vadd{display:flex;gap:6px;flex:1 1 320px;min-width:0}
-.vadd input{flex:1;min-width:0;font:inherit;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 16px;outline:0}
+.vbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:0 4px}
+/* Eingabefeld und sein Knopf sind ein Stueck: der runde Knopf (Plus bzw.
+   Loeschkreuz) sitzt im Pill, nicht daneben. Erst danach beginnt die
+   Werkzeugreihe, deshalb bleibt zwischen Feld und Symbolen etwas Luft. */
+.vadd{position:relative;display:flex;flex:1 1 320px;min-width:0}
+.vadd input{flex:1;min-width:0;font:inherit;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 56px 8px 16px;outline:0}
 .vadd input:focus{border-color:var(--accent)}
 /* Suchfeld: die Lupe sitzt im Feld selbst, damit das eine Feld im Kopf der
    Ansicht sofort als Suche zu erkennen ist und nicht wie das Eingabefeld
@@ -375,8 +378,10 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .vadd.has-lead input{padding-inline-start:42px}
 /* Die Leiste traegt nur Symbolknoepfe wie die uebrigen Leisten der App; das
    Eintragen ist der eine gefuellte Knopf (Kreis in der Akzentfarbe). */
-.vacts{display:flex;gap:2px;align-items:center;flex-wrap:wrap}
-.vadd .ib{width:34px;height:34px;border-radius:50%}
+.vacts{display:flex;gap:2px;align-items:center;flex-wrap:wrap;margin-inline-start:4px}
+.vacts .vgrp{display:flex;align-items:center;gap:2px}
+.vacts .vgrp + .vgrp{margin-inline-start:14px}
+.vadd .ib{position:absolute;inset-inline-end:7px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%}
 .vadd .ib.go{background:var(--accent);color:var(--on-accent)}
 .vadd .ib.go:hover{background:var(--accent-hover);color:var(--on-accent)}
 .rfootbar .ib{width:34px;height:34px;border-radius:50%}
@@ -443,11 +448,6 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .pairbar .ib{width:30px;height:30px;border-radius:50%}
 .pairbar .pill:hover{border-color:var(--accent)}
 .libhead .pairbar{margin-inline-start:auto}
-/* Die Symbolknoepfe im Kopf gehoeren zu verschiedenen Aufgaben; ein etwas
-   groesserer Abstand fasst sie zu Gruppen zusammen (suchen/filtern/auswaehlen,
-   Modell), statt sie als eine lange Reihe gleicher Knoepfe zu zeigen. */
-.libhead .hgrp{display:flex;align-items:center;gap:2px}
-.libhead .hgrp + .hgrp{padding-inline-start:14px}
 
 /* Lese-Arbeitsplatz: eigene Liste der Lesetexte. Die Dokumentenablage (#vL)
    zeigt nur Dokumente; beide nutzen dasselbe Kartenraster, damit sie sich

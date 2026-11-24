@@ -461,14 +461,13 @@ function renderVocab() {
   // Lupe und Trichter zeigen wie die anderen Knoepfe, ob sie gerade wirken.
   const fb = $('#vocFilterBtn');
   if (fb) fb.classList.toggle('on', ST.vocFilter !== 'all');
-  const fr = $('#vocFindRow'), sb = $('#vocFindBtn');
-  const finding = !!fr && !fr.classList.contains('hidden');
+  const fw = $('#vocFindWrap'), sb = $('#vocFindBtn');
+  const finding = !!fw && !fw.classList.contains('hidden');
   if (sb) sb.classList.toggle('on', finding);
-  // Immer nur eine Leiste: die Suche ersetzt das Eingabefeld, die Auswahl
-  // ebenso. Zwei gleich aussehende Felder uebereinander waren der
-  // unuebersichtlichste Teil dieser Ansicht.
-  const addRow = $('#vocAddRow');
-  if (addRow) addRow.classList.toggle('hidden', finding || !!ST.selMode);
+  // Immer nur ein Feld an derselben Stelle: die Suche ersetzt die Eingabe, die
+  // Auswahl blendet sie ebenfalls aus. Die Werkzeuge rechts bleiben stehen.
+  const aw = $('#vocAddWrap');
+  if (aw) aw.classList.toggle('hidden', finding || !!ST.selMode);
 }
 window.studyVocRender = renderVocab;
 
@@ -2231,13 +2230,13 @@ function wire() {
   });
   // Suche: die Lupe klappt das Feld auf, Tippen filtert sofort.
   $('#vocFindBtn').onclick = () => {
-    const row = $('#vocFindRow');
-    const open = row.classList.contains('hidden');
-    row.classList.toggle('hidden', !open);
+    const wrap = $('#vocFindWrap');
+    const open = wrap.classList.contains('hidden');
+    wrap.classList.toggle('hidden', !open);
     $('#vocFindBtn').classList.toggle('on', open);
-    // Das Eingabefeld weicht der Suche, statt sich darunter zu stapeln.
-    const addRow = $('#vocAddRow');
-    if (addRow) addRow.classList.toggle('hidden', open);
+    // Das Eingabefeld weicht der Suche; die Werkzeuge bleiben an ihrem Platz.
+    const aw = $('#vocAddWrap');
+    if (aw) aw.classList.toggle('hidden', open);
     if (open) { $('#vocFind').value = ST.vocFind; vocFindClearSync(); $('#vocFind').focus(); }
     else { $('#vocFind').value = ''; ST.vocFind = ''; renderVocab(); }
   };

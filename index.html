@@ -58,9 +58,18 @@
     <div id="readerWrap"><article id="reader"></article></div>
   </div>
   <div id="vV" class="view hidden">
-    <header class="libhead"><h2 data-t="vocTitle"></h2><span class="sp"></span><span class="pairbar" id="vocPair"></span><span class="muted" id="vocCount"></span><span class="hgrp"><button class="ib" id="vocFindBtn" data-i="search" data-tt="vocSearchT"></button><button class="ib" id="vocFilterBtn" data-i="funnel" data-tt="vocFilterT"></button><button class="ib" id="vocSelBtn" data-i="checklist" data-tt="vocSelectT"></button></span><span class="hgrp"><button class="ib" data-study-model></button></span></header>
-    <div class="vbar" id="vocAddRow"><div class="vadd"><input id="vocTerm" data-ph="vocTermPh"><button class="ib go" id="vocAddBtn" data-i="plus" data-tt="vocAdd"></button></div><div class="vacts"><button class="ib" id="vocFillBtn" data-i="filltr" data-tt="vocFillT"></button><button class="ib" id="vocCsvExp" data-i="download" data-tt="csvExp"></button><button class="ib" id="vocCsvImp" data-i="upload" data-tt="csvImp"></button></div></div>
-    <div class="vbar hidden" id="vocFindRow"><div class="vadd has-lead"><span class="lead" data-i="search" aria-hidden="true"></span><input id="vocFind" data-ph="vocFindPh" autocomplete="off" spellcheck="false"><button class="ib" id="vocFindClear" data-i="x" data-tt="vocFindClear"></button></div></div>
+    <header class="libhead"><h2 data-t="vocTitle"></h2><span class="sp"></span><span class="pairbar" id="vocPair"></span><span class="muted" id="vocCount"></span><button class="ib" data-study-model></button></header>
+    <!-- Eingabe und Suche teilen sich denselben Platz; die Werkzeuge rechts
+         bleiben dabei stehen. Links die Lupe/der Trichter/die Auswahl (wirken
+         auf die Liste), rechts Nachtragen und die beiden Dateiknoepfe. -->
+    <div class="vbar">
+      <div class="vadd" id="vocAddWrap"><input id="vocTerm" data-ph="vocTermPh"><button class="ib go" id="vocAddBtn" data-i="plus" data-tt="vocAdd"></button></div>
+      <div class="vadd has-lead hidden" id="vocFindWrap"><span class="lead" data-i="search" aria-hidden="true"></span><input id="vocFind" data-ph="vocFindPh" autocomplete="off" spellcheck="false"><button class="ib hidden" id="vocFindClear" data-i="x" data-tt="vocFindClear"></button></div>
+      <div class="vacts">
+        <span class="vgrp"><button class="ib" id="vocFindBtn" data-i="search" data-tt="vocSearchT"></button><button class="ib" id="vocFilterBtn" data-i="funnel" data-tt="vocFilterT"></button><button class="ib" id="vocSelBtn" data-i="checklist" data-tt="vocSelectT"></button></span>
+        <span class="vgrp"><button class="ib" id="vocFillBtn" data-i="filltr" data-tt="vocFillT"></button><button class="ib" id="vocCsvExp" data-i="download" data-tt="csvExp"></button><button class="ib" id="vocCsvImp" data-i="upload" data-tt="csvImp"></button></span>
+      </div>
+    </div>
     <div class="vbar hidden" id="vocSelBar"><span class="muted" id="vocSelCount"></span><span class="sp"></span><button class="ib" id="vocSelAllBtn" data-i="checkAll" data-tt="vocSelAll"></button><button class="ib" id="vocSelRepeatBtn" data-i="practice" data-tt="repStartT"></button><button class="ib" id="vocSelDelBtn" data-i="x" data-tt="vocSelDel"></button><button class="ib" id="vocSelEndBtn" data-i="back" data-tt="vocSelEnd"></button></div>
     <div id="vocMsg" class="vmsg hidden"></div>
     <div id="vocList" class="vlist"></div>

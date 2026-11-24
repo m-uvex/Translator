@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.163 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.164 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2654,3 +2654,27 @@ Zustandsabfrage im laufenden Fenster: `#vocAddRow` und `#vocFindRow` sind nie gl
 | Nichts fällig | Kreis mit Haken, „Nichts fällig.“ und der gedämpfte Hinweis darunter |
 
 **Grenzen:** Nur dunkles Erscheinungsbild. Sehr lange Kontextsätze (mehr als zwei Zeilen) nicht durchgespielt — die Begrenzung auf 46 Zeichen und die Mindesthöhe sind so gewählt, dass die Karte mitwächst, geprüft ist das aber nicht. Die Endlos-Runde (`.srscard.typing` mit eigener Beschriftung) übernimmt die neuen Maße, wurde aber nur im Tipp-Modus des Wiederholens angesehen. An der Bewertungslogik und den Tastenkürzeln hat sich nichts geändert.
+
+## 189. Vokabeln: Werkzeuge in einer Reihe (1.15.164)
+
+**Rückmeldung.** Die Symbole wirkten durcheinander: vier im Kopf (Lupe, Trichter, Checkliste, Prozessor), drei in der Eingabezeile (Nachtragen, Export, Import) und dazwischen das Plus — das Muster war zu erahnen, aber nicht ablesbar.
+
+**Was jetzt anders ist.**
+
+- **Der Prozessor steht allein im Kopf** neben „Englisch ⇄ Deutsch“ und dem Zähler: er ist eine Einstellung („womit werden Wörter übersetzt“), keine Aktion auf der Liste.
+- **Alle Listenwerkzeuge stehen in *einer* Reihe rechts neben dem Feld**, in der Reihenfolge, in der man sie braucht: Lupe, Trichter, Checkliste — dann 14 px Luft — Nachtragen, Export, Import. Zwei Gruppen, ein Abstand, keine Linien.
+- **Das Plus sitzt im Pill**, nicht mehr daneben: Eingabefeld und Eintragen sind ein Stück (`position:absolute` im `.vadd`, Eingabe mit 56 px Rechtseinzug). Beim Suchen steht dort das Löschkreuz an derselben Stelle.
+- **Suche und Eingabe teilen sich denselben Platz.** Vorher waren es zwei Zeilen (`.vbar` + `#vocFindRow`); jetzt sind es zwei Wrapper im selben Feld, von denen immer nur einer sichtbar ist (`#vocAddWrap` / `#vocFindWrap`). Die Werkzeuge bleiben beim Umschalten an ihrem Platz, sie springen nicht.
+- Abstand zwischen Feld und Werkzeugreihe 12 px (`.vbar`-Abstand) + 4 px (`margin-inline-start` am `.vacts`), damit die Symbole nicht am Pill kleben.
+
+**Geprüft (Quelllauf 1.15.164, 1600 × 1000, Profil `%TEMP%\u238`, drei Vokabeln, dunkles Erscheinungsbild):**
+
+| Zustand | Beobachtung |
+|---|---|
+| normal | Kopf: Englisch ⇄ Deutsch · 3 Vokabeln · Prozessor. Zeile: Pill mit blauem Plus innen, dahinter Lupe/Trichter/Checkliste, 16 px Abstand, Nachtragen/Export/Import |
+| Suche offen | dasselbe Feld zeigt innen links die Lupe, rechts das Kreuz; Text „ha“, Liste auf „house Haus“ gefiltert; die Werkzeugreihe steht unverändert an ihrem Platz |
+| Auswahl | Feld weg, Werkzeugreihe bleibt oben, darunter „0 ausgewählt“ mit den vier Auswahlknöpfen |
+
+Messwerte im Fenster: beide Werkzeuggruppen je 112 px breit, 16 px Abstand dazwischen, 6 Knöpfe in `.vacts`; `node --check study.js` ohne Fehler.
+
+**Grenzen:** Nur dunkles Erscheinungsbild. Schmales Fenster nicht erneut geprüft — die Reihe bricht weiterhin um (`flex-wrap`), dann stehen die Werkzeuge unter dem Feld. Die Tastaturbedienung (Fokusreihenfolge im DOM) hat sich geändert, weil die Knöpfe jetzt im Feld-Container statt im Kopf liegen; mit Tab durchgegangen ist das nicht.
