@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.161 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.162 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2620,3 +2620,13 @@ Verworfen, weil sie mit dieser Engine abbrechen: `en_US-hfc_female-medium`, `es_
 Zustandsabfrage im laufenden Fenster: `#vocAddRow` und `#vocFindRow` sind nie gleichzeitig sichtbar (`display:none` für die jeweils andere), `#vocSelCount` liest „1 ausgewählt“. `node --check study.js` ohne Fehler.
 
 **Grenzen:** Nur das dunkle Erscheinungsbild angesehen; die helle Fassung (falls genutzt) nicht geprüft. Die Reihenfolge und Funktion der Knöpfe ist unverändert, nur ihre Anordnung und Sichtbarkeit. Ein echtes Eintragen über das Feld wurde nicht versucht (die Vokabeln kamen über `addVocab` in die Testkopie). Schmales Fenster (unter ~700 px) nicht durchgespielt — die Leisten brechen dort weiterhin um (`flex-wrap`).
+
+## 187. Vokabeln: Trennstriche wieder entfernt (1.15.162)
+
+**Rückmeldung.** Die Trennstriche aus §186 wirkten unsinnig — zwischen Lupe/Trichter/Checkliste und dem Prozessor-Symbol stand eine Linie, und zwischen Plus und den drei Dateiknöpfen noch eine. Beide sind weg.
+
+**Was bleibt.** Die Gruppen selbst bleiben: `.hgrp` ist weiter im HTML, der Abstand zwischen zwei Gruppen wächst von 2 px (Abstand innerhalb einer Gruppe) auf 14 px (`padding-inline-start`). Damit liest man „Werkzeuge der Liste“ und „Modell“ weiterhin als zwei Blöcke, ohne dass eine Linie gezeichnet wird. Der `.vsep`-Span vor „Übersetzungen nachtragen / Export / Import“ ist aus `index.html` entfernt, die CSS-Regel gelöscht; die drei Knöpfe sitzen jetzt einfach mit normalem Abstand neben dem Plus.
+
+**Geprüft (Quelllauf 1.15.162):** `document.querySelectorAll('.vsep').length` → 0, `getComputedStyle(.libhead .hgrp + .hgrp, '::before').content` → `none`; Screenshot der installierten 1.15.162 zeigt Lupe, Trichter, Checkliste und Prozessor ohne Linien, die drei Dateiknöpfe ohne Trenner.
+
+**Grenzen:** Nur dunkles Erscheinungsbild; schmales Fenster nicht erneut durchgespielt (an den Umbrüchen hat sich nichts geändert).
