@@ -1101,6 +1101,13 @@ async function addFromSearch() {
 // kannte — trägt das Modell nach. Vorher wird gefragt, und jedes Wort geht mit
 // seinem Kontextsatz mit, damit die Übersetzung zur Stelle passt. Nach jedem
 // Eintrag wird gespeichert, damit ein langer Lauf nicht verloren geht.
+// "los abuelos (pl.)" -> "los abuelos": die Klammer stammt aus der Wortliste
+// und beschreibt die Form, sie ist kein Teil des Wortes.
+const termClean = s => String(s || '')
+  .replace(/\s*\((?:pl\.|sing\.|Sg\.|Pl\.|irr\.|[a-z]{1,2}-[a-z]{1,2})\)/gi, '')
+  .replace(/\s+/g, ' ')
+  .trim();
+
 async function fillMissingTranslations() {
   const todo = ST.vocab.filter(e => inPair(e) && !String(e.translation || '').trim());
   if (!todo.length) { vocStatus(t('vocFillNone')); return; }
@@ -1114,9 +1121,17 @@ async function fillMissingTranslations() {
     try {
       // Eine einzige, zum Satz passende Uebersetzung: die Liste braucht keine
       // Bedeutungsvarianten, sondern den einen Treffer.
-      const r = await translateTerm(e.term, e.context || '', pairOf(e), true);
-      if (!e.translation && r.translation) e.translation = r.translation;
-      if (!e.gender && r.gender) { e.gender = r.gender; e.article = r.article || ''; }
+      // Angaben aus dem Herkunftstext ("(pl.)", "(irr.)", "(c-qu)") gehoeren
+      // nicht ins Wort: sie gingen sonst als Teil der Uebersetzung zurueck.
+      const term = termClean(e.term);
+      const r = await translateTerm(term, e.context || '', pairOf(e), true);
+      const tr = cleanTranslation(String(r.translation || '')
+        .replace(/\s*\((?:Artikel|article)[^)]*\)/gi, '')
+        .replace(/\s+/g, ' ').trim());
+      // Eine "Uebersetzung", die nur das Wort selbst wiederholt, ist keine.
+      if (!tr || ansNorm(tr) === ansNorm(term)) throw new Error('same');
+      if (!e.translation) e.translation = tr;
+      if (!e.gender && r.gender) { e.gender = r.gender; e.article = /^(der|die|das)$/i.test(r.article || '') ? r.article : ''; }
       if (!e.pos && r.pos) e.pos = r.pos;
       done++;
     } catch { fails++; }
@@ -1230,7 +1245,6 @@ function rate(e, how) {
 let srsQueue = [], srsShow = false;
 function maskTerm(text, term) {
   if (!text) return '';
-  const re = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'giu');
   // Die Luecke ist ein Strich, keine Unterstrich-Zeichen: Breite nach der Laenge
   // der Loesung (ohne Leerzeichen), gedeckelt, damit lange Woerter die Zeile
   // nicht sprengen. Fuer die Sprachausgabe ist der Strich stumm (aria-hidden).
@@ -1238,7 +1252,13 @@ function maskTerm(text, term) {
     const w = Math.min(5, Math.max(2.2, m.replace(/\s+/g, '').length * 0.5)).toFixed(1);
     return `<span class="srsblank" style="min-width:${w}em" aria-hidden="true"></span>`;
   };
-  return esc(text).replace(re, bar);
+  const rx = v => new RegExp(String(v).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'giu');
+  // Steht das Wort im Satz ohne seinen Artikel ("Mis abuelos" zu "los abuelos"),
+  // wird ohne Artikel gesucht: sonst bliebe die Loesung im Satz stehen.
+  for (const form of [...new Set([term, bareTerm(term, S.studySrc)].filter(Boolean))]) {
+    if (rx(form).test(text)) return esc(text).replace(rx(form), bar);
+  }
+  return esc(text);
 }
 
 // ---------- Mastery-Modus: tippen ----------
@@ -1341,10 +1361,18 @@ const repForms = s => [...new Set([repFold(s), repSpell(s)].filter(Boolean))];
 // Die Zeichen, die auf einer deutschen Tastatur fuer die gelernte Sprache
 // fehlen (Tabelle EXTRA_CHARS), als Knoepfe ueber dem Eingabefeld.
 const repChars = () => [...new Set(EXTRA_CHARS[S.studySrc] || '')];
+// Ohne fuehrenden Artikel, damit "abuelos" auch fuer "los abuelos" gilt.
+const bareTerm = (x, lang) => {
+  const w = String(x || '').trim().split(/\s+/);
+  const arts = (ARTICLES[lang || S.studySrc] || []).map(a => a[0]);
+  return arts.includes(String(w[0] || '').toLowerCase()) ? w.slice(1).join(' ') : String(x || '');
+};
 function termOk(e, typed) {
   const got = repForms(typed);
   if (!got.length) return false;
-  return [e.term, e.lemma].some(w => repForms(w).some(x => got.includes(x)));
+  return [e.term, e.lemma, bareTerm(e.term), bareTerm(e.lemma)]
+    .filter(Boolean)
+    .some(w => repForms(w).some(x => got.includes(x)));
 }
 
 function startRepeat(ids) {
@@ -1465,47 +1493,74 @@ function typeFill() {
   for (const e of due) if (!typeQueue.includes(e.id)) typeQueue.push(e.id);
 }
 
+// Die Karte zeigt den Satz in der gelernten Sprache mit der Luecke und darunter
+// die Uebersetzung; getippt wird das Wort in der gelernten Sprache, also genau
+// das, was in die Luecke gehoert. Vorher stand dort das Wort selbst und gefragt
+// war die Uebersetzung, was mit dem Satz darueber nichts zu tun hatte.
+let typeHold = null;
 function typeCheck() {
+  if (typeHold) return;
   const e = ST.vocab.find(v => v.id === typeQueue[0]); if (!e) return;
   const inp = $('#srsIn');
   if (!inp || !inp.value.trim()) return;
-  if (answerOk(e, inp.value)) {
+  const ok = termOk(e, inp.value);
+  if (ok) {
     e.mastery = Math.min(MASTER, (Number(e.mastery) || 0) + 1);
     rate(e, 'good');
-    srsNote = { ok: true, text: t('srsRight') + (isMastered(e) ? ' · ' + t('srsMastered') : '') };
+    srsNote = { ok: true, id: e.id, text: t('srsRight') + (isMastered(e) ? ' · ' + t('srsMastered') : '') };
     typeQueue.shift();
   } else {
     // Falsch: Wort nach hinten, Meisterschaft zuruecksetzen, Loesung zeigen.
     e.mastery = 0;
     rate(e, 'again');
-    srsNote = { ok: false, text: t('srsWrong') + ' ' + solutionOf(e) };
+    srsNote = { ok: false, id: e.id, text: t('srsWrong') + ' ' + e.term };
     typeQueue.push(typeQueue.shift());
   }
+  // Die Karte bleibt mit ihrer Antwort stehen, bis "Weiter" kommt; sonst stuende
+  // die Korrektur schon unter dem naechsten Wort.
+  typeHold = { id: e.id, ok, typed: inp.value };
   persist('vocab');
   renderVocab();
+  renderSrs();
+}
+
+function typeNext() {
+  if (!typeHold) return;
+  typeHold = null;
+  srsNote = null;
   renderSrs();
   const next = $('#srsIn'); if (next) next.focus();
 }
 
 function renderType(box, due) {
-  typeFill();
-  const e = ST.vocab.find(v => v.id === typeQueue[0]);
-  const note = srsNote ? `<div class="srsnote ${srsNote.ok ? 'ok' : 'bad'}">${esc(srsNote.text)}</div>` : '';
+  if (!typeHold) typeFill();
+  const e = typeHold ? ST.vocab.find(v => v.id === typeHold.id) : ST.vocab.find(v => v.id === typeQueue[0]);
+  const note = (srsNote && srsNote.id === (typeHold ? typeHold.id : (e && e.id)))
+    ? `<div class="srsnote ${srsNote.ok ? 'ok' : 'bad'}">${esc(srsNote.text)}</div>` : '';
   if (!e) {
     const anyLeft = due.some(x => !isMastered(x));
     box.innerHTML = `<div class="srsempty"><p>${esc(anyLeft ? t('srsNone') : t('srsAllMastered'))}</p><p class="muted">${esc(t('srsMasteredHint'))}</p></div>${note}`;
     return;
   }
   const ctx = e.context ? maskTerm(e.context, e.term) : '';
-  const chars = extraChars().map(ch => `<button class="ch" data-ch="${esc(ch)}">${esc(ch)}</button>`).join('');
+  const sol = solutionOf(e);
+  // Zeichen, die auf einer deutschen Tastatur fuer die gelernte Sprache fehlen
+  // (im Spanischen ¿ ¡ á é í ó ú ü ñ), nicht die der eigenen Sprache.
+  const chars = typeHold ? '' : repChars().map(ch => `<button class="ch" data-ch="${esc(ch)}">${esc(ch)}</button>`).join('');
   box.innerHTML = `<div class="srscard typing">
     ${ctx ? `<div class="srsctx">${ctx}</div>` : ''}
-    <div class="srsword">${esc(e.term)}</div>
-    <div class="srsinput"><input id="srsIn" autocomplete="off" spellcheck="false" placeholder="${esc(t('srsTypeIn'))}"><button class="ib go" id="srsCheckBtn" title="${esc(t('srsCheck'))}">${ic('check', 18)}</button></div>
+    <div class="srsword">${esc(sol || e.term)}</div>
+    <div class="srsinput${typeHold ? ' locked' : ''}"><input id="srsIn" autocomplete="off" spellcheck="false"${typeHold ? ` readonly value="${esc(typeHold.typed)}"` : ''} placeholder="${esc(t('repTypeIn'))}"><button class="ib go" id="srsCheckBtn"${typeHold ? ' disabled' : ''} title="${esc(t('srsCheck'))}">${ic('check', 18)}</button></div>
     ${chars ? `<div class="charbar" title="${esc(t('srsChars'))}">${chars}</div>` : ''}
     <div class="srsmastery muted">${esc(t('srsMastered'))} ${Math.min(MASTER, Number(e.mastery) || 0)} / ${MASTER}</div>
     ${note}
+    ${typeHold ? `<div class="srsbtns one"><button class="primary" id="typeNext">${esc(t('srsQuizNext'))}</button></div>` : ''}
   </div>`;
+  if (typeHold) {
+    const nx = box.querySelector('#typeNext');
+    if (nx) { nx.onclick = typeNext; nx.focus(); }
+    return;
+  }
   const inp = box.querySelector('#srsIn');
   if (inp) {
     inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); typeCheck(); } });
@@ -1534,6 +1589,18 @@ function quizFill() {
 // Die Loesung und bis zu drei andere Woerter aus demselben Paar. Gleiche
 // Wortart kommt zuerst, damit die Auswahl die Antwort nicht ueber die Wortart
 // verraet; doppelte Schreibweisen fliegen raus, sonst gaebe es zwei richtige.
+// Die Wortart steht in den Daten uneinheitlich (noun, Substantiv, n, verb, ...).
+// Fuer die Auswahl zaehlt nur die Gruppe, nicht das geschriebene Wort.
+const posGroup = p => {
+  const x = nrm(p || '');
+  if (!x) return '';
+  if (/^(n|noun|nomen|substantiv|sustantivo)$/.test(x)) return 'noun';
+  if (/verb/.test(x)) return 'verb';
+  if (/^(adj|adjektiv|adjective|adjetivo)$/.test(x)) return 'adj';
+  if (/^(adv|adverb|adverbio)$/.test(x)) return 'adv';
+  return x;
+};
+
 function quizChoices(e) {
   const seen = new Set([ansNorm(e.term)]);
   const others = [];
@@ -1544,8 +1611,9 @@ function quizChoices(e) {
     seen.add(k);
     others.push(v);
   }
-  const same = repShuffle(others.filter(v => e.pos && v.pos === e.pos));
-  const rest = repShuffle(others.filter(v => !(e.pos && v.pos === e.pos)));
+  const g = posGroup(e.pos);
+  const same = repShuffle(others.filter(v => g && posGroup(v.pos) === g));
+  const rest = repShuffle(others.filter(v => !(g && posGroup(v.pos) === g)));
   return repShuffle([e, ...[...same, ...rest].slice(0, 3)]);
 }
 
@@ -1695,7 +1763,7 @@ function renderSrs() {
   });
 }
 window.studySrsRender = () => {
-  srsShow = false; srsNote = null; typeQueue = [];
+  srsShow = false; srsNote = null; typeQueue = []; typeHold = null;
   quizOpts = []; quizPick = -1; quizDone = null;
   srsQueue = ST.vocab.filter(e => inPair(e) && (e.due || todayISO()) <= todayISO());
   renderSrs();
@@ -2382,7 +2450,7 @@ function vocFindClearSync() {
     S.srsType = !S.srsType;
     if (S.srsType) S.srsQuiz = false;
     save();
-    typeQueue = []; srsNote = null;
+    typeQueue = []; srsNote = null; typeHold = null;
     quizQueue = []; quizOpts = []; quizPick = -1; quizDone = null;
     renderSrs();
   };
@@ -2392,7 +2460,7 @@ function vocFindClearSync() {
     S.srsQuiz = !S.srsQuiz;
     if (S.srsQuiz) S.srsType = false;
     save();
-    typeQueue = []; srsNote = null;
+    typeQueue = []; srsNote = null; typeHold = null;
     quizQueue = []; quizOpts = []; quizPick = -1; quizDone = null;
     renderSrs();
   };

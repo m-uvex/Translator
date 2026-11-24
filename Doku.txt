@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.170 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.171 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2788,3 +2788,30 @@ Auf dem Screenshot liegt „Abbrechen“ bläulich getönt mit hellblauer Schrif
 - Beim Zeigen der Maus über einer Option: Akzentrahmen und leichter Akzentfilm (dieselbe Rückmeldung wie bei den übrigen Knöpfen aus §194).
 
 **Grenzen:** Nur dunkles Erscheinungsbild und nur das Paar Englisch → Deutsch angesehen; die arabische und türkische Beschriftung ist gesetzt, aber nicht im laufenden Fenster geprüft. Die Endlos-Runde blendet beide Umschalter aus (unverändert), das wurde nicht neu durchgeklickt. Ein Eintrag ohne Übersetzung wird im Auswahl-Modus übersprungen, weil ohne Übersetzung keine Frage entsteht.
+
+## 196. Tipp-Modus fragt das Wort der gelernten Sprache (1.15.171)
+
+**Vorher.** Die Karte zeigte den Beispielsatz mit der Lücke und darunter das **Wort selbst** („los abuelos“); gefragt war die deutsche Übersetzung. Wer den Satz las, hatte mit der Lücke nichts zu tun, und im Satz stand die Lösung ohnehin.
+
+**Jetzt.** Oben der Satz in der gelernten Sprache mit der Lücke, darunter die **deutsche Entsprechung** („die Großeltern“), und getippt wird das **spanische Wort**. Der Satz ist die Frage, die Übersetzung der Hinweis, die Lücke die Antwort — wie in der Auswahl aus §195, nur selbst geschrieben.
+
+- Vergleich über `termOk()`: Groß-/Kleinschreibung, fehlende Akzente („semaforo“ für „semáforo“), Umschreibungen (ae/oe/ue, ss) und ein fehlender Artikel dürfen abweichen („abuelos“ gilt für „los abuelos“). Grundlage ist die Tabelle `ARTICLES`, die schon beim Speichern den Artikel vom Wort trennt.
+- Die Zeichenleiste zeigt jetzt die Zeichen der **gelernten** Sprache (`repChars()`: ¿ ¡ á é í ó ú ü ñ), nicht mehr die der eigenen (ä ö ü ß).
+- Der Platzhalter im Feld heißt „Wort eintippen …“ statt „Übersetzung eingeben …“.
+- Der Satz wird auch ohne Artikel des Wortes ausgespart: steht „los abuelos“ im Bestand, im Satz aber „Mis abuelos“, sucht `maskTerm()` zusätzlich die Form ohne Artikel und setzt dort die Lücke. Vorher blieb die Lösung in solchen Sätzen stehen.
+
+**Korrektur bleibt stehen.** Vorher sprang die Karte sofort weiter und die Meldung stand schon unter dem **nächsten** Wort — im Bild des Nutzers also „los abuelos“ mit „richtig ist: die Arroba“. Jetzt hält die Karte nach der Antwort an: das Getippte bleibt lesbar, darunter steht „Richtig“ bzw. „Leider falsch — richtig ist: <Wort>“, und erst „Weiter“ (oder Enter) holt die nächste Karte. Die Meldung trägt dafür die Kennung des Eintrags (`srsNote.id`) und erscheint nur bei der Karte, zu der sie gehört.
+
+**Nachtragen repariert (§ 1.15.171).** `fillMissingTranslations()` schickt jetzt das Wort ohne Formangabe aus der Wortliste ans Modell (`termClean()`: „los abuelos (pl.)“ → „los abuelos“), entfernt Hinweise wie „(Artikel nachtragen)“ aus der Antwort und verwirft eine „Übersetzung“, die nur das Wort selbst wiederholt. Ein Artikel wird nur übernommen, wenn er der/die/das ist.
+
+**Eigene Vokabeln.** Die 617 spanischen Einträge wurden einmalig geradegezogen (Sicherung: `vocab.json.bak-20261124-111546` im Profil unter `study/`): 6 Wörter ohne Formangabe, 38 Übersetzungen korrigiert (u. a. „la actividad“ → „die Aktivität“, „la Educación Física“ → „der Sportunterricht“, „el semáforo“ → „die Ampel“, „el guion bajo“ → „der Unterstrich“, „caminas“ → „du gehst“, „muchas veces“ → „oft“, neun leere Funktionswörter wie „tu“/„yo“/„pero“ ergänzt), 112 Beispielsätze repariert („Mis los abuelos (pl.)“ → „Mis abuelos“, „a el“ → „al“, „Mi el gato“ → „Mi gato“, Großbuchstaben am Satzanfang, Platzhalter „No context“ entfernt) und 71 Angaben zu Artikel/Geschlecht bereinigt (kein „der Guten Tag!“ mehr; Artikel nur noch bei Substantiven, abgeleitet aus m/f/n).
+
+**Geprüft (Quelllauf 1.15.171, 1600 × 1000, dunkel, Paar Spanisch → Deutsch, fünf Einträge):**
+
+- Karte „los abuelos“: Satz „Mis ▁▁▁▁ son muy simpáticos y viven en Toledo.“ (Lücke 3,5 em), darunter „die Großeltern“, Feld-Platzhalter „Wort eintippen …“, Zeichenleiste „¿¡áéíóúüñ“, „Gemeistert 0 / 3“.
+- Falsch getippt („abuelo“): Karte bleibt, Feld gesperrt und zeigt „abuelo“, Meldung „Leider falsch — richtig ist: los abuelos“, Knopf „Weiter“.
+- Enter: nächste Karte „die Ampel“, keine Meldung mehr, Feld wieder bedienbar und fokussiert.
+- Richtig getippt ohne Artikel und ohne Akzent („semaforo“): „Richtig“, „Gemeistert 1 / 3“, „Weiter“ da.
+- Daten: 15 Stichproben stimmen, keine Formangabe mehr im Wort, kein „(Artikel …)“ mehr in einer Übersetzung, kein kaputter Beispielsatz der oben genannten Muster, kein Eintrag ohne Übersetzung.
+
+**Grenzen:** Nur dunkles Erscheinungsbild und nur das Paar Spanisch → Deutsch angesehen. Die Lücke entsteht nur, wenn das Wort (oder seine Form ohne Artikel) im Satz vorkommt; bei stark gebeugten Formen („voy“ in „fui“) bleibt der Satz unverändert und die Karte zeigt nur die Übersetzung — dann verrät der Satz aber auch nichts. Die Beispielsätze der 617 Einträge sind inhaltlich nicht neu geschrieben, nur die genannten Muster bereinigt; Sätze mit freier Wortstellung oder falscher Zeit bleiben, wie sie sind.
