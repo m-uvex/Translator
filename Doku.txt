@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.182 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.183 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -3007,3 +3007,14 @@ Dieselbe Knopfzeile schließt auch die Liste der Übersetzermodelle ab — hinte
 - Angesehen als Bild: Liste mit zwei Karten (Badge, Titel, Vokabelzahl, Bekanntheit), Lesefenster mit Titel links und der kurzen Zeile rechts neben dem Modellknopf.
 
 **Grenzen:** Nur deutsch und dunkles Erscheinungsbild, nur der Quelllauf; die installierte Fassung wurde gestartet und über `/health` geprüft, ihr Kopf aber nicht angesehen. Die Textart bleibt als Abzeichen auf der Karte; ob sie im Lesekopf fehlt, ist eine Entscheidung dieser Änderung, keine Messung.
+## 208. Gleich breite Knöpfe im Einrichtungsdialog (1.15.183)
+
+**Anlass.** „Hier die beiden Knöpfe unten auch gleich groß“ (Bild des Einrichtungsdialogs mit „Später“ und „Einrichten“).
+
+**Vorher.** `.setupacts` war eine Zeile mit `justify-content:flex-end` und `gap:8px`; jeder Knopf bekam nur so viel Breite wie sein Wort. Gemessen im Quelllauf: „Später“ 65 px, „Einrichten“ 112 px, Abstand 8 px, Zeile 578 px breit.
+
+**Jetzt.** Dieselbe Zeile als zweispaltiges Raster: `.setupacts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-width:min(300px,100%);margin:12px 0 0 auto}` — zwei gleich breite Spalten, rechtsbündig, 300 px Blockbreite. Gemessen: beide Knöpfe 146 × 39 px, Abstand 8 px, Block 300 px; Dialog 620 px breit.
+
+**Angesehen als Bild.** Dialog im Quelllauf mit beiden Knöpfen: „Später“ und „Einrichten“ gleich breit, rechts unter dem Text, Abstand wie in der Werkzeugleiste.
+
+**Grenzen.** Nur deutsch und dunkles Erscheinungsbild, nur der Quelllauf bei 120 % Skalierung (Fenster 1500 × 900). In anderen Sprachen sind die Wörter länger; das Raster hält beide Spalten gleich breit, gemessen ist das nur für „Später“/„Einrichten“.

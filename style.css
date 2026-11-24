@@ -710,7 +710,10 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
 .setuplines .sl{white-space:pre-wrap;color:var(--muted)}
 .setuplines .sl.step{color:var(--text)}
 .setuplines .sl.err{color:#d9534f}
-.setupacts{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+/* Die beiden Wege am Ende der Einrichtung sind gleich wichtig: zwei gleich
+   breite Knoepfe rechts, statt einer schmalen Vorgabe ("Später") neben einem
+   breiten "Einrichten". */
+.setupacts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-width:min(300px,100%);margin:12px 0 0 auto}
 #setupMsg.okmsg{color:var(--accent)}
 /* Textmarker und Schriftfarbe: die aktive Farbe steht als schmaler Balken unten
    im Werkzeugknopf, die Palette ist ein 4-mal-3-Raster aus Kreisen. Der
