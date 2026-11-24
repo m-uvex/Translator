@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.178 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.179 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2940,3 +2940,16 @@ Dieselbe Knopfzeile schließt auch die Liste der Übersetzermodelle ab — hinte
 - Gewicht bleibt unterschiedlich (600 gegen 400) — gleiche Größe, nicht gleiche Betonung.
 
 **Grenzen:** Nur deutsches Erscheinungsbild und nur der Quelllauf; die installierte Fassung wurde gestartet und über `/health` geprüft, der Textabschluss darin aber nicht geöffnet. Nicht als Bild angesehen. Sehr lange Beschriftungen anderer Sprachen wurden nicht geprüft: bei mehr Zeilen als in 38 px passen würde der Text abgeschnitten, weil die Höhe fest ist.
+## 204. Übungsarten: 8 px statt 2 px Abstand (1.15.179)
+
+**Vorher.** In §200 war die Kapsel um die beiden Knöpfe entfallen und nur die Lücke auf 2 px geschrumpft. Die Akzentfläche der gewählten Art stieß damit fast an den Nachbarn; die beiden Knöpfe wirkten wie ein einziges, verwaschenes Element.
+
+**Jetzt.** `.libhead .seg{gap:8px}`. Die Knöpfe bleiben als Paar erkennbar, haben aber sichtbar Luft dazwischen; Größe (28 × 28 px), Rundung, fehlende eigene Fläche und die Akzentfläche der gewählten Art bleiben wie in §200.
+
+**Geprüft (Quelllauf 1.15.179, 1600 × 1000, dunkles Erscheinungsbild, Spanisch → Deutsch, Messung über CDP):**
+
+- `gap` = 8 px, gemessener Abstand zwischen den Rändern beider Knöpfe 8 px (vorher 2 px).
+- Beide Knöpfe 28 × 28 px; aktive Art mit Fläche `rgb(90, 169, 224)`.
+- Kopfzeile „Vokabeln üben · 3 fällig · Spanisch · Deutsch“ unverändert.
+
+**Grenzen:** Nur dunkles Erscheinungsbild und nur der Quelllauf; die installierte Fassung wurde gestartet und über `/health` geprüft, die Kopfzeile darin aber nicht angesehen. Nicht als Bild angesehen, kein Hover mit echter Maus.
