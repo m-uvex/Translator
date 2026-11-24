@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.165 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.166 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2701,3 +2701,14 @@ Die Zahlen kommen aus demselben `tts:list`, das auch der Stimmen-Wähler benutzt
 Die Seite misst wie bisher erst auf Klick; die Stimmenzeile wird beim selben Lauf mitgelesen (kein zusätzlicher Netzaufruf, nur zwei `existsSync` je Stimme).
 
 **Grenzen:** Nur dunkles Erscheinungsbild. Die englische Fassung ist gesetzt, aber nicht im laufenden Fenster angesehen (nur die deutschen Texte geprüft). Ein Klick auf die Karte führt bewusst nirgendwohin — eingerichtet werden Stimmen weiter im Aussprache-Menü; das steht so nicht auf der Seite.
+
+## 191. Vokabeln: Plus im Feld rund, ein Trennstrich zwischen den Gruppen (1.15.166)
+
+**Zwei kleine Korrekturen an §189/§190.**
+
+- **Der runde Knopf im Feld war zu groß für den Pill.** 34 px Knopf in einem 40 px hohen Feld (Radius 20): Oben rechts lag die Ecke des Kreises außerhalb der Rundung, er wirkte angeschnitten. Jetzt 30 px mit 9 px Abstand zur Feldkante und 52 px Rechtseinzug im Feld — der Kreis liegt ganz im geraden Teil des Pills. Gleiches gilt für das Löschkreuz der Suche, das an derselben Stelle sitzt.
+- **Ein Trennstrich, und zwar nur hier.** Zwischen „mehrere auswählen“ und „Vokabeln nachtragen“ steht wieder eine dünne Linie (1 px × 18 px, mittig im 14 px breiten Zwischenraum, `.vacts .vgrp + .vgrp::before`). Sonst gibt es weiterhin keine Trennstriche — weder zwischen Lupe/Trichter/Checkliste noch zwischen Nachtragen/Export/Import.
+
+**Geprüft (Quelllauf 1.15.166, 1600 × 1000, Profil `%TEMP%\u242`, drei Vokabeln, dunkles Erscheinungsbild):** Im vergrößerten Ausschnitt sitzt der blaue Kreis vollständig innerhalb der Pill-Rundung mit gleichmäßigem Rand; die Linie steht genau zwischen der Auswahl-Checkliste und dem Nachtragen-Symbol, mit Luft zu beiden Seiten. Im Suchzustand steht sie an derselben Stelle, das Kreuz liegt ebenfalls im Feld.
+
+**Grenzen:** Nur dunkles Erscheinungsbild, nur bei 1600 px Breite angesehen; bei schmalem Fenster bricht die Reihe um und die Linie sitzt dann am Zeilenwechsel (nicht angesehen).

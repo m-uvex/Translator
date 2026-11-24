@@ -368,7 +368,7 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
    Loeschkreuz) sitzt im Pill, nicht daneben. Erst danach beginnt die
    Werkzeugreihe, deshalb bleibt zwischen Feld und Symbolen etwas Luft. */
 .vadd{position:relative;display:flex;flex:1 1 320px;min-width:0}
-.vadd input{flex:1;min-width:0;font:inherit;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 56px 8px 16px;outline:0}
+.vadd input{flex:1;min-width:0;font:inherit;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 52px 8px 16px;outline:0}
 .vadd input:focus{border-color:var(--accent)}
 /* Suchfeld: die Lupe sitzt im Feld selbst, damit das eine Feld im Kopf der
    Ansicht sofort als Suche zu erkennen ist und nicht wie das Eingabefeld
@@ -380,8 +380,9 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
    Eintragen ist der eine gefuellte Knopf (Kreis in der Akzentfarbe). */
 .vacts{display:flex;gap:2px;align-items:center;flex-wrap:wrap;margin-inline-start:4px}
 .vacts .vgrp{display:flex;align-items:center;gap:2px}
-.vacts .vgrp + .vgrp{margin-inline-start:14px}
-.vadd .ib{position:absolute;inset-inline-end:7px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%}
+.vacts .vgrp + .vgrp{margin-inline-start:14px;position:relative}
+.vacts .vgrp + .vgrp::before{content:'';position:absolute;inset-inline-start:-7px;top:50%;transform:translateY(-50%);width:1px;height:18px;background:var(--line)}
+.vadd .ib{position:absolute;inset-inline-end:9px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%}
 .vadd .ib.go{background:var(--accent);color:var(--on-accent)}
 .vadd .ib.go:hover{background:var(--accent-hover);color:var(--on-accent)}
 .rfootbar .ib{width:34px;height:34px;border-radius:50%}
