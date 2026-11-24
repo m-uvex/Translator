@@ -843,7 +843,10 @@ const PIPER_HF = 'https://huggingface.co/rhasspy/piper-voices/resolve/main/';
 const TTS_VOICES = [
   { id:'de_DE-thorsten-high', lang:'de', name:'Thorsten', size:'hoch', mb:108.6, rtf:0.41, path:'de/de_DE/thorsten/high/' },
   { id:'en_US-lessac-medium', lang:'en', name:'Lessac', size:'mittel', mb:60.3, rtf:0.099, path:'en/en_US/lessac/medium/' },
-  { id:'es_MX-claude-high', lang:'es', name:'Claude', size:'hoch', mb:63.1, rtf:0.116, path:'es/es_MX/claude/high/' }
+  { id:'es_MX-claude-high', lang:'es', name:'Claude', size:'hoch', mb:63.1, rtf:0.116, path:'es/es_MX/claude/high/' },
+  // Tuerkisch: schon in 1.15.146 mit dieser Engine gemessen (dort 0,1158);
+  // nachgemessen beim Aufnehmen 0,0932 (0,42 s Rechnen fuer 4,54 s Ton).
+  { id:'tr_TR-dfki-medium', lang:'tr', name:'DFKI', size:'mittel', mb:63.2, rtf:0.0932, path:'tr/tr_TR/dfki/medium/' }
 ];
 const ttsRoot = () => path.join(app.getPath('userData'), 'stimmen');
 const piperExe = () => path.join(ttsRoot(), 'piper', 'piper.exe');

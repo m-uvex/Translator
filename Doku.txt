@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.156 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.157 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2542,3 +2542,12 @@ Verworfen, weil sie mit dieser Engine abbrechen: `en_US-hfc_female-medium`, `es_
 - **Nach der Änderung (Quelllauf 1.15.156):** `tr` → `["mueduer","bueyuek","ueber"]`, `es` → `["agueero"]`, `nl` → `["reuenie"]` — genau die Umschriften werden angestrichen, die echten Formen („müdür“, „güzel“, „kitap“, „agüero“, „cigüeña“, „puede“, „mujer“, „reünie“, „boek“, „moeten“) bleiben sauber.
 - **Deutsch unverändert:** `de` → `[]` für „fuer“, „ueber“, „Groesse“, „Gruesse“, „moechte“, „Uebung“; `de` markiert weiter „Strasse“, „Fussball“, „weiss“, „gross“; `de-ch` → `[]` für „fuer“, „Groesse“, „Strasse“, „weiss“, „Massnahme“. `en` markiert „fuer“ wie bisher.
 - **Grenzen:** Die Rust-Fassung hat kein `wordOk` und blieb unverändert. Geprüft wurde über `spell:check` (API), nicht optisch im Editor; die Wörterbuch-eigenen Formen mit ä/ö/ü (etwa „agüero“) prüft weiterhin allein das Wörterbuch.
+
+## 182. Türkische Stimme im Angebot (1.15.157)
+
+**Neu.** `TTS_VOICES` in `main.js` hat einen vierten Eintrag: `tr_TR-dfki-medium` (Türkisch, Sprecher „DFKI“, Güte mittel, **63,2 MB**, Pfad `tr/tr_TR/dfki/medium/`). Die Stimme war schon in 1.15.146 als lauffähig gemessen (dort 0,1158) und blieb damals nur deshalb draußen, weil die drei vorhandenen Sprachen den Bedarf deckten. Beim Aufnehmen nachgemessen mit der mitgelieferten Engine (`piper_windows_amd64.zip`, 2023.11.14-2): Satz „Merhaba, bu bir deneme cümlesidir. Türkçe konuşuyor musunuz?“ → **0,42 s Rechnen für 4,54 s Ton (Echtzeitfaktor 0,0932)**, 5,04 s WAV-Datei, 22.050 Hz.
+
+**Folge im Text.** Die Schlusszeile des Abschnitts „Aussprache“ nannte Türkisch als Sprache ohne eigene Stimme; sie heißt jetzt in allen sechs Oberflächensprachen „Für Niederländisch und Arabisch spricht die Systemstimme.“
+
+- **Geprüft (Quelllauf 1.15.157, eigenes Profil `%TEMP%\u221`, keine Stimme vorinstalliert):** Abschnittsliste zeigt vier Zeilen — Deutsch · Thorsten, Englisch · Lessac, Spanisch · Claude und **Türkisch · DFKI (63 MB · schnell · gut)** mit „Herunterladen“; Schlusszeile wie oben. `api.ttsInstall('tr_TR-dfki-medium')` → `{ ok: true }` in **44 s** (darin die Engine mit 22,5 MB und die Stimme mit 63 MB); `api.ttsSpeak('Merhaba …', 'tr', 'tr_TR-dfki-medium')` → `backend: 'piper'`, `voice: 'tr_TR-dfki-medium'`, **1.024 ms** bis zur WAV-Datei. Im Modellmenü steht danach unter „Aussprache“ der Eintrag „Türkisch · DFKI“ zwischen „Automatisch (Textsprache)“ und „Weitere Stimmen …“.
+- **Grenzen:** Die Stimme wurde über die API eingerichtet und gesprochen, nicht über den Knopf in der Oberfläche geklickt (derselbe Aufruf, `ttsAction()` ruft `api.ttsInstall`). Die Wiedergabe über das Audio-Element habe ich nicht abgehört; gemessen ist die Erzeugung. Für Niederländisch und Arabisch bleibt es bei der Systemstimme.
