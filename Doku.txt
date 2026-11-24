@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.168 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.169 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -2746,3 +2746,24 @@ Auf den Screenshots ist der Unterschied deutlich: „Nochmal“ liegt beim Über
 **Geprüft (Quelllauf 1.15.168, 1600 × 1000, zwei Vokabeln mit Kontextsatz, dunkles Erscheinungsbild):** „She had ▁▁▁▁ so the baby would not wake up.“ — der Strich misst 81 px Breite und 2,4 px Höhe (3 px Rand bei Faktor 0,8 der Bildschirmauflösung), liegt auf der Grundlinie, ohne Textinhalt (`.textContent` leer). Im Tipp-Modus dieselbe Linie über dem Eingabefeld.
 
 **Grenzen:** Nur dunkles Erscheinungsbild; bei sehr kurzen Wörtern („a“) greift die Mindestbreite 2,2 em, das ist etwas breiter als das Wort — bewusst, damit die Lücke als Lücke erkennbar bleibt. Sehr lange Wörter werden bei 5 em gedeckelt.
+
+## 194. Hover-Rückmeldung für alle Ghost- und Primärknöpfe (1.15.169)
+
+**Was geändert wurde.** Die Regeln aus §192 galten nur für die vier Bewertungen (`.srsbtns.rate`). Jetzt stehen sie einmal global an der Klassendefinition und wirken überall:
+
+- `.ghost:hover` — sanfter Akzentfilm über `--soft` plus Akzentfarbe für die Schrift
+- `.primary:hover` — heller auf `--accent-hover`
+- Beide mit `:not(:disabled)`, damit ein gesperrter Knopf nicht so tut, als ginge er.
+
+Betroffen sind damit unter anderem „Abbrechen“/„Speichern“ in den Dialogen (Vokabel bearbeiten, Text hinzufügen, Stil, Bild, Zurücksetzen), die Knöpfe in der Statusleiste des Editors („Text übernehmen“, Wörterbuch), „Bibliothek öffnen“ im Lese-Arbeitsplatz, „Runde beenden“ im Wiederholen, „Weitere Modelle/Stimmen …“ im Übersetzer und die Bestätigungen der Einrichtungsseite. Die alten, auf die Bewertungen beschränkten Regeln sind entfallen — die vier Knöpfe erben jetzt dieselbe Definition.
+
+**Geprüft (Quelllauf 1.15.169, 1600 × 1000, dunkles Erscheinungsbild, echte Mausbewegungen über CDP):**
+
+| Knopf | ohne Zeiger | mit Zeiger |
+|---|---|---|
+| „Abbrechen“ im Dialog „Vokabel bearbeiten“ (`ghost`) | `rgb(43,43,45)` / `#ececec` | `color(srgb 0.209 0.277 0.331)` / `#8cc8f5` |
+| „Speichern“ daneben (`primary`) | `#5aa9e0` | `#82bdea` |
+
+Auf dem Screenshot liegt „Abbrechen“ bläulich getönt mit hellblauer Schrift unter dem Zeiger, „Speichern“ ist sichtbar heller.
+
+**Grenzen:** Nur dunkles Erscheinungsbild geprüft; alle Stellen einzeln durchgehovered wurden nicht — geprüft sind Dialog-Ghost, Dialog-Primär und (aus §192) die Bewertungen, die übrigen erben dieselbe Deklaration. Gesperrte Knöpfe reagieren bewusst nicht; das ist über `:not(:disabled)` gesetzt, aber nicht mit einem gesperrten Knopf durchgeklickt.

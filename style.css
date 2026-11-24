@@ -44,6 +44,11 @@ footer{display:flex;align-items:center;gap:8px;padding:8px 12px}.sp{flex:1}.mute
 .primary{background:var(--accent);color:var(--on-accent);border-radius:999px;padding:8px 22px;font-weight:600}
 .primary:disabled{opacity:.5}
 .ghost{background:var(--soft);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--text)}
+/* Dieselbe Rueckmeldung ueberall: gefuellte Knoepfe werden heller, ruhige
+   Knoepfe bekommen den sanften Akzentfilm. Ausgenommen sind gesperrte Knoepfe,
+   dort waere die Rueckmeldung eine Luege. */
+.primary:not(:disabled):hover{background:var(--accent-hover)}
+.ghost:not(:disabled):hover{background:color-mix(in srgb,var(--accent) 22%,var(--soft));color:var(--accent-ink)}
 .w{border-radius:6px;cursor:pointer}.w:hover{background:color-mix(in srgb,var(--accent) 35%,transparent);color:var(--accent-ink)}
 .out.busy{opacity:.5}
 #drop{position:relative}
@@ -425,10 +430,6 @@ html[dir="rtl"] #docDock{left:12px;right:56px}
    einen einzelnen, breiteren Knopf. */
 .srsbtns.rate{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%}
 .srsbtns.rate button{height:36px;padding:0 6px;font-size:13px;border-radius:999px}
-/* Rueckmeldung beim Ueberfahren wie bei den Symbolknoepfen: sanfte Akzentfarbe
-   statt gar keiner Reaktion. */
-.srsbtns.rate .ghost:hover{background:color-mix(in srgb,var(--accent) 22%,var(--soft));color:var(--accent-ink)}
-.srsbtns.rate .primary:hover{background:var(--accent-hover)}
 .srsbtns.one .primary{min-width:240px;padding:10px 26px}
 /* Stift über der Bewertungsreihe: die aufgedeckte Karte lässt sich vor der
    Bewertung korrigieren. Leise gehalten, damit die vier Bewertungen die
