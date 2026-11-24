@@ -2549,7 +2549,17 @@ let scanTimer = null;
 function scheduleScan() { clearTimeout(scanTimer); scanTimer = setTimeout(spellScan, 500); }
 // Rechtschreib-Markierungen im Spoiler-Bereich ausblenden
 function spoilerNode(n) { const el = n && n.parentElement; return !!(el && el.closest && el.closest('.ai-processing')); }
-function syncSpellHighlight() { if (window.CSS && CSS.highlights) CSS.highlights.set('spell', new Highlight(...ED.ranges.map(x => x.r))); layoutSpell(); }
+// Die CSS-Highlight-API zeichnet nichts (Abschnitt 135), sie bleibt nur
+// Datenquelle. Bei sehr langen Texten kostet das Anlegen zehntausender Ranges
+// in Blink Minuten - dann laesst der Editor sie weg und malt nur die Wellen auf
+// das Canvas, das ohnehin das Sichtbare zeichnet.
+const SPH_MAX = 5000;
+function setSpellHighlight() {
+  if (!window.CSS || !CSS.highlights) return;
+  if (ED.ranges.length > SPH_MAX) { CSS.highlights.delete('spell'); return; }
+  CSS.highlights.set('spell', new Highlight(...ED.ranges.map(x => x.r)));
+}
+function syncSpellHighlight() { setSpellHighlight(); layoutSpell(); }
 function dropSpoilerRanges() { ED.ranges = ED.ranges.filter(x => !spoilerNode(x.r.startContainer)); syncSpellHighlight(); }
 // Entfernt alle Markierungen eines Wortes sofort, bevor der asynchrone Scan
 // antwortet. Das verhindert, dass die Welle nach "Zum Wörterbuch hinzufügen"
@@ -2584,16 +2594,26 @@ function resetSpellRanges() {
 // wird im Druck/PDF komplett ausgeblendet.
 const SPELL_AMP = 1.2, SPELL_LEN = 8.2, SPELL_SPEED = 5;
 function spellVisible() { return !!S.edSpell && !$('#vE').classList.contains('hidden') && ED.ranges.length > 0; }
+// Die Ebene deckt nur das sichtbare Fenster, nicht das ganze Dokument. Frueher
+// war das Canvas so gross wie der gesamte Text; bei 1 MB sind das 1498 x 425.598
+// Pixel und damit weit ueber dem, was ein Canvas in Chromium fassen kann (65.535
+// Pixel je Kante). Die Ebene blieb dann deckend stehen, und der ganze
+// Textbearbeitungs-Arbeitsplatz war weiss.
+let spellOff = { x: 0, y: 0 }, spellW = 0, spellH = 0;
 function drawSpell() {
   const dpr = window.devicePixelRatio || 1;
-  spellCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  spellCtx.clearRect(0, 0, spellCv.width / dpr, spellCv.height / dpr);
+  // Erst mit neutraler Matrix leeren, dann um die Scrollposition verschieben:
+  // die Rechtecke liegen in Dokumentkoordinaten, das Canvas nur im Fenster.
+  spellCtx.setTransform(1, 0, 0, 1, 0, 0);
+  spellCtx.clearRect(0, 0, spellCv.width, spellCv.height);
   if (!spellRects.length) return;
+  spellCtx.setTransform(dpr, 0, 0, dpr, -spellOff.x * dpr, -spellOff.y * dpr);
   spellCtx.strokeStyle = '#e5484d';
   spellCtx.lineWidth = 1.3;
   spellCtx.lineCap = 'round';
   spellCtx.lineJoin = 'round';
   for (const r of spellRects) {
+    if (r.y + r.h < spellOff.y - 8 || r.y > spellOff.y + spellH + 8) continue;
     const y = r.y + r.h - 1.4;
     spellCtx.beginPath();
     for (let x = 0; x <= r.w; x += 0.5) {
@@ -2615,18 +2635,40 @@ function layoutSpell() {
     return;
   }
   const wrap = $('#pageWrap'), dpr = window.devicePixelRatio || 1;
-  const w = Math.max(1, wrap.scrollWidth), h = Math.max(1, wrap.scrollHeight);
-  if (spellCv.width !== Math.round(w * dpr) || spellCv.height !== Math.round(h * dpr)) {
-    spellCv.width = Math.round(w * dpr); spellCv.height = Math.round(h * dpr);
+  const vw = Math.max(1, wrap.clientWidth), vh = Math.max(1, wrap.clientHeight);
+  if (spellCv.width !== Math.round(vw * dpr) || spellCv.height !== Math.round(vh * dpr)) {
+    spellCv.width = Math.round(vw * dpr); spellCv.height = Math.round(vh * dpr);
   }
-  spellCv.style.width = w + 'px'; spellCv.style.height = h + 'px';
+  spellCv.style.width = vw + 'px'; spellCv.style.height = vh + 'px';
+  // Absolut im scrollenden Bereich, aber an dessen Scrollposition: so deckt die
+  // Ebene immer genau das sichtbare Fenster.
+  spellCv.style.left = wrap.scrollLeft + 'px';
+  spellCv.style.top = wrap.scrollTop + 'px';
   spellCv.style.display = 'block';
+  spellOff = { x: wrap.scrollLeft, y: wrap.scrollTop };
+  spellW = vw; spellH = vh;
   const wr = wrap.getBoundingClientRect(), rects = [];
+  // Je Absatz einmal fragen, ob er im Bild liegt, statt fuer jedes einzelne
+  // Range die Lage zu erfragen: bei 1 MB waren das 20.805 Ranges und rund
+  // 300 ms je Scrollschritt.
+  const vis = new Map();
+  const inView = n => {
+    const el = (n && n.parentElement) || n;
+    if (!el || !el.getBoundingClientRect) return true;
+    let v = vis.get(el);
+    if (v === undefined) {
+      const b = el.getBoundingClientRect();
+      v = b.bottom > wr.top - 40 && b.top < wr.bottom + 40;
+      vis.set(el, v);
+    }
+    return v;
+  };
   ED.ranges.forEach(f => {
+    if (!inView(f.r.startContainer)) return;
     let rs; try { rs = f.r.getClientRects(); } catch { return; }
     for (const rc of rs) {
       if (rc.width < 1 || rc.height < 1) continue;
-      rects.push({ x: rc.left - wr.left + wrap.scrollLeft, y: rc.top - wr.top + wrap.scrollTop, w: rc.width, h: rc.height });
+      rects.push({ x: rc.left - wr.left + spellOff.x, y: rc.top - wr.top + spellOff.y, w: rc.width, h: rc.height });
     }
   });
   spellRects = rects;
@@ -2652,43 +2694,67 @@ window.edSpellAnim = () => { if (!S.edSpellAnim) spellPhase = 0; layoutSpell(); 
 $('#pageWrap').addEventListener('scroll', () => { if (spellVisible()) layoutSpell(); }, { passive: true });
 window.addEventListener('resize', () => layoutSpell());
 const COMMA_SKIP = new Set(['und', 'oder', 'sowie', 'aber', 'doch', 'denn', 'sondern', 'ohne', 'statt', 'anstatt', 'außer', 'als', 'auch', 'nur', 'selbst', 'schon', 'bis', 'zumal', 'gerade', 'besonders', 'erst', 'so', 'nicht']);
+// Der Scan laeuft in Bloecken: nach je SPELL_SLICE Textknoten gibt er den
+// Hauptfaden frei, damit ein sehr langes Dokument die Oberflaeche nicht
+// minutenlang blockiert (dann blieb der Arbeitsplatz weiss stehen). Er bricht
+// ab, sobald ein neuer Scan angefordert wurde (ED.seq).
+const SPELL_SLICE = 800;
+const spellBreathe = () => new Promise(r => setTimeout(r, 0));
 async function spellScan() {
   if (!window.CSS || !CSS.highlights || $('#vE').classList.contains('hidden')) return;
   const seq = ++ED.seq;
   if (!S.edSpell) { CSS.highlights.delete('spell'); ED.ranges = []; layoutSpell(); return; }
-  const lang = dictCode(), re = /\p{L}+(?:['’-]\p{L}+)*/gu, occ = [], w = document.createTreeWalker(page, NodeFilter.SHOW_TEXT);
-  while (w.nextNode()) { const n = w.currentNode; if (spoilerNode(n)) continue; re.lastIndex = 0; let m; while ((m = re.exec(n.data))) occ.push({ n, s:m.index, e:m.index + m[0].length, w:m[0] }); }
-  const uniq = [...new Set(occ.map(o => o.w).filter(x => x.length > 1 && x !== x.toUpperCase()))];
+  const lang = dictCode(), re = /\p{L}+(?:['’-]\p{L}+)*/gu;
+  // Erst die Textknoten einsammeln, dann in zwei Durchgaengen arbeiten: erst die
+  // eindeutigen Woerter fuer die Pruefung, dann die Ranges fuer die falschen.
+  // Frueher lagen alle Vorkommen gleichzeitig im Speicher; bei 5 MB sind das
+  // 750.000 Objekte.
+  const nodes = [];
+  const w = document.createTreeWalker(page, NodeFilter.SHOW_TEXT);
+  while (w.nextNode()) { const n = w.currentNode; if (!spoilerNode(n)) nodes.push(n); }
+  const uniq = new Set();
+  for (let i = 0; i < nodes.length; i++) {
+    const d = nodes[i].data; re.lastIndex = 0; let m;
+    while ((m = re.exec(d))) { const x = m[0]; if (x.length > 1 && x !== x.toUpperCase()) uniq.add(x); }
+    if ((i % SPELL_SLICE) === SPELL_SLICE - 1) { if (seq !== ED.seq) return; await spellBreathe(); }
+  }
   let bad = new Set();
-  try { bad = new Set(await window.api.spellCheck(lang, uniq)); }
+  try { bad = new Set(await window.api.spellCheck(lang, [...uniq])); }
   catch (e) { console.warn('Spellcheck unavailable:', e); return; }
   if (seq !== ED.seq) return;
   const found = [];
-  occ.forEach(o => {
-    if (!bad.has(o.w) || ED.ignored.has(o.w.toLowerCase())) return;
-    // Der Text kann sich waehrend des Scans geaendert haben (angenommene
-    // Korrektur, Tippen, Einfuegen): dann zeigt der gemerkte Abschnitt auf
-    // anderen Text, und eine Welle stuende an der falschen Stelle.
-    if (!o.n.isConnected || o.n.data.slice(o.s, o.e) !== o.w) return;
-    try { const r = new Range(); r.setStart(o.n, o.s); r.setEnd(o.n, o.e); found.push({ r, kind:'spell', word:o.w }); } catch {}
-  });
+  for (let i = 0; i < nodes.length; i++) {
+    const n = nodes[i], d = n.data; re.lastIndex = 0; let m;
+    while ((m = re.exec(d))) {
+      const word = m[0];
+      if (!bad.has(word) || ED.ignored.has(word.toLowerCase())) continue;
+      // Der Text kann sich waehrend des Scans geaendert haben (angenommene
+      // Korrektur, Tippen, Einfuegen): dann zeigt der gemerkte Abschnitt auf
+      // anderen Text, und eine Welle stuende an der falschen Stelle.
+      if (!n.isConnected || n.data.slice(m.index, m.index + word.length) !== word) continue;
+      try { const r = new Range(); r.setStart(n, m.index); r.setEnd(n, m.index + word.length); found.push({ r, kind:'spell', word }); } catch {}
+    }
+    if ((i % SPELL_SLICE) === SPELL_SLICE - 1) { if (seq !== ED.seq) return; await spellBreathe(); }
+  }
   if (lang === 'de') {
-    const rc = /(\p{L}+)(\s+)(dass|weil|obwohl|obgleich|sodass|falls)\b/giu, nodes = [];
-    const w2 = document.createTreeWalker(page, NodeFilter.SHOW_TEXT); while (w2.nextNode()) { const n = w2.currentNode; if (!spoilerNode(n)) nodes.push(n); }
-    nodes.forEach(n => {
+    const rc = /(\p{L}+)(\s+)(dass|weil|obwohl|obgleich|sodass|falls)\b/giu;
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i], d = n.data;
       rc.lastIndex = 0; let m;
-      while ((m = rc.exec(n.data))) {
+      while ((m = rc.exec(d))) {
         if (COMMA_SKIP.has(m[1].toLowerCase())) continue;
-        if (n.data.slice(Math.max(0, m.index - 3), m.index).includes(',')) continue;
+        if (d.slice(Math.max(0, m.index - 3), m.index).includes(',')) continue;
         const at = m.index + m[1].length + m[2].length;
         // Auch hier den aktuellen Text pruefen (siehe oben bei den Woertern).
         if (!n.isConnected || n.data.slice(at, at + m[3].length) !== m[3]) continue;
         try { const r = new Range(); r.setStart(n, at); r.setEnd(n, at + m[3].length); found.push({ r, kind:'comma', word:m[3], node:n, pos:m.index + m[1].length }); } catch {}
       }
-    });
+      if ((i % SPELL_SLICE) === SPELL_SLICE - 1) { if (seq !== ED.seq) return; await spellBreathe(); }
+    }
   }
+  if (seq !== ED.seq) return;
   ED.ranges = found.filter(f => !spoilerNode(f.r.startContainer));
-  CSS.highlights.set('spell', new Highlight(...ED.ranges.map(f => f.r)));
+  setSpellHighlight();
   layoutSpell();
 }
 page.addEventListener('contextmenu', async e => {
