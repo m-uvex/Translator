@@ -1132,8 +1132,9 @@ impl App {
 }
 
 /// Verfuegbare Woerterbuchsprachen (wie `DICTS` in `editor.js`).
-const DICTS: [(&str, &str); 6] = [
+const DICTS: [(&str, &str); 7] = [
     ("de", "Deutsch"),
+    ("de-ch", "Deutsch (Schweiz)"),
     ("en", "English"),
     ("nl", "Nederlands"),
     ("es", "Español"),

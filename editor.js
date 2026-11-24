@@ -2544,7 +2544,9 @@ document.addEventListener('mousedown', ev => {
 });
 
 const dictCode = () => S.dictLang || (['de', 'nl', 'es', 'tr', 'ar'].includes(LANG) ? LANG : 'en');
-const DICTS = [['de', 'Deutsch'], ['en', 'English'], ['nl', 'Nederlands'], ['es', 'Español'], ['tr', 'Türkçe'], ['ar', 'العربية']];
+// Wörterbuchsprachen. `de-ch` ist die Schweizer Schreibweise (kein ß, immer ss)
+// und liegt als eigenes Wörterbuch unter dict/de-ch.
+const DICTS = [['de', 'Deutsch'], ['de-ch', 'Deutsch (Schweiz)'], ['en', 'English'], ['nl', 'Nederlands'], ['es', 'Español'], ['tr', 'Türkçe'], ['ar', 'العربية']];
 let scanTimer = null;
 function scheduleScan() { clearTimeout(scanTimer); scanTimer = setTimeout(spellScan, 500); }
 // Rechtschreib-Markierungen im Spoiler-Bereich ausblenden
@@ -2736,7 +2738,8 @@ async function spellScan() {
     }
     if ((i % SPELL_SLICE) === SPELL_SLICE - 1) { if (seq !== ED.seq) return; await spellBreathe(); }
   }
-  if (lang === 'de') {
+  // Die Komma-Heuristik gilt fuer beide deutschen Fassungen (de und de-ch).
+  if (lang.startsWith('de')) {
     const rc = /(\p{L}+)(\s+)(dass|weil|obwohl|obgleich|sodass|falls)\b/giu;
     for (let i = 0; i < nodes.length; i++) {
       const n = nodes[i], d = n.data;

@@ -494,7 +494,34 @@ async function speller(lang) {
     return { testSpelling: () => true, getSpellingSuggestions: () => [], addWord: () => {} };
   }
 }
-const wordOk = (sp, w) => sp.testSpelling(w) || (/[-'’]/.test(w) && w.split(/['’-]/).every(p => !p || sp.testSpelling(p)));
+// Umlaut-Schreibweise ohne Umlaute („fuer“, „ueber“, „Groesse“): Wer so tippt,
+// soll keine Welle bekommen. Geprueft wird nur als Rueckfall, wenn das Wort
+// selbst nicht im Woerterbuch steht, und ohne ss/ß-Umformung - sonst wuerde die
+// Schweizer Fassung deutsche ß-Schreibweisen schlucken (und umgekehrt).
+const UMLAUT_PAIRS = [['ae', 'ä'], ['oe', 'ö'], ['ue', 'ü'], ['Ae', 'Ä'], ['Oe', 'Ö'], ['Ue', 'Ü'], ['AE', 'Ä'], ['OE', 'Ö'], ['UE', 'Ü']];
+function umlautForm(w) {
+  let out = w;
+  for (const [from, to] of UMLAUT_PAIRS) out = out.split(from).join(to);
+  return out;
+}
+// „ss“ gilt in der Umlaut-Schreibweise als „ß“ (Groesse -> Größe), aber nur in
+// Woertern, die auch ae/oe/ue enthalten: sonst wuerde die deutsche Fassung
+// „Strasse“ schlucken, obwohl dort „Straße“ gilt - dafuer gibt es de-ch.
+function sharpForm(w, u) {
+  if (u === w || !/ss/.test(u)) return null;
+  return u.replace(/ss/g, 'ß');
+}
+const formsOf = w => {
+  const u = umlautForm(w);
+  return u === w ? [w] : [u, sharpForm(w, u)].filter(Boolean);
+};
+const wordOk = (sp, w) => {
+  if (sp.testSpelling(w)) return true;
+  const parts = /[-'’]/.test(w) ? w.split(/['’-]/) : null;
+  const okPart = p => !p || sp.testSpelling(p) || formsOf(p).some(f => sp.testSpelling(f));
+  if (parts && parts.every(okPart)) return true;
+  return formsOf(w).some(f => sp.testSpelling(f));
+};
 // Das persoenliche Woerterbuch entscheidet zuerst: Wer ein Wort dort eintraegt,
 // will es ohne Rueckfrage als richtig sehen - auch dann, wenn die Engine es
 // anders sieht und ein spaeterer Scan die Welle zurueckbringen wuerde.
