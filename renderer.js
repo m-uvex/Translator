@@ -2833,7 +2833,7 @@ function tgRow(tag) {
   const meta = mtChips(gbTxt(gbNum), [t('langsN', 55), t('spFast'), t('qMid')].join(' · '));
   const act = tag
     ? `<button class="ib" data-act="tg-delete" data-id="${esc(tag)}" data-gb="${gbNum}" title="${esc(t('bDel'))}" aria-label="${esc(t('bDel'))}">${ic('trash', 16)}</button>`
-    : `<button class="ghost" data-act="tg-install" data-id="${esc(TG_TAG)}" data-gb="${TG_GB}"${mtTgBusy ? ' disabled' : ''}>${mtTgBusy ? esc(t('bBusy')) : esc(t('bDl'))}</button>`;
+    : `<button class="ib dl" data-act="tg-install" data-id="${esc(TG_TAG)}" data-gb="${TG_GB}" title="${esc(t('bDl'))}" aria-label="${esc(t('bDl'))}"${mtTgBusy ? ' disabled' : ''}>${ic('download', 16)}</button>`;
   return `<div class="mgroup"><b>TranslateGemma</b><div class="mrow"><div><b>${esc(name)}</b>` +
     (tag ? `<span class="mstat">${esc(t('mInst'))}</span>` : '') + meta + `</div>${act}</div></div>`;
 }
@@ -2853,7 +2853,7 @@ function mtRow(m) {
   const gb = m.gb == null ? '' : m.gb;
   const act = m.installed
     ? `<button class="ib" data-act="delete" data-id="${esc(id)}" data-gb="${gb}" title="${esc(t('bDel'))}" aria-label="${esc(t('bDel'))}">${ic('trash', 16)}</button>`
-    : `<button class="ghost" data-act="install" data-id="${esc(id)}" data-gb="${gb}"${m.downloading ? ' disabled' : ''}>${m.downloading ? esc(t('bBusy')) : esc(t('bDl'))}</button>`;
+    : `<button class="ib dl" data-act="install" data-id="${esc(id)}" data-gb="${gb}" title="${esc(t('bDl'))}" aria-label="${esc(t('bDl'))}"${m.downloading ? ' disabled' : ''}>${ic('download', 16)}</button>`;
   return `<div class="mrow"><div><b>${esc(m.id)}</b>` +
     (m.installed ? `<span class="mstat">${esc(t('mInst'))}</span>` : '') + meta + `</div>${act}</div>`;
 }
@@ -2881,11 +2881,11 @@ async function drawTts() {
     const meta = busy
       ? `<div class="muted" id="${progId(v.id)}">${esc(ttsStep({ step:'engine', pct:0 }))}</div>`
       : `<div class="mchips"><span>${v.mb.toFixed(0)} MB</span><span>${esc(t(speedWord(v.rtf)))}</span><span>${esc(t(qWord(v.quality)))}</span></div>`;
-    // Rechts genau eine Aktion: Laden als Textknopf, Loeschen als Papierkorb,
-    // damit ein 109-MB-Download nicht wie das Loeschen aussieht.
+    // Rechts genau eine Aktion als Symbol: Herunterladen als Pfeil in der
+    // Akzentfarbe, Loeschen als Papierkorb - der Text steht im Tooltip.
     const act = v.installed
       ? `<button class="ib" data-act="tts-delete" data-id="${esc(v.id)}" title="${esc(t('bDel'))}" aria-label="${esc(t('bDel'))}">${ic('trash', 16)}</button>`
-      : `<button class="ghost" data-act="tts-install" data-id="${esc(v.id)}"${busy ? ' disabled' : ''}>${busy ? esc(t('bBusy')) : esc(t('bDl'))}</button>`;
+      : `<button class="ib dl" data-act="tts-install" data-id="${esc(v.id)}" title="${esc(t('bDl'))}" aria-label="${esc(t('bDl'))}"${busy ? ' disabled' : ''}>${ic('download', 16)}</button>`;
     return `<div class="mrow"><div><b>${esc(langLabel(v.lang))} · ${esc(v.name)}</b>` +
       (v.installed ? `<span class="mstat">${esc(t('ttsOn'))}</span>` : '') + meta + `</div>${act}</div>`;
   }).join('');
