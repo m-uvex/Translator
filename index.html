@@ -89,7 +89,7 @@
     <label class="txf"><span data-t="txCatL"></span><select id="txCat"></select></label>
   </div>
   <label class="txf"><span data-t="txBodyL"></span><textarea id="txBody" data-ph="txBodyPh"></textarea></label>
-  <div class="txacts"><button class="ghost" id="txFile"><span data-i="upload"></span><span data-t="txFileL"></span></button><button class="ghost" id="txPaste"><span data-i="copy"></span><span data-t="txPasteL"></span></button><span class="sp"></span><button class="ghost" id="txCancel" data-t="cancel"></button><button class="primary" id="txOk" data-t="txOkL"></button></div>
+  <div class="txacts"><button class="ghost" id="txFile"><span data-i="upload"></span><span data-t="txFileL"></span></button><button class="ghost" id="txPaste"><span data-i="copy"></span><span data-t="txPasteL"></span></button><span class="sp"></span><span class="dacts"><button class="ghost" id="txCancel" data-t="cancel"></button><button class="primary" id="txOk" data-t="txOkL"></button></span></div>
 </dialog>
 <dialog id="stDlg">
   <div class="dh"><h2 data-t="storyH"></h2><button class="ib" id="stClose" data-i="x" data-tt="cancel"></button></div>
@@ -105,7 +105,7 @@
       <div id="stMsg" class="vmsg stpoolmsg hidden"></div>
     </aside>
   </div>
-  <div class="stacts"><span class="muted" id="stCount"></span><span class="sp"></span><button class="ghost" id="stClear" data-t="stClear"></button><button class="ghost" id="stCancel" data-t="cancel"></button><button class="primary" id="stGo" data-t="stGo"></button></div>
+  <div class="stacts"><span class="muted" id="stCount"></span><span class="sp"></span><span class="dacts"><button class="ghost" id="stClear" data-t="stClear"></button><button class="ghost" id="stCancel" data-t="cancel"></button><button class="primary" id="stGo" data-t="stGo"></button></span></div>
 </dialog>
 <dialog id="vocDlg">
   <div class="dh"><h2 data-t="vocEdit"></h2><button class="ib" id="vocClose" data-i="x" data-tt="cancel"></button></div>
@@ -113,10 +113,10 @@
   <label class="vxf"><span data-t="vocTransL"></span><input id="vocTr2" maxlength="240"></label>
   <label class="vxf"><span data-t="vocCtxL"></span><textarea id="vocCtx2"></textarea></label>
   <div id="vocDlgMsg" class="vmsg hidden"></div>
-  <div class="vxacts"><span class="sp"></span><button class="ghost" id="vocCancel" data-t="cancel"></button><button class="primary" id="vocSaveBtn" data-t="save"></button></div>
+  <div class="vxacts"><span class="sp"></span><span class="dacts"><button class="ghost" id="vocCancel" data-t="cancel"></button><button class="primary" id="vocSaveBtn" data-t="save"></button></span></div>
 </dialog>
-<dialog id="imgDlg"><p id="imgDlgText"></p><div class="dh"><button class="ghost" id="imgDlgCancel"></button><button class="ghost" id="imgDlgAi"></button><button class="primary" id="imgDlgGo"></button></div></dialog>
-<dialog id="ask"><p id="askText"></p><input id="askIn" class="hidden"><div class="dh"><button class="ghost" id="askNo"></button><button class="primary" id="askYes"></button></div></dialog>
+<dialog id="imgDlg"><p id="imgDlgText"></p><div class="dh"><span class="dacts"><button class="ghost" id="imgDlgCancel"></button><button class="ghost" id="imgDlgAi"></button><button class="primary" id="imgDlgGo"></button></span></div></dialog>
+<dialog id="ask"><p id="askText"></p><input id="askIn" class="hidden"><div class="dh"><span class="dacts"><button class="ghost" id="askNo"></button><button class="primary" id="askYes"></button></span></div></dialog>
 <dialog id="styleDlg"></dialog>
 <dialog id="sumDlg"></dialog>
 <dialog id="dictDlg"></dialog>

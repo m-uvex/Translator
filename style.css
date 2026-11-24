@@ -956,3 +956,8 @@ body.tblresizing #page{user-select:none}
   body.print-pages .titlebar,body.print-pages .rail,body.print-pages .tb,body.print-pages .sbar,body.print-pages .ctxbar,body.print-pages #docDock,body.print-pages #vT,body.print-pages #vL{display:none!important}
   @page{size:A4;margin:0}
 }
+/* Aktionszeilen in Dialogen: alle Knoepfe einer Zeile sind gleich breit, das
+   breiteste Wort gibt die Breite vor ("Abbrechen" so breit wie "Verwerfen").
+   Die Gruppen stehen als .dacts in der Zeile, damit Zaehler und Platzierelemente
+   daneben unberuehrt bleiben. */
+.dacts{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(max-content,1fr);gap:8px}

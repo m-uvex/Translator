@@ -600,7 +600,7 @@ async function allOp(kind) {
 }
 function showSummary(txt) {
   const d = $('#sumDlg');
-  d.innerHTML = `<h3 style="margin:0">${t('sumTitle')}</h3><div class="sumtxt"></div><div class="dh"><button class="ghost" data-a="top">${t('insTop')}</button><button class="ghost" data-a="rep">${t('replAll')}</button><button class="ghost" data-a="copy">${t('copy')}</button><button class="primary" data-a="x">${t('close')}</button></div>`;
+  d.innerHTML = `<h3 style="margin:0">${t('sumTitle')}</h3><div class="sumtxt"></div><div class="dh"><span class="dacts"><button class="ghost" data-a="top">${t('insTop')}</button><button class="ghost" data-a="rep">${t('replAll')}</button><button class="ghost" data-a="copy">${t('copy')}</button><button class="primary" data-a="x">${t('close')}</button></span></div>`;
   d.querySelector('.sumtxt').textContent = txt;
   d.onclick = e => {
     const a = e.target.dataset.a; if (!a) return;
@@ -685,7 +685,7 @@ async function showStyleCtx(x, y, st) {
 }
 function styleDlg(ex) {
   const d = $('#styleDlg'); let icon = ex?.icon || STYLE_ICONS[0];
-  d.innerHTML = `<h3 style="margin:0 0 6px">${t(ex ? 'styleEdit' : 'styleNew')}</h3><label class="muted">${t('styleName')}</label><input id="sdName" maxlength="24"><label class="muted">${t('styleIcon')}</label><div class="icg" id="sdIcons"></div><label class="muted">${t('styleInstr')}</label><textarea id="sdText" placeholder="${esc(t('styleInstrPh'))}"></textarea><div class="dh">${ex ? `<button class="ghost" id="sdDel">${t('del')}</button>` : ''}<span class="sp"></span><button class="ghost" id="sdNo">${t('cancel')}</button><button class="primary" id="sdOk">${t('save')}</button></div>`;
+  d.innerHTML = `<h3 style="margin:0 0 6px">${t(ex ? 'styleEdit' : 'styleNew')}</h3><label class="muted">${t('styleName')}</label><input id="sdName" maxlength="24"><label class="muted">${t('styleIcon')}</label><div class="icg" id="sdIcons"></div><label class="muted">${t('styleInstr')}</label><textarea id="sdText" placeholder="${esc(t('styleInstrPh'))}"></textarea><div class="dh">${ex ? `<button class="ghost" id="sdDel">${t('del')}</button>` : ''}<span class="sp"></span><span class="dacts"><button class="ghost" id="sdNo">${t('cancel')}</button><button class="primary" id="sdOk">${t('save')}</button></span></div>`;
   $('#sdName').value = ex?.name || ''; $('#sdText').value = ex?.prompt || '';
   const drawI = () => { $('#sdIcons').innerHTML = STYLE_ICONS.map(i => `<button class="ib${i === icon ? ' on' : ''}" data-ic="${i}">${ic(i)}</button>`).join(''); };
   drawI();
@@ -847,6 +847,9 @@ function newPage() {
   sel.removeAllRanges(); sel.addRange(r);
   page.focus();
   pb.scrollIntoView({ block:'start', behavior:'smooth' });
+  // Der Umbruch ist ein Schritt wie Tippen: sonst laesst er sich mit Strg+Z
+  // nicht zuruecknehmen.
+  edTouch();
   page.dispatchEvent(new Event('input'));
 }
 
@@ -1203,6 +1206,9 @@ function jumpNextPage() {
   paginateA4();
   caretToStart(p);
   p.scrollIntoView({ block: 'center' });
+  // Wie beim Umbruch in der durchlaufenden Seite: der neue Absatz samt
+  // Seitenwechsel ist ein Schritt fuer Strg+Z.
+  edTouch();
   page.dispatchEvent(new Event('input'));
 }
 
