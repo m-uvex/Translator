@@ -3067,7 +3067,7 @@ async function drawTts() {
     return `<div class="mrow"><div><b>${esc(langLabel(v.lang))} · ${esc(v.name)}</b>` +
       (v.installed ? `<span class="mstat">${esc(t('ttsOn'))}</span>` : '') + meta + `</div>${act}</div>`;
   }).join('');
-  box.innerHTML = `<div class="muted">${esc(t('s_ttsHint'))}</div>` + rows +
+  box.innerHTML = `<div class="muted mhint">${esc(t('s_ttsHint'))}</div>` + rows +
     `<div class="muted mnote">${esc(t('ttsOnlySys'))}</div>` +
     `<div class="mrow minfo"><button class="ghost minib" data-info="tts">${esc(t('infoMore'))}</button></div>`;
 }

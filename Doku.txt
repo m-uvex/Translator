@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 25. November 2026, App-Version 1.15.192 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 25. November 2026, App-Version 1.15.193 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -3136,7 +3136,7 @@ Bewusste Entscheidungen stehen in `AUSNAHMEN` (die aus §213 belassenen Stellen 
 
 **Gemessen (erster vollständiger Lauf).** Oberfläche geladen, 549 Schlüssel, Knöpfe 115 × 38 px bei 15 px, 13 Dialoge, Protokoll erreichbar — bestanden.
 
-**Grenzen.** Der Test misst nur, was er kennt; er ersetzt kein Ansehen der Seite. Er braucht einen freien Port und ein eigenes Profil, damit er neben einer laufenden Installation arbeiten kann. Übersetzungen werden nicht geprüft (kein Modell im Test).
+**Grenzen.** Die Zahl der Sprachschlüssel hängt am Ladetempo: `study.js` legt 25 Schlüssel der Kurzgeschichten erst beim eigenen Start in `window.K` ab. Zählt der Test davor, sind es 532 statt 557 — beide Zahlen sind echt, die kleinere nur zu früh gemessen. Der Test misst nur, was er kennt; er ersetzt kein Ansehen der Seite. Er braucht einen freien Port und ein eigenes Profil, damit er neben einer laufenden Installation arbeiten kann. Übersetzungen werden nicht geprüft (kein Modell im Test).
 
 ## 218. Release in einem Lauf (1.15.189)
 
@@ -3171,3 +3171,13 @@ Die Kürzel stehen in einer Tabelle `KEYS` (Kombinationen) und einer Liste `KURZ
 **Gemessen (1.15.192, installierte App über den Debug-Port).** `#cmdDlg` vorhanden; synthetisches Strg+K öffnet (`open === true`); sieben Treffer, Beschriftungen in Reihenfolge der Leiste; Filter „ein“ lässt nur „Einstellungen“ übrig; Enter schließt die Palette (`paletteZu: true`) und öffnet die Einstellungen (`stg: true`); `#scBox` zeichnet sechs Zeilen mit den Kombinationen „Strg+K, Strg+Shift+Leertaste, Strg+Z, Strg+Y, Strg+Enter, Strg+A“; `#setBody [data-htk]` findet null Elemente; der „belegt“-Satz erscheint, wenn eine zweite Instanz den Schnellaufruf nicht registrieren kann (im Versuch genau so, weil die erste Instanz lief); Klick auf „Vokabeln“ in der Palette zeigt `#vV`. Rauchtest: 557 Schlüssel, Lücken NL 30 / ES 46 / TR 46 / AR 46, Knöpfe 115 × 38 px bei 15 px, 14 Dialoge, bestanden.
 
 **Grenzen.** Die Palette ist nicht als Bild angesehen; geprüft sind Zustände im DOM und die ausgeführten Befehle, nicht Aussehen, Abstände oder Auswahlfarbe. Der Abgriff liegt auf `document` in der Capture-Phase und nimmt Strg+K auch dann, wenn ein Eingabefeld den Fokus hat — dort gibt es in dieser App keine andere Bedeutung, in einem künftigen Feld mit eigener Strg+K-Belegung müßte der Abgriff davor zurückscheuen. Die vier Sprachfassungen außer Deutsch und Englisch haben für die neun neuen Schlüssel noch keine eigenen Texte und fallen auf Englisch zurück (Zahlen im Rauchtest). Ein Befehl, der eine Auswahl mitnimmt, ist bewußt nicht dabei: alle Ziele wechseln nur die Ansicht oder öffnen einen Dialog.
+
+## 221. Mehr Luft zwischen Stimmen-Hinweis und Trennlinie (1.15.193)
+
+**Anlass.** Am Anfang des Abschnitts „Aussprache“ steht der Hinweis „Stimmen werden einmal heruntergeladen und sprechen danach ohne Netz. Ohne eigene Stimme spricht die Systemstimme.“ Die erste Stimmenzeile darunter trägt ihre Trennlinie als `border-top` — der Hinweis hatte keinen Abstand nach unten, die Textunterkante saß unmittelbar auf dem Strich.
+
+**Jetzt.** Der Hinweis bekommt im Renderer die Klasse `mhint` (`drawTts()`), in `style.css` steht `.mhint{margin:0 0 10px}`. Zehn Pixel sind derselbe Wert, den `.mnote` als Abstand zur Linie *unter* dem Abschnitt hat (Abschnitt 202) — Kopf und Fuß des Abschnitts sehen damit gleich aus. Der Wortlaut des Hinweises, die Stimmenzeilen und die Knöpfe sind unverändert.
+
+**Gemessen (1.15.193, installierte App, Debug-Port 9481, eigenes Profil).** Settings geöffnet, `#ttsBox` mit 11 Kindern und 9 Stimmenzeilen; `.mhint` vorhanden, `margin-bottom` = `10px`; Abstand von der Unterkante des Hinweises bis zur Oberkante der ersten Stimmenzeile (also bis zur Trennlinie) = **10 px**, vorher 0 px. Rauchtest bestanden (115 × 38 px, 14 Dialoge).
+
+**Grenzen.** Das Ergebnis ist gemessen, nicht angesehen: Abstände in Pixeln, kein Bild. Geprüft ist nur die erste Trennlinie dieses Abschnitts; der Abschnitt „Übersetzungsmodelle“ hat einen anderen Aufbau (`serverDown`-Zeile) und wurde nicht angefasst.
