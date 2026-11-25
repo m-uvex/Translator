@@ -19,6 +19,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $appName = [char]0x00DC + 'bersetzer'   # "Uebersetzer" mit Umlaut, ASCII-Datei
+$installDir = Join-Path $env:LOCALAPPDATA 'Programs/Uebersetzer'
+$installExe = Join-Path $installDir ($appName + '.exe')
 $fail = { param($m) Write-Host ('ABBRUCH: ' + $m) -ForegroundColor Red; exit 1 }
 
 Push-Location $root
@@ -70,8 +72,16 @@ try {
   if ($SkipInstall) { Pop-Location; exit 0 }
 
   # Eine laufende App sperrt die zu ersetzenden Dateien; der Installer endet
-  # dann mit Exitcode 2 und aendert nichts.
-  Get-Process | Where-Object { $_.ProcessName -like '*ersetzer*' } | ForEach-Object { try { $_.Kill() } catch {} }
+  # dann mit Exitcode 2 und aendert nichts. Beendet wird nur, was genau die
+  # installierte exe ist: der Prozessname allein traefe auch eine Entwicklung-
+  # fassung oder ein fremdes Programm mit aehnlichem Namen.
+  $running = @(Get-Process -Name $appName -ErrorAction SilentlyContinue | Where-Object {
+    $pfad = $null
+    try { $pfad = $_.Path } catch { $pfad = $null }
+    $pfad -and ($pfad -ieq $installExe)
+  })
+  foreach ($proc in $running) { try { $proc.Kill() } catch {} }
+  Write-Host ('Beendet: ' + $running.Count + ' Prozess(e) unter ' + $installExe)
   Start-Sleep -Seconds 3
 
   $p = Start-Process -FilePath $setup -ArgumentList '/S' -PassThru
@@ -79,13 +89,21 @@ try {
   if (-not $p.HasExited) { & $fail 'Installer reagiert nicht' }
   if ($p.ExitCode -ne 0) { & $fail ('Installer-Exitcode ' + $p.ExitCode) }
 
-  $asis = Join-Path $env:LOCALAPPDATA ('Programs/Uebersetzer/resources/app.asar')
+  $asis = Join-Path $installDir 'resources/app.asar'
   if (-not (Test-Path $asis)) { & $fail 'app.asar fehlt nach der Installation' }
-  Write-Host ('Installiert: ' + (Get-Item $asis).LastWriteTime)
+
+  # Der Zeitstempel allein sagt nichts ueber den Inhalt: aus der app.asar wird
+  # die package.json gelesen (Kopfzeile beschreibt Offset und Groesse, die
+  # Pruefsumme steht dort ebenfalls) und die Versionsnummer verglichen.
+  $asarPkg = & node -e "const fs=require('fs'),crypto=require('crypto');const b=fs.readFileSync(process.argv[1]);const hs=b.readUInt32LE(12);const hdr=JSON.parse(b.slice(16,16+hs).toString('utf8'));const e=hdr.files['package.json'];const base=8+b.readUInt32LE(4);const off=base+Number(e.offset);const raw=b.slice(off,off+e.size);const h=crypto.createHash('sha256').update(raw).digest('hex');if(h!==e.integrity.hash){console.error('Pruefsumme der package.json in app.asar stimmt nicht');process.exit(2);}process.stdout.write(JSON.parse(raw.toString('utf8')).version);" $asis
+  if ($LASTEXITCODE -ne 0) { & $fail 'package.json in app.asar nicht lesbar' }
+  $asarVersion = ($asarPkg -join '').Trim()
+  if ($asarVersion -ne $Version) { & $fail ('app.asar meldet Version ' + $asarVersion + ' statt ' + $Version) }
+  Write-Host ('Installiert: Version ' + $asarVersion + ', app.asar ' + (Get-Item $asis).LastWriteTime)
 
   if ($SkipHealth) { Pop-Location; exit 0 }
 
-  Start-Process (Join-Path $env:LOCALAPPDATA ('Programs/Uebersetzer/' + $appName + '.exe'))
+  Start-Process $installExe
   $health = $null
   for ($i = 0; $i -lt 40; $i++) {
     Start-Sleep -Seconds 1
