@@ -57,6 +57,8 @@ try {
   # Zurueck auf die Fassung im Repository (electron gehoert dort zu den
   # Abhaengigkeiten), aber mit der neuen Versionsnummer: ein blosses
   # Zurueckkopieren haette den Versionssprung wieder aufgehoben.
+  # Move-Item legt nicht ueber eine vorhandene Datei; ohne -Force bricht es ab
+  # und der finally-Zweig setzt die alte Versionsnummer zurueck.
   Move-Item (Join-Path $root '.tmp-package.json') $pkgPath -Force
   & node -e "const f='package.json',fs=require('fs');const d=JSON.parse(fs.readFileSync(f,'utf8'));d.version=process.argv[1];fs.writeFileSync(f,JSON.stringify(d,null,1)+'\n');" $Version
   if ($LASTEXITCODE -ne 0) { & $fail 'Versionsnummer konnte nicht gesetzt werden' }

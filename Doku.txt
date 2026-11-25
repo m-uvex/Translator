@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.189 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 25. November 2026, App-Version 1.15.190 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -3145,6 +3145,8 @@ Bewusste Entscheidungen stehen in `AUSNAHMEN` (die aus §213 belassenen Stellen 
 **Jetzt.** `tools/release.ps1` (`npm run release`) macht diese Folge, prüft nach jedem Schritt den Exitcode und bricht mit einer klaren Meldung ab. Die Version wird ohne Argument um eine Patchstelle erhöht (`-Version` setzt sie fest), `package.json` wird vorher gesichert und im `finally`-Zweig in jedem Fall zurückgelegt. `-SkipInstall` baut nur, `-SkipHealth` installiert ohne Start. Der Installer wird unter `dist` gesucht, die Installation an der `app.asar` geprüft, `/health` bis zu 40 Sekunden abgefragt.
 
 **Grenzen.** Das Skript committet und pusht nicht — das bleibt eine eigene Entscheidung. Es ist auf Windows beschränkt (NSIS, `taskkill`, `rcedit`) und setzt die Verzeichnisse von electron-builder im Cache voraus; fehlt `rcedit`, läuft es mit dem Standardicon weiter und sagt es.
+
+**Erster vollständiger Lauf (1.15.190).** Bis dahin war die Versionsnummer nach dem Bauen von Hand eingetragen, der Rückweg über die gesicherte `package.json` also nie belegt. Der Lauf deckte einen Fehler darin auf: `Move-Item` legt eine vorhandene Datei nicht über, sondern bricht ab; der `finally`-Zweig hätte die alte Nummer zurückgesetzt. Jetzt steht dort `Move-Item -Force`. Gemessen mit dem korrigierten Skript: 1.15.189 → 1.15.190, Bau und NSIS ohne Fehler, Icon gesetzt, Installer `dist/Übersetzer Setup 1.15.190.exe` (110,6 MB), stille Installation, `app.asar` mit Zeitstempel 11:55:48, `/health` = `{"ok": true, "loaded": null, "port": 8765}`, Protokoll „Start, Version 1.15.190“. Danach steht `electron` wieder in `dependencies`, `devDependencies` enthält nur `electron-builder`, `.tmp-package.json` ist verschwunden und `package.json` behält Einrückung mit einem Leerzeichen.
 
 ## 219. Offene Punkte als Liste (1.15.189)
 
