@@ -10,3 +10,5 @@ Thumbs.db
 .opencode/
 .tools/
 rust/target/
+*.log
+testfiles/ergebnis.*

@@ -3248,80 +3248,98 @@ Kein Eintrag hat eigene Logik: `cmdList()` sucht den echten Knopf (`document.que
 - `npm run regeln`: 538 deutsche Texte, keine Verstöße (einer weniger als vorher, weil der alte feste Satz durch eine Funktion ersetzt ist). `npm run rauch`: bestanden, 557 Schlüssel, Lücken NL 30 / ES 46 / TR 46 / AR 46, Knöpfe 115 × 38 px, 14 Dialoge.
 
 **Grenzen.** Nur deutsch gemessen; die fünf anderen Fassungen sind gelesen, nicht ausgelöst. Den Dialog habe ich nicht als Bild angesehen – geprüft sind `#ask.open`, `#askText` und ob die App beendet. Karten ohne Überschrift heißen im Dialog „Dokument“; bei vielen betroffenen Karten wird der Satz lang und bricht im Dialog um, gekürzt wird nichts.
-§225 Dokumente uebersetzen ueber DeepL (1.15.199)
+§225 Dokumente uebersetzen mit dem lokalen Modell (1.15.200)
 
 Die Dokumentuebersetzung sitzt als Kachel „Dokument uebersetzen“ in der rechten
 Spalte des Uebersetzers, unter dem Glossar und ueber dem Verlauf. Sie belegt
 keinen eigenen Arbeitsplatz: Wer ein Word-Dokument oder ein PDF daneben liegen
-hat, sieht die Kachel neben dem Text, dessen Sprachenpaar sie benutzt. Die
-Kachel ist 258 x 228 px gross und endet 28 px vor dem Fensterrand (gemessen bei
-1280 px Fensterbreite).
+hat, sieht die Kachel neben dem Text, dessen Sprachenpaar sie benutzt. Sie
+arbeitet vollstaendig offline. Uebersetzt wird mit dem Modell, das im
+Uebersetzer eingestellt ist (TranslateGemma ueber Ollama oder ein Modell des
+NLLB-Servers); es gibt keinen Schluessel, keine Cloud und kein Wasserzeichen.
+Die Zielsprache steht in der Kachel zur Wahl, voreingestellt ist die
+Zielsprache des Uebersetzers, und die Liste kommt aus `tgtLangs()`. Darunter
+steht das aktive Modell. Waehrend des Laufs schickt der Hauptprozess
+`doclat:progress` an die Seite, die daraus Balken und Prozentzahl macht.
 
 **Word.** Die Datei wird als ZIP gelesen. Uebersetzt wird ausschliesslich der
 Inhalt von `<w:t>` in `word/document.xml`, `word/header*.xml`,
-`word/footer*.xml`, `word/footnotes.xml` und `word/endnotes.xml`. Jeder Absatz
-geht als Ganzes an DeepL, die einzelnen Textstuecke sind mit `<x id="n">`
-markiert (`tag_handling=xml`); damit bleibt der Satz zusammenhaengend und die
-Uebersetzung landet wieder in dem Textstueck, das die Formatierung traegt.
-Alles andere bleibt Byte fuer Byte stehen - Schriftart, Groesse, Farbe,
-Ausrichtung, Absatz- und Zeichenformate, Nummerierung, Tabellen, Hyperlinks,
-Bilder, Kopf- und Fusszeilen. Zahlen und Zeichen ohne Buchstaben werden nicht
-angefragt.
+`word/footer*.xml`, `word/footnotes.xml` und `word/endnotes.xml`. Jeder
+Absatz geht als Ganzes an das Modell, damit der Satz zusammenhaengt; die
+Uebersetzung wird anschliessend im Verhaeltnis der Textstuecklaengen auf die
+Runs verteilt (`distributeTranslation`, Wortgrenzen ueber `splitByWeights`).
+Damit bleibt die Formatierung an ihrem Platz: Fett, Kursiv, Unterstrichen,
+Farbe und Schrift des Runs gelten weiter fuer den entsprechenden Teil des
+Satzes. Zahlen und Zeichen ohne Buchstaben werden nicht angefragt. Alles
+andere bleibt Byte fuer Byte stehen - Schriftart, Groesse, Farbe, Ausrichtung,
+Absatz- und Zeichenformate, Nummerierung, Tabellen, Hyperlinks, Bilder, Kopf-
+und Fusszeilen.
 
-**PDF.** Die Textzeilen werden mit pdf.js samt Position gelesen, uebersetzt und
-an dieselbe Stelle geschrieben: gleiche Grundlinie, gleicher linker Rand,
-gleiche Groesse, weisse Flaeche ueber dem alten Text, Arial eingebettet (aus
-`%WINDIR%\Fonts\arial.ttf`), automatische Verkleinerung bis 55 %, damit die
-Uebersetzung in die alte Breite passt. Die Fuellfarbe wird uebernommen, wenn die
-Reihenfolge der Farbwechsel eindeutig ist (eine Farbe je Textstueck); sonst
-schwarz, statt zu raten. Link-Anmerkungen bleiben unveraendert.
+**PDF.** Der Seiteninhalt bleibt als Hintergrund stehen. Entfernt werden nur
+die Textoperatoren (`Tj`, `TJ`, `'`, `"`) aus den Seitenstroemen; Bilder,
+Flaechen, Linien und Tabellenstriche bleiben also unveraendert, es wird nichts
+weiss uebermalt. Der uebersetzte Text wird mit pdf-lib an dieselbe Grundlinie
+gesetzt, mit derselben Schriftfamilie, Groesse und Fuellfarbe. Die Familie
+kommt aus dem Fontnamen: Helvetica, Times und Courier werden als
+Standardschriften eingebettet, andere Namen ueber passende Dateien aus
+`%WINDIR%\Fonts` (Arial, Times New Roman, Courier New, Calibri, Cambria,
+Georgia, Verdana, Tahoma, Consolas), sonst Arial. Fett und Kursiv folgen dem
+Fontnamen. Die Ausrichtung (links, zentriert, rechts) wird aus der Lage der
+Zeile im Satzspiegel bestimmt und beim Setzen eingehalten. Reicht die Breite
+nicht, wird zuerst umbrochen (hoechstens drei Zeilen, nur wenn bis zur
+naechsten Grundlinie Platz ist), erst danach auf hoechstens 82 Prozent
+verkleinert. Text in Formular-XObjects wird rekursiv mitbehandelt;
+Link-Anmerkungen bleiben unveraendert.
 
-Seit 1.15.199 gehen PDF-Zeilen ohne XML-Modus an DeepL: spitze Klammern aus dem
-Dokument werden dann nicht als Markup gelesen. Ein einzelner Absatz ueber
-30.000 Zeichen wird stueckweise uebersetzt, statt die Anfrage abzubrechen.
+**Bundelung, Speicher, Fehler.** Texte gehen in Bloecken von hoechstens acht
+Stuecken und 12.000 Zeichen an das Modell; doppelte Texte werden nur einmal
+uebersetzt. Ergebnisse liegen in `%APPDATA%\uebersetzer\doclat-cache.json`
+(hoechstens 20.000 Eintraege, atomar geschrieben) und werden beim zweiten Lauf
+wiederverwendet. Scheitert ein Absatz, wird der Block halbiert, bis der einzelne
+Text scheitert; der bleibt dann in der Ausgangssprache stehen und wird in
+`stats.failed`/`stats.kept` gezaehlt. Nur ein fehlendes Modell oder ein nicht
+erreichbarer Server bricht den Lauf ab.
 
-**Schluessel.** Der DeepL-Schluessel liegt in `deepl.json` im Benutzerprofil
-und wird ueber den Hauptprozess gesetzt. Die Seite erfaehrt nur, ob einer
-hinterlegt ist, und die letzten vier Zeichen als Kennzeichen; der Schluessel
-selbst geht nie in die Oberflaeche. Ein Schluessel mit der Endung `:fx` geht an
-`api-free.deepl.com`, jeder andere an `api.deepl.com`.
+**Pruefungen.** `node tools/dokumentvergleich.js` erzeugt mit
+`tools/dokumentvorlagen.js` ein Word-Dokument und ein PDF und vergleicht
+Original und Ergebnis maschinell; `--fake` benutzt einen nachgebauten
+Uebersetzer (EN-Praefix), ohne `--fake` das eingestellte lokale Modell
+(`DOCLAT_MODEL`, Vorgabe `translategemma:4b`).
 
-**Pruefungen** (`node tools/dokumenttest.js`, 39 Pruefungen, nachgebauter
-DeepL-Dienst auf 127.0.0.1, der die XML-Marken stehen laesst und jeden Text mit
-`EN[…]` praefixiert):
+- DOCX-Vorlage: Ueberschrift (Georgia 16 pt, fett, Farbe 1F4E79, zentriert,
+  Abstand danach), Absatz mit vier Runs (fett, kursiv, Farbe C00000,
+  Blocksatz, Zeilenabstand 360), rechtsbuendige Zeile, drei Aufzaehlungen,
+  zwei Nummern, Hyperlink mit eigenem Run-Format, Tabelle 2 x 3 mit
+  Kopfzeilenschattierung, Bild, Seitenumbruch, zweite Ueberschrift (Cambria),
+  Kopf- und Fusszeile, A4 mit 1417er Raendern.
+- PDF-Vorlage: zwei A4-Seiten mit Titel (Helvetica-Bold 20, Farbe 1f4f78),
+  rechtsbuendiger Unterzeile, drei Textzeilen, fettem Zwischentitel,
+  Times-Zeile in Rot, Courier-Zeile, farbiger Flaeche mit Text, Bild,
+  Link-Anmerkung, zentrierter Zeile und einer kleinen Tabelle aus Flaechen.
+- Mit `translategemma:4b` gemessen: DOCX 25 von 25 Textstellen uebersetzt,
+  23 Absaetze mit gleichen Schrift-, Groessen-, Farb-, Ausrichtungs-, Abstands-
+  und Nummerierungswerten, 10 ZIP-Teile, davon 7 byte-gleich (styles,
+  numbering, settings, rels, media, [Content_Types], .rels), Bild, Tabelle
+  (1 Tabelle, 2 Zeilen, 6 Zellen), Seitenumbruch und Link-Ziel gleich,
+  Seitenformat 11906 x 16838 mit 1417er Raendern gleich. PDF: 2 Seiten
+  595 x 842, 20 von 20 Zeilen uebersetzt, Schrift, Groesse, Farbe und Lage
+  aller Zeilen gleich, Link-Ziel, Bild und Seitenzahl gleich, keine deutschen
+  Woerter mehr. Dauer 66 s DOCX und 65 s PDF.
+- `node tools/dokumentvergleich.js --fake`: dieselben 20 Pruefungen bestanden,
+  Dauer unter einer Sekunde je Datei.
+- `npm run regeln`: 546 deutsche Texte, keine Verstoesse. `npm run rauch`:
+  bestanden, 568 Schluessel, Luecken NL 32 / ES 48 / TR 48 / AR 48, 14 Dialoge.
 
-- DOCX: gleiche acht ZIP-Teile; `word/styles.xml`, `word/_rels/document.xml.rels`,
-  `[Content_Types].xml`, `_rels/.rels` und `word/media/image1.png` byte-gleich;
-  erhalten bleiben Georgia, Farbe `1F4E79`, Groesse 32 halbe Punkte, zentrierte
-  Ausrichtung, Nummerierung, Hyperlink `rId5`, Tabelle und Textfeld.
-  8 von 9 Textstellen uebersetzt (die Zahl „2026“ bleibt stehen), Kopfzeile
-  uebersetzt und ihre Farbe `7F7F7F` erhalten, Fusszeile uebersetzt, Text im
-  Textfeld uebersetzt, die drei Stuecke des Absatzes einzeln verteilt.
-  `mammoth` liest die erzeugte Datei.
-- Datei-Ebene: `probe.en.docx` entsteht neben dem Original (Groesse > 1000
-  Bytes), ein zweiter Lauf schreibt `probe.en (2).docx` statt zu ueberschreiben.
-- PDF: zwei Seiten 595 x 842 pt, vier Zeilen uebersetzt, Grundlinien 0,00 pt
-  Abweichung, linker Rand 0,00 pt, Ueberschriftfarbe `1f4f78` erhalten,
-  Link-Ziel erhalten, Schrift Arial, Ergebnis 24.782 Bytes.
-- Fehlerwege: ohne Schluessel `noKey`, unbekannte Endung `unsupported`,
-  abgelehnter Schluessel `deepl403`.
-- Kachel (CDP-Messung im laufenden Programm): offen, sichtbar, rechte Spalte;
-  Beschriftungen „Dokument uebersetzen / Uebersetzen / Dokument waehlen“; ohne
-  Datei erscheint „Zuerst ein Dokument waehlen.“ statt eines Laufs; Schluessel
-  setzen, lesen und loeschen liefert `set:true`, `hint:t:fx`, danach `set:false`;
-  `doclat:run` ohne Schluessel meldet `noKey`; auf Niederlaendisch heisst die
-  Kachel „Document vertalen“.
-- `npm run regeln`: 548 deutsche Texte, keine Verstoesse. `npm run rauch`:
-  bestanden, 568 Schluessel, Luecken unveraendert (NL 30 / ES 46 / TR 46 / AR 46),
-  14 Dialoge.
+**Grenzen.** Die Kachel ist im Quelltext verdrahtet (Auswahl, Modellzeile,
+Fortschritt, Aufruf `doclat:run`), im laufenden Programm aber nicht
+durchgeklickt; gemessen ist die Verarbeitung ueber `tools/dokumentvergleich.js`.
+Ein PDF ohne Textebene (Scan) wird nicht uebersetzt. Text in Bildern, in
+Anmerkungen und in Formularen ohne eigenen Ressourceneintrag bleibt stehen.
+Die Fuellfarbe stammt aus der Reihenfolge der Fuellungen; bei mehreren
+Textstuecken einer Zeile gilt die Farbe des ersten. Arabisch, Chinesisch,
+Japanisch und Koreanisch brauchen eine Schrift mit diesen Zeichen; fehlt sie,
+bleibt die Standardschrift und die Zeichen fehlen. In Word bleiben Kommentare,
+Aenderungsverfolgung (`w:del`), Felder sowie Text in Diagrammen und SmartArt
+unangetastet. Ohne geladenes Modell meldet die Kachel den Fehler des Servers,
+statt still nichts zu tun.
 
-**Grenzen.** Ein echter DeepL-Lauf ist nicht gemessen: Es liegt kein Schluessel
-vor. Geprueft ist die eigene Verarbeitung (Anfrageformat mit `tag_handling=xml`,
-Rueckverteilung der Marken, ZIP-Aufbau, PDF-Positionen), nicht die Qualitaet
-der DeepL-Uebersetzung. PDF nur bei PDFs mit Text (ein Scan hat keinen Text) und
-weißem Grund; die Farbe nur bei eindeutiger Zuordnung; fett nur, wenn der
-Fontname es hergibt (pdf.js liefert `g_d0_f1`); Arabisch, Chinesisch, Japanisch
-und Koreanisch gehen nicht, weil Arial diese Zeichen nicht hat; Verkleinerung
-hoert bei 55 % auf, laengere Uebersetzungen laufen dann ueber. In Word bleiben
-Kommentare, Aenderungsverfolgung (`w:del`) und Felder unangetastet; Text in
-Diagrammen und SmartArt wird nicht uebersetzt.

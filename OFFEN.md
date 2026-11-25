@@ -5,7 +5,7 @@ ist. Sie ersetzt keine Doku: Der Grund steht hier in einem Satz, die
 Einzelheiten im genannten Doku-Abschnitt. Die Rust-Fassung hat ihre eigene Liste
 in `PROBLEME.md`; Fehler der Electron-Fassung gehören hierher, nicht dorthin.
 
-Stand: 25. November 2026, Version 1.15.199.
+Stand: 26. November 2026, Version 1.15.200.
 
 ## Wortwahl (deutsch)
 
@@ -34,17 +34,20 @@ davon anders entscheidet, streicht sie dort und ändert den Text.
   wäre die Abschnittsüberschriften mit Versionsnummer; beim ersten Start nach
   einer neuen Version eine kurze Liste.
 
-## Dokumentuebersetzung (DeepL, §225)
+## Dokumentuebersetzung (offline, §225)
 
-- **Echter DeepL-Lauf ungeprueft.** Es liegt kein Schluessel vor; gemessen ist
-  die eigene Verarbeitung mit einem nachgebauten Dienst (39 Pruefungen). Sobald
-  ein Schluessel hinterlegt ist, fehlt ein Lauf an einer echten Datei.
-- **PDF nur mit Text und weissem Grund.** Ein Scan hat keinen Text; farbige
-  Hintergruende werden von der weissen Abdeckung ueberdeckt. Fett wird nur
-  uebernommen, wenn der Fontname es hergibt; Arabisch, Chinesisch, Japanisch
-  und Koreanisch gehen nicht (Arial fehlt die Zeichen).
+- **Qualitaet haengt am Modell.** Uebersetzt wird lokal mit dem eingestellten
+  Modell; gemessen ist TranslateGemma 4b. Ein groesseres Modell uebersetzt
+  besser, ein kleineres schneller.
+- **PDF nur mit Textebene.** Ein Scan hat keinen Text. Text in Bildern, in
+  Anmerkungen und in Formularen ohne eigenen Ressourceneintrag bleibt stehen.
+- **Lange Uebersetzungen** werden zuerst umbrochen, dann auf hoechstens 82 %
+  verkleinert; passt es danach noch nicht, laeuft der Text ueber den Rand.
 - **Word:** Kommentare, Aenderungsverfolgung und Felder bleiben unangetastet,
   Text in Diagrammen und SmartArt wird nicht uebersetzt.
+- **Kachel nicht durchgeklickt.** Auswahl, Modellzeile und Fortschritt sind
+  verdrahtet, im laufenden Programm aber nicht ausgeloest; die Verarbeitung
+  ist ueber `tools/dokumentvergleich.js` gemessen.
 
 ## Bekannte Grenzen (kein Fehler, aber gut zu wissen)
 

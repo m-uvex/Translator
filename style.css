@@ -997,3 +997,12 @@ body.tblresizing #page{user-select:none}
 #docBox .vmsg{margin-top:8px}
 #docBox .vmsg.bad{color:var(--danger, #b42318)}
 #docBox #docLatShow{margin-top:8px;width:100%}
+
+/* Dokument uebersetzen: Zielsprache, Modellzeile und Fortschrittsbalken.
+   Der Balken ist bewusst flach, damit die Kachel nicht hoeher wird als
+   die uebrigen Kacheln der Seitenspalte. */
+#docBox .dlfield{gap:8px;justify-content:space-between}
+#docBox .dlfield select{flex:1;min-width:0;font:inherit;font-size:12.5px;color:var(--text);background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+#docBox .dlmodel{margin:-2px 0 6px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#docBox .dlprog{height:4px;border-radius:2px;background:var(--soft);margin-top:8px;overflow:hidden}
+#docBox .dlprog i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
