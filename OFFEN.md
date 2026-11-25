@@ -60,3 +60,22 @@ davon anders entscheidet, streicht sie dort und ändert den Text.
 - `localStorage` ist auf wenige Megabyte begrenzt; der Bestand liegt inzwischen
   zum größten Teil in Dateien unter `%APPDATA%`, die Einstellungen aber weiter
   im `localStorage`.
+
+## Wachhund-Erzwingung (fguard 1.2.0)
+
+- **Freebuff-Hauptagent ohne Hook-API.** Fuer `write_file`, `str_replace`,
+  `read_files` gibt es keinen `PreToolUse`-Haken; dort wirken nur die erlaubten
+  Wurzeln und die OS-Rechte. Der Dienst erkennt Aenderungen an `.ssh`, `.gnupg`,
+  `policy.json` und `token` im Sekundentakt und stellt sie zurueck - ehrlich:
+  Reaktion, nicht Vorab-Ablehnung.
+- **Kernel und Fremdprozesse** sind nicht abgefangen; dafuer braeuchte es eine
+  OS-Sandbox oder einen Filtertreiber.
+- **Kommandosubstitution** (`$(...)`) laeuft in einer Subshell ohne DEBUG-Trap;
+  der Dateizugriff trifft danach aber wieder Shim oder ACL.
+- **Eigentuemer-Rechte**: `icacls`/`Set-Acl` koennten die Deny-ACE entfernen;
+  beide stehen auf der Werkzeug-Sperrliste, ein selbst gestarteter Prozess ohne
+  Shell ist damit nicht vollstaendig geblockt.
+- **Netzwerk** wird ueber die Befehlsnamen geprueft, aber nicht inhaltlich
+  gefiltert (keine Allowlist wie in der Claude-Sandbox).
+- **Anmeldung**: Die Benutzerumgebung wirkt erst nach einem neuen Anmelden; ein
+  laufendes Freebuff behaelt die alte Umgebung bis zum Neustart.
