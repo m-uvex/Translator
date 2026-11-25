@@ -147,7 +147,15 @@ X('save','Speichern','Save','Opslaan','Guardar','Kaydet','حفظ'); X('del','Lö
 X('st_pro','Fachlich','Professional','Professioneel','Técnico','Teknik','تخصصي'); X('st_casual','Locker','Casual','Los','Informal','Günlük','غير رسمي'); X('st_concise','Knapp','Concise','Beknopt','Conciso','Kısa','موجز'); X('st_formal','Gehoben','Formal','Formeel','Formal','Resmî','فصيح'); X('st_creative','Einfallsreich','Creative','Creatief','Creativo','Yaratıcı','إبداعي'); X('st_simple','Einfach','Simple','Eenvoudig','Sencillo','Basit','بسيط');
 X('confNew','Aktuelles Dokument verwerfen und ein neues beginnen?','Discard the current document and start a new one?','Huidig document verwerpen en een nieuw beginnen?','¿Descartar el documento actual y comenzar uno nuevo?','Mevcut belgeyi atıp yenisine başlansın mı?','هل تريد تجاهل المستند الحالي وبدء مستند جديد؟');
 X('confDiscard','Ungespeicherte Änderungen an diesem Dokument verwerfen?','Discard unsaved changes to this document?','Niet-opgeslagen wijzigingen in dit document verwerpen?','¿Descartar los cambios no guardados en este documento?','Bu belgedeki kaydedilmemiş değişiklikler atılsın mı?','هل تريد تجاهل التغييرات غير المحفوظة في هذا المستند؟');
-X('confQuitDiscard','Ungespeicherte Änderungen verwerfen und das Programm beenden?','Discard unsaved changes and quit?','Niet-opgeslagen wijzigingen verwerpen en afsluiten?','¿Descartar los cambios no guardados y salir?','Kaydedilmemiş değişiklikleri atıp çıkılsın mı?','هل تريد تجاهل التغييرات غير المحفوظة والخروج؟');
+// Beim Beenden nennt der Dialog die Karten beim Namen: Steht vorn ein leeres
+// Dokument, sah die Rueckfrage sonst so aus, als gelte sie diesem (Abschnitt 224).
+X('confQuitDiscardIn',
+  n => `Ungespeicherte Änderungen verwerfen und das Programm beenden? Betroffen: ${n.map(x => `„${x}“`).join(', ')}`,
+  n => `Discard unsaved changes and quit? Affected: ${n.map(x => `“${x}”`).join(', ')}`,
+  n => `Niet-opgeslagen wijzigingen verwerpen en afsluiten? Betrokken: ${n.map(x => `‘${x}’`).join(', ')}`,
+  n => `¿Descartar los cambios no guardados y salir? Afectados: ${n.map(x => `«${x}»`).join(', ')}`,
+  n => `Kaydedilmemiş değişiklikler atılıp çıkılsın mı? Etkilenen: ${n.map(x => `“${x}”`).join(', ')}`,
+  n => `هل تريد تجاهل التغييرات غير المحفوظة والخروج؟ المستندات: ${n.map(x => `«${x}»`).join('، ')}`);
 X('discard','Verwerfen','Discard','Verwerpen','Descartar','At','تجاهل');
 X('sumTitle','Zusammenfassung','Summary','Samenvatting'); X('insTop','Am Anfang einfügen','Insert at top','Bovenaan invoegen'); X('replAll','Text ersetzen','Replace text','Tekst vervangen');
 X('lblWriter','Absender*in','Writer','Afzender*','Remitente*','Gönderen*','المرسل*'); X('lblAddr','Empfänger*in','Addressee','Ontvanger*','Receptor*','Alıcı*','المستلم*'); X('lblForm','Ton','Tone','Toon','Tono','Ton','النبرة');
@@ -3784,10 +3792,13 @@ if (window.api?.onRequestClose) {
     // Sitzungsdokumente gehen beim Beenden verloren. Ohne diese Unterscheidung
     // warnte das Programm auch dann, wenn gar nichts verloren ging.
     flushDoc();
-    const dirty = ED.docs.some(d => d.key !== ED.docKey && isDocDirty(d));
-    if (dirty) {
+    // Nur die uebrigen Karten gehen verloren, und der Dialog nennt sie: sonst
+    // wirkt die Rueckfrage so, als gelte sie dem (leeren) Dokument vorn.
+    const lost = ED.docs.filter(d => d.key !== ED.docKey && isDocDirty(d))
+      .map(d => d.name || t('libUntitled'));
+    if (lost.length) {
       showView('ed');
-      if (!(await ask(t('confQuitDiscard'), t('discard'), t('cancel')))) return;
+      if (!(await ask(t('confQuitDiscardIn', lost), t('discard'), t('cancel')))) return;
     }
     window.api.forceQuit();
   });
