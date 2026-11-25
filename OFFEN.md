@@ -5,7 +5,7 @@ ist. Sie ersetzt keine Doku: Der Grund steht hier in einem Satz, die
 Einzelheiten im genannten Doku-Abschnitt. Die Rust-Fassung hat ihre eigene Liste
 in `PROBLEME.md`; Fehler der Electron-Fassung gehören hierher, nicht dorthin.
 
-Stand: 25. November 2026, Version 1.15.195.
+Stand: 25. November 2026, Version 1.15.196.
 
 ## Wortwahl (deutsch)
 

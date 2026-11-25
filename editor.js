@@ -1278,12 +1278,21 @@ function flushDoc() {
   try { localStorage.setItem('edDocId', ED.docId || ''); } catch {}
   try { localStorage.setItem('edDocMode', pageMode()); } catch {}
 }
+// Unsichtbare Richtungs- und Nullbreitenzeichen (etwa U+200B aus einer
+// Eingabemethode) stehen im Text, sind aber nicht zu sehen. Ein Dokument, das
+// nur daraus besteht, ist fuer den Nutzer leer und darf beim Beenden nicht als
+// ungespeicherte Aenderung gelten.
+const INVISIBLE = /[\u00AD\u061C\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u206F\uFEFF]/g;
 function isDocDirty(d) {
   if (!d) return false;
   if (d.key === ED.docKey) d.html = docHtml();
   const temp = document.createElement('div');
   temp.innerHTML = d.html || '';
-  const hasContent = !!(temp.textContent.trim() || temp.querySelector('img,hr'));
+  // Die Platzhalter der A4-Ansicht und die Blaetter des PDF-Exports sind
+  // berechnetes Beiwerk und kein Inhalt.
+  temp.querySelectorAll('.pggap, #printPages').forEach(n => n.remove());
+  const text = temp.textContent.replace(INVISIBLE, '').trim();
+  const hasContent = !!(text || temp.querySelector('img,hr'));
   if (!hasContent) return false;
   if (d.savedHtml !== undefined && d.savedHtml !== null) {
     return cleanHtml(d.html) !== cleanHtml(d.savedHtml);

@@ -2908,20 +2908,24 @@ function cmdList() {
   const ok = window.edAllowedViews ? window.edAllowedViews() : ['tr', 'ed', 'lib', 'txt', 'voc', 'srs'];
   [['navTr', 'tr'], ['navEd', 'ed'], ['navLib', 'lib'], ['navTxt', 'txt'], ['navVoc', 'voc'], ['navSrs', 'srs']]
     .forEach(([l, v]) => { if (ok.includes(v)) out.push({ label: t(l), run: () => window.edShowView && window.edShowView(v) }); });
-  const press = (sel, l, cond = true) => {
+  // `view` ist der Arbeitsplatz, zu dem der Knopf gehoert. Die Palette
+  // springt zuerst dorthin: Ein Befehl, der einen Dialog oeffnet, soll ihn
+  // nicht ueber einem fremden Arbeitsplatz aufziehen („Neues Dokument“ aus
+  // dem Uebersetzer heraus legte das Dokument bisher unsichtbar an).
+  const press = (sel, l, view, cond = true) => {
     const b = document.querySelector(sel);
-    if (b && cond) out.push({ label: t(l), run: () => b.click() });
+    if (b && cond) out.push({ label: t(l), run: () => { if (window.edShowView) window.edShowView(view); b.click(); } });
   };
-  press('#attach', 'attach');
-  press('#swap', 'swap', S.src !== 'auto');
-  press('#refresh', 'reloadModels');
+  press('#attach', 'attach', 'tr');
+  press('#swap', 'swap', 'tr', S.src !== 'auto');
+  press('#refresh', 'reloadModels', 'tr');
   if (ok.includes('ed')) {
-    press('[data-tt="fNew"]', 'fNew');
-    press('[data-tt="fOpen"]', 'fOpen');
-    press('[data-tt="fSave"]', 'fSave');
+    press('[data-tt="fNew"]', 'fNew', 'ed');
+    press('[data-tt="fOpen"]', 'fOpen', 'ed');
+    press('[data-tt="fSave"]', 'fSave', 'ed');
   }
-  if (ok.includes('txt')) press('#txAdd', 'txAdd');
-  if (ok.includes('voc')) press('#vocFindBtn', 'vocSearchT');
+  if (ok.includes('txt')) press('#txAdd', 'txAdd', 'txt');
+  if (ok.includes('voc')) press('#vocFindBtn', 'vocSearchT', 'voc');
   out.push({ label: t('settings'), run: () => $('#openSettings').click() });
   if (S.diagOn) out.push({ label: t('diagH'), run: () => $('#openDiag').click() });
   return out;
