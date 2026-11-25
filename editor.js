@@ -3756,6 +3756,10 @@ window.edRender = () => { buildBar(); renderTb(); renderSb(); applyI18n(); reico
 window.edModels = () => { fixEdLangs(); renderTb(); };
 window.edWorkspace = applyWorkspace;
 window.edShowView = showView;
+// Die Befehlspalette (renderer.js) fragt hier, welche Ansichten gerade zu den
+// sichtbaren Arbeitsplaetzen gehoeren; sonst stuende eine ausgeblendete Gruppe
+// in ihrer Liste.
+window.edAllowedViews = allowedViews;
 const startView = () => {
   // 'study' oeffnet die Leseliste, die uebrigen Werte sind Ansichten.
   const v = S.start === 'last' ? (S.view || 'tr') : S.start === 'study' ? 'txt' : (S.start || 'tr');

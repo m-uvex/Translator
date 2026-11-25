@@ -342,7 +342,13 @@ const K = {
   dataH:['Datenbestand und Protokoll','Data and log'], dataOk:['In Ordnung','All good'], dataBad:['Auffällig','Needs a look'],
   diagFiles:['Nicht lesbare Dateien','Files that cannot be read'], logH:['Protokollzeilen','Log lines'],
   logCopyT:['Protokoll kopieren','Copy the log'], logCopied:['Protokoll kopiert','Log copied'],
-  diagHint:['Die Adressen stehen in den Einstellungen unter „Verbindungen“.','The addresses are set in the settings under “Connections”.'], hotkeyHint:['Schnellaufruf aus jedem Programm: Strg+Shift+Leertaste','Quick access from any app: Ctrl+Shift+Space'], hotkeyTaken:['Der Schnellaufruf aus jedem Programm ist von einem anderen Programm belegt; nach einem Neustart wird es erneut versucht.','Quick access from any app is taken by another program; it is tried again after a restart.'],
+  diagHint:['Die Adressen stehen in den Einstellungen unter „Verbindungen“.','The addresses are set in the settings under “Connections”.'],
+  // Tastenkuerzel: Die Kombinationen selbst stehen nur in `KEYS`, hier stehen
+  // nur die Namen. So kann ein Kuerzel nicht an zwei Stellen auseinanderlaufen.
+  scH:['Tastenkürzel','Keyboard shortcuts'], scPalette:['Befehlspalette','Command palette'],
+  scUndo:['Rückgängig (Textbearbeitung)','Undo (text editor)'], scRedo:['Wiederholen (Textbearbeitung)','Redo (text editor)'],
+  scPage:['Neue Seite (Textbearbeitung)','New page (text editor)'], scSelect:['Seite markieren (Textbearbeitung)','Select the page (text editor)'],
+  cmdFilter:['Befehl suchen …','Search commands …'], cmdEmpty:['Nichts gefunden','Nothing found'], scQuick:['Schnellaufruf aus jedem Programm','Quick access from any app'], hotkeyTaken:['Der Schnellaufruf aus jedem Programm ist von einem anderen Programm belegt; nach einem Neustart wird es erneut versucht.','Quick access from any app is taken by another program; it is tried again after a restart.'],
   startTr:['Übersetzer öffnen','Open translator'], startEd:['Textbearbeitung öffnen','Open text editor'], startStudy:['Lernen öffnen','Open study'], startLast:['Zuletzt verwendetes öffnen','Open last used'],
   // Namen der Arbeitsplatz-Gruppen fuer die Kaestchen in den Einstellungen.
   wsTr:['Übersetzer','Translator'], wsEd:['Textbearbeitung','Text editor'], wsStudy:['Lernen','Study'],
@@ -527,7 +533,7 @@ const NL = {
   diagUnload:'Modellen vrijgeven', diagUnloaded:'Modellen vrijgegeven', diagNoUnload:'Niets geladen',
   diagOllama:'Ollama', diagNllb:'NLLB-server',
   diagTts:'Voorleesstemmen', diagTtsEngine:'Piper-engine', diagVoices:'Stemmen', diagTtsLangs:'Talen',
-  diagTtsOk:'Gereed', diagTtsBad:'Niet ingesteld', diagTtsYes:'aanwezig', diagTtsNo:'ontbreekt', diagHint:'De adressen staan in de instellingen onder „Verbindingen“.', hotkeyHint:'Snel openen vanuit elk programma: Ctrl+Shift+Spatie', hotkeyTaken:'Snel openen vanuit elk programma is bezet door een ander programma; na een herstart wordt het opnieuw geprobeerd.',
+  diagTtsOk:'Gereed', diagTtsBad:'Niet ingesteld', diagTtsYes:'aanwezig', diagTtsNo:'ontbreekt', diagHint:'De adressen staan in de instellingen onder „Verbindingen“.', scQuick:'Snel openen vanuit elk programma', hotkeyTaken:'Snel openen vanuit elk programma is bezet door een ander programma; na een herstart wordt het opnieuw geprobeerd.',
   startTr:'Vertaler openen', startEd:'Tekstbewerking openen', startLast:'Laatst gebruikte openen', wsTr:'Vertaler', wsEd:'Tekstbewerking', wsStudy:'Leren',
   reset:'Herstellen', resetAll:'Alles herstellen', autoSys:'Automatisch (systeem)', autoO:'Automatisch', autoModel:'Automatisch', light:'Licht', dark:'Donker',
   nllbH:'Vertaalmodellen', srvSetup:'Server instellen', mInst:'Geïnstalleerd', mNot:'Niet geïnstalleerd', mLoad:p => `Downloaden … ${p} %`, mErr:e => `Fout: ${e}`, bDl:'Downloaden', bDel:'Verwijderen', bBusy:'Bezig …',
@@ -718,7 +724,7 @@ const ES = {
   diagUnload:'Liberar modelos', diagUnloaded:'Modelos liberados', diagNoUnload:'Nada cargado',
   diagTts:'Voces de lectura', diagTtsEngine:'Motor Piper', diagVoices:'Voces', diagTtsLangs:'Idiomas',
   diagTtsOk:'Listo', diagTtsBad:'Sin configurar', diagTtsYes:'presente', diagTtsNo:'falta',
-  diagNllb:'Servidor NLLB', diagHint:'Las direcciones se ajustan en la configuración, en «Conexiones».', hotkeyHint:'Acceso rápido desde cualquier programa: Ctrl+Shift+Espacio', hotkeyTaken:'El acceso rápido desde cualquier programa está ocupado por otro programa; se volverá a intentar tras reiniciar.',
+  diagNllb:'Servidor NLLB', diagHint:'Las direcciones se ajustan en la configuración, en «Conexiones».', scQuick:'Acceso rápido desde cualquier programa', hotkeyTaken:'El acceso rápido desde cualquier programa está ocupado por otro programa; se volverá a intentar tras reiniciar.',
   startTr:'Abrir traductor', startEd:'Abrir editor', startLast:'Abrir último usado', wsTr:'Traductor', wsEd:'Editor', wsStudy:'Aprendizaje',
   reset:'Restablecer', resetAll:'Restablecer todo', autoSys:'Automático (sistema)', autoO:'Automático', autoModel:'Automático', light:'Claro', dark:'Oscuro',
   nllbH:'Modelos de traducción', srvSetup:'Configurar el servidor', mInst:'Instalado', mNot:'No instalado', mLoad:p => `Descargando … ${p} %`, mErr:e => `Error: ${e}`, bDl:'Descargar', bDel:'Eliminar', bBusy:'Descargando …',
@@ -911,7 +917,7 @@ const TR = {
   diagUnload:'Modelleri boşalt', diagUnloaded:'Modeller boşaltıldı', diagNoUnload:'Yüklü model yok',
   diagTts:'Okuma sesleri', diagTtsEngine:'Piper motoru', diagVoices:'Sesler', diagTtsLangs:'Diller',
   diagTtsOk:'Hazır', diagTtsBad:'Kurulmadı', diagTtsYes:'var', diagTtsNo:'yok',
-  diagNllb:'NLLB sunucusu', diagHint:'Adresler ayarlarda „Bağlantılar“ altında.', hotkeyHint:'Her programdan hızlı erişim: Ctrl+Shift+Boşluk', hotkeyTaken:'Her programdan hızlı erişim başka bir program tarafından kullanılıyor; yeniden başlatmadan sonra tekrar denenecek.',
+  diagNllb:'NLLB sunucusu', diagHint:'Adresler ayarlarda „Bağlantılar“ altında.', scQuick:'Her programdan hızlı erişim', hotkeyTaken:'Her programdan hızlı erişim başka bir program tarafından kullanılıyor; yeniden başlatmadan sonra tekrar denenecek.',
   startTr:'Çevirmeni aç', startEd:'Metin düzenleyiciyi aç', startLast:'Son kullanılanı aç', wsTr:'Çevirmen', wsEd:'Editör', wsStudy:'Öğrenme',
   reset:'Sıfırla', resetAll:'Tümünü sıfırla', autoSys:'Otomatik (sistem)', autoO:'Otomatik', autoModel:'Otomatik', light:'Açık', dark:'Koyu',
   nllbH:'Çeviri modelleri', srvSetup:'Sunucuyu kur', mInst:'Yüklü', mNot:'Yüklü değil', mLoad:p => `İndiriliyor … %${p}`, mErr:e => `Hata: ${e}`, bDl:'İndir', bDel:'Sil', bBusy:'İndiriliyor …',
@@ -1104,7 +1110,7 @@ const AR = {
   diagUnload:'إفراغ النماذج', diagUnloaded:'تم إفراغ النماذج', diagNoUnload:'لا شيء محمّل',
   diagTts:'أصوات القراءة', diagTtsEngine:'محرك Piper', diagVoices:'الأصوات', diagTtsLangs:'اللغات',
   diagTtsOk:'جاهز', diagTtsBad:'غير مُهيّأ', diagTtsYes:'موجود', diagTtsNo:'غير موجود',
-  diagNllb:'خادم NLLB', diagHint:'تُضبط العناوين في الإعدادات ضمن «الاتصالات».', hotkeyHint:'وصول سريع من أي تطبيق: Ctrl+Shift+Space', hotkeyTaken:'وصول سريع من أي تطبيق محجوز من برنامج آخر؛ ستُعاد المحاولة بعد إعادة التشغيل.',
+  diagNllb:'خادم NLLB', diagHint:'تُضبط العناوين في الإعدادات ضمن «الاتصالات».', scQuick:'وصول سريع من أي تطبيق', hotkeyTaken:'وصول سريع من أي تطبيق محجوز من برنامج آخر؛ ستُعاد المحاولة بعد إعادة التشغيل.',
   startTr:'فتح المترجم', startEd:'فتح المحرر', startLast:'فتح آخر مستخدم', wsTr:'المترجم', wsEd:'المحرر', wsStudy:'التعلّم',
   reset:'إعادة تعيين', resetAll:'إعادة تعيين الكل', autoSys:'تلقائي (النظام)', autoO:'تلقائي', autoModel:'تلقائي', light:'فاتح', dark:'داكن',
   nllbH:'نماذج الترجمة', srvSetup:'إعداد الخادم', mInst:'مثبت', mNot:'غير مثبت', mLoad:p => `جاري التنزيل … ${p} %`, mErr:e => `خطأ: ${e}`, bDl:'تنزيل', bDel:'حذف', bBusy:'جاري التنزيل …',
@@ -2726,10 +2732,10 @@ const FIELDS = [['uiLang','s_ui','ui'],['theme','s_theme','theme'],['accent','s_
 const GROUPS = [['s_groupGeneral',['uiLang','theme','accent','start','workspace']],['s_groupAI',['aiAll']],['s_groupStudy',['studyWord','storyOn','csvSrs']],['s_groupFeatures',['bootModel','profanityFilter','profanityStyle','edMarkdown','edPageMode','edSpellAnim','autoCopy','autoCopyTyped','historyOn','diagOn']],['s_groupImages',['imgModel','imgLimit','imgTotalLimit']],['s_groupEdAI',['edAI',{bar:1},{tb:1}]],['s_groupConn',['url','nllb']],['s_groupTrans',['helper','sys','temp','numctx']]];
 // Der systemweite Kurzbefehl kann von einem anderen Programm belegt sein:
 // globalShortcut.register() scheitert dann still. main.js meldet ueber
-// `app:hotkey`, ob die Registrierung geklappt hat; bis die Antwort da ist,
-// steht die zuversichtliche Zeile, danach der Hinweis ohne Tastenkuerzel.
+// `app:hotkey`, ob die Registrierung geklappt hat; die Kuerzel-Uebersicht in
+// den Einstellungen nennt die Kombination in jedem Fall und setzt bei `false`
+// einen Satz darunter, dass sie gerade nicht wirkt.
 let hotkeyOk = null;
-const hotkeyKey = () => hotkeyOk === false ? 'hotkeyTaken' : 'hotkeyHint';
 function drawSettings() {
   const lists = k =>
     k === 'uiLang' ? [['auto', t('autoO')], ['de','Deutsch'], ['en','English'], ['nl','Nederlands'], ['es','Español'], ['tr','Türkçe'], ['ar','العربية']] :
@@ -2825,11 +2831,15 @@ function drawSettings() {
   $('#setBody').innerHTML = GROUPS.map(([h, ks]) => `<h3 class="sect">${t(h)}</h3>` + ks.map(k => typeof k === 'string' ? field(byKey[k]) : (k.bar ? barField() : tbField())).join('')).join('') +
     `<h3 class="sect">${t('nllbH')}</h3><div id="mtBox"></div>` +
     `<h3 class="sect">${t('s_ttsH')}</h3><div id="ttsBox"></div>` +
-    `<p class="muted" data-htk="1" data-t="${hotkeyKey()}"></p>`;
+    // Die Kuerzel stehen ganz unten in einem Stueck - der Schnellaufruf war
+    // frueher eine einzelne Zeile fuer sich (Abschnitt 98/100), jetzt ist er
+    // eine Zeile dieser Uebersicht.
+    `<h3 class="sect">${t('scH')}</h3><div id="scBox"></div>`;
   $('#setBody').querySelectorAll('[data-k]').forEach(el => { const v = S[el.dataset.k]; el.value = el.dataset.bool ? (v ? '1' : '0') : v; });
   applyI18n();
   drawMt();
   drawTts();
+  drawKeys();
 }
 // Die weisse Optionskarte im Symbol-Layout beginnt auf derselben Hoehe wie das
 // Uebersetzungsausgabefeld; Kontext und Glossar ruecken dadurch mit nach unten.
@@ -2857,10 +2867,92 @@ $('#setBody').addEventListener('change', e => { if (e.target.dataset.k === 'url'
 try {
   window.api.hotkeyOk().then(v => {
     hotkeyOk = !!v;
-    const p = document.querySelector('#setBody [data-htk]');
-    if (p) { p.dataset.t = hotkeyKey(); p.textContent = t(hotkeyKey()); }
+    drawKeys();
   }).catch(() => {});
 } catch {}
+
+// ---------- Tastenkuerzel: eine Quelle, zwei Anzeigen ----------
+// `KEYS` haelt die Kombinationen, `KURZ` die Reihenfolge in der Uebersicht.
+// Palette, Uebersicht und die Beschriftung im Tray lesen dieselbe Tabelle;
+// die Tastenabgriffe selbst stehen dort, wo sie hingehoeren (editor.js).
+const modKey = () => (LANG === 'de' ? 'Strg' : 'Ctrl');
+const KEYS = {
+  palette: () => modKey() + '+K',
+  quick: () => modKey() + '+Shift+' + (LANG === 'de' ? 'Leertaste' : 'Space'),
+  undo: () => modKey() + '+Z',
+  redo: () => modKey() + '+Y',
+  page: () => modKey() + '+Enter',
+  select: () => modKey() + '+A'
+};
+const KURZ = [['palette', 'scPalette'], ['quick', 'scQuick'], ['undo', 'scUndo'],
+  ['redo', 'scRedo'], ['page', 'scPage'], ['select', 'scSelect']];
+function drawKeys() {
+  const box = $('#scBox');
+  if (!box) return;
+  box.innerHTML = KURZ.map(([id, l]) =>
+    `<div class="scrow"><kbd>${esc(KEYS[id]())}</kbd><span>${esc(t(l))}</span></div>`).join('') +
+    (hotkeyOk === false ? `<p class="muted">${esc(t('hotkeyTaken'))}</p>` : '');
+}
+
+// ---------- Befehlspalette (Strg+K) ----------
+// Die Palette bietet genau die Ziele an, die auch die Leiste links hat; sie
+// erfindet keine Befehle. Welche Ansicht gerade dazugehoert, entscheidet
+// editor.js (`edAllowedViews`), damit eine ausgeblendete Gruppe nicht in der
+// Liste steht und ein Sprung ins Leere nicht moeglich ist.
+function cmdList() {
+  const out = [];
+  const ok = window.edAllowedViews ? window.edAllowedViews() : ['tr', 'ed', 'lib', 'txt', 'voc', 'srs'];
+  [['navTr', 'tr'], ['navEd', 'ed'], ['navLib', 'lib'], ['navTxt', 'txt'], ['navVoc', 'voc'], ['navSrs', 'srs']]
+    .forEach(([l, v]) => { if (ok.includes(v)) out.push({ label: t(l), run: () => window.edShowView && window.edShowView(v) }); });
+  out.push({ label: t('settings'), run: () => $('#openSettings').click() });
+  if (S.diagOn) out.push({ label: t('diagH'), run: () => $('#openDiag').click() });
+  return out;
+}
+let cmdHits = [], cmdSel = 0;
+function drawCmd() {
+  const q = $('#cmdIn').value.trim().toLowerCase();
+  const all = cmdList();
+  cmdHits = q ? all.filter(c => c.label.toLowerCase().includes(q)) : all;
+  if (cmdSel > cmdHits.length - 1) cmdSel = Math.max(0, cmdHits.length - 1);
+  $('#cmdList').innerHTML = cmdHits.length
+    ? cmdHits.map((c, i) => `<button type="button" class="cmdraw${i === cmdSel ? ' on' : ''}" data-ci="${i}">${esc(c.label)}</button>`).join('')
+    : `<p class="muted">${esc(t('cmdEmpty'))}</p>`;
+  const on = $('#cmdList').querySelector('.on');
+  // Nach jedem Tastenanschlag mitwandern: sonst steht die Auswahl ausserhalb
+  // des sichtbaren Teils und Enter trifft etwas, das man nicht sieht.
+  if (on) on.scrollIntoView({ block: 'nearest' });
+}
+function cmdRun(i) {
+  const c = cmdHits[i];
+  if (!c) return;
+  $('#cmdDlg').close();
+  c.run();
+}
+function openCmd() {
+  const d = $('#cmdDlg');
+  if (d.open) { d.close(); return; }
+  cmdSel = 0;
+  $('#cmdIn').value = '';
+  drawCmd();
+  d.showModal();
+  $('#cmdIn').focus();
+}
+document.addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+  if ((e.key || '').toLowerCase() !== 'k') return;
+  e.preventDefault(); e.stopPropagation();
+  openCmd();
+}, true);
+$('#cmdIn').addEventListener('input', () => { cmdSel = 0; drawCmd(); });
+$('#cmdIn').addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); cmdSel = Math.min(cmdSel + 1, Math.max(0, cmdHits.length - 1)); drawCmd(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); cmdSel = Math.max(cmdSel - 1, 0); drawCmd(); }
+  else if (e.key === 'Enter') { e.preventDefault(); cmdRun(cmdSel); }
+});
+$('#cmdList').addEventListener('click', e => {
+  const b = e.target.closest('[data-ci]');
+  if (b) cmdRun(+b.dataset.ci);
+});
 $('#setBody').onclick = e => {
   const inf = e.target.closest('[data-info]'); if (inf) return openInfo(inf.dataset.info);
   const act = e.target.closest('[data-act]'); if (act) return mtAction(act);

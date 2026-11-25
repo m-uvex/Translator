@@ -5,7 +5,7 @@ ist. Sie ersetzt keine Doku: Der Grund steht hier in einem Satz, die
 Einzelheiten im genannten Doku-Abschnitt. Die Rust-Fassung hat ihre eigene Liste
 in `PROBLEME.md`; Fehler der Electron-Fassung gehören hierher, nicht dorthin.
 
-Stand: 25. November 2026, Version 1.15.191.
+Stand: 25. November 2026, Version 1.15.192.
 
 ## Wortwahl (deutsch)
 
@@ -30,10 +30,6 @@ davon anders entscheidet, streicht sie dort und ändert den Text.
   ein Satz Eingabedateien mit erwarteter Ausgabe für Seitenumbruch, Lernleiter,
   Worthäufigkeit und Glossarersetzung, den beide Fassungen abarbeiten. Offen ist,
   ob die Rust-Fassung das jetzt schon aufnehmen kann.
-- **Befehlspalette mit Strg+K** (Punkt 8): eine Liste aller Aktionen aus derselben
-  Tabelle, die auch die Tastatur bedient. Vorher zu klären: welche Aktionen
-  erscheinen (alle oder nur die ohne eigenen Knopf) und ob sie die aktuelle
-  Auswahl mitnimmt.
 - **„Was ist neu“ aus der Doku** (Punkt 4): auf Wunsch zurückgestellt. Die Quelle
   wäre die Abschnittsüberschriften mit Versionsnummer; beim ersten Start nach
   einer neuen Version eine kurze Liste.
