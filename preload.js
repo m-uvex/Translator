@@ -22,6 +22,14 @@ contextBridge.exposeInMainWorld('api', {
   studyImportFile: ext => ipcRenderer.invoke('study:importFile', ext),
   studyExportFile: (name, data, ext) => ipcRenderer.invoke('study:exportFile', name, data, ext),
   fontsList: () => ipcRenderer.invoke('fonts:list'),
+  // Protokoll und Datenpruefung: Zeilen aus der Oberflaeche ablegen, die letzten
+  // Zeilen holen bzw. in die Zwischenablage legen, und beim Start nachsehen, ob
+  // eine Datei unfertig oder nicht lesbar ist.
+  logWrite: msg => ipcRenderer.invoke('log:write', msg),
+  logTail: n => ipcRenderer.invoke('log:tail', n),
+  logCopy: () => ipcRenderer.invoke('log:copy'),
+  logPath: () => ipcRenderer.invoke('log:path'),
+  dataCheck: () => ipcRenderer.invoke('data:check'),
   nllbUrl: u => ipcRenderer.send('nllb:url', u),
   // Python-Umgebung und Pakete aus der App heraus einrichten (Einstellungen,
   // zusammen mit einem Modell-Download). Liefert {ok, error?}.

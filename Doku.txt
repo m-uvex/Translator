@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.188 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.189 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -3094,3 +3094,60 @@ Dieselbe Knopfzeile schließt auch die Liste der Übersetzermodelle ab — hinte
 **Offen gelassen.** Der Name `s_story` „Kurzgeschichten-Generator (Beta)“ bleibt vorerst, weil die zweite Hälfte noch nicht entschieden ist. Die erwogenen Fassungen sind „Kurzgeschichtenwerkstatt“ (deutsch, zusammengesetzt, an „Schreibwerkstatt“ angelehnt), „Erzählwerkstatt“ (kürzer) und „Kurzgeschichten-Schreiber“; ein Wechsel betrifft nur diesen einen Eintrag, die englischen und die übrigen Sprachfassungen nennen weiter „Short story generator“ und Entsprechungen.
 
 **Grenzen.** Geprüft wurden nur die deutschen Oberflächentexte in `renderer.js`, `editor.js`, `study.js` und `index.html`; die anderen fünf Sprachen und die Installer-Texte in `install.ps1` wurden nicht angefasst. Die Änderungen sind reine Textänderungen; angesehen wurde keine der Stellen im laufenden Fenster, sondern nur der Quelltext und die gebaute Datei.
+## 214. Schreiben mit Umweg und Prüfung des Datenbestands (1.15.189)
+
+**Anlass.** Der gesamte Lernstand liegt als JSON unter `%APPDATA%`/<App>, die Einstellungen im `localStorage`. Geschrieben wurde mit einem einzigen `fs.writeFileSync`: Ein Absturz oder ein hartes Beenden mitten im Schreiben hinterlässt eine abgeschnittene Datei, die beim nächsten Start nicht mehr lesbar ist. Für `study` gab es zwar eine `.bak`, aber auch die Hauptdatei war nach einem Fehlschlag erst einmal kaputt.
+
+**Jetzt.** `safeWrite(file, data, enc)` in `main.js` schreibt zuerst nach `<datei>.part`, ruft `fsync`, schließt und benennt dann um. Bricht der Vorgang ab, bleibt die alte Datei vollständig stehen und nur die `.part` liegt daneben. Jeder Schreibfehler landet im Protokoll (§215). Alle Datenwege benutzen den Helfer: `config.json`, `ollama-address.json`, `nllb-address.json`, `personal-dictionary.json`, Dokumentenablage (`lib:save`), `study:save` samt `.bak`, `file:save` (Text und PDF) und `study:exportFile`.
+
+**Beim Start.** `dataCheck()` räumt liegen gebliebene `.part`-Dateien weg und prüft jede JSON-Datei unter `userData`, `study` und `library` auf Lesbarkeit. Was auffällt, steht im Protokoll und in der Diagnose (§215). `study:load` liest eine defekte Hauptdatei weiterhin aus der `.bak`; der Start bricht in keinem Fall ab.
+
+**Im Renderer.** Der gespeicherte Stand wurde bisher ungeschützt gelesen (`JSON.parse(localStorage.getItem('s') || '{}')`). Eine kaputte Zeichenkette beendete damit die ganze Seite. `storedSettings()` fängt den Fehler ab, legt den alten Text als `s.kaputt.<Zeit>` beiseite, meldet ihn ins Protokoll und startet mit den Vorgaben. Zusätzlich hängen `window.onerror` und `unhandledrejection` der Oberfläche am Protokoll.
+
+**Grenzen.** Der Umweg schützt gegen einen Abbruch während des Schreibens, nicht gegen einen defekten Datenträger; `fsync` ist auf Windows eine Empfehlung an das System, keine Garantie. Für `localStorage` gibt es kein atomares Schreiben — dort bleibt nur das Beiseitelegen des kaputten Standes.
+
+## 215. Protokoll und Datenkarte in der Diagnose (1.15.189)
+
+**Anlass.** Bei einer Fehlermeldung gab es nichts zum Anschauen: kein Protokoll, keine Uhrzeit, keine letzten Schritte. Jede Rückmeldung begann deshalb mit der Frage, was vorher passiert war.
+
+**Jetzt.** `logLine(msg)` hält die letzten 400 Zeilen im Speicher und schreibt sie zusätzlich nach `%APPDATA%`/<App>/`protokoll.log`; wächst die Datei über 512 KB, bleibt die jüngere Hälfte stehen. Angebunden sind: Start mit Version, Fehler im Hauptprozess (`uncaughtException`, `unhandledRejection`), beendete Oberfläche (`render-process-gone`) und Kindprozesse, Schreibfehler aus `safeWrite`, Befunde von `dataCheck` sowie Fehler der Oberfläche über `window.onerror` und `unhandledrejection`. Die Kanäle `log:write`, `log:tail`, `log:copy`, `log:path` und `data:check` liegen in `preload.js` als `logWrite`, `logTail`, `logCopy`, `logPath`, `dataCheck`.
+
+Im Dialog „Verbindungen“ steht dafür eine vierte Karte „Datenbestand und Protokoll“ mit einer Pille („In Ordnung“ oder „Auffällig“), der Liste nicht lesbarer Dateien, der Zahl der Protokollzeilen und einem Knopf, der die letzten Zeilen in die Zwischenablage legt (`logCopyT`, `logCopied`). Nichts davon geht ins Netz.
+
+**Grenzen.** Das Protokoll wächst nur durch Ereignisse; ein Absturz, der die App sofort beendet, kann die letzte Zeile verlieren. Die Karte zeigt den Stand vom Aufruf der Diagnose, nicht laufend aktualisiert.
+
+## 216. Regelprüfer für die deutsche Wortwahl (1.15.189)
+
+**Anlass.** Die Wortwahl-Durchsichten von §213 und die drei davor waren Handarbeit: Fünf Wörterbücher inline, die Regel aus §7 nur im Kopf des jeweiligen Durchgangs. Gefunden wurden dabei Stellen, die seit Monaten im Code standen.
+
+**Jetzt.** `tools/regeln.js` (`npm run regeln`) liest die deutschen Texte aus den Wörterbuchblöcken in `renderer.js`, `study.js` und den `X('key','deutsch',…)`-Aufrufen in `editor.js`/`study.js` und prüft drei Regeln: Bindestrich in einem nativen Kompositum (Marken wie Ollama, NLLB, Python, PDF sind ausgenommen), Lehnwort, für das im Programm schon ein deutsches Wort steht (Standard, Editor, Engine, Infos, Amber, Pink …), und Personenbezeichnung ohne Sternchen. Auskommentierte Einträge zählen nicht. Jede Fundstelle wird mit Datei, Zeile, Schlüssel und Vorschlag gedruckt; der Rückgabewert ist 1, wenn etwas gefunden wurde, damit der Lauf einen Release stoppen kann. `--alle` zeigt zusätzlich die Sprachabdeckung.
+
+Bewusste Entscheidungen stehen in `AUSNAHMEN` (die aus §213 belassenen Stellen und die offenen Punkte aus §7). Wer eine Ausnahme anders entscheidet, streicht sie dort — dann meldet der Prüfer die Stelle wieder.
+
+**Gemessen.** Erster Lauf: 531 deutsche Texte geprüft, drei Fundstellen (eine auskommentierte Farbe, ein Marken-Kompositum „Python-Umgebung“), nach der Korrektur der Ausnahmeliste null Fundstellen. Sprachabdeckung: 549 Schlüssel, Lücken NL 22, ES 38, TR 38, AR 38 (Rückfall auf Englisch).
+
+**Grenzen.** Der Prüfer kennt nur die drei Regeln und nur Wörter, die in seiner Liste stehen; er ersetzt kein Urteil. Er liest den Quelltext textuell, nicht über einen JavaScript-Parser — bei ungewöhnlichen Schreibweisen kann er vorbeisehen.
+
+## 217. Rauchtest über den Debug-Port (1.15.189)
+
+**Anlass.** Jeder Release wurde von Hand geprüft: App starten, Port abgreifen, ein Skript durch den Debugger schicken. Genau die Fehler der letzten Wochen — gleiche Rahmen bei verschiedener Schrift, ungleiche Knopfbreiten — hätte ein Skript gefunden, das die Dialoge öffnet und Maße vergleicht.
+
+**Jetzt.** `node tools/rauchtest.js` (`npm run rauch`) startet die App mit eigenem Profil und eigenem Debug-Port, wartet auf die Seite, verbindet sich über `WebSocket` (in Node ohne Zusatzpaket) mit dem Debug-Protokoll und prüft: Oberfläche geladen (Titel, `#vT`, `window.api`), Schlüsselzahl der Sprachfassungen und Lücken je Sprache, gleiche Höhe und Schriftgröße der Knöpfe in `#txDlg`, Zahl der Dialoge, Erreichbarkeit des Protokolls. Danach beendet er den Prozessbaum und räumt das Profil weg; Rückgabewert 1 bei jedem Fehlschlag.
+
+**Gemessen (erster vollständiger Lauf).** Oberfläche geladen, 549 Schlüssel, Knöpfe 115 × 38 px bei 15 px, 13 Dialoge, Protokoll erreichbar — bestanden.
+
+**Grenzen.** Der Test misst nur, was er kennt; er ersetzt kein Ansehen der Seite. Er braucht einen freien Port und ein eigenes Profil, damit er neben einer laufenden Installation arbeiten kann. Übersetzungen werden nicht geprüft (kein Modell im Test).
+
+## 218. Release in einem Lauf (1.15.189)
+
+**Anlass.** Jeder Release war dieselbe Zahlenfolge von Hand: Version erhöhen, `electron` nach `devDependencies` schieben, bauen, Icon setzen, laufende App beenden (sonst Exitcode 2), still installieren, starten, `/health` messen. Ein vergessener Schritt kostet einen ganzen Durchlauf.
+
+**Jetzt.** `tools/release.ps1` (`npm run release`) macht diese Folge, prüft nach jedem Schritt den Exitcode und bricht mit einer klaren Meldung ab. Die Version wird ohne Argument um eine Patchstelle erhöht (`-Version` setzt sie fest), `package.json` wird vorher gesichert und im `finally`-Zweig in jedem Fall zurückgelegt. `-SkipInstall` baut nur, `-SkipHealth` installiert ohne Start. Der Installer wird unter `dist` gesucht, die Installation an der `app.asar` geprüft, `/health` bis zu 40 Sekunden abgefragt.
+
+**Grenzen.** Das Skript committet und pusht nicht — das bleibt eine eigene Entscheidung. Es ist auf Windows beschränkt (NSIS, `taskkill`, `rcedit`) und setzt die Verzeichnisse von electron-builder im Cache voraus; fehlt `rcedit`, läuft es mit dem Standardicon weiter und sagt es.
+
+## 219. Offene Punkte als Liste (1.15.189)
+
+**Anlass.** Die offenen Wortwahl-Entscheidungen lagen als Prosa in §7 und wurden bei jedem Durchgang neu gefunden; die Rust-Fassung hat für ihre Punkte seit Monaten `PROBLEME.md`, die Electron-Fassung hatte nichts Vergleichbares.
+
+**Jetzt.** `OFFEN.md` im Wurzelverzeichnis sammelt in drei Abschnitten: offene Wortwahl (mit Stelle, jetzigem Text, erwogenen Fassungen und Grund), noch nicht entschiedene Ideen (gemeinsame Prüfdateien mit der Rust-Fassung, Befehlspalette, „Was ist neu“) und bekannte Grenzen. Jeder Eintrag nennt den Doku-Abschnitt mit den Einzelheiten; die Liste ersetzt die Doku nicht.

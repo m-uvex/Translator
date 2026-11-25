@@ -53,6 +53,83 @@ function readCfg() {
   return {};
 }
 
+// ---------- Schreiben mit Umweg ----------
+// Erst in <datei>.part schreiben, dann umbenennen. Ein Absturz mitten im
+// Schreiben laesst so nur die .part-Datei zurueck; die eigentliche Datei bleibt
+// die alte, vollstaendige Fassung. Vorher konnte ein hartes Beenden eine halb
+// geschriebene Datei hinterlassen, die beim naechsten Start nicht mehr lesbar
+// war.
+function safeWrite(file, data, enc) {
+  const tmp = file + '.part';
+  try {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    const fd = fs.openSync(tmp, 'w');
+    try {
+      fs.writeFileSync(fd, data, enc);
+      try { fs.fsyncSync(fd); } catch {}
+    } finally { fs.closeSync(fd); }
+    fs.renameSync(tmp, file);
+    return true;
+  } catch (e) {
+    try { fs.unlinkSync(tmp); } catch {}
+    logLine('Schreiben fehlgeschlagen: ' + file + ' — ' + (e && e.message || e));
+    return false;
+  }
+}
+
+// ---------- Protokoll ----------
+// Die letzten 400 Zeilen liegen im Speicher, jede Zeile wandert zusaetzlich in
+// %APPDATA%/<App>/protokoll.log. Wird die Datei groesser als 512 KB, bleibt die
+// juengere Haelfte stehen. Nichts davon geht ins Netz; der Dialog „Verbindungen“
+// kann die letzten Zeilen in die Zwischenablage legen.
+const LOG_MAX = 400, LOG_BYTES = 512 * 1024;
+const logFile = () => path.join(app.getPath('userData'), 'protokoll.log');
+const logBuf = [];
+function logLine(msg) {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  const stamp = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  const line = stamp + '  ' + String(msg == null ? '' : msg).replace(/\s+$/, '');
+  logBuf.push(line);
+  if (logBuf.length > LOG_MAX) logBuf.splice(0, logBuf.length - LOG_MAX);
+  try {
+    const f = logFile();
+    if (fs.existsSync(f) && fs.statSync(f).size > LOG_BYTES) fs.writeFileSync(f, fs.readFileSync(f, 'utf8').slice(-Math.floor(LOG_BYTES / 2)));
+    fs.appendFileSync(f, line + '\n');
+  } catch {}
+  return line;
+}
+ipcMain.handle('log:write', (_e, msg) => { logLine(msg); return true; });
+ipcMain.handle('log:tail', (_e, n) => logBuf.slice(-Math.max(1, Math.min(LOG_MAX, Number(n) || 100))).join('\n'));
+ipcMain.handle('log:copy', () => { try { clipboard.writeText(logBuf.join('\n')); return logBuf.length; } catch { return 0; } });
+ipcMain.handle('log:path', () => logFile());
+
+// ---------- Datenbestand pruefen ----------
+// Beim Start bleiben keine .part-Dateien liegen, und defekte JSON-Dateien
+// werden gemeldet statt still uebersprungen. Die study-Dateien lesen sich aus
+// ihrer .bak selbst wieder ein (siehe study:load); hier steht nur, was auffiel.
+function dataCheck() {
+  const root = app.getPath('userData');
+  const out = { parts: [], broken: [] };
+  for (const d of [root, path.join(root, 'study'), path.join(root, 'library')]) {
+    let names = [];
+    try { names = fs.readdirSync(d); } catch { continue; }
+    for (const n of names) {
+      const f = path.join(d, n);
+      if (n.endsWith('.part')) { try { fs.unlinkSync(f); out.parts.push(n); } catch {} continue; }
+      if (!n.endsWith('.json')) continue;
+      try { JSON.parse(fs.readFileSync(f, 'utf8')); } catch { out.broken.push(path.relative(root, f).replace(/\\/g, '/')); }
+    }
+  }
+  if (out.parts.length) logLine('Unfertige Dateien entfernt: ' + out.parts.join(', '));
+  if (out.broken.length) logLine('Nicht lesbare Dateien: ' + out.broken.join(', '));
+  return out;
+}
+ipcMain.handle('data:check', () => dataCheck());
+
+process.on('uncaughtException', err => { logLine('Fehler im Hauptprozess: ' + (err && err.stack || err)); });
+process.on('unhandledRejection', r => { logLine('Unbehandelte Zusage: ' + (r && r.stack || r)); });
+
 // Ein Flag schreiben, ohne die uebrigen Werte der Datei zu verlieren. Das
 // Benutzerprofil hat Vorrang vor dem Programmordner (readCfg), deshalb landet
 // der Autostart dort und ueberlebt auch ein Update, das den Programmordner leert.
@@ -60,10 +137,7 @@ function writeCfg(patch) {
   const f = path.join(app.getPath('userData'), 'config.json');
   let cur = {};
   try { cur = JSON.parse(fs.readFileSync(f, 'utf8')) || {}; } catch {}
-  try {
-    fs.mkdirSync(path.dirname(f), { recursive: true });
-    fs.writeFileSync(f, JSON.stringify(Object.assign({}, cur, patch)));
-  } catch {}
+  try { safeWrite(f, JSON.stringify(Object.assign({}, cur, patch))); } catch {}
 }
 
 function killTree(c) {
@@ -97,7 +171,7 @@ function setOllamaUrl(u) {
   if (!/^https?:\/\/[^\s/]+$/i.test(s)) return;
   if (s === ollamaUrl && fs.existsSync(ollamaUrlFile())) return;
   ollamaUrl = s;
-  try { fs.writeFileSync(ollamaUrlFile(), JSON.stringify({ url: s })); } catch {}
+  try { safeWrite(ollamaUrlFile(), JSON.stringify({ url: s })); } catch {}
 }
 ipcMain.on('ollama:url', (_e, u) => setOllamaUrl(u));
 // Ollama wird nur gestartet, wenn die eingestellte Adresse auf diesen Rechner
@@ -143,7 +217,7 @@ function setNllbUrl(u) {
   // Einstellungen abbildet und nicht nur die Abweichungen davon.
   if (s === nllbUrl && fs.existsSync(nllbUrlFile())) return;
   nllbUrl = s;
-  try { fs.writeFileSync(nllbUrlFile(), JSON.stringify({ url: s })); } catch {}
+  try { safeWrite(nllbUrlFile(), JSON.stringify({ url: s })); } catch {}
 }
 // Ein von Hand gestarteter Server darf nicht verdoppelt werden: erst fragen, ob
 // auf der eingestellten Adresse schon jemand antwortet. Jede HTTP-Antwort
@@ -544,7 +618,7 @@ ipcMain.handle('spell:add', (_e, word) => {
   const key = persKey(w);
   if (!personalKeys.has(key)) {
     personal.push(w); personalKeys.add(key);
-    try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {}
+    try { safeWrite(persFile(), JSON.stringify(personal)); } catch {}
     Object.values(spellers).forEach(s => s.addWord(w));
   }
   return true;
@@ -553,7 +627,7 @@ ipcMain.handle('spell:getPersonal', () => [...personal]);
 ipcMain.handle('spell:remove', (_e, word) => {
   const key = persKey(word);
   setPersonal(personal.filter(w => persKey(w) !== key));
-  try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {}
+  try { safeWrite(persFile(), JSON.stringify(personal)); } catch {}
   for (const k in spellers) delete spellers[k];
   return true;
 });
@@ -563,7 +637,7 @@ ipcMain.handle('spell:edit', (_e, oldWord, newWord) => {
   if (idx >= 0 && next) {
     personal[idx] = next;
     setPersonal(personal);
-    try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {}
+    try { safeWrite(persFile(), JSON.stringify(personal)); } catch {}
     for (const k in spellers) delete spellers[k];
   }
   return true;
@@ -612,7 +686,7 @@ function parseDictFile(text) {
 ipcMain.handle('dict:export', async () => {
   const r = await dialog.showSaveDialog(win, { defaultPath: 'woerterbuch.json', filters: [{ name: 'JSON', extensions: ['json'] }] });
   if (r.canceled || !r.filePath) return -1;
-  try { fs.writeFileSync(r.filePath, JSON.stringify(personal, null, 2), 'utf8'); return personal.length; }
+  try { safeWrite(r.filePath, JSON.stringify(personal, null, 2), 'utf8'); return personal.length; }
   catch { return -1; }
 });
 ipcMain.handle('dict:import', async () => {
@@ -621,7 +695,7 @@ ipcMain.handle('dict:import', async () => {
   try {
     const merged = mergeDictWords(personal, parseDictFile(fs.readFileSync(r.filePaths[0], 'utf8')));
     setPersonal(merged.list);
-    try { fs.writeFileSync(persFile(), JSON.stringify(personal)); } catch {}
+    try { safeWrite(persFile(), JSON.stringify(personal)); } catch {}
     for (const k in spellers) delete spellers[k];
     return { added: merged.added, skipped: merged.skipped, total: personal.length };
   } catch { return { error: true }; }
@@ -637,9 +711,9 @@ ipcMain.handle('file:save', async (_e, name, data, kind, opts) => {
     // Blatt fuellt. Die durchlaufende Seite behaelt die Standardraender.
     const pdf = { pageSize: 'A4', printBackground: true };
     if (opts && opts.a4) { pdf.margins = { marginType: 'none' }; pdf.preferCSSPageSize = true; }
-    fs.writeFileSync(r.filePath, await win.webContents.printToPDF(pdf));
+    safeWrite(r.filePath, await win.webContents.printToPDF(pdf));
   }
-  else fs.writeFileSync(r.filePath, data, 'utf8');
+  else safeWrite(r.filePath, data, 'utf8');
   return true;
 });
 
@@ -680,8 +754,8 @@ ipcMain.handle('lib:save', (_e, doc) => {
   let created = Date.now();
   try { created = JSON.parse(fs.readFileSync(libMeta(id), 'utf8')).created || created; } catch {}
   const meta = { id, name: String((doc && doc.name) || 'Dokument').slice(0, 120), created, updated: Date.now(), mode: doc && doc.mode === 'a4' ? 'a4' : 'flow' };
-  fs.writeFileSync(libHtml(id), String((doc && doc.html) || ''), 'utf8');
-  fs.writeFileSync(libMeta(id), JSON.stringify(meta), 'utf8');
+  safeWrite(libHtml(id), String((doc && doc.html) || ''), 'utf8');
+  safeWrite(libMeta(id), JSON.stringify(meta), 'utf8');
   return meta;
 });
 ipcMain.handle('lib:delete', (_e, id) => {
@@ -730,9 +804,8 @@ ipcMain.handle('study:save', (_e, name, data) => {
     // Geschrieben wird immer, gesichert nur bei einem glaubwuerdigen Umfang:
     // leere oder auf weniger als die Haelfte geschrumpfte Listen sind der
     // Fehlerfall, den die Sicherung ueberleben muss.
-    if (curN > 0 && nextN >= 0 && nextN * 2 >= curN) fs.writeFileSync(b, cur, 'utf8');
-    fs.writeFileSync(f, JSON.stringify(data), 'utf8');
-    return true;
+    if (curN > 0 && nextN >= 0 && nextN * 2 >= curN) safeWrite(b, cur, 'utf8');
+    return safeWrite(f, JSON.stringify(data), 'utf8');
   } catch { return false; }
 });
 // Eine Datei auswaehlen und ihren Text zurueckgeben (eigene Texte hochladen).
@@ -772,7 +845,7 @@ ipcMain.handle('study:importFile', async (_e, ext) => {
 ipcMain.handle('study:exportFile', async (_e, name, data, ext) => {
   const r = await dialog.showSaveDialog(win, { defaultPath: name + '.' + ext, filters: [{ name: String(ext).toUpperCase(), extensions: [String(ext)] }] });
   if (r.canceled || !r.filePath) return false;
-  try { fs.writeFileSync(r.filePath, data, 'utf8'); return true; } catch { return false; }
+  return safeWrite(r.filePath, data, 'utf8');
 });
 
 // Eigene Fensterleiste (frame:false). Die drei Knoepfe im Renderer rufen diese
@@ -1062,6 +1135,8 @@ ipcMain.handle('app:forceQuit', () => {
 });
 
 app.whenReady().then(() => {
+  logLine('Start, Version ' + app.getVersion());
+  dataCheck();
   try { setPersonal(JSON.parse(fs.readFileSync(persFile(), 'utf8'))); } catch {}
   session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => cb(permission === 'local-fonts'));
   startOllama(); startNllb(); createTray();
@@ -1091,3 +1166,5 @@ app.on('will-quit', () => {
   killTree(nllb); killTree(ollama);
 });
 app.on('window-all-closed', () => app.quit());
+app.on('render-process-gone', (_e, _wc, d) => logLine('Oberflaeche beendet: ' + JSON.stringify(d)));
+app.on('child-process-gone', (_e, d) => logLine('Kindprozess beendet: ' + JSON.stringify(d)));

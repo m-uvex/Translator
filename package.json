@@ -1,12 +1,15 @@
 {
  "name": "uebersetzer",
- "version": "1.15.188",
+ "version": "1.15.189",
  "private": true,
  "description": "Lokaler Übersetzer und Texteditor mit Ollama, NLLB-200, HY-MT, MiLMMT-46 und TranslateGemma",
  "author": "Janek",
  "main": "main.js",
  "scripts": {
   "start": "electron .",
+  "regeln": "node tools/regeln.js",
+  "rauch": "node tools/rauchtest.js",
+  "release": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/release.ps1",
   "dist": "electron-builder --win nsis",
   "dist:win": "electron-builder --win nsis",
   "dist:linux": "electron-builder --linux AppImage deb rpm tar.gz"
