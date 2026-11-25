@@ -2899,11 +2899,29 @@ function drawKeys() {
 // erfindet keine Befehle. Welche Ansicht gerade dazugehoert, entscheidet
 // editor.js (`edAllowedViews`), damit eine ausgeblendete Gruppe nicht in der
 // Liste steht und ein Sprung ins Leere nicht moeglich ist.
+// Die Befehle der Leisten sind keine zweite Fassung davon: jeder Eintrag
+// klickt den vorhandenen Knopf an (`b.click()`), damit Palette und Knopf nie
+// auseinanderlaufen. Was ohne Ziel nichts taete (Tauschen bei „Automatisch
+// erkennen“, Formatierungen ohne Auswahl), steht auch nicht in der Liste.
 function cmdList() {
   const out = [];
   const ok = window.edAllowedViews ? window.edAllowedViews() : ['tr', 'ed', 'lib', 'txt', 'voc', 'srs'];
   [['navTr', 'tr'], ['navEd', 'ed'], ['navLib', 'lib'], ['navTxt', 'txt'], ['navVoc', 'voc'], ['navSrs', 'srs']]
     .forEach(([l, v]) => { if (ok.includes(v)) out.push({ label: t(l), run: () => window.edShowView && window.edShowView(v) }); });
+  const press = (sel, l, cond = true) => {
+    const b = document.querySelector(sel);
+    if (b && cond) out.push({ label: t(l), run: () => b.click() });
+  };
+  press('#attach', 'attach');
+  press('#swap', 'swap', S.src !== 'auto');
+  press('#refresh', 'reloadModels');
+  if (ok.includes('ed')) {
+    press('[data-tt="fNew"]', 'fNew');
+    press('[data-tt="fOpen"]', 'fOpen');
+    press('[data-tt="fSave"]', 'fSave');
+  }
+  if (ok.includes('txt')) press('#txAdd', 'txAdd');
+  if (ok.includes('voc')) press('#vocFindBtn', 'vocSearchT');
   out.push({ label: t('settings'), run: () => $('#openSettings').click() });
   if (S.diagOn) out.push({ label: t('diagH'), run: () => $('#openDiag').click() });
   return out;

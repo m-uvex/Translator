@@ -3181,3 +3181,28 @@ Die Kürzel stehen in einer Tabelle `KEYS` (Kombinationen) und einer Liste `KURZ
 **Gemessen (1.15.193, installierte App, Debug-Port 9481, eigenes Profil).** Settings geöffnet, `#ttsBox` mit 11 Kindern und 9 Stimmenzeilen; `.mhint` vorhanden, `margin-bottom` = `10px`; Abstand von der Unterkante des Hinweises bis zur Oberkante der ersten Stimmenzeile (also bis zur Trennlinie) = **10 px**, vorher 0 px. Rauchtest bestanden (115 × 38 px, 14 Dialoge).
 
 **Grenzen.** Das Ergebnis ist gemessen, nicht angesehen: Abstände in Pixeln, kein Bild. Geprüft ist nur die erste Trennlinie dieses Abschnitts; der Abschnitt „Übersetzungsmodelle“ hat einen anderen Aufbau (`serverDown`-Zeile) und wurde nicht angefasst.
+
+## 222. Befehlspalette führt auch die Befehle der Leisten aus (1.15.195)
+
+**Anlass.** Die Palette (§220) konnte bisher nur springen: sechs Ansichten, Einstellungen, Diagnose. Wer „Sprachen tauschen“, „neues Dokument“ oder „Datei laden“ suchte, fand nichts, obwohl der Knopf einen Zentimeter daneben lag.
+
+**Jetzt.** Neun Einträge kommen dazu, alle aus den vorhandenen Leisten: „Datei anhängen“ (`#attach`, Übersetzer), „Tauschen“ (`#swap`), „Modelle neu laden“ (`#refresh`), „Neues Dokument“ / „Öffnen“ / „Speichern unter …“ (`fNew`, `fOpen`, `fSave` der Editorleiste), „Text hinzufügen“ (`#txAdd`, Lesetexte), „Vokabeln durchsuchen“ (`#vocFindBtn`). Damit sind es 15 Zeilen, wenn alle drei Arbeitsplätze sichtbar und Quell- und Zielsprache fest gewählt sind.
+
+Kein Eintrag hat eigene Logik: `cmdList()` sucht den echten Knopf (`document.querySelector`) und merkt sich ihn; `run` ist `b.click()`. Palette und Knopf können deshalb nicht auseinanderlaufen, und ein Fehler im Befehl ist immer auch ein Fehler am Knopf. Die Beschriftungen sind die vorhandenen Sprachschlüssel (`attach`, `swap`, `reloadModels`, `fNew`, `fOpen`, `fSave`, `txAdd`, `vocSearchT`) — der Eintrag heißt damit genau wie der Knopf, und es gibt keine neuen Texte in sechs Sprachen.
+
+**Sichtbarkeit und Bedingungen.** Die Editor-Befehle erscheinen nur, wenn `edAllowedViews()` die Ansicht `ed` führt, „Text hinzufügen“ nur bei `txt`, die Vokabelsuche nur bei `voc` — dieselbe Quelle, aus der auch die Navigationszeilen kommen (`study` liefert `txt`, `read`, `voc`, `srs`, `ed` liefert `ed` und `lib`). „Tauschen“ fehlt, solange die Quelle „Automatisch erkennen“ ist (`S.src !== 'auto'`): der Knopf täte dann ebenfalls nichts. „Speichern unter …“ läuft über den Leistenknopf, weil `savePop(btn)` dessen Position als Anker für das Menü braucht; der Eintrag ist deshalb an die sichtbare Editor-Gruppe gebunden.
+
+**Bewusst nicht aufgenommen.** „Übersetzen“, „Kopieren“, „Stopp“ und „Vorlesen“ brauchen Text oder eine fertige Ausgabe; Formatierung, Bild, Tabelle, Link, Ausrichtung und „Zurücksetzen“ wirken auf Cursor oder Auswahl, und die Palette schließt vor dem Ausführen — die Auswahl wäre weg. Löschen ist destruktiv, Quell-/Zielsprache und Modell sind Knöpfe, die ein Menü an ihrer Position aufklappen, `#pickBtn` ist die Wortauswahl im Eingabefeld und keine Dateiablage, und „Passend zu mir“, Vokabelfilter und Mehrfachauswahl sind Zustandsschalter, die man sehen muss, um sie zu deuten.
+
+**Gemessen (Quelllauf über Debug-Port 9494, eigenes Profil; der Release baute und installierte danach 1.15.195):**
+
+- Alle Gruppen, Deutsch → Englisch: **15 Zeilen** — Übersetzer · Textbearbeitung · Dokumentenablage · Lesen · Vokabeln · Üben · Datei anhängen · Tauschen · Modelle neu laden · Neues Dokument · Öffnen · Speichern unter … · Text hinzufügen · Vokabeln durchsuchen · Einstellungen.
+- Filter „tausch“: genau ein Treffer („Tauschen“); Enter schließt die Palette (`open === false`) und tauscht **Deutsch→Englisch** zu **Englisch→Deutsch**.
+- Quelle „Automatisch erkennen“: **14 Zeilen**, „Tauschen“ fehlt.
+- Nur Arbeitsplatz „Übersetzer“ (`tr`): **5 Zeilen** — Übersetzer · Datei anhängen · Tauschen · Modelle neu laden · Einstellungen (keine Editor-, Lese- oder Vokabelbefehle).
+- Nur „Lernen“ (`study`): **9 Zeilen** — Lesen · Vokabeln · Üben · Datei anhängen · Tauschen · Modelle neu laden · Text hinzufügen · Vokabeln durchsuchen · Einstellungen.
+- „Neues Dokument“ per Palette: `#docNewDlg` offen, Palette geschlossen. „Text hinzufügen“ per Palette: `#txDlg` offen.
+- `npm run regeln`: 539 deutsche Texte, 0 Verstöße. `npm run rauch`: 557 Schlüssel, Lücken NL 30 / ES 46 / TR 46 / AR 46 (unverändert, weil keine neuen Texte), Knöpfe 115 × 38 px bei 15 px, 14 Dialoge, bestanden.
+- Release: `Übersetzer Setup 1.15.195.exe` gebaut, still installiert („Installiert: Version 1.15.195“), dabei 4 Prozesse der alten Fassung beendet, `/health` danach `{"ok": true, "loaded": null, "port": 8765}`.
+
+**Grenzen.** Die Palette ist auch mit den neuen Befehlen nicht als Bild angesehen: geprüft sind Zählungen, Beschriftungen und ausgeführte Befehle im DOM, nicht Abstände oder die Auswahlfarbe. Gemessen ist nur der Quelllauf; die installierte Fassung wird nach dem Release gestartet und über `/health` geprüft, ihr Menü aber nicht. „Datei anhängen“, „Öffnen“, „Speichern unter …“, „Modelle neu laden“ und „Vokabeln durchsuchen“ wurden nicht ausgelöst — sie öffnen einen Systemdialog, laden Modelle oder setzen den Fokus ins Suchfeld; von ihnen ist nur gemessen, dass sie an der richtigen Stelle mit der richtigen Beschriftung stehen. Nur deutsch.
