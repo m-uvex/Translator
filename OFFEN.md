@@ -5,7 +5,7 @@ ist. Sie ersetzt keine Doku: Der Grund steht hier in einem Satz, die
 Einzelheiten im genannten Doku-Abschnitt. Die Rust-Fassung hat ihre eigene Liste
 in `PROBLEME.md`; Fehler der Electron-Fassung gehören hierher, nicht dorthin.
 
-Stand: 25. November 2026, Version 1.15.197.
+Stand: 25. November 2026, Version 1.15.199.
 
 ## Wortwahl (deutsch)
 
@@ -33,6 +33,25 @@ davon anders entscheidet, streicht sie dort und ändert den Text.
 - **„Was ist neu“ aus der Doku** (Punkt 4): auf Wunsch zurückgestellt. Die Quelle
   wäre die Abschnittsüberschriften mit Versionsnummer; beim ersten Start nach
   einer neuen Version eine kurze Liste.
+
+## Dokumentuebersetzung (DeepL, §225)
+
+- **Echter DeepL-Lauf ungeprueft.** Es liegt kein Schluessel vor; gemessen ist
+  die eigene Verarbeitung mit einem nachgebauten Dienst (39 Pruefungen). Sobald
+  ein Schluessel hinterlegt ist, fehlt ein Lauf an einer echten Datei.
+- **PDF nur mit Text und weissem Grund.** Ein Scan hat keinen Text; farbige
+  Hintergruende werden von der weissen Abdeckung ueberdeckt. Fett wird nur
+  uebernommen, wenn der Fontname es hergibt; Arabisch, Chinesisch, Japanisch
+  und Koreanisch gehen nicht (Arial fehlt die Zeichen).
+- **Word:** Kommentare, Aenderungsverfolgung und Felder bleiben unangetastet,
+  Text in Diagrammen und SmartArt wird nicht uebersetzt.
+
+## Wachhund fguard
+
+- Der Wachhund (`github.com/Baanaanek/uebersetzer-guard`, privat) entscheidet
+  nur, was durch ihn laeuft. Freebuff fragt ihn nicht selbst; ein
+  oeffentliches Hook-API war am 25.11.2026 nicht auffindbar. Echte Erzwingung
+  braucht einen OS-Sandbox. Grenzen und Quellen stehen in `SECURITY.md`.
 
 ## Bekannte Grenzen (kein Fehler, aber gut zu wissen)
 

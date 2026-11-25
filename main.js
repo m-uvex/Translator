@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, session, clipboard, Tray, Menu, globalShortcut, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, session, clipboard, Tray, Menu, globalShortcut, nativeImage, shell } = require('electron');
 const { spawn, spawnSync } = require('child_process');
 const http = require('http'), path = require('path'), fs = require('fs'), os = require('os');
 const { pathToFileURL } = require('url');
@@ -512,6 +512,44 @@ function fcFamilies() {
     return out.split('\n').flatMap(l => l.split(',')).map(s => s.trim()).filter(Boolean);
   } catch { return []; }
 }
+// ---------- Dokumente uebersetzen (DeepL) ----------
+// Der Schluessel liegt in deepl.json im Benutzerprofil und geht nie in die
+// Seite: der Renderer fragt nur, ob einer hinterlegt ist. Die Uebersetzung
+// selbst macht doclat.js (Word: nur Textstellen, PDF: Text an gleicher Stelle).
+const deeplFile = () => path.join(app.getPath('userData'), 'deepl.json');
+function deeplKey() {
+  try { return String(JSON.parse(fs.readFileSync(deeplFile(), 'utf8')).key || '').trim(); } catch { return ''; }
+}
+ipcMain.handle('doclat:key', (_e, key) => {
+  if (key === undefined) { const k = deeplKey(); return { set: !!k, hint: k ? k.slice(-4) : '' }; }
+  const v = String(key == null ? '' : key).trim();
+  const ok = safeWrite(deeplFile(), JSON.stringify({ key: v }));
+  logLine('DeepL-Schluessel ' + (v ? 'gespeichert' : 'entfernt') + (ok ? '' : ' (Schreiben fehlgeschlagen)'));
+  return { set: !!v, hint: v ? v.slice(-4) : '', ok };
+});
+ipcMain.handle('doclat:pick', async () => {
+  const r = await dialog.showOpenDialog(win || undefined, {
+    title: 'Dokument waehlen', properties: ['openFile'],
+    filters: [{ name: 'Word oder PDF', extensions: ['docx', 'pdf'] }]
+  });
+  return r.canceled || !r.filePaths.length ? null : r.filePaths[0];
+});
+ipcMain.handle('doclat:run', async (_e, file, src, tgt) => {
+  const key = deeplKey();
+  if (!key) return { ok: false, error: 'noKey' };
+  try {
+    const r = await require('./doclat').translateFile(String(file), { key, src, tgt });
+    logLine('Dokument uebersetzt: ' + path.basename(String(file)) + ' -> ' + path.basename(r.out) + ' ' + JSON.stringify(r.stats));
+    return r;
+  } catch (err) {
+    logLine('Dokument nicht uebersetzt: ' + ((err && err.message) || err));
+    return { ok: false, error: String((err && err.message) || err), code: (err && err.code) || '' };
+  }
+});
+ipcMain.handle('doclat:show', (_e, file) => {
+  try { shell.showItemInFolder(String(file)); return true; } catch { return false; }
+});
+
 ipcMain.handle('fonts:list', () => {
   const fc = IS_WIN ? [] : fcFamilies();
   if (fc.length) return [...new Set(fc)].sort((a, b) => a.localeCompare(b));

@@ -3248,3 +3248,113 @@ Kein Eintrag hat eigene Logik: `cmdList()` sucht den echten Knopf (`document.que
 - `npm run regeln`: 538 deutsche Texte, keine Verstöße (einer weniger als vorher, weil der alte feste Satz durch eine Funktion ersetzt ist). `npm run rauch`: bestanden, 557 Schlüssel, Lücken NL 30 / ES 46 / TR 46 / AR 46, Knöpfe 115 × 38 px, 14 Dialoge.
 
 **Grenzen.** Nur deutsch gemessen; die fünf anderen Fassungen sind gelesen, nicht ausgelöst. Den Dialog habe ich nicht als Bild angesehen – geprüft sind `#ask.open`, `#askText` und ob die App beendet. Karten ohne Überschrift heißen im Dialog „Dokument“; bei vielen betroffenen Karten wird der Satz lang und bricht im Dialog um, gekürzt wird nichts.
+§225 Dokumente uebersetzen ueber DeepL (1.15.199)
+
+Die Dokumentuebersetzung sitzt als Kachel „Dokument uebersetzen“ in der rechten
+Spalte des Uebersetzers, unter dem Glossar und ueber dem Verlauf. Sie belegt
+keinen eigenen Arbeitsplatz: Wer ein Word-Dokument oder ein PDF daneben liegen
+hat, sieht die Kachel neben dem Text, dessen Sprachenpaar sie benutzt. Die
+Kachel ist 258 x 228 px gross und endet 28 px vor dem Fensterrand (gemessen bei
+1280 px Fensterbreite).
+
+**Word.** Die Datei wird als ZIP gelesen. Uebersetzt wird ausschliesslich der
+Inhalt von `<w:t>` in `word/document.xml`, `word/header*.xml`,
+`word/footer*.xml`, `word/footnotes.xml` und `word/endnotes.xml`. Jeder Absatz
+geht als Ganzes an DeepL, die einzelnen Textstuecke sind mit `<x id="n">`
+markiert (`tag_handling=xml`); damit bleibt der Satz zusammenhaengend und die
+Uebersetzung landet wieder in dem Textstueck, das die Formatierung traegt.
+Alles andere bleibt Byte fuer Byte stehen - Schriftart, Groesse, Farbe,
+Ausrichtung, Absatz- und Zeichenformate, Nummerierung, Tabellen, Hyperlinks,
+Bilder, Kopf- und Fusszeilen. Zahlen und Zeichen ohne Buchstaben werden nicht
+angefragt.
+
+**PDF.** Die Textzeilen werden mit pdf.js samt Position gelesen, uebersetzt und
+an dieselbe Stelle geschrieben: gleiche Grundlinie, gleicher linker Rand,
+gleiche Groesse, weisse Flaeche ueber dem alten Text, Arial eingebettet (aus
+`%WINDIR%\Fonts\arial.ttf`), automatische Verkleinerung bis 55 %, damit die
+Uebersetzung in die alte Breite passt. Die Fuellfarbe wird uebernommen, wenn die
+Reihenfolge der Farbwechsel eindeutig ist (eine Farbe je Textstueck); sonst
+schwarz, statt zu raten. Link-Anmerkungen bleiben unveraendert.
+
+Seit 1.15.199 gehen PDF-Zeilen ohne XML-Modus an DeepL: spitze Klammern aus dem
+Dokument werden dann nicht als Markup gelesen. Ein einzelner Absatz ueber
+30.000 Zeichen wird stueckweise uebersetzt, statt die Anfrage abzubrechen.
+
+**Schluessel.** Der DeepL-Schluessel liegt in `deepl.json` im Benutzerprofil
+und wird ueber den Hauptprozess gesetzt. Die Seite erfaehrt nur, ob einer
+hinterlegt ist, und die letzten vier Zeichen als Kennzeichen; der Schluessel
+selbst geht nie in die Oberflaeche. Ein Schluessel mit der Endung `:fx` geht an
+`api-free.deepl.com`, jeder andere an `api.deepl.com`.
+
+**Pruefungen** (`node tools/dokumenttest.js`, 39 Pruefungen, nachgebauter
+DeepL-Dienst auf 127.0.0.1, der die XML-Marken stehen laesst und jeden Text mit
+`EN[…]` praefixiert):
+
+- DOCX: gleiche acht ZIP-Teile; `word/styles.xml`, `word/_rels/document.xml.rels`,
+  `[Content_Types].xml`, `_rels/.rels` und `word/media/image1.png` byte-gleich;
+  erhalten bleiben Georgia, Farbe `1F4E79`, Groesse 32 halbe Punkte, zentrierte
+  Ausrichtung, Nummerierung, Hyperlink `rId5`, Tabelle und Textfeld.
+  8 von 9 Textstellen uebersetzt (die Zahl „2026“ bleibt stehen), Kopfzeile
+  uebersetzt und ihre Farbe `7F7F7F` erhalten, Fusszeile uebersetzt, Text im
+  Textfeld uebersetzt, die drei Stuecke des Absatzes einzeln verteilt.
+  `mammoth` liest die erzeugte Datei.
+- Datei-Ebene: `probe.en.docx` entsteht neben dem Original (Groesse > 1000
+  Bytes), ein zweiter Lauf schreibt `probe.en (2).docx` statt zu ueberschreiben.
+- PDF: zwei Seiten 595 x 842 pt, vier Zeilen uebersetzt, Grundlinien 0,00 pt
+  Abweichung, linker Rand 0,00 pt, Ueberschriftfarbe `1f4f78` erhalten,
+  Link-Ziel erhalten, Schrift Arial, Ergebnis 24.782 Bytes.
+- Fehlerwege: ohne Schluessel `noKey`, unbekannte Endung `unsupported`,
+  abgelehnter Schluessel `deepl403`.
+- Kachel (CDP-Messung im laufenden Programm): offen, sichtbar, rechte Spalte;
+  Beschriftungen „Dokument uebersetzen / Uebersetzen / Dokument waehlen“; ohne
+  Datei erscheint „Zuerst ein Dokument waehlen.“ statt eines Laufs; Schluessel
+  setzen, lesen und loeschen liefert `set:true`, `hint:t:fx`, danach `set:false`;
+  `doclat:run` ohne Schluessel meldet `noKey`; auf Niederlaendisch heisst die
+  Kachel „Document vertalen“.
+- `npm run regeln`: 548 deutsche Texte, keine Verstoesse. `npm run rauch`:
+  bestanden, 568 Schluessel, Luecken unveraendert (NL 30 / ES 46 / TR 46 / AR 46),
+  14 Dialoge.
+
+**Grenzen.** Ein echter DeepL-Lauf ist nicht gemessen: Es liegt kein Schluessel
+vor. Geprueft ist die eigene Verarbeitung (Anfrageformat mit `tag_handling=xml`,
+Rueckverteilung der Marken, ZIP-Aufbau, PDF-Positionen), nicht die Qualitaet
+der DeepL-Uebersetzung. PDF nur bei PDFs mit Text (ein Scan hat keinen Text) und
+weißem Grund; die Farbe nur bei eindeutiger Zuordnung; fett nur, wenn der
+Fontname es hergibt (pdf.js liefert `g_d0_f1`); Arabisch, Chinesisch, Japanisch
+und Koreanisch gehen nicht, weil Arial diese Zeichen nicht hat; Verkleinerung
+hoert bei 55 % auf, laengere Uebersetzungen laufen dann ueber. In Word bleiben
+Kommentare, Aenderungsverfolgung (`w:del`) und Felder unangetastet; Text in
+Diagrammen und SmartArt wird nicht uebersetzt.
+
+§226 Wachhund fguard (eigenes, privates Repository)
+
+Weil Freebuff-Toolaufrufe nicht abfangbar sind, liegt der Schutz in einem
+eigenen Programm: `https://github.com/Baanaanek/uebersetzer-guard` (privat).
+`fguard` entscheidet vor jedem Zugriff `read`/`write`/`exec` nach einer
+Richtlinie (Arbeitsbereiche, Sperrlisten, Nur-Lese-Modus, Frage-Modus mit
+einmaligem Token), protokolliert jede Entscheidung als JSON-Zeile, bewacht
+Schluessel- und Anmeldedateien ausserhalb des Arbeitsbereichs (Aenderung,
+Loeschung, neue Datei werden im 2-Sekunden-Takt zurueckgenommen) und erkennt
+Prompt-Injektionen in fremdem Text.
+
+Entschieden wurde Node statt Rust: Auf dem Rechner ist keine Rust-Werkzeugkette
+installiert, und der Wachhund muss vor dem ersten Toolaufruf laufen; ein
+Programm ohne Bau-Schritt ist hier wartbarer. Die Regeln sind eine reine
+Funktion `decide(op, pfad)` und liessen sich spaeter 1:1 portieren.
+
+Gemessen: `node test/run.js` besteht 55 Faelle (Pfadtricks mit `..`,
+Gross-/Kleinschreibung, Wechselstrom-Anhang, 8.3-Kurzname, Geraetename, UNC,
+Junction nach aussen; Sperrlisten; Token einmalig, ablaufend, pfadgebunden;
+13 Injektionsproben; Waechter stellt Aenderung, Loeschung und neue Datei
+zurueck; `exec` verweigert Pfad ausserhalb, Umleitung und unbekannten Befehl;
+HTTP-Dienst 401 ohne Token; Protokoll nur gueltiges JSON). Der Dienst laeuft im
+Auto-Modus mit Waechter auf 127.0.0.1:8791 (`/health` meldet `ok:true`,
+`watched:4`), der Run-Eintrag `UebersetzerGuard` ist gesetzt.
+
+**Grenze.** Der Wachhund faengt keine fremden Prozesse im Kernel ab; er
+entscheidet nur, was durch ihn laeuft. Freebuff selbst fragt ihn nicht, solange
+es kein oeffentliches Hook-API dafuer gibt (am 25.11.2026 keines gefunden).
+Echte Erzwingung braucht einen OS-Sandbox oder die Zustimmungsschicht des
+Agenten; das steht ausfuehrlich in `SECURITY.md` des Repositories, zusammen mit
+dem Vergleich zu Claude Code (sechs Modi, deny vor allow, OS-Sandbox) und den
+Empfehlungen von OWASP, NVIDIA, ISACA und CSA.

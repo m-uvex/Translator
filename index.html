@@ -30,6 +30,16 @@
           <div id="glossList"></div>
         </details>
       </div>
+      <details class="ctx" id="docBox"><summary data-t="docLatH"></summary>
+        <p class="muted dlhint" data-t="docLatKind"></p>
+        <div class="dlrow"><button class="ghost" id="docLatPick"><span data-i="upload"></span><span data-t="docLatPick"></span></button></div>
+        <div class="muted dlname" id="docLatName"></div>
+        <div class="dlrow"><input id="docLatKey" type="password" data-ph="docLatKeyPh" autocomplete="off" spellcheck="false"><button class="ib" id="docLatKeyBtn" data-i="check" data-tt="save"></button></div>
+        <div class="muted" id="docLatKeyState"></div>
+        <button class="primary" id="docLatGo" data-t="translate"></button>
+        <div class="vmsg hidden" id="docLatMsg"></div>
+        <button class="ghost hidden" id="docLatShow" data-t="docLatShow"></button>
+      </details>
       <details class="ctx hidden" id="histBox"><summary data-t="historyH"></summary><div id="histList"></div></details>
       <p id="nllbNote" class="muted hidden"></p>
     </aside>
@@ -133,4 +143,4 @@
 <dialog id="docNewDlg"><div class="dh"><h2 data-t="docNew"></h2><span class="sp"></span><button class="ib" id="docNewX" data-i="x" data-tt="cancel"></button></div>
 <div class="docnew"><button class="dncard" id="dnFlow"><span class="dnprev flow"></span><b data-t="docNewFlow"></b><span data-t="docNewFlowHint"></span></button><button class="dncard" id="dnA4"><span class="dnprev a4"><i></i><i></i></span><b data-t="docNewA4"></b><span data-t="docNewA4Hint"></span></button></div></dialog>
 <dialog id="cmdDlg"><input id="cmdIn" data-ph="cmdFilter" autocomplete="off" spellcheck="false"><div id="cmdList" class="cmdlist"></div></dialog>
-<script src="renderer.js"></script><script src="editor.js"></script><script src="study.js"></script></body></html>
+<script src="renderer.js"></script><script src="editor.js"></script><script src="study.js"></script><script src="doclat-ui.js"></script></body></html>

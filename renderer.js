@@ -471,9 +471,23 @@ const K = {
   setupDoneMsg:['Fertig. Die App ist eingerichtet.','Done. The app is set up.'],
   setupFailMsg:['Die Einrichtung ist nicht vollständig durchgelaufen: ','Setup did not finish: '],
   confBig:[(id, gb) => `${id} ist ${gb} GB groß und braucht viel Arbeitsspeicher und Zeit. Trotzdem herunterladen?`, (id, gb) => `${id} is ${gb} GB and needs a lot of RAM and time. Download anyway?`],
+  // Dokument uebersetzen (DeepL): Kachel in der rechten Spalte. Der Schluessel
+  // wird im Hauptprozess abgelegt; hier steht nur, ob einer hinterlegt ist.
+  docLatH:['Dokument übersetzen','Translate a document'], docLatPick:['Dokument wählen','Choose a document'],
+  docLatKeyPh:['DeepL-Schlüssel','DeepL key'], docLatKeySet:['Schlüssel hinterlegt','Key saved'],
+  docLatShow:['Im Ordner zeigen','Show in folder'],
+  docLatKind:['Word und PDF. Schrift, Farbe, Ausrichtung, Absätze und Bilder bleiben erhalten.','Word and PDF. Font, colour, alignment, paragraphs and images are kept.'],
+  docLatNoKey:['Für Dokumente wird ein DeepL-Schlüssel gebraucht; er steht im DeepL-Konto und endet auf :fx.','Translating documents needs a DeepL key; it is in your DeepL account and ends in :fx.'],
+  docLatNeedFile:['Zuerst ein Dokument wählen.','Choose a document first.'], docLatNoTgt:['Zuerst eine Zielsprache wählen.','Choose a target language first.'],
+  docLatRun:['Das Dokument wird übersetzt …','Translating the document …'],
+  docLatDone:[n => `Fertig: ${n}`, n => `Done: ${n}`],
   confDel:[id => `${id} wirklich löschen? Das Modell kann später erneut geladen werden.`, id => `Really delete ${id}? You can download it again later.`]
 };
 const NL = {
+  docLatH:'Document vertalen', docLatPick:'Document kiezen', docLatKeyPh:'DeepL-sleutel', docLatKeySet:'Sleutel opgeslagen',
+  docLatShow:'In map tonen', docLatKind:'Word en PDF. Lettertype, kleur, uitlijning, alinea’s en afbeeldingen blijven behouden.',
+  docLatNoKey:'Voor documenten is een DeepL-sleutel nodig; die staat in je DeepL-account en eindigt op :fx.',
+  docLatNeedFile:'Kies eerst een document.', docLatNoTgt:'Kies eerst een doeltaal.', docLatRun:'Het document wordt vertaald …', docLatDone:n => `Klaar: ${n}`,
   s_ttsH:'Uitspraak',
   s_ttsHint:'Stemmen worden één keer gedownload en spreken daarna zonder netwerk. Zonder eigen stem spreekt de systeemstem.',
   ttsOn:'Geïnstalleerd',
@@ -666,6 +680,10 @@ const NL = {
 };
 
 const ES = {
+  docLatH:'Traducir documento', docLatPick:'Elegir documento', docLatKeyPh:'Clave de DeepL', docLatKeySet:'Clave guardada',
+  docLatShow:'Mostrar en la carpeta', docLatKind:'Word y PDF. La fuente, el color, la alineación, los párrafos y las imágenes se conservan.',
+  docLatNoKey:'Para traducir documentos hace falta una clave de DeepL; está en la cuenta de DeepL y termina en :fx.',
+  docLatNeedFile:'Primero elige un documento.', docLatNoTgt:'Primero elige un idioma de destino.', docLatRun:'Se está traduciendo el documento …', docLatDone:n => `Listo: ${n}`,
   s_ttsH:'Pronunciación',
   s_ttsHint:'Las voces se descargan una vez y después hablan sin red. Sin una voz propia habla la voz del sistema.',
   ttsOn:'Instalada',
@@ -859,6 +877,10 @@ const ES = {
 };
 
 const TR = {
+  docLatH:'Belgeyi çevir', docLatPick:'Belge seç', docLatKeyPh:'DeepL anahtarı', docLatKeySet:'Anahtar kaydedildi',
+  docLatShow:'Klasörde göster', docLatKind:'Word ve PDF. Yazı tipi, renk, hizalama, paragraflar ve resimler korunur.',
+  docLatNoKey:'Belgeler için DeepL anahtarı gerekir; DeepL hesabınızda bulunur ve :fx ile biter.',
+  docLatNeedFile:'Önce bir belge seçin.', docLatNoTgt:'Önce bir hedef dil seçin.', docLatRun:'Belge çevriliyor …', docLatDone:n => `Bitti: ${n}`,
   s_ttsH:'Seslendirme',
   s_ttsHint:'Sesler bir kez indirilir, sonra ağ olmadan konuşur. Kendi sesiniz yoksa sistem sesi konuşur.',
   ttsOn:'Yüklü',
@@ -1052,6 +1074,10 @@ const TR = {
 };
 
 const AR = {
+  docLatH:'ترجمة مستند', docLatPick:'اختيار مستند', docLatKeyPh:'مفتاح DeepL', docLatKeySet:'تم حفظ المفتاح',
+  docLatShow:'إظهار في المجلد', docLatKind:'Word وPDF. يبقى الخط واللون والمحاذاة والفقرات والصور كما هي.',
+  docLatNoKey:'ترجمة المستندات تحتاج إلى مفتاح DeepL؛ يوجد في حساب DeepL وينتهي بـ :fx.',
+  docLatNeedFile:'اختر مستندًا أولًا.', docLatNoTgt:'اختر لغة الهدف أولًا.', docLatRun:'جارٍ ترجمة المستند …', docLatDone:n => `تم: ${n}`,
   s_ttsH:'النطق',
   s_ttsHint:'تُنزَّل الأصوات مرة واحدة ثم تتحدث دون شبكة. وبدون صوت خاص يتحدث صوت النظام.',
   ttsOn:'مثبّت',

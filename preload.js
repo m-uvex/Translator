@@ -1,6 +1,12 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('api', {
   extract: (name, data) => ipcRenderer.invoke('extract', name, data),
+  // Dokumente (Word/PDF) ueber DeepL uebersetzen. Der Schluessel bleibt im
+  // Hauptprozess; die Seite erfaehrt nur, ob einer hinterlegt ist.
+  doclatKey: key => ipcRenderer.invoke('doclat:key', key),
+  doclatPick: () => ipcRenderer.invoke('doclat:pick'),
+  doclatRun: (file, src, tgt) => ipcRenderer.invoke('doclat:run', file, src, tgt),
+  doclatShow: file => ipcRenderer.invoke('doclat:show', file),
   spellCheck: (lang, words) => ipcRenderer.invoke('spell:check', lang, words),
   spellSuggest: (lang, word) => ipcRenderer.invoke('spell:suggest', lang, word),
   spellAdd: word => ipcRenderer.invoke('spell:add', word),
