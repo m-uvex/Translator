@@ -2434,7 +2434,7 @@ const STORY_STR = {
   storyT: ['Kurzgeschichte schreiben', 'Write a short story', 'Kort verhaal schrijven', 'Escribir un relato corto', 'Kısa hikâye yaz', 'كتابة قصة قصيرة'],
   storyH: ['Kurzgeschichte', 'Short story', 'Kort verhaal', 'Relato corto', 'Kısa hikâye', 'قصة قصيرة'],
   storyModelT: ['Schreibmodell für Kurzgeschichten', 'Writing model for short stories', 'Schrijfmodel voor korte verhalen', 'Modelo de escritura para relatos', 'Kısa hikâye yazma modeli', 'نموذج كتابة القصص'],
-  storyModelAuto: ['Standard (Schreibmodell des Editors)', 'Default (editor writing model)', 'Standaard (schrijfmodel van de editor)', 'Predeterminado (modelo del editor)', 'Varsayılan (düzenleyicinin yazma modeli)', 'افتراضي (نموذج المحرر)'],
+  storyModelAuto: ['Vorgabe (Schreibmodell der Textbearbeitung)', 'Default (editor writing model)', 'Standaard (schrijfmodel van de editor)', 'Predeterminado (modelo del editor)', 'Varsayılan (düzenleyicinin yazma modeli)', 'افتراضي (نموذج المحرر)'],
   stFrameL: ['Vorgabe', 'Recipe', 'Opzet', 'Guion', 'Tarif', 'الوصفة'],
   stSlotFig: ['Figur', 'Main character', 'Hoofdpersoon', 'Protagonista', 'Ana karakter', 'الشخصية الرئيسية'],
   stSlotPlace: ['Schauplatz', 'Setting', 'Plaats', 'Lugar', 'Mekân', 'المكان'],

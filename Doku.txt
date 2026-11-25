@@ -1,6 +1,6 @@
 # Dokumentation: Übersetzer-App
 
-Stand: 24. November 2026, App-Version 1.15.187 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
+Stand: 24. November 2026, App-Version 1.15.188 (package.json), mit Linux-Fassung (Abschnitte 55 bis 57) und zurückgestellter Android-Planung (Abschnitt 58). Ergänzt um die Rust-Neufassung 0.1.0 unter rust/ (Abschnitt 13) — **diese ist WIP und liegt auf Eis (On Hold)**. Die Electron-Fassung im Wurzelverzeichnis ist die aktuelle, vollständig funktionsfähige App; dort sind nur kleinere Fehler offen. Geprueft sind die Tooltips der Werkzeugleiste, der Kontext-Leiste und der Einstellungen in allen sechs Sprachen (Abschnitt 137). Diese Datei ist die verbindliche technische Dokumentation der Codebasis.
 
 ## 0. Pflicht für KI-Agenten: Diese Dokumentation ist Teil des Codes
 
@@ -3070,3 +3070,27 @@ Dieselbe Knopfzeile schließt auch die Liste der Übersetzermodelle ab — hinte
 **Angesehen als Bild.** Der Dialog „Text hinzufügen“ mit allen vier Knöpfen: gleiche Höhe, gleiche Schriftgröße, „Abbrechen“ und „Hinzufügen“ gleich breit.
 
 **Grenzen.** Nur deutsch und dunkles Erscheinungsbild; die Zahlen gelten für die deutschen Beschriftungen. Die Wirkung in den anderen fünf Sprachen ist nicht angesehen.
+## 213. Wortwahl der deutschen Fassung verfeinert (1.15.188)
+
+**Anlass.** Nach der Brainstorm-Runde sollte die deutsche Anzeige noch einmal gegen die Stilregel aus Abschnitt 7 gehalten werden: deutsches Wort vor Lehnwort, etablierter Fachbegriff vor ungewöhnlicher Bildung, Bindestrich nur bei schwer lesbarer Verbindung, keine Doppelbelegung. Jede gefundene Stelle wurde einzeln vorgelegt und einzeln entschieden.
+
+**Geändert (nur deutsche Einträge, die übrigen fünf Sprachen bleiben unverändert):**
+
+| Schlüssel | vorher | jetzt |
+| --- | --- | --- |
+| `studyModelAuto` | „Standard (Modell des Übersetzers)“ | „Vorgabe (Modell des Übersetzers)“ |
+| `storyModelAuto` | „Standard (Schreibmodell des Editors)“ | „Vorgabe (Schreibmodell der Textbearbeitung)“ |
+| `diagTtsEngine` | „Piper-Engine“ | „Piper-Sprachausgabe“ |
+| `infoShow` | „Infos ansehen“ | „Angaben ansehen“ |
+| `s_imgTotalLimit` | „Bildmenge je Dokument begrenzen (höchstens 20 MB)“ | „Bildgröße je Dokument begrenzen (zusammen höchstens 20 MB)“ |
+| `s_edCtx` | „Leiste bei Textauswahl zeigen“ | „Werkzeugleiste bei Textauswahl zeigen“ |
+| `accentAmber` | „Amber“ | „Bernstein“ |
+| `accentPink` | „Pink“ | „Rosa“ |
+
+`studyModelAuto` und `storyModelAuto` tragen damit dasselbe Wort wie die benachbarte Option „Ohne Vorgabe“; `storyModelAuto` nennt den Arbeitsplatz außerdem mit seinem richtigen Namen statt „Editor“. `infoShow` folgt dem Satz „Was bedeuten die Angaben?“ daneben. `s_imgTotalLimit` heißt jetzt wie die Zeile darüber „Bildgröße …“ und sagt mit „zusammen“ genau, dass es um die Summe geht. `s_edCtx` spricht dieselbe Leiste an wie `s_edTbGroup` („Werkzeugleiste: ganzer Text“). Die beiden Farblacke reihen sich in Himmelblau, Koralle, Türkis und Grau ein.
+
+**Bewusst nicht geändert** (jeweils auf Entscheidung, nicht aus Versehen): `s_csvSrs` „Export-Dateien“, `glossColls` „Glossar-Sammlungen“, `s_sys` „System-Anweisung“, `serverDown` „Übersetzungs-Server“, `s_nllb` „NLLB-Server-Adresse“, `styleIcon` „Zeichen“ und `s_edAI`/`edAIdim` „im Editor“. Damit bleibt die in §7 begonnene Liste offener Punkte („Hochfahren“, „mit eingerichtet“, „Fachlich“, „Natürlich“/„Formell“) unverändert gültig.
+
+**Offen gelassen.** Der Name `s_story` „Kurzgeschichten-Generator (Beta)“ bleibt vorerst, weil die zweite Hälfte noch nicht entschieden ist. Die erwogenen Fassungen sind „Kurzgeschichtenwerkstatt“ (deutsch, zusammengesetzt, an „Schreibwerkstatt“ angelehnt), „Erzählwerkstatt“ (kürzer) und „Kurzgeschichten-Schreiber“; ein Wechsel betrifft nur diesen einen Eintrag, die englischen und die übrigen Sprachfassungen nennen weiter „Short story generator“ und Entsprechungen.
+
+**Grenzen.** Geprüft wurden nur die deutschen Oberflächentexte in `renderer.js`, `editor.js`, `study.js` und `index.html`; die anderen fünf Sprachen und die Installer-Texte in `install.ps1` wurden nicht angefasst. Die Änderungen sind reine Textänderungen; angesehen wurde keine der Stellen im laufenden Fenster, sondern nur der Quelltext und die gebaute Datei.
