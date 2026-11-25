@@ -79,3 +79,7 @@ davon anders entscheidet, streicht sie dort und ändert den Text.
   gefiltert (keine Allowlist wie in der Claude-Sandbox).
 - **Anmeldung**: Die Benutzerumgebung wirkt erst nach einem neuen Anmelden; ein
   laufendes Freebuff behaelt die alte Umgebung bis zum Neustart.
+- **Platzhalter**: `.aws`, `.gitconfig`, `.npmrc` und `.git-credentials` existierten
+  auf diesem Profil nicht; fguard legt sie leer an und entfernt sie beim
+  Rueckbau wieder, solange sie leer sind. Wer dort spaeter echte Zugangsdaten
+  ablegt, behaelt sie bei der Deinstallation.
